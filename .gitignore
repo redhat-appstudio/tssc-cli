@@ -1,0 +1,11 @@
+/.vscode/
+/*.dll
+/*.dylib
+/*.exe
+/*.exe~
+/*.out
+/*.so
+/*.test
+/bin
+/rhtap-installer-cli
+/tmp
