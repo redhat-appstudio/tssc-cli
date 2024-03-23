@@ -19,7 +19,7 @@ func HelmReleasePrinter(rel *release.Release) {
 	fmt.Println("#")
 
 	if rel.Info.Notes != "" {
-		fmt.Printf("#\n# Notes:\n#\n")
+		fmt.Printf("#\n# Notes:\n#\n\n")
 		fmt.Println(rel.Info.Notes)
 	}
 }
@@ -29,7 +29,7 @@ func HelmReleasePrinter(rel *release.Release) {
 func HelmExtendedReleasePrinter(rel *release.Release) {
 	ValuesPrinter(rel.Config)
 
-	fmt.Printf("#\n# Manifest:\n#\n")
+	fmt.Printf("#\n# Manifest:\n#\n\n")
 	fmt.Print(rel.Manifest)
 
 	if len(rel.Hooks) > 0 {
@@ -42,7 +42,7 @@ func HelmExtendedReleasePrinter(rel *release.Release) {
 
 // ValuesPrinter prints the values in a map as properties.
 func ValuesPrinter(vals map[string]interface{}) {
-	fmt.Printf("#\n# Config:\n#\n")
+	fmt.Printf("#\n# Config:\n#\n\n")
 	properties := new(strings.Builder)
 	valuesToProperties(vals, "", properties)
 	printProperties(properties, " * ")
