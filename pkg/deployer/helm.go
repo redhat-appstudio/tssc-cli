@@ -50,7 +50,7 @@ func (h *Helm) helmInstall(vals chartutil.Values) (*release.Release, error) {
 	c.GenerateName = false
 	c.Namespace = h.dep.Namespace
 	c.ReleaseName = h.chart.Name()
-	c.Wait = true
+	c.Timeout = h.flags.Timeout
 
 	ctx := backgroundContext(func() {
 		h.logger.Warn("Release installation has been cancelled.")
@@ -67,7 +67,7 @@ func (h *Helm) helmUpgrade(vals chartutil.Values) (*release.Release, error) {
 	c := action.NewUpgrade(h.actionCfg)
 	c.DryRun = h.flags.DryRun
 	c.Namespace = h.dep.Namespace
-	c.Wait = true
+	c.Timeout = h.flags.Timeout
 
 	ctx := backgroundContext(func() {
 		h.logger.Warn("Release upgrade has been cancelled.")
@@ -110,12 +110,12 @@ func (h *Helm) Verify() error {
 	h.logger.Debug("Verifying the release...")
 	c := action.NewReleaseTesting(h.actionCfg)
 	c.Namespace = h.dep.Namespace
-	rel, err := c.Run(h.chart.Name())
+
+	_, err := c.Run(h.chart.Name())
 	if err != nil {
 		return err
 	}
-
-	h.printRelease(rel)
+	h.logger.Info("Release verified!")
 	return nil
 }
 
