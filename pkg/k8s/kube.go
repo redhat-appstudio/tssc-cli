@@ -6,8 +6,11 @@ import (
 
 	"github.com/otaviof/rhtap-installer-cli/pkg/flags"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/dynamic"
 )
 
 // Kube represents the Kubernetes client helper.
@@ -32,6 +35,45 @@ func (k *Kube) DiscoveryClient(namespace string) (*discovery.DiscoveryClient, er
 		return nil, err
 	}
 	return discovery.NewDiscoveryClientForConfig(restConfig)
+}
+
+func (k *Kube) DynamicClient(namespace string) (*dynamic.DynamicClient, error) {
+	restConfig, err := k.RESTClientGetter(namespace).ToRESTConfig()
+	if err != nil {
+		return nil, err
+	}
+	return dynamic.NewForConfig(restConfig)
+}
+
+func (k *Kube) GetDynamicClientOnKind(
+	apiVersion, kind, namespace string,
+) (dynamic.NamespaceableResourceInterface, bool, error) {
+	gvk := schema.FromAPIVersionAndKind(apiVersion, kind)
+	dc, err := k.DiscoveryClient(namespace)
+	if err != nil {
+		return nil, false, err
+	}
+
+	resList, err := dc.ServerResourcesForGroupVersion(gvk.GroupVersion().String())
+	if err != nil {
+		return nil, false, err
+	}
+	var apiResource metav1.APIResource
+	for _, r := range resList.APIResources {
+		if r.Kind == kind {
+			apiResource = r
+			apiResource.Group = gvk.Group
+			apiResource.Version = gvk.Version
+		}
+	}
+
+	gvr := gvk.GroupVersion().WithResource(apiResource.Name)
+	dynamicClient, err := k.DynamicClient(namespace)
+	if err != nil {
+		return nil, false, err
+	}
+
+	return dynamicClient.Resource(gvr), apiResource.Namespaced, nil
 }
 
 // Connected reads the cluster's version, to assert if the client is working. For

@@ -15,7 +15,7 @@ import (
 	"helm.sh/helm/v3/pkg/chartutil"
 )
 
-// Deploy is the deploy sub-command.
+// Deploy is the deploy subcommand.
 type Deploy struct {
 	logger *slog.Logger       // application logger
 	cmd    *cobra.Command     // cobra command
@@ -23,23 +23,39 @@ type Deploy struct {
 	cfg    *config.ConfigSpec // installer configuration
 	kube   *k8s.Kube          // kubernetes client
 
-	valuesTemplatePath string
+	valuesTemplatePath string // path to the values template file
 }
 
 var _ Interface = &Deploy{}
 
+const deployDesc = `
+Deploys the RHTAP platform components. The installer looks the the informed
+configuration to identify the features to be installed, and the dependencies to be
+resolved.
+
+The deployment configuration file describes the sequence of Helm charts to be
+applied, on the attribute 'rhtapInstallerCLI.dependencies[]'.
+
+The platform configuration is rendered from the values template file
+(--values-template), this configuration payload is given to all Helm charts.
+`
+
+// Cmd exposes the cobra instance.
 func (d *Deploy) Cmd() *cobra.Command {
 	return d.cmd
 }
 
+// log logger with contextual information.
 func (d *Deploy) log() *slog.Logger {
 	return d.logger.With(
 		"values-template", d.valuesTemplatePath,
 		"dry-run", d.flags.DryRun,
 		"debug", d.flags.Debug,
+		"timeout", d.flags.Timeout.String(),
 	)
 }
 
+// Complete verifies the object is complete.
 func (d *Deploy) Complete(_ []string) error {
 	if d.cfg == nil {
 		return fmt.Errorf("configuration is not informed")
@@ -50,6 +66,7 @@ func (d *Deploy) Complete(_ []string) error {
 	return nil
 }
 
+// Validate asserts the requirements to start the deployment are in place.
 func (d *Deploy) Validate() error {
 	d.log().Debug("Verifying Kubernetes client connection...")
 	if err := d.kube.Connected(); err != nil {
@@ -72,7 +89,7 @@ func (d *Deploy) Run() error {
 		return err
 	}
 
-	eng := engine.NewEngine(string(valuesTemplatePayload))
+	eng := engine.NewEngine(d.kube, string(valuesTemplatePayload))
 
 	for _, dep := range d.cfg.Dependencies {
 		logger := d.log().With(
@@ -117,15 +134,16 @@ func NewDeploy(
 	kube *k8s.Kube,
 ) Interface {
 	d := &Deploy{
-		logger: logger.WithGroup("deploy"),
 		cmd: &cobra.Command{
 			Use:          "deploy",
-			Short:        "Deploys the RHTAP components",
+			Short:        "Rollout RHTAP platform components",
+			Long:         deployDesc,
 			SilenceUsage: true,
 		},
-		flags: f,
-		cfg:   cfg,
-		kube:  kube,
+		logger: logger.WithGroup("deploy"),
+		flags:  f,
+		cfg:    cfg,
+		kube:   kube,
 	}
 	flags.SetValuesTmplFlag(d.cmd.PersistentFlags(), &d.valuesTemplatePath)
 	return d
