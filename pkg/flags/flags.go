@@ -2,6 +2,7 @@ package flags
 
 import (
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
 	"strings"
@@ -45,6 +46,12 @@ func (f *Flags) PersistentFlags(p *pflag.FlagSet) {
 			f.Timeout.String(),
 		),
 	)
+}
+
+// GetLogger returns a logger instance for flag setting.
+func (f *Flags) GetLogger(out io.Writer) *slog.Logger {
+	logOpts := &slog.HandlerOptions{Level: f.LogLevel}
+	return slog.New(slog.NewTextHandler(out, logOpts))
 }
 
 // NewFlags instantiates the global flags with default values.
