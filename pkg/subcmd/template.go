@@ -29,7 +29,6 @@ type Template struct {
 
 	valuesTemplatePath string            // path to the values template file
 	showValues         bool              // show rendered values
-	validate           bool              // validate the resources
 	showManifests      bool              // show rendered manifests
 	dependency         config.Dependency // chart to render
 }
@@ -85,7 +84,7 @@ func (t *Template) Validate() error {
 	if !t.showManifests {
 		return nil
 	}
-	if t.flags.DryRun {
+	if !t.flags.DryRun {
 		return fmt.Errorf("template command is only available in dry-run mode")
 	}
 	if t.dependency.Chart == "" {
@@ -174,7 +173,6 @@ func NewTemplate(
 		dependency:    config.Dependency{Namespace: "default"},
 		showValues:    true,
 		showManifests: true,
-		validate:      false,
 	}
 
 	p := t.cmd.PersistentFlags()
@@ -187,8 +185,6 @@ func NewTemplate(
 		"show values template rendered payload")
 	p.BoolVar(&t.showManifests, "show-manifests", t.showManifests,
 		"show Helm chart rendered manifests")
-	p.BoolVar(&t.validate, "validate", t.validate,
-		"validate the rendered manifests")
 
 	return t
 }
