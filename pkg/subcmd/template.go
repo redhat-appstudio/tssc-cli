@@ -55,11 +55,10 @@ func (t *Template) Cmd() *cobra.Command {
 
 // log logger with contextual information.
 func (t *Template) log() *slog.Logger {
-	return t.logger.With(
-		"values-template", t.valuesTemplatePath,
-		"dry-run", t.flags.DryRun,
-		"chart", t.dependency.Chart,
-		"namespace", t.dependency.Namespace,
+	return t.flags.LoggerWith(
+		t.dependency.LoggerWith(
+			t.logger.With("values-template", t.valuesTemplatePath),
+		),
 	)
 }
 

@@ -54,6 +54,11 @@ func (f *Flags) GetLogger(out io.Writer) *slog.Logger {
 	return slog.New(slog.NewTextHandler(out, logOpts))
 }
 
+// LoggerWith returns a logger with contextual information.
+func (f *Flags) LoggerWith(l *slog.Logger) *slog.Logger {
+	return l.With("debug", f.Debug, "dry-run", f.DryRun, "timeout", f.Timeout)
+}
+
 // NewFlags instantiates the global flags with default values.
 func NewFlags() *Flags {
 	defaultLogLevel := slog.LevelWarn

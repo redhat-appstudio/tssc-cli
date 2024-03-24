@@ -47,12 +47,8 @@ func (d *Deploy) Cmd() *cobra.Command {
 
 // log logger with contextual information.
 func (d *Deploy) log() *slog.Logger {
-	return d.logger.With(
-		"values-template", d.valuesTemplatePath,
-		"dry-run", d.flags.DryRun,
-		"debug", d.flags.Debug,
-		"timeout", d.flags.Timeout.String(),
-	)
+	return d.flags.LoggerWith(
+		d.logger.With("values-template", d.valuesTemplatePath))
 }
 
 // Complete verifies the object is complete.
@@ -95,10 +91,7 @@ func (d *Deploy) Run() error {
 	eng := engine.NewEngine(d.kube, string(valuesTemplatePayload))
 
 	for _, dep := range d.cfg.Dependencies {
-		logger := d.log().With(
-			"dependency-chart", dep.Chart,
-			"dependency-namespace", dep.Namespace,
-		)
+		logger := dep.LoggerWith(d.log())
 
 		hc, err := deployer.NewHelm(logger, d.flags, d.kube, &dep)
 		if err != nil {

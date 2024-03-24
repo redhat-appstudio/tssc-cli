@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 
 	"github.com/spf13/pflag"
@@ -48,6 +49,11 @@ type Dependency struct {
 	Chart string `yaml:"chart"`
 	// Namespace where the Helm chart will be deployed.
 	Namespace string `yaml:"namespace"`
+}
+
+// LoggerWith returns a logger with Dependency contextual information.
+func (d *Dependency) LoggerWith(l *slog.Logger) *slog.Logger {
+	return l.With("dep-chart", d.Chart, "dep-namespace", d.Namespace)
 }
 
 // ConfigSpec contains all configuration sections.

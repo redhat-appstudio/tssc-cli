@@ -26,9 +26,9 @@ type Helm struct {
 	logger *slog.Logger // application logger
 	flags  *flags.Flags // global flags
 
-	dep       *config.Dependency    // helm chart coordinates
-	chart     *chart.Chart          // helm chart instance
-	actionCfg *action.Configuration // helm action configuration
+	dependency *config.Dependency    // helm chart coordinates
+	chart      *chart.Chart          // helm chart instance
+	actionCfg  *action.Configuration // helm action configuration
 }
 
 // ErrInstallFailed when the Helm chart installation fails.
@@ -39,11 +39,7 @@ var ErrUpgradeFailed = errors.New("upgrade failed")
 
 // log logger with contextual information.
 func (h *Helm) log() *slog.Logger {
-	return h.logger.With(
-		"type", "helm",
-		"helm-chart", h.dep.Chart,
-		"helm-namespace", h.dep.Namespace,
-	)
+	return h.dependency.LoggerWith(h.logger.With("type", "helm"))
 }
 
 // printRelease prints the Helm release information.
@@ -58,7 +54,7 @@ func (h *Helm) printRelease(rel *release.Release) {
 func (h *Helm) helmInstall(vals chartutil.Values) (*release.Release, error) {
 	c := action.NewInstall(h.actionCfg)
 	c.GenerateName = false
-	c.Namespace = h.dep.Namespace
+	c.Namespace = h.dependency.Namespace
 	c.ReleaseName = h.chart.Name()
 	c.Timeout = h.flags.Timeout
 
@@ -82,7 +78,7 @@ func (h *Helm) helmInstall(vals chartutil.Values) (*release.Release, error) {
 // helmUpgrade equivalent to "helm upgrade" command.
 func (h *Helm) helmUpgrade(vals chartutil.Values) (*release.Release, error) {
 	c := action.NewUpgrade(h.actionCfg)
-	c.Namespace = h.dep.Namespace
+	c.Namespace = h.dependency.Namespace
 	c.Timeout = h.flags.Timeout
 
 	c.DryRun = h.flags.DryRun
@@ -134,7 +130,7 @@ func (h *Helm) Verify() error {
 
 	h.log().Debug("Verifying the release...")
 	c := action.NewReleaseTesting(h.actionCfg)
-	c.Namespace = h.dep.Namespace
+	c.Namespace = h.dependency.Namespace
 
 	_, err := c.Run(h.chart.Name())
 	if err != nil {
@@ -177,10 +173,10 @@ func NewHelm(
 	}
 
 	return &Helm{
-		logger:    logger,
-		flags:     f,
-		chart:     chart,
-		actionCfg: actionCfg,
-		dep:       dep,
+		logger:     logger,
+		flags:      f,
+		chart:      chart,
+		actionCfg:  actionCfg,
+		dependency: dep,
 	}, nil
 }
