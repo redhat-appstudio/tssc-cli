@@ -210,3 +210,35 @@ func TestFromJSONArray(t *testing.T) {
 		})
 	}
 }
+func TestRequired(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    interface{}
+		expected interface{}
+		wantErr  bool
+	}{{
+		name:     "nil value",
+		input:    nil,
+		expected: nil,
+		wantErr:  true,
+	}, {
+		name:     "non-nil value",
+		input:    "value",
+		expected: "value",
+		wantErr:  false,
+	}}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := required(tt.name, tt.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("required() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(result, tt.expected) {
+				t.Errorf("required() result = %v, expected %v",
+					result, tt.expected)
+			}
+		})
+	}
+}

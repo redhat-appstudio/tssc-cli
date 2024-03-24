@@ -37,7 +37,7 @@ func TestEngine_Render(t *testing.T) {
 
 	t.Logf("Template: %s", testTemplate)
 
-	e := NewEngine(testTemplate)
+	e := NewEngine(nil, testTemplate)
 	payload, err := e.Render(variables)
 	g.Expect(err).To(o.Succeed())
 	g.Expect(payload).NotTo(o.BeEmpty())

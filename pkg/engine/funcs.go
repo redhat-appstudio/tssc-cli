@@ -2,6 +2,7 @@ package engine
 
 import (
 	"encoding/json"
+	"errors"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -53,4 +54,11 @@ func fromJSONArray(str string) []interface{} {
 		a = []interface{}{err.Error()}
 	}
 	return a
+}
+
+func required(name string, value interface{}) (interface{}, error) {
+	if value == nil {
+		return nil, errors.New(name + " is required")
+	}
+	return value, nil
 }

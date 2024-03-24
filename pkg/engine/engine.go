@@ -4,20 +4,21 @@ import (
 	"bytes"
 	"html/template"
 
+	"github.com/otaviof/rhtap-installer-cli/pkg/k8s"
+
 	"github.com/Masterminds/sprig/v3"
 )
 
 // Engine represents the template engine.
 type Engine struct {
-	templatePayload string // template payload
+	funcMap         template.FuncMap // template functions
+	templatePayload string           // template payload
 }
 
 // Render renders the template with the given variables.
 func (e *Engine) Render(variables *Variables) ([]byte, error) {
-	funcMap := sprig.TxtFuncMap()
-
 	tmpl, err := template.New("values.yaml.tpl").
-		Funcs(funcMap).
+		Funcs(e.funcMap).
 		Parse(e.templatePayload)
 	if err != nil {
 		return nil, err
@@ -31,6 +32,24 @@ func (e *Engine) Render(variables *Variables) ([]byte, error) {
 }
 
 // NewEngine instantiates the template engine.
-func NewEngine(templatePayload string) *Engine {
-	return &Engine{templatePayload: templatePayload}
+func NewEngine(kube *k8s.Kube, templatePayload string) *Engine {
+	funcMap := sprig.TxtFuncMap()
+
+	funcMap["toYaml"] = toYAML
+	funcMap["fromYaml"] = fromYAML
+	funcMap["fromYamlArray"] = fromYAMLArray
+
+	funcMap["toJson"] = toJSON
+	funcMap["fromJson"] = fromJSON
+	funcMap["fromJsonArray"] = fromJSONArray
+
+	funcMap["required"] = required
+
+	l := NewLookupFuncs(kube)
+	funcMap["lookup"] = l.Lookup()
+
+	return &Engine{
+		templatePayload: templatePayload,
+		funcMap:         funcMap,
+	}
 }
