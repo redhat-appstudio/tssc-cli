@@ -5,9 +5,9 @@ import (
 
 	"github.com/otaviof/rhtap-installer-cli/pkg/k8s"
 
+	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/dynamic"
 )
 
 // LookupFuncs represents the template functions that will need to lookup
@@ -23,17 +23,14 @@ func (l *LookupFuncs) lookup(
 ) (map[string]interface{}, error) {
 	empty := map[string]interface{}{}
 
-	dc, namespaced, err := l.kube.GetDynamicClientOnKind(
-		apiVersion, kind, namespace)
+	client, err := l.kube.GetDynamicClientForObjectRef(&v1.ObjectReference{
+		APIVersion: apiVersion,
+		Kind:       kind,
+		Namespace:  namespace,
+		Name:       name,
+	})
 	if err != nil {
 		return empty, err
-	}
-
-	var client dynamic.ResourceInterface
-	if namespaced {
-		client = dc.Namespace(namespace)
-	} else {
-		client = dc
 	}
 
 	ctx := context.Background()

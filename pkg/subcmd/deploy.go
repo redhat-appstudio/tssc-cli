@@ -88,6 +88,9 @@ func (d *Deploy) Run() error {
 	if err := variables.SetInstaller(d.cfg); err != nil {
 		return err
 	}
+	if err := variables.SetOpenShift(d.kube); err != nil {
+		return err
+	}
 
 	eng := engine.NewEngine(d.kube, string(valuesTemplatePayload))
 

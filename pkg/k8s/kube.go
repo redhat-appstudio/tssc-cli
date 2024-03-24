@@ -6,8 +6,8 @@ import (
 
 	"github.com/otaviof/rhtap-installer-cli/pkg/flags"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
@@ -45,22 +45,22 @@ func (k *Kube) DynamicClient(namespace string) (*dynamic.DynamicClient, error) {
 	return dynamic.NewForConfig(restConfig)
 }
 
-func (k *Kube) GetDynamicClientOnKind(
-	apiVersion, kind, namespace string,
-) (dynamic.NamespaceableResourceInterface, bool, error) {
-	gvk := schema.FromAPIVersionAndKind(apiVersion, kind)
-	dc, err := k.DiscoveryClient(namespace)
+// GetDynamicClientForObjectRef returns a dynamic client for the object reference.
+func (k *Kube) GetDynamicClientForObjectRef(
+	objectRef *corev1.ObjectReference,
+) (dynamic.ResourceInterface, error) {
+	dc, err := k.DiscoveryClient(objectRef.Namespace)
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
-
+	gvk := objectRef.GroupVersionKind()
 	resList, err := dc.ServerResourcesForGroupVersion(gvk.GroupVersion().String())
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 	var apiResource metav1.APIResource
 	for _, r := range resList.APIResources {
-		if r.Kind == kind {
+		if r.Kind == objectRef.Kind {
 			apiResource = r
 			apiResource.Group = gvk.Group
 			apiResource.Version = gvk.Version
@@ -68,12 +68,14 @@ func (k *Kube) GetDynamicClientOnKind(
 	}
 
 	gvr := gvk.GroupVersion().WithResource(apiResource.Name)
-	dynamicClient, err := k.DynamicClient(namespace)
+	dynamicClient, err := k.DynamicClient(objectRef.Namespace)
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
-
-	return dynamicClient.Resource(gvr), apiResource.Namespaced, nil
+	if apiResource.Namespaced {
+		return dynamicClient.Resource(gvr).Namespace(objectRef.Namespace), nil
+	}
+	return dynamicClient.Resource(gvr), nil
 }
 
 // Connected reads the cluster's version, to assert if the client is working. For

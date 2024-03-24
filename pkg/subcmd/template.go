@@ -108,6 +108,9 @@ func (t *Template) Run() error {
 	if err := variables.SetInstaller(t.cfg); err != nil {
 		return err
 	}
+	if err := variables.SetOpenShift(t.kube); err != nil {
+		return err
+	}
 
 	t.log().Debug("Loading values template file")
 	valuesTemplatePayload, err := os.ReadFile(t.valuesTemplatePath)
