@@ -20,7 +20,7 @@ var _ pflag.Value = &DurationValue{}
 func (d *DurationValue) Set(value string) error {
 	duration, err := time.ParseDuration(value)
 	if err != nil {
-		return fmt.Errorf("unsupported duration value %q: %v", value, err)
+		return fmt.Errorf("unsupported duration value %q: %w", value, err)
 	}
 	*d.duration = duration
 	// holding the duration value for a valid value

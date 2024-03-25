@@ -13,13 +13,13 @@ import (
 // ErrInvalidConfig indicates the configuration content is invalid.
 var ErrInvalidConfig = errors.New("invalid configuration")
 
-// ErrEmptyConfig indicates the configuration file is empty.l
+// ErrEmptyConfig indicates the configuration file is empty.
 var ErrEmptyConfig = errors.New("empty configuration")
 
 // ErrUnmarshalConfig indicates the configuration file structure is invalid.
 var ErrUnmarshalConfig = errors.New("failed to unmarshal configuration")
 
-// FeatureSpec contains the configuration for a specific feature.l
+// FeatureSpec contains the configuration for a specific feature.
 type FeatureSpec struct {
 	// Enabled feature toggle.
 	Enabled bool `yaml:"enabled"`
@@ -56,8 +56,8 @@ func (d *Dependency) LoggerWith(l *slog.Logger) *slog.Logger {
 	return l.With("dep-chart", d.Chart, "dep-namespace", d.Namespace)
 }
 
-// ConfigSpec contains all configuration sections.
-type ConfigSpec struct {
+// Spec contains all configuration sections.
+type Spec struct {
 	// Namespace installer's namespace, where the installer's resources will be
 	// deployed. Note, Helm charts deployed by the installer are likely to use a
 	// different namespace.
@@ -73,7 +73,7 @@ type Config struct {
 	// configPath is the path to the configuration file, private attribute.
 	configPath string
 	// Installer is the root configuration for the installer.
-	Installer ConfigSpec `yaml:"rhtapInstallerCLI"`
+	Installer Spec `yaml:"rhtapInstallerCLI"`
 }
 
 // PersistentFlags defines the persistent flags for the CLI.
@@ -131,7 +131,7 @@ func (c *Config) UnmarshalYAML() error {
 		return fmt.Errorf("%w: %s", ErrEmptyConfig, c.configPath)
 	}
 	if err = yaml.Unmarshal(payload, c); err != nil {
-		return fmt.Errorf("%w: %s %s", ErrUnmarshalConfig, c.configPath, err)
+		return fmt.Errorf("%w: %s %w", ErrUnmarshalConfig, c.configPath, err)
 	}
 	return c.Validate()
 }

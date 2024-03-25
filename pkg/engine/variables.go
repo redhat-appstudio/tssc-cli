@@ -19,7 +19,7 @@ type Variables struct {
 }
 
 // SetInstaller sets the installer configuration.
-func (v *Variables) SetInstaller(cfg *config.ConfigSpec) error {
+func (v *Variables) SetInstaller(cfg *config.Spec) error {
 	var err error
 	v.Installer, err = UnstructuredType(cfg)
 	return err
@@ -39,7 +39,7 @@ func (v *Variables) SetOpenShift(kube *k8s.Kube) error {
 	}
 	operatorClient, err := operatorv1client.NewForConfig(restConfig)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	ingressController, err := operatorClient.

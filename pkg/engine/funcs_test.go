@@ -138,6 +138,7 @@ func TestToJSON(t *testing.T) {
 		})
 	}
 }
+
 func TestFromJSON(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -210,6 +211,7 @@ func TestFromJSONArray(t *testing.T) {
 		})
 	}
 }
+
 func TestRequired(t *testing.T) {
 	tests := []struct {
 		name     string

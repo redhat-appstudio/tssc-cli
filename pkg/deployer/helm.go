@@ -26,7 +26,7 @@ type Helm struct {
 	logger *slog.Logger // application logger
 	flags  *flags.Flags // global flags
 
-	dependency *config.Dependency    // helm chart coordinates
+	dependency config.Dependency     // helm chart coordinates
 	chart      *chart.Chart          // helm chart instance
 	actionCfg  *action.Configuration // helm action configuration
 }
@@ -103,10 +103,10 @@ func (h *Helm) Install(vals chartutil.Values) error {
 	c := action.NewHistory(h.actionCfg)
 	c.Max = 1
 
-	rel := &release.Release{}
+	var rel *release.Release
 	h.log().Debug("Checking if release exists on the cluster")
 	var err error
-	if _, err = c.Run(h.chart.Name()); err == driver.ErrReleaseNotFound {
+	if _, err = c.Run(h.chart.Name()); errors.Is(err, driver.ErrReleaseNotFound) {
 		h.log().Info("Installing Helm Chart...")
 		rel, err = h.helmInstall(vals)
 	} else {
@@ -147,7 +147,7 @@ func NewHelm(
 	logger *slog.Logger,
 	f *flags.Flags,
 	kube *k8s.Kube,
-	dep *config.Dependency,
+	dep config.Dependency,
 ) (*Helm, error) {
 	actionCfg := new(action.Configuration)
 	getter := kube.RESTClientGetter(dep.Namespace)

@@ -18,11 +18,11 @@ import (
 
 // Template represents the "template" subcommand.
 type Template struct {
-	logger *slog.Logger       // application logger
-	cmd    *cobra.Command     // cobra command
-	flags  *flags.Flags       // global flags
-	cfg    *config.ConfigSpec // installer configuration
-	kube   *k8s.Kube          // kubernetes client
+	logger *slog.Logger   // application logger
+	cmd    *cobra.Command // cobra command
+	flags  *flags.Flags   // global flags
+	cfg    *config.Spec   // installer configuration
+	kube   *k8s.Kube      // kubernetes client
 
 	// TODO: add support for "--validate", so the rendered resources are validated
 	// against the cluster during templating.
@@ -62,7 +62,7 @@ func (t *Template) log() *slog.Logger {
 	)
 }
 
-// Complete parse the informed args as charts, when valid
+// Complete parse the informed args as charts, when valid.
 func (t *Template) Complete(args []string) error {
 	// Dry-run mode is always enabled by default for templating, when manually set
 	// fo false it will return a validation error.
@@ -144,7 +144,7 @@ func (t *Template) Run() error {
 	}
 
 	t.log().Debug("Showing rendered chart manifests")
-	hc, err := deployer.NewHelm(t.logger, t.flags, t.kube, &t.dependency)
+	hc, err := deployer.NewHelm(t.logger, t.flags, t.kube, t.dependency)
 	if err != nil {
 		return err
 	}
@@ -155,7 +155,7 @@ func (t *Template) Run() error {
 func NewTemplate(
 	logger *slog.Logger,
 	f *flags.Flags,
-	cfg *config.ConfigSpec,
+	cfg *config.Spec,
 	kube *k8s.Kube,
 ) *Template {
 	t := &Template{

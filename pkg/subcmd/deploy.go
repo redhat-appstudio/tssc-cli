@@ -17,11 +17,11 @@ import (
 
 // Deploy is the deploy subcommand.
 type Deploy struct {
-	logger *slog.Logger       // application logger
-	cmd    *cobra.Command     // cobra command
-	flags  *flags.Flags       // global flags
-	cfg    *config.ConfigSpec // installer configuration
-	kube   *k8s.Kube          // kubernetes client
+	logger *slog.Logger   // application logger
+	cmd    *cobra.Command // cobra command
+	flags  *flags.Flags   // global flags
+	cfg    *config.Spec   // installer configuration
+	kube   *k8s.Kube      // kubernetes client
 
 	valuesTemplatePath string // path to the values template file
 }
@@ -93,7 +93,7 @@ func (d *Deploy) Run() error {
 	for _, dep := range d.cfg.Dependencies {
 		logger := dep.LoggerWith(d.log())
 
-		hc, err := deployer.NewHelm(logger, d.flags, d.kube, &dep)
+		hc, err := deployer.NewHelm(logger, d.flags, d.kube, dep)
 		if err != nil {
 			return err
 		}
@@ -126,7 +126,7 @@ func (d *Deploy) Run() error {
 func NewDeploy(
 	logger *slog.Logger,
 	f *flags.Flags,
-	cfg *config.ConfigSpec,
+	cfg *config.Spec,
 	kube *k8s.Kube,
 ) Interface {
 	d := &Deploy{
