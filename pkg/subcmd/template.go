@@ -18,8 +18,8 @@ import (
 
 // Template represents the "template" subcommand.
 type Template struct {
-	logger *slog.Logger   // application logger
 	cmd    *cobra.Command // cobra command
+	logger *slog.Logger   // application logger
 	flags  *flags.Flags   // global flags
 	cfg    *config.Spec   // installer configuration
 	kube   *k8s.Kube      // kubernetes client
