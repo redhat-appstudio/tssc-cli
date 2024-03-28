@@ -106,7 +106,7 @@ func (t *Template) Run() error {
 	if err := variables.SetInstaller(t.cfg); err != nil {
 		return err
 	}
-	if err := variables.SetOpenShift(t.kube); err != nil {
+	if err := variables.SetOpenShift(t.cmd.Context(), t.kube); err != nil {
 		return err
 	}
 

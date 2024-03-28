@@ -41,6 +41,8 @@ type Features struct {
 	TrustedArtifactSigner FeatureSpec `yaml:"trustedArtifactSigner"`
 	// RedHatDeveloperHub Red Hat Developer Hub (RHDH).
 	RedHatDeveloperHub FeatureSpec `yaml:"redHatDeveloperHub"`
+	// OpenShiftPipelines OpenShift Pipelines.
+	OpenShiftPipelines FeatureSpec `yaml:"openShiftPipelines"`
 }
 
 // Dependency contains a individual Helm chart configuration.
@@ -104,6 +106,11 @@ func (c *Config) Validate() error {
 		root.Features.TrustedArtifactSigner.Namespace == "" {
 		return fmt.Errorf(
 			"%w: missing namespace for TrustedArtifactSigner", ErrInvalidConfig)
+	}
+	if root.Features.OpenShiftPipelines.Enabled &&
+		root.Features.OpenShiftPipelines.Namespace == "" {
+		return fmt.Errorf(
+			"%w: missing namespace for OpenShiftPipelines", ErrInvalidConfig)
 	}
 	if len(root.Dependencies) == 0 {
 		return fmt.Errorf("%w: missing dependencies", ErrInvalidConfig)

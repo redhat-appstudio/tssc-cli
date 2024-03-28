@@ -64,12 +64,12 @@ func (d *Deploy) Complete(_ []string) error {
 
 // Validate asserts the requirements to start the deployment are in place.
 func (d *Deploy) Validate() error {
-	d.log().Debug("Verifying Kubernetes client connection...")
-	if err := d.kube.Connected(); err != nil {
-		return err
-	}
-	d.log().Debug("Ensure the OpenShift project for RHTAP installer is created")
-	return deployer.EnsureOpenShiftProject(d.log(), d.kube, d.cfg.Namespace)
+	return k8s.EnsureOpenShiftProject(
+		d.cmd.Context(),
+		d.log(),
+		d.kube,
+		d.cfg.Namespace,
+	)
 }
 
 func (d *Deploy) Run() error {
@@ -84,7 +84,7 @@ func (d *Deploy) Run() error {
 	if err := variables.SetInstaller(d.cfg); err != nil {
 		return err
 	}
-	if err := variables.SetOpenShift(d.kube); err != nil {
+	if err := variables.SetOpenShift(d.cmd.Context(), d.kube); err != nil {
 		return err
 	}
 

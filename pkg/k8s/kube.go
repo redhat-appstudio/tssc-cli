@@ -12,6 +12,7 @@ import (
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
 // Kube represents the Kubernetes client helper.
@@ -37,6 +38,17 @@ func (k *Kube) ClientSet(namespace string) (*kubernetes.Clientset, error) {
 		return nil, err
 	}
 	return kubernetes.NewForConfig(restConfig)
+}
+
+// CoreV1ClientSet returns a "corev1" Kubernetes Clientset.
+func (k *Kube) CoreV1ClientSet(
+	namespace string,
+) (*corev1client.CoreV1Client, error) {
+	restConfig, err := k.RESTClientGetter(namespace).ToRESTConfig()
+	if err != nil {
+		return nil, err
+	}
+	return corev1client.NewForConfig(restConfig)
 }
 
 // DiscoveryClient instantiates a discovery client for the given namespace.
@@ -103,6 +115,7 @@ func (k *Kube) Connected() error {
 	return nil
 }
 
+// NewKube instantiates the Kubernetes client helper.
 func NewKube(flags *flags.Flags) *Kube {
 	return &Kube{flags: flags}
 }
