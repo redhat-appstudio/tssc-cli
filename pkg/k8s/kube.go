@@ -11,6 +11,8 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
+	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
 // Kube represents the Kubernetes client helper.
@@ -21,11 +23,32 @@ type Kube struct {
 // ErrClientNotConnected kubernetes clients is not able to access the API.
 var ErrClientNotConnected = errors.New("kubernetes client not connected")
 
+// RESTClientGetter returns a REST client getter for the given namespace.
 func (k *Kube) RESTClientGetter(namespace string) genericclioptions.RESTClientGetter {
 	g := genericclioptions.NewConfigFlags(false)
 	g.KubeConfig = &k.flags.KubeConfigPath
 	g.Namespace = &namespace
 	return g
+}
+
+// ClientSet returns a "corev1" Kubernetes Clientset.
+func (k *Kube) ClientSet(namespace string) (*kubernetes.Clientset, error) {
+	restConfig, err := k.RESTClientGetter(namespace).ToRESTConfig()
+	if err != nil {
+		return nil, err
+	}
+	return kubernetes.NewForConfig(restConfig)
+}
+
+// CoreV1ClientSet returns a "corev1" Kubernetes Clientset.
+func (k *Kube) CoreV1ClientSet(
+	namespace string,
+) (*corev1client.CoreV1Client, error) {
+	restConfig, err := k.RESTClientGetter(namespace).ToRESTConfig()
+	if err != nil {
+		return nil, err
+	}
+	return corev1client.NewForConfig(restConfig)
 }
 
 // DiscoveryClient instantiates a discovery client for the given namespace.
@@ -37,6 +60,7 @@ func (k *Kube) DiscoveryClient(namespace string) (*discovery.DiscoveryClient, er
 	return discovery.NewDiscoveryClientForConfig(restConfig)
 }
 
+// DynamicClient instantiates a dynamic client for the given namespace.
 func (k *Kube) DynamicClient(namespace string) (*dynamic.DynamicClient, error) {
 	restConfig, err := k.RESTClientGetter(namespace).ToRESTConfig()
 	if err != nil {
@@ -91,6 +115,7 @@ func (k *Kube) Connected() error {
 	return nil
 }
 
+// NewKube instantiates the Kubernetes client helper.
 func NewKube(flags *flags.Flags) *Kube {
 	return &Kube{flags: flags}
 }
