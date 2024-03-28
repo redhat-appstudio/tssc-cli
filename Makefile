@@ -12,16 +12,6 @@ GOFLAGS_TEST ?= -failfast -v -cover
 .default: build
 
 #
-# Tools
-#
-
-# Installs golangci-lint.
-tool-golangci-lint: GOFLAGS =
-tool-golangci-lint:
-	@which golangci-lint &>/dev/null || \
-		go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest &>/dev/null
-
-#
 # Build and Run
 #
 
@@ -37,6 +27,16 @@ build: $(BIN)
 .PHONY: run
 run:
 	go run $(CMD) $(ARGS)
+
+#
+# Tools
+#
+
+# Installs golangci-lint.
+tool-golangci-lint: GOFLAGS =
+tool-golangci-lint:
+	@which golangci-lint &>/dev/null || \
+		go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest &>/dev/null
 
 #
 # Test and Lint
