@@ -1,7 +1,7 @@
 package installer
 
 import (
-	"github.com/otaviof/rhtap-installer-cli/pkg/config"
+	"github.com/redhat-appstudio/rhtap-cli/pkg/config"
 )
 
 type Installer struct {

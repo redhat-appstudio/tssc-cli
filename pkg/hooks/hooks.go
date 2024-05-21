@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"path"
 
-	"github.com/otaviof/rhtap-installer-cli/pkg/config"
+	"github.com/redhat-appstudio/rhtap-cli/pkg/config"
 	"helm.sh/helm/v3/pkg/chartutil"
 )
 

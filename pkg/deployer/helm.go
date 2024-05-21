@@ -5,10 +5,10 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/otaviof/rhtap-installer-cli/pkg/config"
-	"github.com/otaviof/rhtap-installer-cli/pkg/flags"
-	"github.com/otaviof/rhtap-installer-cli/pkg/k8s"
-	"github.com/otaviof/rhtap-installer-cli/pkg/printer"
+	"github.com/redhat-appstudio/rhtap-cli/pkg/config"
+	"github.com/redhat-appstudio/rhtap-cli/pkg/flags"
+	"github.com/redhat-appstudio/rhtap-cli/pkg/k8s"
+	"github.com/redhat-appstudio/rhtap-cli/pkg/printer"
 
 	"github.com/pkg/errors"
 	"helm.sh/helm/v3/pkg/action"

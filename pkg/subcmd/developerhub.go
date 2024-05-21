@@ -3,8 +3,8 @@ package subcmd
 import (
 	"log/slog"
 
-	"github.com/otaviof/rhtap-installer-cli/pkg/config"
-	"github.com/otaviof/rhtap-installer-cli/pkg/k8s"
+	"github.com/redhat-appstudio/rhtap-cli/pkg/config"
+	"github.com/redhat-appstudio/rhtap-cli/pkg/k8s"
 	"github.com/spf13/cobra"
 )
 

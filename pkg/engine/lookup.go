@@ -3,7 +3,7 @@ package engine
 import (
 	"context"
 
-	"github.com/otaviof/rhtap-installer-cli/pkg/k8s"
+	"github.com/redhat-appstudio/rhtap-cli/pkg/k8s"
 
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"

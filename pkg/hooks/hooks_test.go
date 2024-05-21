@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	o "github.com/onsi/gomega"
-	"github.com/otaviof/rhtap-installer-cli/pkg/config"
+	"github.com/redhat-appstudio/rhtap-cli/pkg/config"
 	"helm.sh/helm/v3/pkg/chartutil"
 )
 

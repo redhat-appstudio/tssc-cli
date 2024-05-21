@@ -3,7 +3,7 @@ package engine
 import (
 	"testing"
 
-	"github.com/otaviof/rhtap-installer-cli/pkg/config"
+	"github.com/redhat-appstudio/rhtap-cli/pkg/config"
 
 	o "github.com/onsi/gomega"
 )

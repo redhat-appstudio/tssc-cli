@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/otaviof/rhtap-installer-cli/pkg/flags"
+	"github.com/redhat-appstudio/rhtap-cli/pkg/flags"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

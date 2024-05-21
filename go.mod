@@ -1,4 +1,4 @@
-module github.com/otaviof/rhtap-installer-cli
+module github.com/redhat-appstudio/rhtap-cli
 
 go 1.22.0
 

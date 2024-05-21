@@ -3,7 +3,7 @@ package k8s
 import (
 	"testing"
 
-	"github.com/otaviof/rhtap-installer-cli/pkg/flags"
+	"github.com/redhat-appstudio/rhtap-cli/pkg/flags"
 
 	o "github.com/onsi/gomega"
 )
