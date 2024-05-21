@@ -18,8 +18,8 @@ func TestNewHooks(t *testing.T) {
 
 	vals := chartutil.Values{"key": "value"}
 
-	err := h.PreInstall(vals)
+	err := h.PreDeploy(vals)
 	g.Expect(err).To(o.Succeed())
-	err = h.PostInstall(vals)
+	err = h.PostDeploy(vals)
 	g.Expect(err).To(o.Succeed())
 }
