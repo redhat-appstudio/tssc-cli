@@ -9,6 +9,7 @@ import (
 	"github.com/otaviof/rhtap-installer-cli/pkg/deployer"
 	"github.com/otaviof/rhtap-installer-cli/pkg/engine"
 	"github.com/otaviof/rhtap-installer-cli/pkg/flags"
+	"github.com/otaviof/rhtap-installer-cli/pkg/hooks"
 	"github.com/otaviof/rhtap-installer-cli/pkg/k8s"
 
 	"github.com/spf13/cobra"
@@ -110,12 +111,27 @@ func (d *Deploy) Run() error {
 			return err
 		}
 
+		hook := hooks.NewHooks(dep)
+		logger.Debug("Running pre-deploy hook script...")
+		if err = hook.PreDeploy(values); err != nil {
+			return err
+		}
+
+		// Performing the installation, or upgrade, of the Helm chart dependency,
+		// using the values rendered before hand.
 		logger.Debug("Installing the Helm chart")
 		if err = hc.Install(values); err != nil {
 			return err
 		}
+		// Verifying if the instaltion was successful, by running the Helm chart
+		// tests interactively.
 		logger.Debug("Verifying the Helm chart release")
 		if err = hc.Verify(); err != nil {
+			return err
+		}
+
+		logger.Debug("Running post-deploy hook script...")
+		if err = hook.PostDeploy(values); err != nil {
 			return err
 		}
 		logger.Info("Helm chart installed!")

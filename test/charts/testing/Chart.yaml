@@ -1,0 +1,6 @@
+---
+apiVersion: v2
+name: testing
+description: Testing Helm Chart for `rhtap-cli`
+type: application
+version: 0.0.1
