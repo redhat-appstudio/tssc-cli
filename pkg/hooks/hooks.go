@@ -1,7 +1,6 @@
 package hooks
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -25,16 +24,17 @@ func (h *Hooks) runHookScript(name string, vals chartutil.Values) error {
 		return err
 	}
 
-	var out bytes.Buffer
 	cmd := exec.Command(scriptPath)
+	cmd.Env = os.Environ()
 	for k, v := range vals {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%v", k, v))
 	}
-	cmd.Stdout = &out
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		return err
 	}
-	fmt.Println(out.String())
+
 	return nil
 }
 
