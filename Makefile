@@ -1,4 +1,4 @@
-APP = rhtap-installer-cli
+APP = rhtap-cli
 
 BIN_DIR ?= ./bin
 BIN ?= $(BIN_DIR)/$(APP)
