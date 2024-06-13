@@ -1,6 +1,6 @@
 module github.com/redhat-appstudio/rhtap-cli
 
-go 1.22.0
+go 1.21.0
 
 require (
 	github.com/Masterminds/sprig/v3 v3.2.3
