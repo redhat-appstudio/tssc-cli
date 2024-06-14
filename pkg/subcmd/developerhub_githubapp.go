@@ -30,6 +30,19 @@ type DeveloperHubGitHubApp struct {
 
 var _ Interface = &DeveloperHubGitHubApp{}
 
+const developerHubLongDesc = `
+Manages the GitHub App integration with the Developer Hub, by creating a new
+application using the GitHub API, storing the credentials required by RHDH and
+others services to interact with the GitHub App.
+
+The App credentials are stored on a Kubernetes Secret on the configured namespace
+for RHDH.
+
+The informed personal access token (--token) must have the desired permissions for
+OpenShift GitOps interact with the repositores, adding "push" permission may be
+required.
+`
+
 // Cmd exposes the cobra instance.
 func (d *DeveloperHubGitHubApp) Cmd() *cobra.Command {
 	return d.cmd
@@ -48,13 +61,7 @@ func (d *DeveloperHubGitHubApp) Complete(args []string) error {
 		return fmt.Errorf("expected 1, got %d arguments", len(args))
 	}
 	d.name = args[0]
-
-	return k8s.EnsureOpenShiftProject(
-		d.cmd.Context(),
-		d.logger,
-		d.kube,
-		d.cfg.Installer.Namespace,
-	)
+	return nil
 }
 
 // Validate checks if the required configuration is set.
@@ -65,14 +72,21 @@ func (d *DeveloperHubGitHubApp) Validate() error {
 	if !d.cfg.Installer.Features.OpenShiftPipelines.Enabled {
 		return fmt.Errorf("OpenShift Pipelines feature is not enabled")
 	}
+	// TODO: make the name optional, the user will inform the GitHub App name on
+	// the web-form, which can be later extracted.
 	if d.name == "" {
 		return fmt.Errorf("GitHub App name is required")
 	}
-	return nil
+	// Making sure the GitHub integration is valid, for instance, the required
+	// personal access token is informed.
+	return d.gitHubIntegration.Validate()
 }
 
 // Run creates or updates the Developer Hub GitHub App integration.
 func (d *DeveloperHubGitHubApp) Run() error {
+	if err := d.gitHubIntegration.EnsureNamespace(d.cmd.Context()); err != nil {
+		return err
+	}
 	if d.create {
 		return d.gitHubIntegration.Create(d.cmd.Context(), d.name)
 	}
@@ -97,6 +111,7 @@ func NewDeveloperHubGitHubApp(
 		cmd: &cobra.Command{
 			Use:          "github-app <name> [--create|--update] [flags]",
 			Short:        "Prepares a GitHub App for DeveloperHub integration",
+			Long:         developerHubLongDesc,
 			SilenceUsage: true,
 		},
 
