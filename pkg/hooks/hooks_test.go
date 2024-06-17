@@ -3,9 +3,10 @@ package hooks
 import (
 	"testing"
 
-	o "github.com/onsi/gomega"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/config"
 	"helm.sh/helm/v3/pkg/chartutil"
+
+	o "github.com/onsi/gomega"
 )
 
 func TestNewHooks(t *testing.T) {

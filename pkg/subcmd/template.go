@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/redhat-appstudio/rhtap-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/config"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/deployer"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/engine"
@@ -143,8 +144,23 @@ func (t *Template) Run() error {
 		return nil
 	}
 
+	t.log().Debug("Searching Helm charts from the current directory")
+	cfs := chartfs.NewChartFSForCWD()
+
+	t.log().Debug("Loading dependency Helm chart (from CFS)")
+	chart, err := cfs.GetChartForDep(&t.dependency)
+	if err != nil {
+		return err
+	}
+
 	t.log().Debug("Showing rendered chart manifests")
-	hc, err := deployer.NewHelm(t.logger, t.flags, t.kube, t.dependency)
+	hc, err := deployer.NewHelm(
+		t.logger,
+		t.flags,
+		t.kube,
+		t.dependency.Namespace,
+		chart,
+	)
 	if err != nil {
 		return err
 	}

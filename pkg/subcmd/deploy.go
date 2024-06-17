@@ -3,8 +3,8 @@ package subcmd
 import (
 	"fmt"
 	"log/slog"
-	"os"
 
+	"github.com/redhat-appstudio/rhtap-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/config"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/deployer"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/engine"
@@ -74,8 +74,10 @@ func (d *Deploy) Validate() error {
 }
 
 func (d *Deploy) Run() error {
-	d.log().Debug("Loading values template file")
-	valuesTemplatePayload, err := os.ReadFile(d.valuesTemplatePath)
+	cfs := chartfs.NewChartFSForCWD()
+
+	d.log().Debug("Loading values template file (from CFS)")
+	valuesTemplatePayload, err := cfs.ReadFile(d.valuesTemplatePath)
 	if err != nil {
 		return err
 	}
@@ -89,12 +91,19 @@ func (d *Deploy) Run() error {
 		return err
 	}
 
+	d.log().Debug("Searching Helm charts from the current directory")
 	eng := engine.NewEngine(d.kube, string(valuesTemplatePayload))
 
 	for _, dep := range d.cfg.Dependencies {
 		logger := dep.LoggerWith(d.log())
 
-		hc, err := deployer.NewHelm(logger, d.flags, d.kube, dep)
+		logger.Debug("Loading dependency Helm chart (from CFS)")
+		chart, err := cfs.GetChartForDep(&dep)
+		if err != nil {
+			return err
+		}
+
+		hc, err := deployer.NewHelm(logger, d.flags, d.kube, dep.Namespace, chart)
 		if err != nil {
 			return err
 		}
