@@ -3,6 +3,7 @@ package subcmd
 import (
 	"fmt"
 	"log/slog"
+	"os"
 
 	"github.com/redhat-appstudio/rhtap-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/config"
@@ -120,7 +121,7 @@ func (d *Deploy) Run() error {
 			return err
 		}
 
-		hook := hooks.NewHooks(dep)
+		hook := hooks.NewHooks(cfs, &dep, os.Stdout, os.Stderr)
 		logger.Debug("Running pre-deploy hook script...")
 		if err = hook.PreDeploy(values); err != nil {
 			return err
