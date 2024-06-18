@@ -3,18 +3,14 @@ package subcmd
 import (
 	"fmt"
 	"log/slog"
-	"os"
 
 	"github.com/redhat-appstudio/rhtap-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/config"
-	"github.com/redhat-appstudio/rhtap-cli/pkg/deployer"
-	"github.com/redhat-appstudio/rhtap-cli/pkg/engine"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/flags"
-	"github.com/redhat-appstudio/rhtap-cli/pkg/hooks"
+	"github.com/redhat-appstudio/rhtap-cli/pkg/installer"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/k8s"
 
 	"github.com/spf13/cobra"
-	"helm.sh/helm/v3/pkg/chartutil"
 )
 
 // Deploy is the deploy subcommand.
@@ -25,7 +21,7 @@ type Deploy struct {
 	cfg    *config.Spec   // installer configuration
 	kube   *k8s.Kube      // kubernetes client
 
-	valuesTemplatePath string // path to the values template file
+	valuesTmplPath string // path to the values template file
 }
 
 var _ Interface = &Deploy{}
@@ -50,17 +46,11 @@ func (d *Deploy) Cmd() *cobra.Command {
 // log logger with contextual information.
 func (d *Deploy) log() *slog.Logger {
 	return d.flags.LoggerWith(
-		d.logger.With("values-template", d.valuesTemplatePath))
+		d.logger.With("values-template", d.valuesTmplPath))
 }
 
 // Complete verifies the object is complete.
 func (d *Deploy) Complete(_ []string) error {
-	if d.cfg == nil {
-		return fmt.Errorf("configuration is not informed")
-	}
-	if d.kube == nil {
-		return fmt.Errorf("kubernetes client is not informed")
-	}
 	return nil
 }
 
@@ -74,78 +64,42 @@ func (d *Deploy) Validate() error {
 	)
 }
 
+// Run deploys the dependencies listed on the configuration.
 func (d *Deploy) Run() error {
 	cfs := chartfs.NewChartFSForCWD()
 
-	d.log().Debug("Loading values template file (from CFS)")
-	valuesTemplatePayload, err := cfs.ReadFile(d.valuesTemplatePath)
+	d.log().Debug("Reading values template file")
+	valuesTmpl, err := cfs.ReadFile(d.valuesTmplPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read values template file: %w", err)
 	}
 
-	d.log().Debug("Preparing values template context")
-	variables := engine.NewVariables()
-	if err := variables.SetInstaller(d.cfg); err != nil {
-		return err
-	}
-	if err := variables.SetOpenShift(d.cmd.Context(), d.kube); err != nil {
-		return err
-	}
-
-	d.log().Debug("Searching Helm charts from the current directory")
-	eng := engine.NewEngine(d.kube, string(valuesTemplatePayload))
-
+	// Installing each Helm Chart dependency from the configuration.
+	d.log().Debug("Installing dependencies...")
 	for _, dep := range d.cfg.Dependencies {
-		logger := dep.LoggerWith(d.log())
+		i := installer.NewInstaller(d.log(), d.flags, d.kube, cfs, &dep)
 
-		logger.Debug("Loading dependency Helm chart (from CFS)")
-		chart, err := cfs.GetChartForDep(&dep)
+		err := i.SetValues(d.cmd.Context(), d.cfg, string(valuesTmpl))
 		if err != nil {
 			return err
 		}
-
-		hc, err := deployer.NewHelm(logger, d.flags, d.kube, dep.Namespace, chart)
-		if err != nil {
-			return err
+		if d.flags.Debug {
+			i.PrintRawValues()
 		}
 
-		logger.Debug("Rendering values from template")
-		valuesBytes, err := eng.Render(variables)
-		if err != nil {
+		if err := i.RenderValues(); err != nil {
 			return err
+		}
+		if d.flags.Debug {
+			i.PrintValues()
 		}
 
-		logger.Debug("Preparing rendered values for Helm installation")
-		values, err := chartutil.ReadValues(valuesBytes)
-		if err != nil {
+		if err = i.Install(); err != nil {
 			return err
 		}
-
-		hook := hooks.NewHooks(cfs, &dep, os.Stdout, os.Stderr)
-		logger.Debug("Running pre-deploy hook script...")
-		if err = hook.PreDeploy(values); err != nil {
-			return err
-		}
-
-		// Performing the installation, or upgrade, of the Helm chart dependency,
-		// using the values rendered before hand.
-		logger.Debug("Installing the Helm chart")
-		if err = hc.Install(values); err != nil {
-			return err
-		}
-		// Verifying if the instaltion was successful, by running the Helm chart
-		// tests interactively.
-		logger.Debug("Verifying the Helm chart release")
-		if err = hc.Verify(); err != nil {
-			return err
-		}
-
-		logger.Debug("Running post-deploy hook script...")
-		if err = hook.PostDeploy(values); err != nil {
-			return err
-		}
-		logger.Info("Helm chart installed!")
 	}
+
+	d.log().Info("Deployment complete!")
 	return nil
 }
 
@@ -167,6 +121,6 @@ func NewDeploy(
 		cfg:    cfg,
 		kube:   kube,
 	}
-	flags.SetValuesTmplFlag(d.cmd.PersistentFlags(), &d.valuesTemplatePath)
+	flags.SetValuesTmplFlag(d.cmd.PersistentFlags(), &d.valuesTmplPath)
 	return d
 }
