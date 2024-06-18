@@ -7,8 +7,6 @@ import (
 	"github.com/redhat-appstudio/rhtap-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/config"
 
-	"helm.sh/helm/v3/pkg/chartutil"
-
 	o "github.com/onsi/gomega"
 )
 
@@ -26,7 +24,12 @@ func TestNewHooks(t *testing.T) {
 		&stdout,
 		&stderr,
 	)
-	vals := chartutil.Values{"key": "value"}
+
+	vals := map[string]interface{}{
+		"key": map[string]interface{}{
+			"nested": "value",
+		},
+	}
 
 	t.Run("PreDeploy", func(t *testing.T) {
 		err := h.PreDeploy(vals)
@@ -34,7 +37,10 @@ func TestNewHooks(t *testing.T) {
 
 		t.Logf("stdout: %s", stdout.String())
 		t.Logf("stderr: %s", stderr.String())
-		g.Expect(stdout.String()).To(o.ContainSubstring("script runs before"))
+		// Asserting the environment variable is printed out by the hook script,
+		// the variable is passed by the informed values.
+		g.Expect(stdout.String()).
+			To(o.ContainSubstring("# INSTALLER__KEY__NESTED='value'"))
 
 		stdout.Reset()
 		stderr.Reset()

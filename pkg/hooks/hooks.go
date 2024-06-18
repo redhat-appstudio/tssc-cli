@@ -24,11 +24,14 @@ type Hooks struct {
 	stderr io.Writer          // standard error
 }
 
+const envPrefix = "INSTALLER"
+
 // exec executes the script with the given environment variables.
 func (h *Hooks) exec(scriptPath string, vals map[string]interface{}) error {
 	cmd := exec.Command(scriptPath)
 	cmd.Env = os.Environ()
-	for k, v := range vals {
+	// Transforming the informed values into environment variables.
+	for k, v := range valuesToEnv(vals, envPrefix) {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%v", k, v))
 	}
 	cmd.Stdout = h.stdout
