@@ -98,6 +98,7 @@ func (c *Config) Validate() error {
 	if root.Namespace == "" {
 		return fmt.Errorf("%w: missing namespace", ErrInvalidConfig)
 	}
+
 	if root.Features.Keycloak.Enabled && root.Features.Keycloak.Namespace == "" {
 		return fmt.Errorf("%w: missing namespace for Keycloak", ErrInvalidConfig)
 	}
@@ -116,6 +117,22 @@ func (c *Config) Validate() error {
 		return fmt.Errorf(
 			"%w: missing namespace for OpenShiftPipelines", ErrInvalidConfig)
 	}
+	if root.Features.RedHatDeveloperHub.Enabled &&
+		root.Features.RedHatDeveloperHub.Namespace == "" {
+		return fmt.Errorf(
+			"%w: missing namespace for RedHatDeveloperHub", ErrInvalidConfig)
+	}
+	if root.Features.RedHatAdvancedClusterSecurity.Enabled &&
+		root.Features.RedHatAdvancedClusterSecurity.Namespace == "" {
+		return fmt.Errorf(
+			"%w: missing namespace for RedHatAdvancedClusterSecurity", ErrInvalidConfig)
+	}
+	if root.Features.RedHatQuay.Enabled &&
+		root.Features.RedHatQuay.Namespace == "" {
+		return fmt.Errorf(
+			"%w: missing namespace for RedHatQuay", ErrInvalidConfig)
+	}
+
 	if len(root.Dependencies) == 0 {
 		return fmt.Errorf("%w: missing dependencies", ErrInvalidConfig)
 	}
