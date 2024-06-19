@@ -18,7 +18,7 @@ type Deploy struct {
 	cmd    *cobra.Command // cobra command
 	logger *slog.Logger   // application logger
 	flags  *flags.Flags   // global flags
-	cfg    *config.Spec   // installer configuration
+	cfg    *config.Config // installer configuration
 	kube   *k8s.Kube      // kubernetes client
 
 	valuesTmplPath string // path to the values template file
@@ -60,11 +60,11 @@ func (d *Deploy) Validate() error {
 		d.cmd.Context(),
 		d.log(),
 		d.kube,
-		d.cfg.Namespace,
+		d.cfg.Installer.Namespace,
 	)
 }
 
-// Run deploys the dependencies listed on the configuration.
+// Run deploys the enabled dependencies listed on the configuration.
 func (d *Deploy) Run() error {
 	cfs := chartfs.NewChartFSForCWD()
 
@@ -74,12 +74,13 @@ func (d *Deploy) Run() error {
 		return fmt.Errorf("failed to read values template file: %w", err)
 	}
 
-	// Installing each Helm Chart dependency from the configuration.
+	// Installing each Helm Chart dependency from the configuration, only
+	// selecting the Helm Charts that are enabled.
 	d.log().Debug("Installing dependencies...")
-	for _, dep := range d.cfg.Dependencies {
+	for _, dep := range d.cfg.GetEnabledDependencies(d.log()) {
 		i := installer.NewInstaller(d.log(), d.flags, d.kube, cfs, &dep)
 
-		err := i.SetValues(d.cmd.Context(), d.cfg, string(valuesTmpl))
+		err := i.SetValues(d.cmd.Context(), &d.cfg.Installer, string(valuesTmpl))
 		if err != nil {
 			return err
 		}
@@ -103,10 +104,11 @@ func (d *Deploy) Run() error {
 	return nil
 }
 
+// NewDeploy instantiates the deploy subcommand.
 func NewDeploy(
 	logger *slog.Logger,
 	f *flags.Flags,
-	cfg *config.Spec,
+	cfg *config.Config,
 	kube *k8s.Kube,
 ) Interface {
 	d := &Deploy{

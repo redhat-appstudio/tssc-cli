@@ -55,11 +55,17 @@ type Dependency struct {
 	Chart string `yaml:"chart"`
 	// Namespace where the Helm chart will be deployed.
 	Namespace string `yaml:"namespace"`
+	// Enabled Helm Chart toggle.
+	Enabled bool `yaml:"enabled"`
 }
 
 // LoggerWith returns a logger with Dependency contextual information.
-func (d *Dependency) LoggerWith(l *slog.Logger) *slog.Logger {
-	return l.With("dep-chart", d.Chart, "dep-namespace", d.Namespace)
+func (d *Dependency) LoggerWith(logger *slog.Logger) *slog.Logger {
+	return logger.With(
+		"dep-chart", d.Chart,
+		"dep-namespace", d.Namespace,
+		"dep-enabled", d.Enabled,
+	)
 }
 
 // Spec contains all configuration sections.
@@ -162,6 +168,21 @@ func (c *Config) UnmarshalYAML() error {
 		return fmt.Errorf("%w: %s %w", ErrUnmarshalConfig, c.configPath, err)
 	}
 	return c.Validate()
+}
+
+// GetEnabledDependencies returns a list of enabled dependencies.
+func (c *Config) GetEnabledDependencies(logger *slog.Logger) []Dependency {
+	enabled := []Dependency{}
+	logger.Debug("Getting enabled dependencies")
+	for _, dep := range c.Installer.Dependencies {
+		if dep.Enabled {
+			logger.Debug("Using dependency...", "dep-chart", dep.Chart)
+			enabled = append(enabled, dep)
+		} else {
+			logger.Debug("Skipping dependency...", "dep-chart", dep.Chart)
+		}
+	}
+	return enabled
 }
 
 // NewConfigFromFile returns a new Config instance based on the informed file. The
