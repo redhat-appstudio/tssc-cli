@@ -41,6 +41,8 @@ type Features struct {
 	TrustedArtifactSigner FeatureSpec `yaml:"trustedArtifactSigner"`
 	// RedHatDeveloperHub Red Hat Developer Hub (RHDH).
 	RedHatDeveloperHub FeatureSpec `yaml:"redHatDeveloperHub"`
+	// RedHatAdvancedClusterSecurity Red Hat Advanced Cluster Security (RHACS).
+	RedHatAdvancedClusterSecurity FeatureSpec `yaml:"redHatAdvancedClusterSecurity"`
 	// RedHatQuay Red Hat Quay (RHDH).
 	RedHatQuay FeatureSpec `yaml:"redHatQuay"`
 	// OpenShiftPipelines OpenShift Pipelines.
