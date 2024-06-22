@@ -5,6 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/redhat-appstudio/rhtap-cli/pkg/config"
+	"github.com/redhat-appstudio/rhtap-cli/pkg/constants"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/githubapp"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/k8s"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/rhdh"
@@ -92,7 +93,9 @@ func (d *DeveloperHubGitHubApp) Run() error {
 	}
 	if d.update {
 		// TODO: implement update.
-		panic("TODO: 'rhtap-installer-cli developer-hub github-app --update'")
+		panic(fmt.Sprintf(
+			"TODO: '%s developer-hub github-app --update'", constants.AppName,
+		))
 	}
 	return nil
 }

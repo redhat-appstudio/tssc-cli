@@ -85,7 +85,7 @@ type Config struct {
 	// configPath is the path to the configuration file, private attribute.
 	configPath string
 	// Installer is the root configuration for the installer.
-	Installer Spec `yaml:"rhtapInstallerCLI"`
+	Installer Spec `yaml:"rhtapCLI"`
 }
 
 // PersistentFlags defines the persistent flags for the CLI.
