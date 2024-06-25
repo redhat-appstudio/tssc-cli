@@ -26,7 +26,17 @@ type FeatureSpec struct {
 	// Namespace target namespace for the feature, which may involve different
 	// Helm charts targeting the specific feature namespace, while the chart
 	// target is deployed in a different namespace.
-	Namespace string `yaml:"namespace"`
+	Namespace *string `yaml:"namespace,omitempty"`
+	// Properties contains the feature specific configuration.
+	Properties map[string]interface{} `yaml:"properties"`
+}
+
+// GetNamespace returns the feature namespace, or an empty string if not set.
+func (f *FeatureSpec) GetNamespace() string {
+	if f.Namespace == nil {
+		return ""
+	}
+	return *f.Namespace
 }
 
 // Features contains the configuration for the installer features.
@@ -105,36 +115,37 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("%w: missing namespace", ErrInvalidConfig)
 	}
 
-	if root.Features.Keycloak.Enabled && root.Features.Keycloak.Namespace == "" {
+	if root.Features.Keycloak.Enabled &&
+		root.Features.Keycloak.GetNamespace() == "" {
 		return fmt.Errorf("%w: missing namespace for Keycloak", ErrInvalidConfig)
 	}
 	if root.Features.TrustedProfileAnalyzer.Enabled &&
-		root.Features.TrustedProfileAnalyzer.Namespace == "" {
+		root.Features.TrustedProfileAnalyzer.GetNamespace() == "" {
 		return fmt.Errorf(
 			"%w: missing namespace for TrustedProfileAnalyzer", ErrInvalidConfig)
 	}
 	if root.Features.TrustedArtifactSigner.Enabled &&
-		root.Features.TrustedArtifactSigner.Namespace == "" {
+		root.Features.TrustedArtifactSigner.GetNamespace() == "" {
 		return fmt.Errorf(
 			"%w: missing namespace for TrustedArtifactSigner", ErrInvalidConfig)
 	}
 	if root.Features.OpenShiftPipelines.Enabled &&
-		root.Features.OpenShiftPipelines.Namespace == "" {
+		root.Features.OpenShiftPipelines.GetNamespace() == "" {
 		return fmt.Errorf(
 			"%w: missing namespace for OpenShiftPipelines", ErrInvalidConfig)
 	}
 	if root.Features.RedHatDeveloperHub.Enabled &&
-		root.Features.RedHatDeveloperHub.Namespace == "" {
+		root.Features.RedHatDeveloperHub.GetNamespace() == "" {
 		return fmt.Errorf(
 			"%w: missing namespace for RedHatDeveloperHub", ErrInvalidConfig)
 	}
 	if root.Features.RedHatAdvancedClusterSecurity.Enabled &&
-		root.Features.RedHatAdvancedClusterSecurity.Namespace == "" {
+		root.Features.RedHatAdvancedClusterSecurity.GetNamespace() == "" {
 		return fmt.Errorf(
 			"%w: missing namespace for RedHatAdvancedClusterSecurity", ErrInvalidConfig)
 	}
 	if root.Features.RedHatQuay.Enabled &&
-		root.Features.RedHatQuay.Namespace == "" {
+		root.Features.RedHatQuay.GetNamespace() == "" {
 		return fmt.Errorf(
 			"%w: missing namespace for RedHatQuay", ErrInvalidConfig)
 	}
