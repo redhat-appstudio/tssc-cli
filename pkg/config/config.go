@@ -19,65 +19,6 @@ var ErrEmptyConfig = errors.New("empty configuration")
 // ErrUnmarshalConfig indicates the configuration file structure is invalid.
 var ErrUnmarshalConfig = errors.New("failed to unmarshal configuration")
 
-// FeatureSpec contains the configuration for a specific feature.
-type FeatureSpec struct {
-	// Enabled feature toggle.
-	Enabled bool `yaml:"enabled"`
-	// Namespace target namespace for the feature, which may involve different
-	// Helm charts targeting the specific feature namespace, while the chart
-	// target is deployed in a different namespace.
-	Namespace *string `yaml:"namespace,omitempty"`
-	// Properties contains the feature specific configuration.
-	Properties map[string]interface{} `yaml:"properties"`
-}
-
-// GetNamespace returns the feature namespace, or an empty string if not set.
-func (f *FeatureSpec) GetNamespace() string {
-	if f.Namespace == nil {
-		return ""
-	}
-	return *f.Namespace
-}
-
-// Features contains the configuration for the installer features.
-type Features struct {
-	// CRC Code Ready Containers (CRC).
-	CRC FeatureSpec `yaml:"crc"`
-	// Keycloak Keycloak IAM/SSO.
-	Keycloak FeatureSpec `yaml:"keycloak"`
-	// TrustedProfileAnalyzer Trusted Profile Analyzer (TPA).
-	TrustedProfileAnalyzer FeatureSpec `yaml:"trustedProfileAnalyzer"`
-	// TrustedArtifactSigner Trusted Artifact Signer (TAS).
-	TrustedArtifactSigner FeatureSpec `yaml:"trustedArtifactSigner"`
-	// RedHatDeveloperHub Red Hat Developer Hub (RHDH).
-	RedHatDeveloperHub FeatureSpec `yaml:"redHatDeveloperHub"`
-	// RedHatAdvancedClusterSecurity Red Hat Advanced Cluster Security (RHACS).
-	RedHatAdvancedClusterSecurity FeatureSpec `yaml:"redHatAdvancedClusterSecurity"`
-	// RedHatQuay Red Hat Quay (RHDH).
-	RedHatQuay FeatureSpec `yaml:"redHatQuay"`
-	// OpenShiftPipelines OpenShift Pipelines.
-	OpenShiftPipelines FeatureSpec `yaml:"openShiftPipelines"`
-}
-
-// Dependency contains a individual Helm chart configuration.
-type Dependency struct {
-	// Chart relative location to the Helm chart directory.
-	Chart string `yaml:"chart"`
-	// Namespace where the Helm chart will be deployed.
-	Namespace string `yaml:"namespace"`
-	// Enabled Helm Chart toggle.
-	Enabled bool `yaml:"enabled"`
-}
-
-// LoggerWith returns a logger with Dependency contextual information.
-func (d *Dependency) LoggerWith(logger *slog.Logger) *slog.Logger {
-	return logger.With(
-		"dep-chart", d.Chart,
-		"dep-namespace", d.Namespace,
-		"dep-enabled", d.Enabled,
-	)
-}
-
 // Spec contains all configuration sections.
 type Spec struct {
 	// Namespace installer's namespace, where the installer's resources will be
@@ -85,7 +26,7 @@ type Spec struct {
 	// different namespace.
 	Namespace string `yaml:"namespace"`
 	// Features contains the configuration for the installer features.
-	Features Features `yaml:"features"`
+	Features map[string]FeatureSpec `yaml:"features"`
 	// Dependencies contains the installer Helm chart dependencies.
 	Dependencies []Dependency `yaml:"dependencies"`
 }
@@ -108,51 +49,50 @@ func (c *Config) PersistentFlags(f *pflag.FlagSet) {
 	)
 }
 
+// GetEnabledDependencies returns a list of enabled dependencies.
+func (c *Config) GetEnabledDependencies(logger *slog.Logger) []Dependency {
+	enabled := []Dependency{}
+	logger.Debug("Getting enabled dependencies")
+	for _, dep := range c.Installer.Dependencies {
+		if dep.Enabled {
+			logger.Debug("Using dependency...", "dep-chart", dep.Chart)
+			enabled = append(enabled, dep)
+		} else {
+			logger.Debug("Skipping dependency...", "dep-chart", dep.Chart)
+		}
+	}
+	return enabled
+}
+
+// GetFeature returns a feature by name, or an error if the feature is not found.
+func (c *Config) GetFeature(name string) (*FeatureSpec, error) {
+	feature, ok := c.Installer.Features[name]
+	if !ok {
+		return nil, fmt.Errorf("feature %s not found", name)
+	}
+	return &feature, nil
+}
+
 // Validate validates the configuration, checking for missing fields.
 func (c *Config) Validate() error {
 	root := c.Installer
+	// The installer itself must have a namespace.
 	if root.Namespace == "" {
 		return fmt.Errorf("%w: missing namespace", ErrInvalidConfig)
 	}
 
-	if root.Features.Keycloak.Enabled &&
-		root.Features.Keycloak.GetNamespace() == "" {
-		return fmt.Errorf("%w: missing namespace for Keycloak", ErrInvalidConfig)
-	}
-	if root.Features.TrustedProfileAnalyzer.Enabled &&
-		root.Features.TrustedProfileAnalyzer.GetNamespace() == "" {
-		return fmt.Errorf(
-			"%w: missing namespace for TrustedProfileAnalyzer", ErrInvalidConfig)
-	}
-	if root.Features.TrustedArtifactSigner.Enabled &&
-		root.Features.TrustedArtifactSigner.GetNamespace() == "" {
-		return fmt.Errorf(
-			"%w: missing namespace for TrustedArtifactSigner", ErrInvalidConfig)
-	}
-	if root.Features.OpenShiftPipelines.Enabled &&
-		root.Features.OpenShiftPipelines.GetNamespace() == "" {
-		return fmt.Errorf(
-			"%w: missing namespace for OpenShiftPipelines", ErrInvalidConfig)
-	}
-	if root.Features.RedHatDeveloperHub.Enabled &&
-		root.Features.RedHatDeveloperHub.GetNamespace() == "" {
-		return fmt.Errorf(
-			"%w: missing namespace for RedHatDeveloperHub", ErrInvalidConfig)
-	}
-	if root.Features.RedHatAdvancedClusterSecurity.Enabled &&
-		root.Features.RedHatAdvancedClusterSecurity.GetNamespace() == "" {
-		return fmt.Errorf(
-			"%w: missing namespace for RedHatAdvancedClusterSecurity", ErrInvalidConfig)
-	}
-	if root.Features.RedHatQuay.Enabled &&
-		root.Features.RedHatQuay.GetNamespace() == "" {
-		return fmt.Errorf(
-			"%w: missing namespace for RedHatQuay", ErrInvalidConfig)
+	// Validating the features, making sure every feature entry is valid.
+	for _, feature := range root.Features {
+		if err := feature.Validate(); err != nil {
+			return err
+		}
 	}
 
+	// Making sure the installer has a list of dependencies.
 	if len(root.Dependencies) == 0 {
 		return fmt.Errorf("%w: missing dependencies", ErrInvalidConfig)
 	}
+	// Validating each dependency, making sure they have the required fields.
 	for pos, dep := range root.Dependencies {
 		if dep.Chart == "" {
 			return fmt.Errorf(
@@ -179,21 +119,6 @@ func (c *Config) UnmarshalYAML() error {
 		return fmt.Errorf("%w: %s %w", ErrUnmarshalConfig, c.configPath, err)
 	}
 	return c.Validate()
-}
-
-// GetEnabledDependencies returns a list of enabled dependencies.
-func (c *Config) GetEnabledDependencies(logger *slog.Logger) []Dependency {
-	enabled := []Dependency{}
-	logger.Debug("Getting enabled dependencies")
-	for _, dep := range c.Installer.Dependencies {
-		if dep.Enabled {
-			logger.Debug("Using dependency...", "dep-chart", dep.Chart)
-			enabled = append(enabled, dep)
-		} else {
-			logger.Debug("Skipping dependency...", "dep-chart", dep.Chart)
-		}
-	}
-	return enabled
 }
 
 // NewConfigFromFile returns a new Config instance based on the informed file. The

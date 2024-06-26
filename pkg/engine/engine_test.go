@@ -22,7 +22,7 @@ root:
 {{- end }}
   dependencies:
 	{{- .Installer.Dependencies | toYaml | nindent 4 }}
-  catalogURL: {{ .Installer.Features.RedHatDeveloperHub.Properties.catalogURL }}
+  catalogURL: {{ .Installer.Features.redHatDeveloperHub.Properties.catalogURL }}
 `
 
 func TestEngine_Render(t *testing.T) {
@@ -66,7 +66,8 @@ func TestEngine_Render(t *testing.T) {
 
 	g.Expect(root).To(o.HaveKey("catalogURL"))
 	g.Expect(root["catalogURL"]).NotTo(o.BeNil())
-	g.Expect(root["catalogURL"]).To(o.Equal(
-		cfg.Installer.Features.RedHatDeveloperHub.Properties["catalogURL"],
-	))
+
+	feature, err := cfg.GetFeature(config.RedHatDeveloperHub)
+	g.Expect(err).To(o.Succeed())
+	g.Expect(root["catalogURL"]).To(o.Equal(feature.Properties["catalogURL"]))
 }

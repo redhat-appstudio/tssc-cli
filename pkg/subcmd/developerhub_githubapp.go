@@ -67,10 +67,18 @@ func (d *DeveloperHubGitHubApp) Complete(args []string) error {
 
 // Validate checks if the required configuration is set.
 func (d *DeveloperHubGitHubApp) Validate() error {
-	if !d.cfg.Installer.Features.RedHatDeveloperHub.Enabled {
+	feature, err := d.cfg.GetFeature(config.RedHatDeveloperHub)
+	if err != nil {
+		return err
+	}
+	if !feature.Enabled {
 		return fmt.Errorf("Red Hat Developer Hub feature is not enabled")
 	}
-	if !d.cfg.Installer.Features.OpenShiftPipelines.Enabled {
+	feature, err = d.cfg.GetFeature(config.OpenShiftPipelines)
+	if err != nil {
+		return err
+	}
+	if !feature.Enabled {
 		return fmt.Errorf("OpenShift Pipelines feature is not enabled")
 	}
 	// TODO: make the name optional, the user will inform the GitHub App name on
