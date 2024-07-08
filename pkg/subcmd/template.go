@@ -63,7 +63,7 @@ func (t *Template) log() *slog.Logger {
 // Complete parse the informed args as charts, when valid.
 func (t *Template) Complete(args []string) error {
 	// Dry-run mode is always enabled by default for templating, when manually set
-	// fo false it will return a validation error.
+	// to false it will return a validation error.
 	t.flags.DryRun = true
 
 	if !t.showManifests {

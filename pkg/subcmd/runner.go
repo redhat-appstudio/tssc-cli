@@ -2,8 +2,8 @@ package subcmd
 
 import "github.com/spf13/cobra"
 
-// Runner controls the "subcommands" workflow from end-to-end, each step of is
-// executed on the predefined sequence: Complete, Validate and Run.
+// Runner controls the "subcommands" workflow from end-to-end, each step of it
+// is executed in the predefined sequence: Complete, Validate and Run.
 type Runner struct {
 	subCmd Interface // SubCommand instance
 }

@@ -114,7 +114,7 @@ func (i *Installer) Install() error {
 	if err = hc.Install(i.values); err != nil {
 		return err
 	}
-	// Verifying if the instaltion was successful, by running the Helm chart
+	// Verifying if the installation was successful, by running the Helm chart
 	// tests interactively.
 	i.logger.Debug("Verifying the Helm chart release")
 	if err = hc.Verify(); err != nil {

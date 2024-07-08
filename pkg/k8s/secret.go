@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-// GetSecret retrieve a Kubernetes secret by full name.
+// GetSecret retrieves a Kubernetes secret by full name.
 func GetSecret(
 	ctx context.Context,
 	kube *Kube,
