@@ -30,7 +30,7 @@ const envPrefix = "INSTALLER"
 func (h *Hooks) exec(scriptPath string, vals map[string]interface{}) error {
 	cmd := exec.Command(scriptPath)
 	cmd.Env = os.Environ()
-	// Transforming the informed values into environment variables.
+	// Transforming the given values into environment variables.
 	for k, v := range valuesToEnv(vals, envPrefix) {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%v", k, v))
 	}
@@ -47,7 +47,7 @@ func (h *Hooks) runHookScript(name string, vals map[string]interface{}) error {
 	scriptBytes, err := h.cfs.ReadFile(scriptPath)
 	if err != nil {
 		// Ignoring when the script is not found, it means the given Chart does
-		// not carry hook scripts.
+		// not carry any hook scripts.
 		if os.IsNotExist(err) {
 			return nil
 		}

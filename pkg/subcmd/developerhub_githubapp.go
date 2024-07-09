@@ -39,8 +39,8 @@ others services to interact with the GitHub App.
 The App credentials are stored on a Kubernetes Secret on the configured namespace
 for RHDH.
 
-The informed personal access token (--token) must have the desired permissions for
-OpenShift GitOps interact with the repositores, adding "push" permission may be
+The given personal access token (--token) must have the desired permissions for
+OpenShift GitOps to interact with the repositores, adding "push" permission may be
 required.
 `
 

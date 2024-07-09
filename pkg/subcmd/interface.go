@@ -5,7 +5,7 @@ import (
 )
 
 // Interface defines the interface for a subcommand, as well the sequence of steps
-// each subcommon is obliged to follow.
+// each subcommand is obliged to follow.
 type Interface interface {
 	Cmd() *cobra.Command
 
@@ -13,7 +13,7 @@ type Interface interface {
 	// configuration files or checking the Kubernetes API client connectivity.
 	Complete(_ []string) error
 
-	// Validate checks the subcommand configuration, assert the required fields
+	// Validate checks the subcommand configuration, asserts the required fields
 	// are valid before running the primary action.
 	Validate() error
 

@@ -96,7 +96,7 @@ func EnsureOpenShiftProject(
 		return err
 	}
 
-	// Graceful time to ensure the namespace is ready
+	// Grace time to ensure the namespace is ready
 	logger.Info("OpenShift project created!")
 	time.Sleep(5 * time.Second)
 	return nil
