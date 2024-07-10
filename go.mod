@@ -4,8 +4,8 @@ go 1.21.0
 
 require (
 	github.com/Masterminds/sprig/v3 v3.2.3
-	github.com/google/go-github/scrape v0.0.0-20240325132105-8bec011ec30d
-	github.com/google/go-github/v60 v60.0.0
+	github.com/google/go-github/scrape v0.0.0-20240710201133-173aa01e10b0
+	github.com/google/go-github/v61 v61.0.0
 	github.com/onsi/gomega v1.32.0
 	github.com/openshift/api v0.0.0-20240321180530-e2137ad2cefd
 	github.com/openshift/client-go v0.0.0-20240312121557-60dd5f9fbf8d
@@ -29,7 +29,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.2.1 // indirect
 	github.com/Masterminds/squirrel v1.5.4 // indirect
 	github.com/Microsoft/hcsshim v0.12.0 // indirect
-	github.com/PuerkitoBio/goquery v1.9.1 // indirect
+	github.com/PuerkitoBio/goquery v1.9.2 // indirect
 	github.com/andybalholm/cascadia v1.3.2 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -122,13 +122,13 @@ require (
 	go.opentelemetry.io/otel/metric v1.24.0 // indirect
 	go.opentelemetry.io/otel/trace v1.24.0 // indirect
 	go.starlark.net v0.0.0-20240314022150-ee8ed142361c // indirect
-	golang.org/x/crypto v0.21.0 // indirect
-	golang.org/x/net v0.23.0 // indirect
+	golang.org/x/crypto v0.25.0 // indirect
+	golang.org/x/net v0.27.0 // indirect
 	golang.org/x/oauth2 v0.18.0 // indirect
-	golang.org/x/sync v0.6.0 // indirect
-	golang.org/x/sys v0.18.0 // indirect
-	golang.org/x/term v0.18.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/sync v0.7.0 // indirect
+	golang.org/x/sys v0.22.0 // indirect
+	golang.org/x/term v0.22.0 // indirect
+	golang.org/x/text v0.16.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240318140521-94a12d6c2237 // indirect

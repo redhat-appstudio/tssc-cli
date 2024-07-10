@@ -13,7 +13,7 @@ import (
 	"github.com/redhat-appstudio/rhtap-cli/pkg/constants"
 
 	"github.com/google/go-github/scrape"
-	"github.com/google/go-github/v60/github"
+	"github.com/google/go-github/v61/github"
 	"github.com/spf13/pflag"
 )
 
@@ -59,7 +59,7 @@ func (g *GitHubApp) getGitHubClient() (*github.Client, error) {
 		return github.NewClient(nil), nil
 	}
 	g.log().Debug("using GitHub Enterprise API")
-	return github.NewClient(nil).WithEnterpriseURLs(g.gitHubURL, "")
+	return github.NewEnterpriseClient(g.gitHubURL, "", nil)
 }
 
 // oAuth2Workflow starts the oAuth2 workflow to create a new GitHub App. The user
