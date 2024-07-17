@@ -8,16 +8,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewDeveloperHub(
+func NewIntegration(
 	logger *slog.Logger,
 	cfg *config.Config,
 	kube *k8s.Kube,
 ) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "developer-hub <type>",
-		Short: "Configures the VCS provider for the DeveloperHub",
+		Use:   "integration <type>",
+		Short: "Configures an external service provider for RHTAP",
 	}
 
-	cmd.AddCommand(NewRunner(NewDeveloperHubGitHubApp(logger, cfg, kube)).Cmd())
+	cmd.AddCommand(NewRunner(NewIntegrationGitHubApp(logger, cfg, kube)).Cmd())
 	return cmd
 }
