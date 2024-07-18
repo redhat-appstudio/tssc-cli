@@ -19,5 +19,6 @@ func NewIntegration(
 	}
 
 	cmd.AddCommand(NewRunner(NewIntegrationGitHubApp(logger, cfg, kube)).Cmd())
+	cmd.AddCommand(NewRunner(NewIntegrationQuay(logger, cfg, kube)).Cmd())
 	return cmd
 }

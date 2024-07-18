@@ -35,9 +35,6 @@ type GithubIntegration struct {
 	token string // github personal access token
 }
 
-// ErrSecretAlreadyExists is returned when the integration secret already exists.
-var ErrSecretAlreadyExists = fmt.Errorf("secret already exists")
-
 // PersistentFlags sets the persistent flags for the GitHub integration.
 func (g *GithubIntegration) PersistentFlags(p *pflag.FlagSet) {
 	p.BoolVar(&g.force, "force", g.force,
