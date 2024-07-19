@@ -9,6 +9,11 @@ PKG ?= ./pkg/...
 GOFLAGS ?= -v
 GOFLAGS_TEST ?= -failfast -v -cover
 
+IMAGE_REPO ?= ghcr.io/redhat-appstudio/rhtap-cli
+IMAGE_TAG ?= latest
+
+.EXPORT_ALL_VARIABLES:
+
 .default: build
 
 #
@@ -27,6 +32,21 @@ build: $(BIN)
 .PHONY: run
 run:
 	go run $(CMD) $(ARGS)
+
+#
+# Container Image
+#
+
+image:
+	podman build --tag="$(IMAGE_REPO)/$(APP):$(IMAGE_TAG)" .
+
+image-run:
+	podman run \
+		--rm \
+		--interactive \
+		--tty \
+		$(IMAGE_REPO)/$(APP):$(IMAGE_TAG) \
+		$(ARGS)
 
 #
 # Tools

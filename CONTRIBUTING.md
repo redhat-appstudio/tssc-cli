@@ -16,6 +16,16 @@ After you have cloned the repository and installed the requirements, you can sta
 make
 ```
 
+## Container Image
+
+In order to build a container image out of this project run the following target:
+
+```bash
+make image IMAGE_REPO="ghcr.io/redhat-appstudio/rhtap-cli" IMAGE_TAG="latest"
+```
+
+The `IMAGE_REPO` and `IMAGE_TAG` are optional variables, you should use your own repository and tag for the image.
+
 # Testing
 
 Unit testing is done using the `go test` command, you can run the tests with the following target:
