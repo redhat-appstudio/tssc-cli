@@ -121,8 +121,8 @@ func (a *ACSIntegration) store(
 		},
 		Type: corev1.SecretTypeOpaque,
 		Data: map[string][]byte{
-			".endpoint": []byte(a.endpoint),
-			"token":     []byte(a.token),
+			"endpoint": []byte(a.endpoint),
+			"token":    []byte(a.token),
 		},
 	}
 	logger := a.log().With(
