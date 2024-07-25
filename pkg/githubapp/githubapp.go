@@ -42,6 +42,14 @@ func (g *GitHubApp) PersistentFlags(p *pflag.FlagSet) {
 		"Callback webserver port number")
 }
 
+// Validate validates the GitHub App configuration.
+func (g *GitHubApp) Validate() error {
+	if g.gitHubOrgName == "" {
+		return errors.New("GitHub organization name is required")
+	}
+	return nil
+}
+
 // log logger with contextual information.
 func (g *GitHubApp) log() *slog.Logger {
 	return g.logger.With(

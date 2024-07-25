@@ -68,7 +68,7 @@ func (g *GithubIntegration) Validate() error {
 	if g.token == "" {
 		return fmt.Errorf("github token is required")
 	}
-	return nil
+	return g.gitHubApp.Validate()
 }
 
 // EnsureNamespace ensures the namespace needed for the GitHub integration secret
