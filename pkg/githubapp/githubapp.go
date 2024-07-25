@@ -10,8 +10,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/redhat-appstudio/rhtap-cli/pkg/constants"
-
 	"github.com/google/go-github/scrape"
 	"github.com/google/go-github/v61/github"
 	"github.com/spf13/pflag"
@@ -92,7 +90,7 @@ func (g *GitHubApp) oAuth2Workflow(
 			g.log().Debug("oAuth code obtained")
 			oAuthCodeCh <- code
 			g.log().Info("GitHub App successfully created!")
-			fmt.Fprintf(w, gitHubAppSuccessfullyCreatedTmpl, *manifest.Name, constants.AppName)
+			fmt.Fprintf(w, gitHubAppSuccessfullyCreatedTmpl, g.gitHubURL, *manifest.Name)
 		} else {
 			gitHubURL := g.gitHubURL
 			// when the GitHub organization name is informed, using it to create

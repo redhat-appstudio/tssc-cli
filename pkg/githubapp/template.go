@@ -17,11 +17,8 @@ const gitHubNewAppForTmpl = `
 const gitHubAppSuccessfullyCreatedTmpl = `
 <html>
 <body>
-	You have successfully created a new GitHub App %q, go back to the CLI to
-	finish the installation:
-	<pre>
-		$ %s deploy
-	</pre>
+	GitHub App successfully created.
+	Install <a href="%s/apps/%s">the new application</a> in your GitHub organization and continue the installation process.
 </body>
 </html>
 `
