@@ -76,7 +76,7 @@ func NewIntegrationACS(
 
 	d := &IntegrationACS{
 		cmd: &cobra.Command{
-			Use:          "acs <name> [flags]",
+			Use:          "acs [flags]",
 			Short:        "Integrates a ACS instance into RHTAP",
 			Long:         acsIntegrationLongDesc,
 			SilenceUsage: true,

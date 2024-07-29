@@ -78,7 +78,7 @@ func NewIntegrationGitLab(
 
 	d := &IntegrationGitLab{
 		cmd: &cobra.Command{
-			Use:          "gitlab <name> [flags]",
+			Use:          "gitlab [flags]",
 			Short:        "Integrates a GitLab instance into RHTAP",
 			Long:         gitlabIntegrationLongDesc,
 			SilenceUsage: true,

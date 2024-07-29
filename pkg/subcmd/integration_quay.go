@@ -80,7 +80,7 @@ func NewIntegrationQuay(
 
 	d := &IntegrationQuay{
 		cmd: &cobra.Command{
-			Use:          "quay <name> [flags]",
+			Use:          "quay [flags]",
 			Short:        "Integrates a Quay instance into RHTAP",
 			Long:         quayIntegrationLongDesc,
 			SilenceUsage: true,
