@@ -77,7 +77,7 @@ func NewIntegrationJenkins(
 
 	d := &IntegrationJenkins{
 		cmd: &cobra.Command{
-			Use:          "jenkins <name> [flags]",
+			Use:          "jenkins [flags]",
 			Short:        "Integrates a Jenkins instance into RHTAP",
 			Long:         jenkinsIntegrationLongDesc,
 			SilenceUsage: true,
