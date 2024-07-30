@@ -20,6 +20,8 @@ type Kube struct {
 	flags *flags.Flags // global flags
 }
 
+var _ Interface = &Kube{}
+
 // ErrClientNotConnected kubernetes clients is not able to access the API.
 var ErrClientNotConnected = errors.New("kubernetes client not connected")
 
@@ -32,7 +34,7 @@ func (k *Kube) RESTClientGetter(namespace string) genericclioptions.RESTClientGe
 }
 
 // ClientSet returns a "corev1" Kubernetes Clientset.
-func (k *Kube) ClientSet(namespace string) (*kubernetes.Clientset, error) {
+func (k *Kube) ClientSet(namespace string) (kubernetes.Interface, error) {
 	restConfig, err := k.RESTClientGetter(namespace).ToRESTConfig()
 	if err != nil {
 		return nil, err
@@ -43,7 +45,7 @@ func (k *Kube) ClientSet(namespace string) (*kubernetes.Clientset, error) {
 // CoreV1ClientSet returns a "corev1" Kubernetes Clientset.
 func (k *Kube) CoreV1ClientSet(
 	namespace string,
-) (*corev1client.CoreV1Client, error) {
+) (corev1client.CoreV1Interface, error) {
 	restConfig, err := k.RESTClientGetter(namespace).ToRESTConfig()
 	if err != nil {
 		return nil, err
@@ -52,7 +54,7 @@ func (k *Kube) CoreV1ClientSet(
 }
 
 // DiscoveryClient instantiates a discovery client for the given namespace.
-func (k *Kube) DiscoveryClient(namespace string) (*discovery.DiscoveryClient, error) {
+func (k *Kube) DiscoveryClient(namespace string) (discovery.DiscoveryInterface, error) {
 	restConfig, err := k.RESTClientGetter(namespace).ToRESTConfig()
 	if err != nil {
 		return nil, err
@@ -61,7 +63,7 @@ func (k *Kube) DiscoveryClient(namespace string) (*discovery.DiscoveryClient, er
 }
 
 // DynamicClient instantiates a dynamic client for the given namespace.
-func (k *Kube) DynamicClient(namespace string) (*dynamic.DynamicClient, error) {
+func (k *Kube) DynamicClient(namespace string) (dynamic.Interface, error) {
 	restConfig, err := k.RESTClientGetter(namespace).ToRESTConfig()
 	if err != nil {
 		return nil, err
