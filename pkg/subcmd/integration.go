@@ -23,5 +23,6 @@ func NewIntegration(
 	cmd.AddCommand(NewRunner(NewIntegrationGitLab(logger, cfg, kube)).Cmd())
 	cmd.AddCommand(NewRunner(NewIntegrationJenkins(logger, cfg, kube)).Cmd())
 	cmd.AddCommand(NewRunner(NewIntegrationQuay(logger, cfg, kube)).Cmd())
+	cmd.AddCommand(NewRunner(NewIntegrationTrustification(logger, cfg, kube)).Cmd())
 	return cmd
 }
