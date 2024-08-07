@@ -13,6 +13,7 @@ import (
 	"github.com/redhat-appstudio/rhtap-cli/pkg/flags"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/hooks"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/k8s"
+	"github.com/redhat-appstudio/rhtap-cli/pkg/monitor"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/printer"
 
 	"helm.sh/helm/v3/pkg/chartutil"
@@ -89,7 +90,7 @@ func (i *Installer) PrintValues() {
 
 // Install performs the installation of the Helm chart, including the pre and post
 // hooks execution.
-func (i *Installer) Install() error {
+func (i *Installer) Install(ctx context.Context) error {
 	if i.values == nil {
 		return fmt.Errorf("values not set")
 	}
@@ -111,7 +112,7 @@ func (i *Installer) Install() error {
 	// Performing the installation, or upgrade, of the Helm chart dependency,
 	// using the values rendered before hand.
 	i.logger.Debug("Installing the Helm chart")
-	if err = hc.Install(i.values); err != nil {
+	if err = hc.Deploy(i.values); err != nil {
 		return err
 	}
 	// Verifying if the installation was successful, by running the Helm chart
@@ -122,12 +123,23 @@ func (i *Installer) Install() error {
 	}
 
 	if !i.flags.DryRun {
+		m := monitor.NewMonitor(i.logger, i.kube)
+		i.logger.Debug("Collecting resources for monitoring...")
+		if err = hc.VisitReleaseResources(ctx, m); err != nil {
+			return err
+		}
+		i.logger.Debug("Monitoring the Helm chart release...")
+		if err = m.Watch(i.flags.Timeout); err != nil {
+			return err
+		}
+		i.logger.Debug("Monitoring completed, release is successful!")
+
 		i.logger.Debug("Running post-deploy hook script...")
 		if err = hook.PostDeploy(i.values); err != nil {
 			return err
 		}
 	} else {
-		i.logger.Debug("Skipping post-deploy hook script (dry-run)")
+		i.logger.Debug("Skipping monitoring and post-deploy hook (dry-run)")
 	}
 
 	i.logger.Info("Helm chart installed!")

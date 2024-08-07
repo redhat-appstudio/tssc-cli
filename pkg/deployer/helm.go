@@ -1,12 +1,15 @@
 package deployer
 
 import (
+	"bytes"
+	"context"
 	"fmt"
 	"log/slog"
 	"os"
 
 	"github.com/redhat-appstudio/rhtap-cli/pkg/flags"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/k8s"
+	"github.com/redhat-appstudio/rhtap-cli/pkg/monitor"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/printer"
 
 	"github.com/pkg/errors"
@@ -16,6 +19,7 @@ import (
 	"helm.sh/helm/v3/pkg/registry"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
+	"k8s.io/cli-runtime/pkg/resource"
 )
 
 // Helm represents the Helm support for the installer. It's responsible for
@@ -27,6 +31,8 @@ type Helm struct {
 	chart     *chart.Chart          // helm chart instance
 	namespace string                // kubernetes namespace
 	actionCfg *action.Configuration // helm action configuration
+
+	release *release.Release // helm chart release
 }
 
 // ErrInstallFailed when the Helm chart installation fails.
@@ -90,26 +96,25 @@ func (h *Helm) helmUpgrade(vals chartutil.Values) (*release.Release, error) {
 	return rel, err
 }
 
-// Install installs the Helm chart (Dependency) on the cluster. It checks if the
+// Deploy deploys the Helm chart (Dependency) on the cluster. It checks if the
 // release is already installed in order to use the proper helm-client (action).
-func (h *Helm) Install(vals chartutil.Values) error {
+func (h *Helm) Deploy(vals chartutil.Values) error {
 	c := action.NewHistory(h.actionCfg)
 	c.Max = 1
 
-	var rel *release.Release
 	h.logger.Debug("Checking if release exists on the cluster")
 	var err error
 	if _, err = c.Run(h.chart.Name()); errors.Is(err, driver.ErrReleaseNotFound) {
 		h.logger.Info("Installing Helm Chart...")
-		rel, err = h.helmInstall(vals)
+		h.release, err = h.helmInstall(vals)
 	} else {
 		h.logger.Info("Upgrading Helm Chart...")
-		rel, err = h.helmUpgrade(vals)
+		h.release, err = h.helmUpgrade(vals)
 	}
 	if err != nil {
 		return err
 	}
-	h.printRelease(rel)
+	h.printRelease(h.release)
 	return nil
 }
 
@@ -131,6 +136,24 @@ func (h *Helm) Verify() error {
 	}
 	h.logger.Info("Release verified!")
 	return nil
+}
+
+// VisitReleaseResources collects the resources created by the Helm chart release.
+func (h *Helm) VisitReleaseResources(
+	ctx context.Context,
+	m monitor.Interface,
+) error {
+	releasedResources, err := h.actionCfg.KubeClient.Build(
+		bytes.NewBufferString(h.release.Manifest), true)
+	if err != nil {
+		return err
+	}
+	return releasedResources.Visit(func(r *resource.Info, err error) error {
+		if err != nil {
+			return err
+		}
+		return m.Collect(ctx, r)
+	})
 }
 
 // NewHelm creates a new Helm instance, setting up the Helm action configuration

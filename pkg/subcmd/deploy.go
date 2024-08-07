@@ -95,7 +95,7 @@ func (d *Deploy) Run() error {
 			i.PrintValues()
 		}
 
-		if err = i.Install(); err != nil {
+		if err = i.Install(d.cmd.Context()); err != nil {
 			return err
 		}
 	}

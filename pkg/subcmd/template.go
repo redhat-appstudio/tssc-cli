@@ -131,7 +131,7 @@ func (t *Template) Run() error {
 	if !t.showManifests {
 		return nil
 	}
-	return i.Install()
+	return i.Install(t.cmd.Context())
 }
 
 // NewTemplate creates the "template" subcommand with flags.

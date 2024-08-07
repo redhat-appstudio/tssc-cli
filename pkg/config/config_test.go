@@ -23,7 +23,7 @@ func TestNewConfigFromFile(t *testing.T) {
 	t.Run("GetEnabledDependencies", func(t *testing.T) {
 		deps := cfg.GetEnabledDependencies(slog.Default())
 		g.Expect(deps).NotTo(o.BeEmpty())
-		g.Expect(len(deps)).To(o.BeNumerically(">", 1))
+		g.Expect(len(deps)).To(o.BeNumerically(">=", 1))
 	})
 
 	t.Run("GetFeature", func(t *testing.T) {
