@@ -27,6 +27,12 @@ type GitHubApp struct {
 	webServerPort int    // local webserver port
 }
 
+// AppConfigResult represents a GitHub App configuration result.
+type AppConfigResult struct {
+	appConfig *github.AppConfig
+	err       error
+}
+
 // defaultPublicGitHubURL is the default URL for public GitHub.
 const defaultPublicGitHubURL = "https://github.com"
 
@@ -74,23 +80,41 @@ func (g *GitHubApp) getGitHubClient() (*github.Client, error) {
 func (g *GitHubApp) oAuth2Workflow(
 	ctx context.Context,
 	manifest scrape.AppManifest,
-) (string, error) {
+) (*github.AppConfig, error) {
 	manifestBytes, err := json.Marshal(manifest)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	serveMux := http.NewServeMux()
-	oAuthCodeCh := make(chan string, 1)
+	oAppConfigCh := make(chan AppConfigResult, 1)
 	// Handling the oAuth callback from GitHub, trying to extract the code from
 	// the response. When the code obtained the flow is completed successfully.
 	serveMux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		result := AppConfigResult{nil, nil}
 		code := r.URL.Query().Get("code")
 		if code != "" {
-			g.log().Debug("oAuth code obtained")
-			oAuthCodeCh <- code
+			// Retrieving the full AppConfig manifest, from GitHub.
+			g.log().Debug(
+				"oAuth2 workflow is completed, code is obtained",
+				"code-len", len(code),
+			)
 			g.log().Info("GitHub App successfully created!")
-			fmt.Fprintf(w, gitHubAppSuccessfullyCreatedTmpl, g.gitHubURL, *manifest.Name)
+
+			gp, err := g.getGitHubClient()
+			if err != nil {
+				result.err = err
+				oAppConfigCh <- result
+				return
+			}
+			g.log().Debug("Retrieving full AppConfig manifest from GitHub")
+			result.appConfig, _, result.err = gp.Apps.CompleteAppManifest(ctx, code)
+			if result.err != nil {
+				oAppConfigCh <- result
+				return
+			}
+			fmt.Fprintf(w, gitHubAppSuccessfullyCreatedTmpl, *result.appConfig.HTMLURL)
+			oAppConfigCh <- result
 		} else {
 			gitHubURL := g.gitHubURL
 			// when the GitHub organization name is informed, using it to create
@@ -128,7 +152,7 @@ func (g *GitHubApp) oAuth2Workflow(
 	}()
 
 	// Waiting for the code, then shutting down the callback webserver.
-	code := <-oAuthCodeCh
+	result := <-oAppConfigCh
 
 	// Giving a few seconds for the user to see the success message, with the
 	// shared context the server should close when the application is shutting
@@ -140,7 +164,7 @@ func (g *GitHubApp) oAuth2Workflow(
 		}
 	}()
 
-	return code, nil
+	return result.appConfig, result.err
 }
 
 // Create creates a new GitHub App using the provided manifest. The manifest is
@@ -156,26 +180,10 @@ func (g *GitHubApp) Create(
 	// Starting the oAuth workflow to interact with the GitHub web UI and create
 	// the new GitHub App.
 	g.log().Debug("starting oAuth2 workflow", "redirect-url", redirectURL)
-	code, err := g.oAuth2Workflow(ctx, manifest)
+	appConfig, err := g.oAuth2Workflow(ctx, manifest)
 	if err != nil {
 		return nil, err
 	}
-
-	// Retrieving the full AppConfig manifest, from GitHub.
-	g.log().Debug(
-		"oAuth2 workflow is completed, code is obtained",
-		"code-len", len(code),
-	)
-	gp, err := g.getGitHubClient()
-	if err != nil {
-		return nil, err
-	}
-	g.log().Debug("Retrieving full AppConfig manifest from GitHub")
-	appConfig, _, err := gp.Apps.CompleteAppManifest(ctx, code)
-	if err != nil {
-		return nil, err
-	}
-	g.log().Info("GitHub App successfully created!", "app-id", appConfig.GetID())
 	return appConfig, nil
 }
 
