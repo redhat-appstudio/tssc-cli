@@ -35,7 +35,7 @@ func (q *QuayIntegration) PersistentFlags(p *pflag.FlagSet) {
 		"Overwrite the existing secret")
 
 	p.StringVar(&q.dockerconfigjson, "dockerconfigjson", q.dockerconfigjson,
-		"Quay dockerconfigjson")
+		"Quay dockerconfigjson, e.g. '{ \"auths\": { \"quay.io\": { \"auth\": \"****\", \"email\": \"\" }}}'")
 	p.StringVar(&q.token, "token", q.token,
 		"Quay API token")
 	p.StringVar(&q.url, "url", q.url,
