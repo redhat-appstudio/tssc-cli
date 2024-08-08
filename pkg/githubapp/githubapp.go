@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"time"
 
@@ -113,7 +114,12 @@ func (g *GitHubApp) oAuth2Workflow(
 				oAppConfigCh <- result
 				return
 			}
-			fmt.Fprintf(w, gitHubAppSuccessfullyCreatedTmpl, *result.appConfig.HTMLURL)
+
+			// Sanitize URL
+			u, _ := url.Parse(*result.appConfig.HTMLURL)
+			b, _ := u.MarshalBinary()
+			fmt.Fprintf(w, gitHubAppSuccessfullyCreatedTmpl, b)
+
 			oAppConfigCh <- result
 		} else {
 			gitHubURL := g.gitHubURL
