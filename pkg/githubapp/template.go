@@ -18,7 +18,7 @@ const gitHubAppSuccessfullyCreatedTmpl = `
 <html>
 <body>
 	GitHub App successfully created.
-	Install <a href="%s/apps/%s">the new application</a> in your GitHub organization and continue the installation process.
+	Install <a href="%s">the new application</a> in your GitHub organization and continue the installation process.
 </body>
 </html>
 `
