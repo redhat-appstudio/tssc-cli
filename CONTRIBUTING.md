@@ -55,5 +55,36 @@ make &&
     bin/rhtap-cli deploy --help
 ```
 
-[gnuMake]: https://www.gnu.org/software/make/
-[golang]: https://golang.org/dl/
+# GitHub Release
+
+This project uses [GitHub Actions](.github/workflows/release.yaml) to automate the release process, triggered by a new tag in the repository.
+
+To release this application using the the GitHub web interface follow the steps:
+
+1. Go to the [releases page][releases]
+2. Click on "Create a new release" button
+3. Choose the tag you want to release, the tag must start with `v` and follow the semantic versioning pattern.
+4. Fill the release title and description
+5. [Wait for the release workflow][actions] to finish and verify the release assets
+
+## Release Automation
+
+For the release automation the following tools are used:
+- [`gh`][gitHubCLI]: GitHub helper CLI, ensure the release is created, or create it if it doesn't exist yet.
+- [`goreleaser`][goreleaser]: Tool to automate the release process, it creates the release assets and uploads them to the GitHub release.
+
+The [release workflow](.github/workflows/release.yaml) relies on the `make github-release` target, this [`Makefile`](Makefile) target is responsible for ensure the release is created, or create it using `gh` helper, build and upload the release assets using `goreleaser`.
+
+The GitHub workflow provides [`GITHUB_REF_NAME` environment variable][gitHubDocWorkflowEnvVars] to the release job, this variable is used to determine the tag name to release.
+
+```bash
+make github-release GITHUB_REF_NAME="v0.1.0"
+```
+
+[actions]: https://github.com/redhat-appstudio/rhtap-cli/actions
+[gitHubCLI]: https://cli.github.com
+[gitHubDocWorkflowEnvVars]: https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/variables#default-environment-variables
+[gnuMake]: https://www.gnu.org/software/make
+[golang]: https://golang.org/dl
+[goreleaser]: https://goreleaser.com
+[releases]: https://github.com/redhat-appstudio/rhtap-cli/releases

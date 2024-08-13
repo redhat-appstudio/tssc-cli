@@ -1,3 +1,15 @@
+<p align="center">
+    <a alt="Project quality report" href="https://goreportcard.com/report/github.com/redhat-appstudio/rhtap-cli">
+        <img src="https://goreportcard.com/badge/github.com/redhat-appstudio/rhtap-cli">
+    </a>
+    <a alt="Release workflow status" href="https://github.com/redhat-appstudio/rhtap-cli/actions">
+        <img src="https://github.com/redhat-appstudio/rhtap-cli/actions/workflows/release.yaml/badge.svg">
+    </a>
+    <a alt="Latest project release" href="https://github.com/redhat-appstudio/rhtap-cli/releases/latest">
+        <img src="https://img.shields.io/github/v/release/redhat-appstudio/rhtap-cli">
+    </a>
+</p>
+
 Red Hat Trusted Application Pipeline Installer (`rhtap-cli`)
 ------------------------------------------------------------
 
