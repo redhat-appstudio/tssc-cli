@@ -77,7 +77,12 @@ func (d *Deploy) Run() error {
 	// Installing each Helm Chart dependency from the configuration, only
 	// selecting the Helm Charts that are enabled.
 	d.log().Debug("Installing dependencies...")
-	for _, dep := range d.cfg.GetEnabledDependencies(d.log()) {
+	deps := d.cfg.GetEnabledDependencies(d.log())
+	for ix, dep := range deps {
+		fmt.Printf("\n\n############################################################\n")
+		fmt.Printf("# [%d/%d] Deploying '%s' in '%s'.\n", ix+1, len(deps), dep.Chart, dep.Namespace)
+		fmt.Printf("############################################################\n")
+
 		i := installer.NewInstaller(d.log(), d.flags, d.kube, cfs, &dep)
 
 		err := i.SetValues(d.cmd.Context(), &d.cfg.Installer, string(valuesTmpl))
@@ -98,9 +103,10 @@ func (d *Deploy) Run() error {
 		if err = i.Install(d.cmd.Context()); err != nil {
 			return err
 		}
+		fmt.Printf("############################################################\n\n")
 	}
 
-	d.log().Info("Deployment complete!")
+	fmt.Printf("Deployment complete!\n")
 	return nil
 }
 
