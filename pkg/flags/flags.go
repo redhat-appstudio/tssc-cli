@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"os"
+	"os/user"
+	"path"
 	"strings"
 	"time"
 
@@ -61,11 +62,18 @@ func (f *Flags) LoggerWith(l *slog.Logger) *slog.Logger {
 
 // NewFlags instantiates the global flags with default values.
 func NewFlags() *Flags {
+	// Getting the current user configuration, later on the home directory is used
+	// for flag population.
+	usr, err := user.Current()
+	if err != nil {
+		panic(fmt.Errorf("unable to detect current user: %w", err))
+	}
+
 	defaultLogLevel := slog.LevelWarn
 	return &Flags{
 		Debug:          false,
 		DryRun:         false,
-		KubeConfigPath: fmt.Sprintf("%s/.kube/config", os.Getenv("HOME")),
+		KubeConfigPath: path.Join(usr.HomeDir, ".kube", "config"),
 		LogLevel:       &defaultLogLevel,
 		Timeout:        15 * time.Minute,
 	}
