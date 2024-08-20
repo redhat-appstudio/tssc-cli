@@ -21,10 +21,8 @@ type IntegrationGitLab struct {
 
 	gitlabIntegration *integrations.GitLabIntegration // gitlab integration
 
-	host         string // E.g. 'gitlab.com'
-	clientId     string // Application client id
-	clientSecret string // Application client secret
-	token        string // API token
+	host  string // E.g. 'gitlab.com'
+	token string // API token
 }
 
 var _ Interface = &IntegrationGitLab{}
