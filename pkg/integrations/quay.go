@@ -16,6 +16,9 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+// defaultPublicQuayURL is the default URL for public Quay.
+const defaultPublicQuayURL = "https://quay.io"
+
 // QuayIntegration represents the RHTAP Quay integration.
 type QuayIntegration struct {
 	logger *slog.Logger   // application logger
@@ -61,7 +64,7 @@ func (q *QuayIntegration) Validate() error {
 		return fmt.Errorf("token is required")
 	}
 	if q.url == "" {
-		return fmt.Errorf("url is required")
+		q.url = defaultPublicQuayURL
 	} else {
 		u, err := url.Parse(q.url)
 		if err != nil {
