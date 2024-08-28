@@ -113,10 +113,9 @@ This will create a bin directory.
 
   ```yaml
   redHatAdvancedClusterSecurity: 
-   enabled: false 
-      
+    enabled: false 
   redHatQuay: 
-   enabled: false
+    enabled: false
 ```
       
 3.Run the command `rhtap-cli` to display help text that shows all the supported commands and options. 
