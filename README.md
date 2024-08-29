@@ -100,3 +100,38 @@ Please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) file for more information
 
 
 [helm]: https://helm.sh/
+
+## Deploy RHTAP
+Follow the below steps to deploy RHTAP on Openshift cluster. 
+
+1.Clone the repositry.Run the command 'make` from the rhtap-cli directory. 
+This will create a bin directory. 
+
+2.Edit the [`config.yaml`](config.yaml) file for select or deselect the components from installation. 
+
+  Eg : Change the lines as below to disable installation of components ACS and Quay 
+
+  ```yaml
+  redHatAdvancedClusterSecurity: 
+    enabled: false 
+  redHatQuay: 
+    enabled: false
+```
+      
+3.Run the command `rhtap-cli` to display help text that shows all the supported commands and options. 
+
+4.Run the command `rhtap-cli integration` to provide integrations to external components.
+  The below command will list the options supported. 
+  
+```bash
+rhtap-cli integration --help
+```
+  
+5.Finally run the below command to proceed with RHTAP deployment. 
+
+```bash
+rhtap-cli deploy
+```
+ 
+  
+   
