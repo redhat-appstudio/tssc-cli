@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v3"
@@ -47,6 +48,11 @@ func (c *Config) PersistentFlags(f *pflag.FlagSet) {
 		c.configPath,
 		"Path to the installer configuration file",
 	)
+}
+
+// GetBaseDir returns the base directory of the configuration file.
+func (c *Config) GetBaseDir() string {
+	return filepath.Dir(c.configPath)
 }
 
 // GetEnabledDependencies returns a list of enabled dependencies.
@@ -131,5 +137,5 @@ func NewConfigFromFile(configPath string) (*Config, error) {
 // NewConfig returns a new Config instance, pointing to the default "config.yaml"
 // file location.
 func NewConfig() *Config {
-	return &Config{configPath: "config.yaml"}
+	return &Config{configPath: "installer/config.yaml"}
 }

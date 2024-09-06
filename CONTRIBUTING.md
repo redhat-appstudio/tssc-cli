@@ -16,6 +16,17 @@ After you have cloned the repository and installed the requirements, you can sta
 make
 ```
 
+The resources needed for the installer are stored in the `installer` directory, you can find the `config.yaml` file there. Before the application is built, the contents of the installer directory are packaged into a tarball and embedded into the application binary.
+
+To package the installer resources into a tarball run the following target:
+
+```bash
+make installer-tarball
+ls -l installer/installer.tar
+```
+
+The `installer/installer.tar` is intentionally excluded from version control.
+
 ## Container Image
 
 In order to build a container image out of this project run the following target:

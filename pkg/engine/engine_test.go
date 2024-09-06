@@ -28,7 +28,7 @@ root:
 func TestEngine_Render(t *testing.T) {
 	g := o.NewWithT(t)
 
-	cfg, err := config.NewConfigFromFile("../../config.yaml")
+	cfg, err := config.NewConfigFromFile("../../installer/config.yaml")
 	g.Expect(err).To(o.Succeed())
 
 	variables := NewVariables()

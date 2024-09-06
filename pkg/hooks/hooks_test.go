@@ -16,9 +16,9 @@ func TestNewHooks(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 	h := NewHooks(
-		chartfs.NewChartFS("../.."),
+		chartfs.NewChartFS("../../test"),
 		&config.Dependency{
-			Chart:     "test/charts/testing",
+			Chart:     "charts/testing",
 			Namespace: "rhtap",
 		},
 		&stdout,

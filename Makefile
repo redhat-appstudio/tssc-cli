@@ -22,6 +22,13 @@ GITHUB_TOKEN ?= ${GITHUB_TOKEN:-}
 IMAGE_REPO ?= ghcr.io/redhat-appstudio/rhtap-cli
 IMAGE_TAG ?= latest
 
+# Directory with the installer resources, scripts, Helm Charts, etc.
+INSTALLER_DIR ?= ./installer
+# Tarball with the installer resources.
+INSTALLER_TARBALL ?= $(INSTALLER_DIR)/installer.tar
+# Data to include in the tarball.
+INSTALLER_TARBALL_DATA ?= charts config.yaml scripts
+
 .EXPORT_ALL_VARIABLES:
 
 .default: build
@@ -30,8 +37,9 @@ IMAGE_TAG ?= latest
 # Build and Run
 #
 
+# Builds the application executable with installer resources embedded.
 .PHONY: $(BIN)
-$(BIN):
+$(BIN): installer-tarball
 	@[ -d $(BIN_DIR) ] || mkdir -p $(BIN_DIR)
 	go build -o $(BIN) $(CMD) $(ARGS)
 
@@ -40,6 +48,7 @@ build: $(BIN)
 
 # Uses goreleaser to create a snapshot build.
 .PHONY: goreleaser-snapshot
+goreleaser-snapshot: installer-tarball
 goreleaser-snapshot: tool-goreleaser
 	goreleaser build --clean --snapshot --single-target -o $(BIN) $(ARGS)
 
@@ -49,6 +58,17 @@ snapshot: goreleaser-snapshot
 .PHONY: run
 run:
 	go run $(CMD) $(ARGS)
+
+#
+# Installer Tarball
+#
+
+# Creates a tarball with all resources required for the installation process.
+.PHONY: installer-tarball
+installer-tarball:
+	@test -f "$(INSTALLER_TARBALL)" && rm -f "$(INSTALLER_TARBALL)" || true
+	tar -C "$(INSTALLER_DIR)" -cpf "$(INSTALLER_TARBALL)" \
+		$(INSTALLER_TARBALL_DATA)
 
 #
 # Container Image
@@ -95,7 +115,7 @@ test: test-unit
 
 # Runs the unit tests.
 .PHONY: test-unit
-test-unit:
+test-unit: installer-tarball
 	go test $(GOFLAGS_TEST) $(CMD) $(PKG) $(ARGS)
 
 # Uses golangci-lint to inspect the code base.
@@ -132,6 +152,7 @@ github-release-create: tool-gh
 # release payload, it amends the release in progress with the application
 # executables.
 .PHONY: goreleaser-release
+goreleaser-release: installer-tarball
 goreleaser-release: tool-goreleaser
 goreleaser-release: CGO_ENABLED = 0
 goreleaser-release: GOFLAGS = -a

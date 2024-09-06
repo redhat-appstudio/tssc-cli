@@ -51,7 +51,7 @@ func (h *Hooks) runHookScript(name string, vals map[string]interface{}) error {
 		if os.IsNotExist(err) {
 			return nil
 		}
-		return err
+		return fmt.Errorf("running script %q: %w", scriptPath, err)
 	}
 
 	// Storing the script payload in a temporary file, adding permissions to
