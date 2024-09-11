@@ -3,9 +3,7 @@ package subcmd
 import (
 	"fmt"
 	"log/slog"
-	"os"
 
-	"github.com/redhat-appstudio/rhtap-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/config"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/flags"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/installer"
@@ -19,7 +17,7 @@ type Template struct {
 	cmd    *cobra.Command // cobra command
 	logger *slog.Logger   // application logger
 	flags  *flags.Flags   // global flags
-	cfg    *config.Spec   // installer configuration
+	cfg    *config.Config // installer configuration
 	kube   *k8s.Kube      // kubernetes client
 
 	// TODO: add support for "--validate", so the rendered resources are validated
@@ -44,6 +42,9 @@ chart directory, optional.
 
 Additionally, the '--debug' flag should be used to display the raw values template
 payload, regardless of whether it is valid YAML or not.
+
+The installer resources are embedded in the executable, these resources are
+employed by default, to use local files, set the '--embedded' flag to false.
 `
 
 // Cmd exposes the cobra instance.
@@ -87,20 +88,15 @@ func (t *Template) Validate() error {
 	if t.dep.Chart == "" {
 		return fmt.Errorf("missing chart path")
 	}
-	info, err := os.Stat(t.dep.Chart)
-	if err != nil {
-		return err
-	}
-	if !info.IsDir() {
-		return fmt.Errorf("chart path %s is not a directory", t.dep.Chart)
-	}
 	return nil
 }
 
 // Run Renders the templates.
 func (t *Template) Run() error {
-	t.log().Debug("Searching Helm charts from the current directory")
-	cfs := chartfs.NewChartFSForCWD()
+	cfs, err := newChartFS(t.logger, t.flags, t.cfg)
+	if err != nil {
+		return err
+	}
 
 	valuesTmplPayload, err := cfs.ReadFile(t.valuesTemplatePath)
 	if err != nil {
@@ -111,8 +107,11 @@ func (t *Template) Run() error {
 	i := installer.NewInstaller(t.logger, t.flags, t.kube, cfs, &t.dep)
 
 	// Setting values and loading cluster's information.
-	err = i.SetValues(t.cmd.Context(), t.cfg, string(valuesTmplPayload))
-	if err != nil {
+	if err = i.SetValues(
+		t.cmd.Context(),
+		&t.cfg.Installer,
+		string(valuesTmplPayload),
+	); err != nil {
 		return err
 	}
 	if t.showValues && t.flags.Debug {
@@ -138,7 +137,7 @@ func (t *Template) Run() error {
 func NewTemplate(
 	logger *slog.Logger,
 	f *flags.Flags,
-	cfg *config.Spec,
+	cfg *config.Config,
 	kube *k8s.Kube,
 ) *Template {
 	t := &Template{

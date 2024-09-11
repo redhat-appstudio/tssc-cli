@@ -10,7 +10,7 @@ import (
 func TestNewConfigFromFile(t *testing.T) {
 	g := o.NewWithT(t)
 
-	cfg, err := NewConfigFromFile("../../config.yaml")
+	cfg, err := NewConfigFromFile("../../installer/config.yaml")
 	g.Expect(err).To(o.Succeed())
 	g.Expect(cfg).NotTo(o.BeNil())
 	g.Expect(cfg.Installer).NotTo(o.BeNil())

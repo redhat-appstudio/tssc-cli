@@ -8,5 +8,6 @@
 /*.so
 /*.test
 /bin
+/installer/*.tar
 /rhtap-cli
 /tmp

@@ -10,7 +10,7 @@ func SetValuesTmplFlag(p *pflag.FlagSet, v *string) {
 	p.StringVar(
 		v,
 		ValuesTemplateFlag,
-		"charts/values.yaml.tpl",
+		"installer/charts/values.yaml.tpl",
 		"Path to the values template file",
 	)
 }

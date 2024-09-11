@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/redhat-appstudio/rhtap-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/config"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/flags"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/installer"
@@ -36,6 +35,9 @@ applied, on the attribute 'rhtapCLI.dependencies[]'.
 
 The platform configuration is rendered from the values template file
 (--values-template), this configuration payload is given to all Helm charts.
+
+The installer resources are embedded in the executable, these resources are
+employed by default, to use local files, set the '--embedded' flag to false.
 `
 
 // Cmd exposes the cobra instance.
@@ -66,7 +68,10 @@ func (d *Deploy) Validate() error {
 
 // Run deploys the enabled dependencies listed on the configuration.
 func (d *Deploy) Run() error {
-	cfs := chartfs.NewChartFSForCWD()
+	cfs, err := newChartFS(d.logger, d.flags, d.cfg)
+	if err != nil {
+		return err
+	}
 
 	d.log().Debug("Reading values template file")
 	valuesTmpl, err := cfs.ReadFile(d.valuesTmplPath)
