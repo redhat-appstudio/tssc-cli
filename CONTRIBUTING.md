@@ -5,6 +5,7 @@ In order to contribute to this project you need the following requirements:
 
 - [Golang 1.16 or higher][golang]
 - [GNU Make][gnuMake]
+- [Podman][podman] or [Buildah][buildah] (optional)
 
 All the automation needed for the project lives in the [Makefile](Makefile). This file is the entry point for all the automation tasks in the project for CI, development and release
 
@@ -36,6 +37,8 @@ make image IMAGE_REPO="ghcr.io/redhat-appstudio/rhtap-cli" IMAGE_TAG="latest"
 ```
 
 The `IMAGE_REPO` and `IMAGE_TAG` are optional variables, you should use your own repository and tag for the image.
+
+By default the container is build using `podman`, you can alternatively use `buildah` by running the target `make image-buildah` instead.
 
 # Testing
 
@@ -98,4 +101,6 @@ make github-release GITHUB_REF_NAME="v0.1.0"
 [gnuMake]: https://www.gnu.org/software/make
 [golang]: https://golang.org/dl
 [goreleaser]: https://goreleaser.com
+[buildah]: https://buildah.io
+[podman]: https://podman.io
 [releases]: https://github.com/redhat-appstudio/rhtap-cli/releases
