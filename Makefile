@@ -18,9 +18,20 @@ CGO_LDFLAGS ?=
 GITHUB_REF_NAME ?= ${GITHUB_REF_NAME:-}
 GITHUB_TOKEN ?= ${GITHUB_TOKEN:-}
 
-# Coordinates for the container image build.
-IMAGE_REPO ?= ghcr.io/redhat-appstudio/rhtap-cli
+
+# Container registry credentials.
+IMAGE_REPO_USERNAME ?=
+IMAGE_REPO_PASSWORD ?=
+
+# Container registry repository, the hostname of the registry, or empty for
+# default registry.
+IMAGE_REPO ?= ghcr.io
+# Container image namespace, usually the organization or user name.
+IMAGE_NAMESPACE ?= redhat-appstudio
+# Container image tag.
 IMAGE_TAG ?= latest
+# Fully qualified container image name.
+IMAGE_FQN ?= $(IMAGE_REPO)/$(IMAGE_NAMESPACE)/$(APP):$(IMAGE_TAG)
 
 # Directory with the installer resources, scripts, Helm Charts, etc.
 INSTALLER_DIR ?= ./installer
@@ -74,16 +85,37 @@ installer-tarball:
 # Container Image
 #
 
-image:
-	podman build --tag="$(IMAGE_REPO)/$(APP):$(IMAGE_TAG)" .
+# By default builds the container image using Podman.
+image: image-podman
 
-image-run:
-	podman run \
-		--rm \
-		--interactive \
-		--tty \
-		$(IMAGE_REPO)/$(APP):$(IMAGE_TAG) \
-		$(ARGS)
+# Builds the container image with Podman.
+image-podman:
+	@echo "# Building '$(IMAGE_FQN)'..."
+	podman build --tag="$(IMAGE_FQN)" .
+
+# Logins into the container registry.
+login-buildah:
+	@echo "# Login into '$(IMAGE_REPO)' with user '$(IMAGE_REPO_USERNAME)'"
+	@buildah login \
+		--username="$(IMAGE_REPO_USERNAME)" \
+		--password="$(IMAGE_REPO_PASSWORD)" \
+		$(IMAGE_REPO)
+
+# Builds the container image with Buildah.
+image-buildah:
+	@echo "# Building '$(IMAGE_FQN)'..."
+	buildah bud --tag="$(IMAGE_FQN)" .
+
+# Tags the container image with the provided arguments as tag.
+image-buildah-tag: NEW_IMAGE_FQN = $(IMAGE_REPO)/$(IMAGE_NAMESPACE)/$(APP):$(ARGS)
+image-buildah-tag:
+	@echo "# Tagging '$(IMAGE_FQN)' with $(ARGS)..."
+	buildah tag $(IMAGE_FQN) $(NEW_IMAGE_FQN)
+
+# Pushes the container image to the registry.
+image-buildah-push:
+	@echo "# Pushing '$(IMAGE_FQN)'..."
+	buildah push $(IMAGE_FQN)
 
 #
 # Tools
