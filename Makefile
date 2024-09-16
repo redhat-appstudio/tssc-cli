@@ -67,7 +67,7 @@ snapshot: goreleaser-snapshot
 
 # Runs the application with arbitrary ARGS.
 .PHONY: run
-run:
+run: installer-tarball
 	go run $(CMD) $(ARGS)
 
 #
