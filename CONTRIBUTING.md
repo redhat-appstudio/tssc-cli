@@ -62,7 +62,7 @@ To run the application you can rely on the `run` target, this is the equivalent 
 make run ARGS='deploy --help'
 ```
 
-Which is the equivalent of:
+Which is the equivalent of building and running the application, i.e.:
 
 ```bash
 make &&
@@ -83,6 +83,8 @@ To release this application using the the GitHub web interface follow the steps:
 
 ## Release Automation
 
+### Workflow
+
 For the release automation the following tools are used:
 - [`gh`][gitHubCLI]: GitHub helper CLI, ensure the release is created, or create it if it doesn't exist yet.
 - [`goreleaser`][goreleaser]: Tool to automate the release process, it creates the release assets and uploads them to the GitHub release.
@@ -93,6 +95,22 @@ The GitHub workflow provides [`GITHUB_REF_NAME` environment variable][gitHubDocW
 
 ```bash
 make github-release GITHUB_REF_NAME="v0.1.0"
+```
+
+### Assets
+
+The release assets are built using `goreleaser`, the configuration for this tool is stored in the [`.goreleaser.yaml`](.goreleaser.yaml) file.
+
+To build the release assets for only the current platform, run:
+
+```bash
+make snapshot ARGS='--single-target --output=bin/rhtap-cli'
+```
+
+To build the release assets for all platforms, run:
+
+```bash
+make snapshot
 ```
 
 [actions]: https://github.com/redhat-appstudio/rhtap-cli/actions
