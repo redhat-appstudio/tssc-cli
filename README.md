@@ -13,7 +13,7 @@
 Red Hat Trusted Application Pipeline Installer (`rhtap-cli`)
 ------------------------------------------------------------
 
-# Overview
+# Abstract
 
 The `rhtap-cli` is designed as a sophisticated installer for Kubernetes [Helm Charts][helm], addressing the complexity of managing interdependent resources in Kubernetes environments. Unlike Kubernetes, which orchestrates resources individually without acknowledging their interdependencies, `rhtap-cli` enhances the deployment process by considering these relationships, thereby improving the user experience.
 
@@ -23,9 +23,41 @@ Helm, serving as the foundation of `rhtap-cli`, provides a detailed blueprint of
 
 The `rhtap-cli` is designed to be user-friendly, providing a seamless installation process for users of all skill levels. 
 
-# Configuration Overview
+# Deploy RHTAP
 
-The `config.yaml` file is structured to outline key components essential for the setup:
+Install the `rhtap-cli` binary on your local machine following [these instructions](#installing-rhtap-cli).
+
+Follow the below steps to deploy RHTAP on Openshift cluster. 
+
+1. Edit the [`config.yaml`](installer/config.yaml) file for select or deselect the components from installation. See the [configuration](#configuration) section for more details.
+
+  For instance: change the lines as below to disable installation of components ACS and Quay .
+
+```yaml
+# ...
+redHatAdvancedClusterSecurity: 
+  enabled: false 
+redHatQuay: 
+  enabled: false
+```
+      
+2. Run the command `rhtap-cli` to display help text that shows all the supported commands and options. 
+
+3. Run the command `rhtap-cli integration` to provide integrations to external components. The command below lists the options supported: 
+  
+```bash
+rhtap-cli integration --help
+```
+  
+4. Finally, run the below command to proceed with RHTAP deployment. 
+
+```bash
+rhtap-cli deploy
+```
+
+# Configuration
+
+The [`config.yaml`](installer/config.yaml) file is structured to outline key components essential for the setup, for instance:
 
 ```yaml
 ---
@@ -65,6 +97,8 @@ This data can be leveraged for templating using the [`values.yaml.tpl`](#templat
 
 ## `rhtapCLI.dependencies`
 
+Each dependency is defined by a unique name and a set of attributes. The installer will deploy these dependencies in the order specified in the configuration file. For instance:
+
 ```yaml
 rhtapCLI:
   dependencies:
@@ -73,17 +107,26 @@ rhtapCLI:
       enabled: true
 ```
 
-# Template Functions
+### Hook Scripts
 
-The following functions are available for use in the `values.yaml.tpl` file:
+The installer supports hook scripts to execute custom logic before and after the installation of a Helm Chart. The hook scripts are stored in the `hooks` directory and are executed in the following order:
 
-## `{{ .Installer.Features.* }}`
+1. `pre-install.sh`: Executed before the installation of the dependency.
+2. `post-install.sh`: Executed after the installation of the dependency.
+
+Windows users must be aware that the hook scripts are written in Bash and may not be compatible with the Windows shell. To execute the hook scripts, consider using WSL or a similar tool.
+
+## Template Functions
+
+The following functions are available for use in the [`values.yaml.tpl`](./installer/charts/values.yaml.tpl) file:
+
+### `{{ .Installer.Features.* }}`
 
 - `{{ .Installer.Features.*.Enabled }}`: Returns the boolean value of the feature's `enabled` field.
 - `{{ .Installer.Features.*.Namespace }}`: Returns the namespace in which the feature will be deployed.
 - `{{ .Installer.Features.*.Properties.*}}`: Returns a dictionary of key-value pairs for the feature's properties.
 
-## `{{ .OpenShift.Ingress }}`
+### `{{ .OpenShift.Ingress }}`
 
 Helper function to inspect the target cluster's Ingress configuration.
 
@@ -94,46 +137,43 @@ developerHub:
   ingressDomain: {{ $ingressDomain }}
 ```
 
+# Installing `rhtap-cli`
+
+## Pre-Compiled Binaries
+
+Check the lastest release from the [releases page][releases] and download the binary for your operating system and executable architecture. Then, either use the binary directly or move it to a directory in your `PATH`, for instance:
+
+```bash
+install --mode=755 bin/rhtap-cli /usr/local/bin
+```
+
+## From Source
+
+Please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) for more information on building the project from source requirements. Then, follow the steps below to install the `rhtap-cli` binary from source:
+
+1. Clone [the repository][rhtapCLI], and navigate to the `rhtap-cli` directory.
+
+```bash
+git clone --depth=1 https://github.com/redhat-appstudio/rhtap-cli.git && \
+  cd rhtap-cli
+```
+
+2. Run the command `make` from the `rhtap-cli` directory, this will create a `bin` folder
+
+```bash
+make
+```
+
+3. Move the `rhtap-cli` to the desired location, for instance `/usr/local/bin`.
+
+```bash
+install --mode=755 bin/rhtap-cli /usr/local/bin
+```
+
 # Contributing
 
 Please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) file for more information on contributing to this project.
-
-
-[helm]: https://helm.sh/
-
-## Deploy RHTAP
-
-### From Source
-
-Follow the below steps to deploy RHTAP on Openshift cluster. 
-
-1. Clone the repository. Run the command `make` from the rhtap-cli directory.  This will create a `bin` directory. 
-
-2. Edit the [`config.yaml`](installer/config.yaml) file for select or deselect the components from installation. 
-
-  For instance: change the lines as below to disable installation of components ACS and Quay .
-
-```yaml
-# ...
-redHatAdvancedClusterSecurity: 
-  enabled: false 
-redHatQuay: 
-  enabled: false
-```
-      
-3. Run the command `rhtap-cli` to display help text that shows all the supported commands and options. 
-
-4. Run the command `rhtap-cli integration` to provide integrations to external components. The command below lists the options supported: 
-  
-```bash
-rhtap-cli integration --help
-```
-  
-5. Finally run the below command to proceed with RHTAP deployment. 
-
-```bash
-rhtap-cli deploy
-```
  
-  
-   
+[helm]: https://helm.sh/
+[releases]: https://github.com/redhat-appstudio/rhtap-cli/releases
+[rhtapCLI]: https://github.com/redhat-appstudio/rhtap-cli
