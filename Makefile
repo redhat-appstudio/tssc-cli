@@ -38,7 +38,11 @@ INSTALLER_DIR ?= ./installer
 # Tarball with the installer resources.
 INSTALLER_TARBALL ?= $(INSTALLER_DIR)/installer.tar
 # Data to include in the tarball.
-INSTALLER_TARBALL_DATA ?= charts config.yaml scripts
+INSTALLER_TARBALL_DATA ?= $(shell find $(INSTALLER_DIR) -maxdepth 1 \
+	! -path "$(INSTALLER_DIR)" \
+	! -path "$(INSTALLER_TARBALL)" \
+	! -name embed.go \
+)
 
 .EXPORT_ALL_VARIABLES:
 
@@ -76,10 +80,11 @@ run:
 
 # Creates a tarball with all resources required for the installation process.
 .PHONY: installer-tarball
-installer-tarball:
+installer-tarball: $(INSTALLER_TARBALL)
+$(INSTALLER_TARBALL): $(INSTALLER_TARBALL_DATA)
 	@test -f "$(INSTALLER_TARBALL)" && rm -f "$(INSTALLER_TARBALL)" || true
 	tar -C "$(INSTALLER_DIR)" -cpf "$(INSTALLER_TARBALL)" \
-		$(INSTALLER_TARBALL_DATA)
+	$(shell echo "$(INSTALLER_TARBALL_DATA)" | sed "s:\./installer/:./:g")
 
 #
 # Container Image
