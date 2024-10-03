@@ -246,6 +246,7 @@ func (g *GithubIntegration) generateAppManifest(name string) scrape.AppManifest 
 			PullRequests:     github.String("write"),
 			// Permissions for Red Hat Developer Hub (RHDH).
 			Administration: github.String("write"),
+			Workflows:      github.String("write"),
 		},
 	}
 }
