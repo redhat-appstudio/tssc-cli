@@ -38,8 +38,7 @@ INSTALLER_DIR ?= ./installer
 # Tarball with the installer resources.
 INSTALLER_TARBALL ?= $(INSTALLER_DIR)/installer.tar
 # Data to include in the tarball.
-INSTALLER_TARBALL_DATA ?= $(shell find $(INSTALLER_DIR) -maxdepth 1 \
-	! -path "$(INSTALLER_DIR)" \
+INSTALLER_TARBALL_DATA ?= $(shell find -L $(INSTALLER_DIR) -type f \
 	! -path "$(INSTALLER_TARBALL)" \
 	! -name embed.go \
 )
@@ -55,6 +54,7 @@ INSTALLER_TARBALL_DATA ?= $(shell find $(INSTALLER_DIR) -maxdepth 1 \
 # Builds the application executable with installer resources embedded.
 .PHONY: $(BIN)
 $(BIN): installer-tarball
+	@echo "# Building '$(BIN)'"
 	@[ -d $(BIN_DIR) ] || mkdir -p $(BIN_DIR)
 	go build -o $(BIN) $(CMD) $(ARGS)
 
@@ -82,8 +82,9 @@ run: installer-tarball
 .PHONY: installer-tarball
 installer-tarball: $(INSTALLER_TARBALL)
 $(INSTALLER_TARBALL): $(INSTALLER_TARBALL_DATA)
+	@echo "# Generating '$(INSTALLER_TARBALL)'"
 	@test -f "$(INSTALLER_TARBALL)" && rm -f "$(INSTALLER_TARBALL)" || true
-	tar -C "$(INSTALLER_DIR)" -cpf "$(INSTALLER_TARBALL)" \
+	@tar -C "$(INSTALLER_DIR)" -cpf "$(INSTALLER_TARBALL)" \
 	$(shell echo "$(INSTALLER_TARBALL_DATA)" | sed "s:\./installer/:./:g")
 
 #
