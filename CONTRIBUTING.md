@@ -5,9 +5,16 @@ In order to contribute to this project you need the following requirements:
 
 - [Golang 1.16 or higher][golang]
 - [GNU Make][gnuMake]
+- [GNU Tar][gnuTar]
 - [Podman][podman] or [Buildah][buildah] (optional)
 
 All the automation needed for the project lives in the [Makefile](Makefile). This file is the entry point for all the automation tasks in the project for CI, development and release
+
+For macOS users make sure `gtar` is available, i.e.:
+
+```bash
+brew install gnu-tar
+```
 
 # Building
 
@@ -122,3 +129,4 @@ make snapshot
 [buildah]: https://buildah.io
 [podman]: https://podman.io
 [releases]: https://github.com/redhat-appstudio/rhtap-cli/releases
+[gnuTar]: https://www.gnu.org/software/tar
