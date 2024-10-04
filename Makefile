@@ -33,6 +33,14 @@ IMAGE_TAG ?= latest
 # Fully qualified container image name.
 IMAGE_FQN ?= $(IMAGE_REPO)/$(IMAGE_NAMESPACE)/$(APP):$(IMAGE_TAG)
 
+# Determine the appropriate tar command based on the operating system.
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
+	TAR := gtar
+else
+	TAR := tar
+endif
+
 # Directory with the installer resources, scripts, Helm Charts, etc.
 INSTALLER_DIR ?= ./installer
 # Tarball with the installer resources.
@@ -84,7 +92,7 @@ installer-tarball: $(INSTALLER_TARBALL)
 $(INSTALLER_TARBALL): $(INSTALLER_TARBALL_DATA)
 	@echo "# Generating '$(INSTALLER_TARBALL)'"
 	@test -f "$(INSTALLER_TARBALL)" && rm -f "$(INSTALLER_TARBALL)" || true
-	@tar -C "$(INSTALLER_DIR)" -cpf "$(INSTALLER_TARBALL)" \
+	@$(TAR) -C "$(INSTALLER_DIR)" -cpf "$(INSTALLER_TARBALL)" \
 	$(shell echo "$(INSTALLER_TARBALL_DATA)" | sed "s:\./installer/:./:g")
 
 #
