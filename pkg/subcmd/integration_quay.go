@@ -35,7 +35,10 @@ The credentials are stored in a Kubernetes Secret in the configured namespace
 for RHDH.
 
 
-The given dockerconfig must include the repository path. E.g. "quay.io" becomes "quay.io/my-repository".
+If you experience push issues, add the image repository path in the "dockerconfig.json". For example, instead of "quay.io", specify the full repository path "quay.io/my-repository", as shown below:
+
+/bin/rhtap-cli integration quay --kube-config ~/my/kube/config --dockerconfigjson '{ "auths": { "quay.io/my-repository": { "auth": "REDACTED", "email": "" }  } }' --token "REDACTED" --url https://quay.io/my-repository
+
 The given API token (--token) must have push/pull permissions on the target repository.
 `
 
