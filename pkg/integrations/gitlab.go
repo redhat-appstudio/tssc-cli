@@ -25,8 +25,10 @@ type GitLabIntegration struct {
 
 	force bool // overwrite the existing secret
 
-	host  string // GitLab host
-	token string // API token credentials
+	host         string // GitLab host
+	clientId     string // GitLab application client id
+	clientSecret string // GitLab application client secret
+	token        string // API token credentials
 }
 
 // PersistentFlags sets the persistent flags for the GitLab integration.
@@ -36,6 +38,10 @@ func (g *GitLabIntegration) PersistentFlags(p *pflag.FlagSet) {
 
 	p.StringVar(&g.host, "host", g.host,
 		"GitLab host, defaults to 'gitlab.com'")
+	p.StringVar(&g.clientId, "app-id", g.clientId,
+		"GitLab application client id")
+	p.StringVar(&g.clientSecret, "app-secret", g.clientSecret,
+		"GitLab application client secret")
 	p.StringVar(&g.token, "token", g.token,
 		"GitLab API token")
 }
@@ -45,6 +51,8 @@ func (g *GitLabIntegration) log() *slog.Logger {
 	return g.logger.With(
 		"force", g.force,
 		"host", g.host,
+		"clientId", g.clientId,
+		"clientSecret-len", len(g.clientSecret),
 		"token-len", len(g.token),
 	)
 }
@@ -53,6 +61,12 @@ func (g *GitLabIntegration) log() *slog.Logger {
 func (g *GitLabIntegration) Validate() error {
 	if g.host == "" {
 		g.host = defaultPublicGitLabHost
+	}
+	if g.clientId != "" && g.clientSecret == "" {
+		return fmt.Errorf("app-secret is required when id is specified")
+	}
+	if g.clientId == "" && g.clientSecret != "" {
+		return fmt.Errorf("app-id is required when app-secret is specified")
 	}
 	if g.token == "" {
 		return fmt.Errorf("token is required")
@@ -117,8 +131,10 @@ func (g *GitLabIntegration) store(
 		},
 		Type: corev1.SecretTypeOpaque,
 		Data: map[string][]byte{
-			"host":  []byte(g.host),
-			"token": []byte(g.token),
+			"clientId":     []byte(g.clientId),
+			"clientSecret": []byte(g.clientSecret),
+			"host":         []byte(g.host),
+			"token":        []byte(g.token),
 		},
 	}
 	logger := g.log().With(
@@ -159,8 +175,10 @@ func NewGitLabIntegration(
 		cfg:    cfg,
 		kube:   kube,
 
-		force: false,
-		host:  "",
-		token: "",
+		force:        false,
+		host:         "",
+		clientId:     "",
+		clientSecret: "",
+		token:        "",
 	}
 }
