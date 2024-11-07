@@ -20,7 +20,7 @@ type Deploy struct {
 	cfg    *config.Config // installer configuration
 	kube   *k8s.Kube      // kubernetes client
 
-	valuesTmplPath string // path to the values template file
+	valuesTemplatePath string // path to the values template file
 }
 
 var _ Interface = &Deploy{}
@@ -48,7 +48,7 @@ func (d *Deploy) Cmd() *cobra.Command {
 // log logger with contextual information.
 func (d *Deploy) log() *slog.Logger {
 	return d.flags.LoggerWith(
-		d.logger.With("values-template", d.valuesTmplPath))
+		d.logger.With(flags.ValuesTemplateFlag, d.valuesTemplatePath))
 }
 
 // Complete verifies the object is complete.
@@ -58,6 +58,12 @@ func (d *Deploy) Complete(_ []string) error {
 
 // Validate asserts the requirements to start the deployment are in place.
 func (d *Deploy) Validate() error {
+	if d.flags.Embedded && d.valuesTemplatePath == "" {
+		return fmt.Errorf(
+			"flag --%s is ignored when using embedded resources",
+			flags.ValuesTemplateFlag,
+		)
+	}
 	return k8s.EnsureOpenShiftProject(
 		d.cmd.Context(),
 		d.log(),
@@ -74,7 +80,7 @@ func (d *Deploy) Run() error {
 	}
 
 	d.log().Debug("Reading values template file")
-	valuesTmpl, err := cfs.ReadFile(d.valuesTmplPath)
+	valuesTmpl, err := cfs.ReadFile(d.valuesTemplatePath)
 	if err != nil {
 		return fmt.Errorf("failed to read values template file: %w", err)
 	}
@@ -134,6 +140,6 @@ func NewDeploy(
 		cfg:    cfg,
 		kube:   kube,
 	}
-	flags.SetValuesTmplFlag(d.cmd.PersistentFlags(), &d.valuesTmplPath)
+	flags.SetValuesTmplFlag(d.cmd.PersistentFlags(), &d.valuesTemplatePath)
 	return d
 }
