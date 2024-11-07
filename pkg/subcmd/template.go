@@ -56,7 +56,7 @@ func (t *Template) Cmd() *cobra.Command {
 func (t *Template) log() *slog.Logger {
 	return t.flags.LoggerWith(
 		t.dep.LoggerWith(
-			t.logger.With("values-template", t.valuesTemplatePath),
+			t.logger.With(flags.ValuesTemplateFlag, t.valuesTemplatePath),
 		),
 	)
 }
@@ -87,6 +87,12 @@ func (t *Template) Validate() error {
 	}
 	if t.dep.Chart == "" {
 		return fmt.Errorf("missing chart path")
+	}
+	if t.flags.Embedded && t.valuesTemplatePath == "" {
+		return fmt.Errorf(
+			"flag --%s is ignored when using embedded resources",
+			flags.ValuesTemplateFlag,
+		)
 	}
 	return nil
 }
