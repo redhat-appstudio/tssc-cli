@@ -48,6 +48,9 @@ For instance:
 		$ rhtap-cli deploy --config /path/to/directory/config.yaml
 `
 
+// dirMode is the default directory permissions.
+const dirMode os.FileMode = 0755
+
 // Cmd exposes the cobra instance.
 func (i *Installer) Cmd() *cobra.Command {
 	return i.cmd
@@ -116,10 +119,19 @@ func (i *Installer) extractResources() error {
 
 		target := filepath.Join(i.extract, header.Name)
 
+		// Creating the base directory if it does not exist.
+		baseDir := filepath.Dir(target)
+		if _, err := os.Stat(baseDir); os.IsNotExist(err) {
+			fmt.Printf("- Creating base directory %q\n", baseDir)
+			if err := os.MkdirAll(baseDir, dirMode); err != nil {
+				return err
+			}
+		}
+
 		switch header.Typeflag {
 		case tar.TypeDir:
 			fmt.Printf("- Creating directory %q\n", target)
-			if err := os.MkdirAll(target, os.FileMode(header.Mode)); err != nil {
+			if err := os.MkdirAll(target, dirMode); err != nil {
 				return err
 			}
 		case tar.TypeReg:
@@ -138,6 +150,27 @@ func (i *Installer) extractResources() error {
 				return err
 			}
 		case tar.TypeSymlink:
+			// Checking for existing symlinks and removing them if they point to a
+			// different target location.
+			if existingTarget, err := os.Readlink(target); err == nil {
+				if existingTarget == header.Linkname {
+					fmt.Printf(
+						"- Symlink %q already exists and points to %q\n",
+						target,
+						header.Linkname,
+					)
+					continue
+				} else {
+					// Removing the existing symlink if it points to a different
+					// target.
+					if err := os.Remove(target); err != nil {
+						return err
+					}
+				}
+			} else if !os.IsNotExist(err) {
+				return err
+			}
+
 			fmt.Printf("- Creating symlink %q -> %q\n", target, header.Linkname)
 			if err := os.Symlink(header.Linkname, target); err != nil {
 				return err
