@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Chart.Name}}
+  name: {{ .Chart.Name }}
 data:
 {{- range $key, $value := .Values }}
   {{ $key }}: {{ $value | quote }}
