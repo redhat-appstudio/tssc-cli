@@ -6,17 +6,21 @@ import (
 	"testing"
 )
 
+const emptyInput = "empty input"
+const validInput = "valid input"
+const invalidInput = "invalid input"
+
 func TestToYAML(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    interface{}
 		expected string
 	}{{
-		name:     "empty input",
+		name:     emptyInput,
 		input:    nil,
 		expected: "null",
 	}, {
-		name: "valid input",
+		name: validInput,
 		input: map[string]interface{}{
 			"key1": "value1",
 			"key2": 123,
@@ -41,12 +45,12 @@ func TestFromYAML(t *testing.T) {
 		expected map[string]interface{}
 		wantErr  bool
 	}{{
-		name:     "empty input",
+		name:     emptyInput,
 		input:    "",
 		expected: map[string]interface{}{},
 		wantErr:  false,
 	}, {
-		name:  "valid input",
+		name:  validInput,
 		input: "key1: value1\nkey2: 123",
 		expected: map[string]interface{}{
 			"key1": "value1",
@@ -54,7 +58,7 @@ func TestFromYAML(t *testing.T) {
 		},
 		wantErr: false,
 	}, {
-		name:    "invalid input",
+		name:    invalidInput,
 		input:   `invalid yaml`,
 		wantErr: true,
 	}}
@@ -80,17 +84,17 @@ func TestFromYAMLArray(t *testing.T) {
 		expected []interface{}
 		wantErr  bool
 	}{{
-		name:     "empty input",
+		name:     emptyInput,
 		input:    "",
 		expected: []interface{}{},
 		wantErr:  false,
 	}, {
-		name:     "valid input",
+		name:     validInput,
 		input:    "- value1\n- 123\n- true",
 		expected: []interface{}{"value1", 123, true},
 		wantErr:  false,
 	}, {
-		name:    "invalid input",
+		name:    invalidInput,
 		input:   "invalid yaml",
 		wantErr: true,
 	}}
@@ -117,11 +121,11 @@ func TestToJSON(t *testing.T) {
 		input    interface{}
 		expected string
 	}{{
-		name:     "empty input",
+		name:     emptyInput,
 		input:    nil,
 		expected: "null",
 	}, {
-		name: "valid input",
+		name: validInput,
 		input: map[string]interface{}{
 			"key1": "value1",
 			"key2": 123,
@@ -146,17 +150,17 @@ func TestFromJSON(t *testing.T) {
 		expected map[string]interface{}
 		wantErr  bool
 	}{{
-		name:     "empty input",
+		name:     emptyInput,
 		input:    "{}",
 		expected: map[string]interface{}{},
 		wantErr:  false,
 	}, {
-		name:     "valid input",
+		name:     validInput,
 		input:    `{"key1":"value1"}`,
 		expected: map[string]interface{}{"key1": "value1"},
 		wantErr:  false,
 	}, {
-		name:    "invalid input",
+		name:    invalidInput,
 		input:   `invalid json`,
 		wantErr: true,
 	}}
@@ -182,17 +186,17 @@ func TestFromJSONArray(t *testing.T) {
 		expected []interface{}
 		wantErr  bool
 	}{{
-		name:     "empty input",
+		name:     emptyInput,
 		input:    "[]",
 		expected: []interface{}{},
 		wantErr:  false,
 	}, {
-		name:     "valid input",
+		name:     validInput,
 		input:    `["value1", "value2"]`,
 		expected: []interface{}{"value1", "value2"},
 		wantErr:  false,
 	}, {
-		name:    "invalid input",
+		name:    invalidInput,
 		input:   "invalid json",
 		wantErr: true,
 	}}
