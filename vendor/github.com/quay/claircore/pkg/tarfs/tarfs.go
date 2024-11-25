@@ -7,7 +7,6 @@ import (
 	"io"
 	"io/fs"
 	"path"
-	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -34,7 +33,13 @@ type inode struct {
 //
 // This is needed any time a name is pulled from the archive.
 func normPath(p string) string {
-	s, _ := filepath.Rel("/", filepath.Join("/", p))
+	// This is OK because [path.Join] is documented to call [path.Clean], which
+	// will remove any parent ("..") elements, and will always return a string
+	// of at least length 1, because the static component is length 1.
+	s := path.Join("/", p)[1:]
+	if len(s) == 0 {
+		return "."
+	}
 	if utf8.ValidString(s) {
 		return s
 	}
@@ -207,7 +212,7 @@ Again:
 	f.lookup[name] = i
 
 	cycle := make(map[*inode]struct{})
-	dir := filepath.Dir(name)
+	dir := path.Dir(name)
 AddEnt:
 	switch dir {
 	case name:
@@ -447,38 +452,6 @@ func (f *FS) ReadDir(name string) ([]fs.DirEntry, error) {
 	return ret, nil
 }
 
-// ReadFile implements fs.ReadFileFS.
-func (f *FS) ReadFile(name string) ([]byte, error) {
-	// ReadFileFS is implemented because it can avoid allocating an intermediate
-	// "file" struct and can immediately allocate a byte slice of the correct
-	// size.
-	const op = `readfile`
-	i, err := f.getInode(op, name)
-	if err != nil {
-		return nil, err
-	}
-	if i.h.FileInfo().Mode().Type()&fs.ModeSymlink != 0 {
-		return f.ReadFile(i.h.Linkname)
-	}
-	r := tar.NewReader(io.NewSectionReader(f.r, i.off, i.sz))
-	if _, err := r.Next(); err != nil {
-		return nil, &fs.PathError{
-			Op:   op,
-			Path: name,
-			Err:  err,
-		}
-	}
-	ret := make([]byte, i.h.Size)
-	if _, err := io.ReadFull(r, ret); err != nil {
-		return nil, &fs.PathError{
-			Op:   op,
-			Path: name,
-			Err:  err,
-		}
-	}
-	return ret, nil
-}
-
 // Glob implements fs.GlobFS.
 //
 // See path.Match for the patten syntax.
@@ -517,15 +490,12 @@ func (f *FS) Sub(dir string) (fs.FS, error) {
 		lookup: make(map[string]int),
 	}
 	for n, i := range f.lookup {
-		rel, err := filepath.Rel(bp, n)
-		if err != nil {
-			// Can't be made relative.
-			continue
-		}
-		if strings.HasPrefix(rel, "..") {
+		if !strings.HasPrefix(n, bp) {
 			// Not in this subtree.
 			continue
 		}
+		// NormPath handles the root condition cleanly.
+		rel := normPath(strings.TrimPrefix(n, bp))
 		ret.lookup[rel] = i
 	}
 	return &ret, nil
@@ -533,10 +503,9 @@ func (f *FS) Sub(dir string) (fs.FS, error) {
 
 // A bunch of static assertions for the fs interfaces.
 var (
-	_ fs.FS         = (*FS)(nil)
-	_ fs.GlobFS     = (*FS)(nil)
-	_ fs.ReadDirFS  = (*FS)(nil)
-	_ fs.ReadFileFS = (*FS)(nil)
-	_ fs.StatFS     = (*FS)(nil)
-	_ fs.SubFS      = (*FS)(nil)
+	_ fs.FS        = (*FS)(nil)
+	_ fs.GlobFS    = (*FS)(nil)
+	_ fs.ReadDirFS = (*FS)(nil)
+	_ fs.StatFS    = (*FS)(nil)
+	_ fs.SubFS     = (*FS)(nil)
 )

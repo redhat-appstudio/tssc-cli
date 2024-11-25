@@ -7,13 +7,15 @@ import (
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
-// MachineConfigurationSpecApplyConfiguration represents an declarative configuration of the MachineConfigurationSpec type for use
+// MachineConfigurationSpecApplyConfiguration represents a declarative configuration of the MachineConfigurationSpec type for use
 // with apply.
 type MachineConfigurationSpecApplyConfiguration struct {
 	StaticPodOperatorSpecApplyConfiguration `json:",inline"`
+	ManagedBootImages                       *ManagedBootImagesApplyConfiguration          `json:"managedBootImages,omitempty"`
+	NodeDisruptionPolicy                    *NodeDisruptionPolicyConfigApplyConfiguration `json:"nodeDisruptionPolicy,omitempty"`
 }
 
-// MachineConfigurationSpecApplyConfiguration constructs an declarative configuration of the MachineConfigurationSpec type for use with
+// MachineConfigurationSpecApplyConfiguration constructs a declarative configuration of the MachineConfigurationSpec type for use with
 // apply.
 func MachineConfigurationSpec() *MachineConfigurationSpecApplyConfiguration {
 	return &MachineConfigurationSpecApplyConfiguration{}
@@ -80,5 +82,21 @@ func (b *MachineConfigurationSpecApplyConfiguration) WithFailedRevisionLimit(val
 // If called multiple times, the SucceededRevisionLimit field is set to the value of the last call.
 func (b *MachineConfigurationSpecApplyConfiguration) WithSucceededRevisionLimit(value int32) *MachineConfigurationSpecApplyConfiguration {
 	b.SucceededRevisionLimit = &value
+	return b
+}
+
+// WithManagedBootImages sets the ManagedBootImages field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the ManagedBootImages field is set to the value of the last call.
+func (b *MachineConfigurationSpecApplyConfiguration) WithManagedBootImages(value *ManagedBootImagesApplyConfiguration) *MachineConfigurationSpecApplyConfiguration {
+	b.ManagedBootImages = value
+	return b
+}
+
+// WithNodeDisruptionPolicy sets the NodeDisruptionPolicy field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the NodeDisruptionPolicy field is set to the value of the last call.
+func (b *MachineConfigurationSpecApplyConfiguration) WithNodeDisruptionPolicy(value *NodeDisruptionPolicyConfigApplyConfiguration) *MachineConfigurationSpecApplyConfiguration {
+	b.NodeDisruptionPolicy = value
 	return b
 }
