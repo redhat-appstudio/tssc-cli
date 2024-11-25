@@ -27,9 +27,9 @@ import (
 	"strings"
 	"time"
 
-	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	jsonpatch "gopkg.in/evanphx/json-patch.v4"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -427,9 +427,10 @@ type FeatureGate string
 const (
 	ApplySet                FeatureGate = "KUBECTL_APPLYSET"
 	CmdPluginAsSubcommand   FeatureGate = "KUBECTL_ENABLE_CMD_SHADOW"
-	InteractiveDelete       FeatureGate = "KUBECTL_INTERACTIVE_DELETE"
 	OpenAPIV3Patch          FeatureGate = "KUBECTL_OPENAPIV3_PATCH"
 	RemoteCommandWebsockets FeatureGate = "KUBECTL_REMOTE_COMMAND_WEBSOCKETS"
+	PortForwardWebsockets   FeatureGate = "KUBECTL_PORT_FORWARD_WEBSOCKETS"
+	DebugCustomProfile      FeatureGate = "KUBECTL_DEBUG_CUSTOM_PROFILE"
 )
 
 // IsEnabled returns true iff environment variable is set to true.
