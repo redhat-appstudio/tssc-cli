@@ -25,6 +25,7 @@ type GitHubApp struct {
 
 	gitHubURL     string // GitHub API URL
 	gitHubOrgName string // GitHub organization name
+	webServerAddr string // local webserver address
 	webServerPort int    // local webserver port
 }
 
@@ -43,6 +44,8 @@ func (g *GitHubApp) PersistentFlags(p *pflag.FlagSet) {
 		"GitHub URL")
 	p.StringVar(&g.gitHubOrgName, "org", g.gitHubOrgName,
 		"GitHub organization name")
+	p.StringVar(&g.webServerAddr, "webserver-addr", g.webServerAddr,
+		"Callback webserver listen address")
 	p.IntVar(&g.webServerPort, "webserver-port", g.webServerPort,
 		"Callback webserver port number")
 }
@@ -136,7 +139,7 @@ func (g *GitHubApp) oAuth2Workflow(
 	})
 
 	webServer := &http.Server{
-		Addr:    fmt.Sprintf("127.0.0.1:%d", g.webServerPort),
+		Addr:    fmt.Sprintf("%s:%d", g.webServerAddr, g.webServerPort),
 		Handler: serveMux,
 	}
 	// Opening the web browser while listening for the GitHub callback URL in the
@@ -198,6 +201,7 @@ func NewGitHubApp(logger *slog.Logger) *GitHubApp {
 	return &GitHubApp{
 		logger:        logger,
 		gitHubURL:     defaultPublicGitHubURL,
+		webServerAddr: "127.0.0.1",
 		webServerPort: 8228,
 	}
 }
