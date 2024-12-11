@@ -17,7 +17,10 @@ func HelmReleasePrinter(rel *release.Release) {
 	fmt.Printf("#    Revision: %d\n", rel.Version)
 	fmt.Printf("#     Updated: %s\n", rel.Info.LastDeployed.String())
 	fmt.Println("#")
+}
 
+// HelmReleaseNotesPrinter prints the release notes.
+func HelmReleaseNotesPrinter(rel *release.Release) {
 	if rel.Info.Notes != "" {
 		fmt.Printf("#\n# Notes\n#\n\n")
 		fmt.Println(rel.Info.Notes)
@@ -27,8 +30,6 @@ func HelmReleasePrinter(rel *release.Release) {
 // HelmExtendedReleasePrinter prints the release information, including the
 // manifest and hooks.
 func HelmExtendedReleasePrinter(rel *release.Release) {
-	ValuesPrinter("Config", rel.Config)
-
 	fmt.Printf("#\n# Manifest\n#\n\n")
 	fmt.Print(rel.Manifest)
 

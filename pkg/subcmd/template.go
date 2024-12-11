@@ -36,15 +36,26 @@ The Template subcommand is used to render the values template file and,
 optionally, the Helm chart manifests. It is particularly useful for
 troubleshooting and developing Helm charts for the RHTAP installation process.
 
-By using the '--show-manifest=false' flag, only the values template
-('--values-template') will be rendered, making the last argument, with the Helm
-chart directory, optional.
+By using the '--show-manifest=false' flag, only the global values template
+('--values-template') will be rendered as YAML, thus the last argument, with the
+Helm chart directory, optional.
 
-Additionally, the '--debug' flag should be used to display the raw values template
-payload, regardless of whether it is valid YAML or not.
+Additionally, the '--debug' flag should be used to display rendered global values,
+passed into every Helm Chart installed, as key-value pairs.
 
 The installer resources are embedded in the executable, these resources are
 employed by default, to use local files, set the '--embedded' flag to false.
+
+Examples:
+
+  # Only showing the global values as YAML.
+  $ rhtap-cli template --show-manifests=false
+
+  # Rendering only the templates of a single Helm Chart.
+  $ rhtap-cli template --show-values=false charts/rhtap-subscriptions
+
+  # Rendering all resources of a Helm Chart.
+  $ rhtap-cli template charts/rhtap-subscriptions
 `
 
 // Cmd exposes the cobra instance.
@@ -120,16 +131,20 @@ func (t *Template) Run() error {
 	); err != nil {
 		return err
 	}
-	if t.showValues && t.flags.Debug {
-		i.PrintRawValues()
-	}
 
 	// Rendering the global values.
 	if err = i.RenderValues(); err != nil {
 		return err
 	}
+	// Show the rendered global values, what's passed into very chart.
 	if t.showValues {
-		i.PrintValues()
+		// Displaying the rendered values as properties, where it's easier to
+		// verify settings by inspecting key-value pairs.
+		if t.flags.Debug {
+			// i.PrintValues()
+		}
+		// Show values as YAML.
+		i.PrintRawValues()
 	}
 
 	// When the manifests aren't shown, we don't need to dry-run "helm install".
