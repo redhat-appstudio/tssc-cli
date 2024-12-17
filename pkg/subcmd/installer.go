@@ -63,9 +63,6 @@ func (i *Installer) Complete(_ []string) error {
 
 // Validate validates the informed flags are correct, and the conditions are met.
 func (i *Installer) Validate() error {
-	if !i.flags.Embedded {
-		return fmt.Errorf("embedded must be enabled")
-	}
 	if i.list && i.extract != "" {
 		return fmt.Errorf("list and extract are mutually exclusive")
 	}

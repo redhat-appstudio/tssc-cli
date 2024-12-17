@@ -3,7 +3,9 @@ package subcmd
 import (
 	"fmt"
 	"log/slog"
+	"os"
 
+	"github.com/redhat-appstudio/rhtap-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/config"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/flags"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/installer"
@@ -44,7 +46,8 @@ Additionally, the '--debug' flag should be used to display rendered global value
 passed into every Helm Chart installed, as key-value pairs.
 
 The installer resources are embedded in the executable, these resources are
-employed by default, to use local files, set the '--embedded' flag to false.
+employed by default, to use local files just use the last argument with the path
+to the local Helm Chart.
 
 Examples:
 
@@ -99,18 +102,17 @@ func (t *Template) Validate() error {
 	if t.dep.Chart == "" {
 		return fmt.Errorf("missing chart path")
 	}
-	if t.flags.Embedded && t.valuesTemplatePath == "" {
-		return fmt.Errorf(
-			"flag --%s is ignored when using embedded resources",
-			flags.ValuesTemplateFlag,
-		)
-	}
 	return nil
 }
 
 // Run Renders the templates.
 func (t *Template) Run() error {
-	cfs, err := newChartFS(t.logger, t.flags, t.cfg)
+	cwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	cfs, err := chartfs.NewChartFS(cwd)
 	if err != nil {
 		return err
 	}

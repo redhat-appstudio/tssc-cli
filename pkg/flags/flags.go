@@ -16,7 +16,6 @@ import (
 type Flags struct {
 	Debug          bool          // debug mode
 	DryRun         bool          // dry-run mode
-	Embedded       bool          // embedded mode
 	KubeConfigPath string        // path to the kubeconfig file
 	LogLevel       *slog.Level   // log verbosity level
 	Timeout        time.Duration // helm client timeout
@@ -26,12 +25,6 @@ type Flags struct {
 func (f *Flags) PersistentFlags(p *pflag.FlagSet) {
 	p.BoolVar(&f.Debug, "debug", f.Debug, "enable debug mode")
 	p.BoolVar(&f.DryRun, "dry-run", f.DryRun, "enable dry-run mode")
-	p.BoolVar(
-		&f.Embedded,
-		"embedded",
-		f.Embedded,
-		"installer resources embedded on the executable",
-	)
 	p.StringVar(
 		&f.KubeConfigPath,
 		"kube-config",
@@ -80,7 +73,6 @@ func NewFlags() *Flags {
 	return &Flags{
 		Debug:          false,
 		DryRun:         false,
-		Embedded:       true,
 		KubeConfigPath: path.Join(usr.HomeDir, ".kube", "config"),
 		LogLevel:       &defaultLogLevel,
 		Timeout:        15 * time.Minute,

@@ -11,7 +11,8 @@ import (
 func TestNewChartFS(t *testing.T) {
 	g := o.NewWithT(t)
 
-	c := NewChartFS("../../installer")
+	c, err := NewChartFS("../../installer")
+	g.Expect(err).To(o.Succeed())
 	g.Expect(c).ToNot(o.BeNil())
 
 	t.Run("ReadFile", func(t *testing.T) {

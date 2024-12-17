@@ -15,8 +15,10 @@ func TestNewHooks(t *testing.T) {
 
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
+	cfs, err := chartfs.NewChartFS("../../test")
+	g.Expect(err).To(o.Succeed())
 	h := NewHooks(
-		chartfs.NewChartFS("../../test"),
+		cfs,
 		&config.Dependency{
 			Chart:     "charts/testing",
 			Namespace: "rhtap",
