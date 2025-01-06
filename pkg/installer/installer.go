@@ -34,7 +34,7 @@ type Installer struct {
 // specifies the default namespace for the Helm Chart.
 func (i *Installer) prepareHelmClient() (*deployer.Helm, error) {
 	i.logger.Debug("Loading dependency Helm chart (from CFS)")
-	chart, err := i.cfs.GetChartForDep(i.dep)
+	chart, err := i.cfs.GetChartForDep(i.dep.Chart)
 	if err != nil {
 		return nil, err
 	}

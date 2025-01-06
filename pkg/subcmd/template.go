@@ -3,7 +3,6 @@ package subcmd
 import (
 	"fmt"
 	"log/slog"
-	"os"
 
 	"github.com/redhat-appstudio/rhtap-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/config"
@@ -16,11 +15,12 @@ import (
 
 // Template represents the "template" subcommand.
 type Template struct {
-	cmd    *cobra.Command // cobra command
-	logger *slog.Logger   // application logger
-	flags  *flags.Flags   // global flags
-	cfg    *config.Config // installer configuration
-	kube   *k8s.Kube      // kubernetes client
+	cmd    *cobra.Command   // cobra command
+	logger *slog.Logger     // application logger
+	flags  *flags.Flags     // global flags
+	cfg    *config.Config   // installer configuration
+	cfs    *chartfs.ChartFS // embedded filesystem
+	kube   *k8s.Kube        // kubernetes client
 
 	// TODO: add support for "--validate", so the rendered resources are validated
 	// against the cluster during templating.
@@ -107,23 +107,13 @@ func (t *Template) Validate() error {
 
 // Run Renders the templates.
 func (t *Template) Run() error {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-
-	cfs, err := chartfs.NewChartFS(cwd)
-	if err != nil {
-		return err
-	}
-
-	valuesTmplPayload, err := cfs.ReadFile(t.valuesTemplatePath)
+	valuesTmplPayload, err := t.cfs.ReadFile(t.valuesTemplatePath)
 	if err != nil {
 		return fmt.Errorf("failed to read values template file: %w", err)
 	}
 
 	// Installer for the specific dependency
-	i := installer.NewInstaller(t.logger, t.flags, t.kube, cfs, &t.dep)
+	i := installer.NewInstaller(t.logger, t.flags, t.kube, t.cfs, &t.dep)
 
 	// Setting values and loading cluster's information.
 	if err = i.SetValues(
@@ -161,6 +151,7 @@ func NewTemplate(
 	logger *slog.Logger,
 	f *flags.Flags,
 	cfg *config.Config,
+	cfs *chartfs.ChartFS,
 	kube *k8s.Kube,
 ) *Template {
 	t := &Template{
@@ -173,6 +164,7 @@ func NewTemplate(
 		logger:        logger.WithGroup("template"),
 		flags:         f,
 		cfg:           cfg,
+		cfs:           cfs,
 		kube:          kube,
 		dep:           config.Dependency{Namespace: "default"},
 		showValues:    true,

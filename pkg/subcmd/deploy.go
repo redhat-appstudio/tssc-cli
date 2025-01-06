@@ -16,11 +16,12 @@ import (
 
 // Deploy is the deploy subcommand.
 type Deploy struct {
-	cmd    *cobra.Command // cobra command
-	logger *slog.Logger   // application logger
-	flags  *flags.Flags   // global flags
-	cfg    *config.Config // installer configuration
-	kube   *k8s.Kube      // kubernetes client
+	cmd    *cobra.Command   // cobra command
+	logger *slog.Logger     // application logger
+	flags  *flags.Flags     // global flags
+	cfg    *config.Config   // installer configuration
+	cfs    *chartfs.ChartFS // embedded filesystem
+	kube   *k8s.Kube        // kubernetes client
 
 	valuesTemplatePath string // path to the values template file
 }
@@ -128,6 +129,7 @@ func NewDeploy(
 	logger *slog.Logger,
 	f *flags.Flags,
 	cfg *config.Config,
+	cfs *chartfs.ChartFS,
 	kube *k8s.Kube,
 ) Interface {
 	d := &Deploy{
@@ -140,6 +142,7 @@ func NewDeploy(
 		logger: logger.WithGroup("deploy"),
 		flags:  f,
 		cfg:    cfg,
+		cfs:    cfs,
 		kube:   kube,
 	}
 	flags.SetValuesTmplFlag(d.cmd.PersistentFlags(), &d.valuesTemplatePath)

@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/redhat-appstudio/rhtap-cli/installer"
-	"github.com/redhat-appstudio/rhtap-cli/pkg/config"
 
 	"github.com/quay/claircore/pkg/tarfs"
 	"helm.sh/helm/v3/pkg/chart"
@@ -81,9 +80,9 @@ func (c *ChartFS) ReadFile(name string) ([]byte, error) {
 
 // GetChartForDep returns the Helm chart for the given dependency. It uses
 // BufferredFiles to walk through the filesytem and collect the chart files.
-func (c *ChartFS) GetChartForDep(dep *config.Dependency) (*chart.Chart, error) {
-	bf := NewBufferedFiles(c.embeddedFS, dep.Chart)
-	if err := fs.WalkDir(c.embeddedFS, dep.Chart, bf.Walk); err != nil {
+func (c *ChartFS) GetChartForDep(chartPath string) (*chart.Chart, error) {
+	bf := NewBufferedFiles(c.embeddedFS, chartPath)
+	if err := fs.WalkDir(c.embeddedFS, chartPath, bf.Walk); err != nil {
 		return nil, err
 	}
 	return loader.LoadFiles(bf.Files())
@@ -101,4 +100,14 @@ func NewChartFS(baseDir string) (*ChartFS, error) {
 		baseDir:    installerDir,
 		localFS:    os.DirFS(baseDir),
 	}, nil
+}
+
+// NewChartFSForCWD instantiates a ChartFS instance using the current working
+// directory.
+func NewChartFSForCWD() (*ChartFS, error) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+	return NewChartFS(cwd)
 }

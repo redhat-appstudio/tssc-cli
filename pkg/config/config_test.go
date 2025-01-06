@@ -5,12 +5,16 @@ import (
 	"testing"
 
 	o "github.com/onsi/gomega"
+	"github.com/redhat-appstudio/rhtap-cli/pkg/chartfs"
 )
 
 func TestNewConfigFromFile(t *testing.T) {
 	g := o.NewWithT(t)
 
-	cfg, err := NewConfigFromFile("../../installer/config.yaml")
+	cfs, err := chartfs.NewChartFS("../../installer")
+	g.Expect(err).To(o.Succeed())
+
+	cfg, err := NewConfigFromFile(cfs, "config.yaml")
 	g.Expect(err).To(o.Succeed())
 	g.Expect(cfg).NotTo(o.BeNil())
 	g.Expect(cfg.Installer).NotTo(o.BeNil())

@@ -3,8 +3,6 @@ package chartfs
 import (
 	"testing"
 
-	"github.com/redhat-appstudio/rhtap-cli/pkg/config"
-
 	o "github.com/onsi/gomega"
 )
 
@@ -22,10 +20,7 @@ func TestNewChartFS(t *testing.T) {
 	})
 
 	t.Run("GetChartForDep", func(t *testing.T) {
-		chart, err := c.GetChartForDep(&config.Dependency{
-			Chart:     "charts/rhtap-openshift",
-			Namespace: "rhtap",
-		})
+		chart, err := c.GetChartForDep("charts/rhtap-openshift")
 		g.Expect(err).To(o.Succeed())
 		g.Expect(chart).ToNot(o.BeNil())
 		g.Expect(chart.Name()).To(o.Equal("rhtap-openshift"))
