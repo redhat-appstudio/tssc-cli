@@ -33,14 +33,14 @@ type Installer struct {
 // prepareHelmClient prepares the Helm client for the given dependency, which also
 // specifies the default namespace for the Helm Chart.
 func (i *Installer) prepareHelmClient() (*deployer.Helm, error) {
-	i.logger.Debug("Loading dependency Helm chart (from CFS)")
-	chart, err := i.cfs.GetChartForDep(i.dep.Chart)
+	i.logger.Debug("Loading dependency Helm chart...")
+	cf, err := i.cfs.GetChartFiles(i.dep.Chart)
 	if err != nil {
 		return nil, err
 	}
 
 	i.logger.Debug("Loading Helm client for dependency and namespace")
-	return deployer.NewHelm(i.logger, i.flags, i.kube, i.dep.Namespace, chart)
+	return deployer.NewHelm(i.logger, i.flags, i.kube, i.dep.Namespace, cf)
 }
 
 // SetValues prepares the values template for the Helm chart installation.

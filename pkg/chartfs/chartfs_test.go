@@ -20,7 +20,7 @@ func TestNewChartFS(t *testing.T) {
 	})
 
 	t.Run("GetChartForDep", func(t *testing.T) {
-		chart, err := c.GetChartForDep("charts/rhtap-openshift")
+		chart, err := c.GetChartFiles("charts/rhtap-openshift")
 		g.Expect(err).To(o.Succeed())
 		g.Expect(chart).ToNot(o.BeNil())
 		g.Expect(chart.Name()).To(o.Equal("rhtap-openshift"))

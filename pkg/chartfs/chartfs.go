@@ -78,14 +78,22 @@ func (c *ChartFS) ReadFile(name string) ([]byte, error) {
 	return nil, err
 }
 
-// GetChartForDep returns the Helm chart for the given dependency. It uses
-// BufferredFiles to walk through the filesytem and collect the chart files.
-func (c *ChartFS) GetChartForDep(chartPath string) (*chart.Chart, error) {
-	bf := NewBufferedFiles(c.embeddedFS, chartPath)
-	if err := fs.WalkDir(c.embeddedFS, chartPath, bf.Walk); err != nil {
+// walkChartDir walks through the chart directory, and loads the chart files.
+func (c *ChartFS) walkChartDir(fsys fs.FS, chartPath string) (*chart.Chart, error) {
+	bf := NewBufferedFiles(fsys, chartPath)
+	if err := fs.WalkDir(fsys, chartPath, bf.Walk); err != nil {
 		return nil, err
 	}
 	return loader.LoadFiles(bf.Files())
+}
+
+// GetChartFiles returns the informed Helm chart path instantiated files.
+func (c *ChartFS) GetChartFiles(chartPath string) (*chart.Chart, error) {
+	chartFiles, err := c.walkChartDir(c.localFS, chartPath)
+	if err == nil {
+		return chartFiles, nil
+	}
+	return c.walkChartDir(c.embeddedFS, chartPath)
 }
 
 // NewChartFS instantiates a ChartFS instance using the embedded tarball,
