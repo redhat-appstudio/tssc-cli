@@ -17,15 +17,16 @@ import (
 )
 
 // installerDir represents the directory where the installer tarball is stored.
-const installerDir = "installer"
+const embeddedInstallerDir = "installer"
 
 // ChartFS represents a file system abstraction which provides the Helm charts
 // payload, and as well the "values.yaml.tpl" file. It uses the embedded tarball
 // as data source, and as well, the local file system.
 type ChartFS struct {
-	embeddedFS fs.FS  // embedded file system
-	localFS    fs.FS  // local file system
-	baseDir    string // base directory path
+	embeddedFS      fs.FS  // embedded file system
+	embeddedBaseDir string // base directory path
+	localFS         fs.FS  // local file system
+	localBaseDir    string // base directory path
 }
 
 // ErrFailedToReadEmbeddedFiles returned when the tarball is not readable.
@@ -35,7 +36,7 @@ var ErrFailedToReadEmbeddedFiles = errors.New("failed to read embedded files")
 func (c *ChartFS) relativePath(baseDir, name string) (string, error) {
 	// If the file name does not start with the base directory, it means the path
 	// is already relative.
-	if !strings.HasPrefix(name, baseDir) {
+	if !strings.HasPrefix(name, baseDir) && name[0] != '/' {
 		return name, nil
 	}
 
@@ -49,7 +50,7 @@ func (c *ChartFS) relativePath(baseDir, name string) (string, error) {
 // readFileFromLocalFS reads the file from the local file system, so using the
 // base diretory configured.
 func (c *ChartFS) readFileFromLocalFS(name string) ([]byte, error) {
-	relPath, err := c.relativePath(c.baseDir, name)
+	relPath, err := c.relativePath(c.localBaseDir, name)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +60,7 @@ func (c *ChartFS) readFileFromLocalFS(name string) ([]byte, error) {
 // readFileFromEmbeddedFS reads the file from the embedded file system, using the
 // known base direcotry for embedded files.
 func (c *ChartFS) readFileFromEmbeddedFS(name string) ([]byte, error) {
-	relPath, err := c.relativePath(installerDir, name)
+	relPath, err := c.relativePath(c.embeddedBaseDir, name)
 	if err != nil {
 		return nil, err
 	}
@@ -104,9 +105,10 @@ func NewChartFS(baseDir string) (*ChartFS, error) {
 		return nil, fmt.Errorf("%w: %v", ErrFailedToReadEmbeddedFiles, err)
 	}
 	return &ChartFS{
-		embeddedFS: tfs,
-		baseDir:    installerDir,
-		localFS:    os.DirFS(baseDir),
+		embeddedFS:      tfs,
+		embeddedBaseDir: embeddedInstallerDir,
+		localFS:         os.DirFS(baseDir),
+		localBaseDir:    baseDir,
 	}, nil
 }
 
