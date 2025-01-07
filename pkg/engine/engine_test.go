@@ -3,6 +3,7 @@ package engine
 import (
 	"testing"
 
+	"github.com/redhat-appstudio/rhtap-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/config"
 
 	o "github.com/onsi/gomega"
@@ -28,7 +29,10 @@ root:
 func TestEngine_Render(t *testing.T) {
 	g := o.NewWithT(t)
 
-	cfg, err := config.NewConfigFromFile("../../installer/config.yaml")
+	cfs, err := chartfs.NewChartFS("../../installer")
+	g.Expect(err).To(o.Succeed())
+
+	cfg, err := config.NewConfigFromFile(cfs, "config.yaml")
 	g.Expect(err).To(o.Succeed())
 
 	variables := NewVariables()

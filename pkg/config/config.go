@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"os"
 	"path/filepath"
 
+	"github.com/redhat-appstudio/rhtap-cli/pkg/chartfs"
 	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v3"
 )
@@ -34,10 +34,10 @@ type Spec struct {
 
 // Config root configuration structure.
 type Config struct {
-	// configPath is the path to the configuration file, private attribute.
-	configPath string
-	// Installer is the root configuration for the installer.
-	Installer Spec `yaml:"rhtapCLI"`
+	cfs        *chartfs.ChartFS // embedded filesystem
+	configPath string           // configuration file path
+
+	Installer Spec `yaml:"rhtapCLI"` // root configuration for the installer
 }
 
 // PersistentFlags defines the persistent flags for the CLI.
@@ -114,7 +114,7 @@ func (c *Config) Validate() error {
 
 // UnmarshalYAML reads the configuration file and unmarshal it into the Config.
 func (c *Config) UnmarshalYAML() error {
-	payload, err := os.ReadFile(c.configPath)
+	payload, err := c.cfs.ReadFile(c.configPath)
 	if err != nil {
 		return err
 	}
@@ -129,13 +129,17 @@ func (c *Config) UnmarshalYAML() error {
 
 // NewConfigFromFile returns a new Config instance based on the informed file. The
 // config file path is kept as a private attribute.
-func NewConfigFromFile(configPath string) (*Config, error) {
-	c := &Config{configPath: configPath}
+func NewConfigFromFile(cfs *chartfs.ChartFS, configPath string) (*Config, error) {
+	c := NewConfig(cfs)
+	c.configPath = configPath
 	return c, c.UnmarshalYAML()
 }
 
 // NewConfig returns a new Config instance, pointing to the default "config.yaml"
 // file location.
-func NewConfig() *Config {
-	return &Config{configPath: "installer/config.yaml"}
+func NewConfig(cfs *chartfs.ChartFS) *Config {
+	return &Config{
+		configPath: "installer/config.yaml",
+		cfs:        cfs,
+	}
 }
