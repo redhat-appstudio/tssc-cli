@@ -55,6 +55,17 @@ func (c *Config) GetBaseDir() string {
 	return filepath.Dir(c.configPath)
 }
 
+// GetDependency returns a dependency chart configuration.
+func (c *Config) GetDependency(logger *slog.Logger, chart string) (*Dependency, error) {
+	logger.Debug("Getting dependency")
+	for _, dep := range c.Installer.Dependencies {
+		if dep.Chart == chart {
+			return &dep, nil
+		}
+	}
+	return nil, fmt.Errorf("chart %s not found", chart)
+}
+
 // GetEnabledDependencies returns a list of enabled dependencies.
 func (c *Config) GetEnabledDependencies(logger *slog.Logger) []Dependency {
 	enabled := []Dependency{}

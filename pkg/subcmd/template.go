@@ -113,7 +113,11 @@ func (t *Template) Run() error {
 	}
 
 	// Installer for the specific dependency
-	i := installer.NewInstaller(t.logger, t.flags, t.kube, t.cfs, &t.dep)
+	dep, err := t.cfg.GetDependency(t.log(), t.dep.Chart)
+	if err != nil {
+		return err
+	}
+	i := installer.NewInstaller(t.logger, t.flags, t.kube, t.cfs, dep)
 
 	// Setting values and loading cluster's information.
 	if err = i.SetValues(
