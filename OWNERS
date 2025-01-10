@@ -1,9 +1,10 @@
 ---
 approvers:
-  - jduimovich
   - otaviof
   - roming22
+  - lcarva
 reviewers:
   - xinredhat
   - prietyc123
-  - flacatus
+  - jkopriva
+  - rhopp
