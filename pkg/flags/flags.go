@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"os"
 	"os/user"
 	"path"
 	"strings"
@@ -70,10 +71,14 @@ func NewFlags() *Flags {
 	}
 
 	defaultLogLevel := slog.LevelWarn
+	kubeConfigPath, exists := os.LookupEnv("KUBECONFIG")
+	if !exists {
+		kubeConfigPath = path.Join(usr.HomeDir, ".kube", "config")
+	}
 	return &Flags{
 		Debug:          false,
 		DryRun:         false,
-		KubeConfigPath: path.Join(usr.HomeDir, ".kube", "config"),
+		KubeConfigPath: kubeConfigPath,
 		LogLevel:       &defaultLogLevel,
 		Timeout:        15 * time.Minute,
 	}
