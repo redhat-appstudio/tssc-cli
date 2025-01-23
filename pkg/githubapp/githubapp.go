@@ -201,7 +201,7 @@ func NewGitHubApp(logger *slog.Logger) *GitHubApp {
 	return &GitHubApp{
 		logger:        logger,
 		gitHubURL:     defaultPublicGitHubURL,
-		webServerAddr: "127.0.0.1",
+		webServerAddr: "0.0.0.0",
 		webServerPort: 8228,
 	}
 }
