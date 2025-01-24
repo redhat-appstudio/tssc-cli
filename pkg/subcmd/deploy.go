@@ -23,6 +23,7 @@ type Deploy struct {
 	cfs    *chartfs.ChartFS // embedded filesystem
 	kube   *k8s.Kube        // kubernetes client
 
+	chartPath          string // path of the chart when deploying a single chart
 	valuesTemplatePath string // path to the values template file
 }
 
@@ -42,6 +43,9 @@ The platform configuration is rendered from the values template file
 The installer resources are embedded in the executable, these resources are
 employed by default, to use local files just point the "config.yaml" file to
 find the dependencies in the local filesystem.
+
+A single chart can be deployed by specifying its path. E.g.:
+	rhtap-cli deploy charts/rhtap-openshift
 `
 
 // Cmd exposes the cobra instance.
@@ -56,7 +60,10 @@ func (d *Deploy) log() *slog.Logger {
 }
 
 // Complete verifies the object is complete.
-func (d *Deploy) Complete(_ []string) error {
+func (d *Deploy) Complete(args []string) error {
+	if len(args) == 1 {
+		d.chartPath = args[0]
+	}
 	return nil
 }
 
@@ -88,10 +95,20 @@ func (d *Deploy) Run() error {
 		return fmt.Errorf("failed to read values template file: %w", err)
 	}
 
-	// Installing each Helm Chart dependency from the configuration, only
-	// selecting the Helm Charts that are enabled.
 	d.log().Debug("Installing dependencies...")
-	deps := d.cfg.GetEnabledDependencies(d.log())
+	var deps []config.Dependency
+	if d.chartPath == "" {
+		// Installing each Helm Chart dependency from the configuration, only
+		// selecting the Helm Charts that are enabled.
+		deps = d.cfg.GetEnabledDependencies(d.log())
+	} else {
+		// Installing a single Chart dependency
+		dep, err := d.cfg.GetDependency(d.log(), d.chartPath)
+		if err != nil {
+			return err
+		}
+		deps = append(deps, *dep)
+	}
 	for ix, dep := range deps {
 		fmt.Printf("\n\n############################################################\n")
 		fmt.Printf("# [%d/%d] Deploying '%s' in '%s'.\n", ix+1, len(deps), dep.Chart, dep.Namespace)
@@ -134,16 +151,17 @@ func NewDeploy(
 ) Interface {
 	d := &Deploy{
 		cmd: &cobra.Command{
-			Use:          "deploy",
+			Use:          "deploy [chart]",
 			Short:        "Rollout RHTAP platform components",
 			Long:         deployDesc,
 			SilenceUsage: true,
 		},
-		logger: logger.WithGroup("deploy"),
-		flags:  f,
-		cfg:    cfg,
-		cfs:    cfs,
-		kube:   kube,
+		logger:    logger.WithGroup("deploy"),
+		flags:     f,
+		cfg:       cfg,
+		cfs:       cfs,
+		kube:      kube,
+		chartPath: "",
 	}
 	flags.SetValuesTmplFlag(d.cmd.PersistentFlags(), &d.valuesTemplatePath)
 	return d
