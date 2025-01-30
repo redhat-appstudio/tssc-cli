@@ -90,7 +90,7 @@ func (h *Helm) helmUpgrade(vals chartutil.Values) (*release.Release, error) {
 
 	c.DryRun = h.flags.DryRun
 	if h.flags.DryRun {
-		c.DryRunOption = "client"
+		c.DryRunOption = "server"
 	}
 
 	ctx := backgroundContext(func() {
