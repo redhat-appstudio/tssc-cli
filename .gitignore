@@ -1,5 +1,5 @@
 /__debug*
-/.vscode/
+/.vscode
 /*.dll
 /*.dylib
 /*.exe
