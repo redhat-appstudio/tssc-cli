@@ -85,24 +85,19 @@ func (i *TrustificationIntegration) Validate() error {
 // EnsureNamespace ensures the namespace needed for the Trustification integration secret
 // is created on the cluster.
 func (i *TrustificationIntegration) EnsureNamespace(ctx context.Context) error {
-	feature, err := i.cfg.GetFeature(config.RedHatDeveloperHub)
-	if err != nil {
-		return err
-	}
 	return k8s.EnsureOpenShiftProject(
 		ctx,
 		i.log(),
 		i.kube,
-		feature.GetNamespace(),
+		i.cfg.Installer.Namespace,
 	)
 }
 
 // secretName returns the secret name for the integration. The name is "lazy"
 // generated to make sure configuration is already loaded.
 func (i *TrustificationIntegration) secretName() types.NamespacedName {
-	feature, _ := i.cfg.GetFeature(config.RedHatDeveloperHub)
 	return types.NamespacedName{
-		Namespace: feature.GetNamespace(),
+		Namespace: i.cfg.Installer.Namespace,
 		Name:      "rhtap-trustification-integration",
 	}
 }

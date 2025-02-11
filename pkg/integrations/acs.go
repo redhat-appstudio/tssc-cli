@@ -67,24 +67,19 @@ func (a *ACSIntegration) Validate() error {
 // EnsureNamespace ensures the namespace needed for the ACS integration secret
 // is created on the cluster.
 func (a *ACSIntegration) EnsureNamespace(ctx context.Context) error {
-	feature, err := a.cfg.GetFeature(config.RedHatDeveloperHub)
-	if err != nil {
-		return err
-	}
 	return k8s.EnsureOpenShiftProject(
 		ctx,
 		a.log(),
 		a.kube,
-		feature.GetNamespace(),
+		a.cfg.Installer.Namespace,
 	)
 }
 
 // secretName returns the secret name for the integration. The name is "lazy"
 // generated to make sure configuration is already loaded.
 func (a *ACSIntegration) secretName() types.NamespacedName {
-	feature, _ := a.cfg.GetFeature(config.RedHatDeveloperHub)
 	return types.NamespacedName{
-		Namespace: feature.GetNamespace(),
+		Namespace: a.cfg.Installer.Namespace,
 		Name:      "rhtap-acs-integration",
 	}
 }

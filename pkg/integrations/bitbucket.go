@@ -70,24 +70,19 @@ func (g *BitBucketIntegration) Validate() error {
 // EnsureNamespace ensures the namespace needed for the BitBucket integration secret
 // is created on the cluster.
 func (g *BitBucketIntegration) EnsureNamespace(ctx context.Context) error {
-	feature, err := g.cfg.GetFeature(config.RedHatDeveloperHub)
-	if err != nil {
-		return err
-	}
 	return k8s.EnsureOpenShiftProject(
 		ctx,
 		g.log(),
 		g.kube,
-		feature.GetNamespace(),
+		g.cfg.Installer.Namespace,
 	)
 }
 
 // secretName returns the secret name for the integration. The name is "lazy"
 // generated to make sure configuration is already loaded.
 func (g *BitBucketIntegration) secretName() types.NamespacedName {
-	feature, _ := g.cfg.GetFeature(config.RedHatDeveloperHub)
 	return types.NamespacedName{
-		Namespace: feature.GetNamespace(),
+		Namespace: g.cfg.Installer.Namespace,
 		Name:      "rhtap-bitbucket-integration",
 	}
 }

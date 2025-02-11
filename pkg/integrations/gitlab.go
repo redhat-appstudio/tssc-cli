@@ -77,24 +77,19 @@ func (g *GitLabIntegration) Validate() error {
 // EnsureNamespace ensures the namespace needed for the GitLab integration secret
 // is created on the cluster.
 func (g *GitLabIntegration) EnsureNamespace(ctx context.Context) error {
-	feature, err := g.cfg.GetFeature(config.RedHatDeveloperHub)
-	if err != nil {
-		return err
-	}
 	return k8s.EnsureOpenShiftProject(
 		ctx,
 		g.log(),
 		g.kube,
-		feature.GetNamespace(),
+		g.cfg.Installer.Namespace,
 	)
 }
 
 // secretName returns the secret name for the integration. The name is "lazy"
 // generated to make sure configuration is already loaded.
 func (g *GitLabIntegration) secretName() types.NamespacedName {
-	feature, _ := g.cfg.GetFeature(config.RedHatDeveloperHub)
 	return types.NamespacedName{
-		Namespace: feature.GetNamespace(),
+		Namespace: g.cfg.Installer.Namespace,
 		Name:      "rhtap-gitlab-integration",
 	}
 }

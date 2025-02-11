@@ -70,24 +70,19 @@ func (n *NexusIntegration) Validate() error {
 // EnsureNamespace ensures the namespace needed for the Nexus integration secret
 // is created on the cluster.
 func (n *NexusIntegration) EnsureNamespace(ctx context.Context) error {
-	feature, err := n.cfg.GetFeature(config.RedHatDeveloperHub)
-	if err != nil {
-		return err
-	}
 	return k8s.EnsureOpenShiftProject(
 		ctx,
 		n.log(),
 		n.kube,
-		feature.GetNamespace(),
+		n.cfg.Installer.Namespace,
 	)
 }
 
 // secretName returns the secret name for the integration. The name is "lazy"
 // generated to make sure configuration is already loaded.
 func (n *NexusIntegration) secretName() types.NamespacedName {
-	feature, _ := n.cfg.GetFeature(config.RedHatDeveloperHub)
 	return types.NamespacedName{
-		Namespace: feature.GetNamespace(),
+		Namespace: n.cfg.Installer.Namespace,
 		Name:      "rhtap-nexus-integration",
 	}
 }

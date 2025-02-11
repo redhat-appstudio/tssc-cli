@@ -80,24 +80,19 @@ func (q *QuayIntegration) Validate() error {
 // EnsureNamespace ensures the namespace needed for the Quay integration secret
 // is created on the cluster.
 func (q *QuayIntegration) EnsureNamespace(ctx context.Context) error {
-	feature, err := q.cfg.GetFeature(config.RedHatDeveloperHub)
-	if err != nil {
-		return err
-	}
 	return k8s.EnsureOpenShiftProject(
 		ctx,
 		q.log(),
 		q.kube,
-		feature.GetNamespace(),
+		q.cfg.Installer.Namespace,
 	)
 }
 
 // secretName returns the secret name for the integration. The name is "lazy"
 // generated to make sure configuration is already loaded.
 func (q *QuayIntegration) secretName() types.NamespacedName {
-	feature, _ := q.cfg.GetFeature(config.RedHatDeveloperHub)
 	return types.NamespacedName{
-		Namespace: feature.GetNamespace(),
+		Namespace: q.cfg.Installer.Namespace,
 		Name:      "rhtap-quay-integration",
 	}
 }

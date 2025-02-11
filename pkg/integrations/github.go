@@ -75,15 +75,11 @@ func (g *GithubIntegration) Validate() error {
 // EnsureNamespace ensures the namespace needed for the GitHub integration secret
 // is created on the cluster.
 func (g *GithubIntegration) EnsureNamespace(ctx context.Context) error {
-	feature, err := g.cfg.GetFeature(config.RedHatDeveloperHub)
-	if err != nil {
-		return err
-	}
 	return k8s.EnsureOpenShiftProject(
 		ctx,
 		g.log(),
 		g.kube,
-		feature.GetNamespace(),
+		g.cfg.Installer.Namespace,
 	)
 }
 
@@ -136,9 +132,8 @@ func (g *GithubIntegration) setOpenShiftURLs(ctx context.Context) error {
 // secretName returns the secret name for the integration. The name is "lazy"
 // generated to make sure configuration is already loaded.
 func (g *GithubIntegration) secretName() types.NamespacedName {
-	feature, _ := g.cfg.GetFeature(config.RedHatDeveloperHub)
 	return types.NamespacedName{
-		Namespace: feature.GetNamespace(),
+		Namespace: g.cfg.Installer.Namespace,
 		Name:      "rhtap-github-integration",
 	}
 }
