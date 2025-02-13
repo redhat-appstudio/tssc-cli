@@ -25,6 +25,7 @@ type IntegrationGitLab struct {
 	clientId     string // Application client id
 	clientSecret string // Application client secret
 	token        string // API token
+        group        string // Group name
 }
 
 var _ Interface = &IntegrationGitLab{}
