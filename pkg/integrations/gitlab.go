@@ -29,7 +29,7 @@ type GitLabIntegration struct {
 	clientId     string // GitLab application client id
 	clientSecret string // GitLab application client secret
 	token        string // API token credentials
-        group        string // GitLab group name
+	group        string // GitLab group name
 }
 
 // PersistentFlags sets the persistent flags for the GitLab integration.
@@ -45,8 +45,8 @@ func (g *GitLabIntegration) PersistentFlags(p *pflag.FlagSet) {
 		"GitLab application client secret")
 	p.StringVar(&g.token, "token", g.token,
 		"GitLab API token")
-        p.StringVar(&g.group, "group", g.group,
-                "GitLab group name")
+	p.StringVar(&g.group, "group", g.group,
+		"GitLab group name")
 }
 
 // log logger with contextual information.
@@ -57,7 +57,7 @@ func (g *GitLabIntegration) log() *slog.Logger {
 		"clientId", g.clientId,
 		"clientSecret-len", len(g.clientSecret),
 		"token-len", len(g.token),
-                "group", g.group,
+		"group", g.group,
 	)
 }
 
@@ -75,9 +75,9 @@ func (g *GitLabIntegration) Validate() error {
 	if g.token == "" {
 		return fmt.Errorf("token is required")
 	}
-        if g.group == "" {
-                return fmt.Errorf("group is required")
-        }
+	if g.group == "" {
+		return fmt.Errorf("group is required")
+	}
 	return nil
 }
 
@@ -137,7 +137,7 @@ func (g *GitLabIntegration) store(
 			"clientSecret": []byte(g.clientSecret),
 			"host":         []byte(g.host),
 			"token":        []byte(g.token),
-                        "group":        []byte(g.group),
+			"group":        []byte(g.group),
 		},
 	}
 	logger := g.log().With(
@@ -183,6 +183,6 @@ func NewGitLabIntegration(
 		clientId:     "",
 		clientSecret: "",
 		token:        "",
-                group:        "",
+		group:        "",
 	}
 }
