@@ -12,12 +12,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/google/go-github/v61/github"
+	"github.com/google/go-github/v69/github"
 )
 
 // AppRestrictionsEnabled returns whether the specified organization has
@@ -45,13 +46,13 @@ func (c *Client) AppRestrictionsEnabled(org string) (bool, error) {
 
 // ListOAuthApps lists the reviewed OAuth Applications for the
 // specified organization (whether approved or denied).
-func (c *Client) ListOAuthApps(org string) ([]OAuthApp, error) {
+func (c *Client) ListOAuthApps(org string) ([]*OAuthApp, error) {
 	doc, err := c.get("/organizations/%s/settings/oauth_application_policy", org)
 	if err != nil {
 		return nil, err
 	}
 
-	var apps []OAuthApp
+	var apps []*OAuthApp
 	doc.Find(".oauth-application-allowlist ul > li").Each(func(i int, s *goquery.Selection) {
 		var app OAuthApp
 		app.Name = s.Find(".request-info strong").First().Text()
@@ -72,7 +73,7 @@ func (c *Client) ListOAuthApps(org string) ([]OAuthApp, error) {
 		} else if r := s.Find(".request-indicator .denied-request"); r.Length() > 0 {
 			app.State = OAuthAppDenied
 		}
-		apps = append(apps, app)
+		apps = append(apps, &app)
 	})
 
 	return apps, nil
@@ -91,11 +92,11 @@ func intFromLastPathSegment(s string) int {
 type OAuthAppReviewState int
 
 const (
-	// OAuthAppRequested indicates access has been requested, but not reviewed
+	// OAuthAppRequested indicates access has been requested, but not reviewed.
 	OAuthAppRequested OAuthAppReviewState = iota + 1
-	// OAuthAppApproved indicates access has been approved
+	// OAuthAppApproved indicates access has been approved.
 	OAuthAppApproved
-	// OAuthAppDenied indicates access has been denied
+	// OAuthAppDenied indicates access has been denied.
 	OAuthAppDenied
 )
 
@@ -114,7 +115,7 @@ type OAuthApp struct {
 type AppManifest struct {
 	// The name of the GitHub App.
 	Name *string `json:"name,omitempty"`
-	//Required. The homepage of your GitHub App.
+	// Required. The homepage of your GitHub App.
 	URL *string `json:"url,omitempty"`
 	// The full URL(s) of the endpoint(s) to authenticate users via the GitHub App (Max: 10).
 	CallbackURLs []string `json:"callback_urls,omitempty"`
@@ -134,8 +135,15 @@ type AppManifest struct {
 }
 
 // CreateApp creates a new GitHub App with the given manifest configuration.
-func (c *Client) CreateApp(m *AppManifest) (*http.Response, error) {
-	u, err := c.baseURL.Parse("/settings/apps/new")
+// orgName is optional, and if provided, the App will be created within the specified organization.
+func (c *Client) CreateApp(m *AppManifest, orgName string) (*http.Response, error) {
+	url := "/settings/apps/new"
+
+	if orgName != "" {
+		url = fmt.Sprintf("/organizations/%v/settings/apps/new", orgName)
+	}
+
+	u, err := c.baseURL.Parse(url)
 	if err != nil {
 		return nil, err
 	}
