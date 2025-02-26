@@ -45,7 +45,9 @@ func (d *IntegrationGitLab) Cmd() *cobra.Command {
 
 // Complete is a no-op in this case.
 func (d *IntegrationGitLab) Complete(args []string) error {
-	return nil
+	var err error
+	d.cfg, err = bootstrapConfig(d.cmd.Context(), d.kube)
+	return err
 }
 
 // Validate checks if the required configuration is set.
@@ -62,20 +64,20 @@ func (d *IntegrationGitLab) Validate() error {
 
 // Run creates or updates the GitLab integration secret.
 func (d *IntegrationGitLab) Run() error {
-	if err := d.gitlabIntegration.EnsureNamespace(d.cmd.Context()); err != nil {
+	err := d.gitlabIntegration.EnsureNamespace(d.cmd.Context(), d.cfg)
+	if err != nil {
 		return err
 	}
-	return d.gitlabIntegration.Create(d.cmd.Context())
+	return d.gitlabIntegration.Create(d.cmd.Context(), d.cfg)
 }
 
 // NewIntegrationGitLab creates the sub-command for the "integration gitlab"
 // responsible to manage the RHTAP integrations with the GitLab service.
 func NewIntegrationGitLab(
 	logger *slog.Logger,
-	cfg *config.Config,
 	kube *k8s.Kube,
 ) *IntegrationGitLab {
-	gitlabIntegration := integrations.NewGitLabIntegration(logger, cfg, kube)
+	gitlabIntegration := integrations.NewGitLabIntegration(logger, kube)
 
 	d := &IntegrationGitLab{
 		cmd: &cobra.Command{
@@ -86,7 +88,6 @@ func NewIntegrationGitLab(
 		},
 
 		logger: logger,
-		cfg:    cfg,
 		kube:   kube,
 
 		gitlabIntegration: gitlabIntegration,

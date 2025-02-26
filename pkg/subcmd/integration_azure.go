@@ -45,7 +45,9 @@ func (d *IntegrationAzure) Cmd() *cobra.Command {
 
 // Complete is a no-op in this case.
 func (d *IntegrationAzure) Complete(args []string) error {
-	return nil
+	var err error
+	d.cfg, err = bootstrapConfig(d.cmd.Context(), d.kube)
+	return err
 }
 
 // Validate checks if the required configuration is set.
@@ -62,20 +64,20 @@ func (d *IntegrationAzure) Validate() error {
 
 // Run creates or updates the Azure integration secret.
 func (d *IntegrationAzure) Run() error {
-	if err := d.azureIntegration.EnsureNamespace(d.cmd.Context()); err != nil {
+	err := d.azureIntegration.EnsureNamespace(d.cmd.Context(), d.cfg)
+	if err != nil {
 		return err
 	}
-	return d.azureIntegration.Create(d.cmd.Context())
+	return d.azureIntegration.Create(d.cmd.Context(), d.cfg)
 }
 
 // NewIntegrationAzure creates the sub-command for the "integration azure"
 // responsible to manage the RHTAP integrations with the Azure service.
 func NewIntegrationAzure(
 	logger *slog.Logger,
-	cfg *config.Config,
 	kube *k8s.Kube,
 ) *IntegrationAzure {
-	azureIntegration := integrations.NewAzureIntegration(logger, cfg, kube)
+	azureIntegration := integrations.NewAzureIntegration(logger, kube)
 
 	d := &IntegrationAzure{
 		cmd: &cobra.Command{
@@ -86,7 +88,6 @@ func NewIntegrationAzure(
 		},
 
 		logger: logger,
-		cfg:    cfg,
 		kube:   kube,
 
 		azureIntegration: azureIntegration,

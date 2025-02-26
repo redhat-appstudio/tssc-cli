@@ -44,7 +44,9 @@ func (d *IntegrationBitBucket) Cmd() *cobra.Command {
 
 // Complete is a no-op in this case.
 func (d *IntegrationBitBucket) Complete(args []string) error {
-	return nil
+	var err error
+	d.cfg, err = bootstrapConfig(d.cmd.Context(), d.kube)
+	return err
 }
 
 // Validate checks if the required configuration is set.
@@ -61,20 +63,20 @@ func (d *IntegrationBitBucket) Validate() error {
 
 // Run creates or updates the BitBucket integration secret.
 func (d *IntegrationBitBucket) Run() error {
-	if err := d.bitbucketIntegration.EnsureNamespace(d.cmd.Context()); err != nil {
+	err := d.bitbucketIntegration.EnsureNamespace(d.cmd.Context(), d.cfg)
+	if err != nil {
 		return err
 	}
-	return d.bitbucketIntegration.Create(d.cmd.Context())
+	return d.bitbucketIntegration.Create(d.cmd.Context(), d.cfg)
 }
 
 // NewIntegrationBitBucket creates the sub-command for the "integration bitbucket"
 // responsible to manage the RHTAP integrations with the BitBucket service.
 func NewIntegrationBitBucket(
 	logger *slog.Logger,
-	cfg *config.Config,
 	kube *k8s.Kube,
 ) *IntegrationBitBucket {
-	bitbucketIntegration := integrations.NewBitBucketIntegration(logger, cfg, kube)
+	bitbucketIntegration := integrations.NewBitBucketIntegration(logger, kube)
 
 	d := &IntegrationBitBucket{
 		cmd: &cobra.Command{
@@ -85,7 +87,6 @@ func NewIntegrationBitBucket(
 		},
 
 		logger: logger,
-		cfg:    cfg,
 		kube:   kube,
 
 		bitbucketIntegration: bitbucketIntegration,

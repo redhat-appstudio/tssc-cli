@@ -18,9 +18,8 @@ import (
 
 // NexusIntegration represents the RHTAP Nexus integration.
 type NexusIntegration struct {
-	logger *slog.Logger   // application logger
-	cfg    *config.Config // installer configuration
-	kube   *k8s.Kube      // kubernetes client
+	logger *slog.Logger // application logger
+	kube   *k8s.Kube    // kubernetes client
 
 	force bool // overwrite the existing secret
 
@@ -69,29 +68,35 @@ func (n *NexusIntegration) Validate() error {
 
 // EnsureNamespace ensures the namespace needed for the Nexus integration secret
 // is created on the cluster.
-func (n *NexusIntegration) EnsureNamespace(ctx context.Context) error {
+func (n *NexusIntegration) EnsureNamespace(
+	ctx context.Context,
+	cfg *config.Config,
+) error {
 	return k8s.EnsureOpenShiftProject(
 		ctx,
 		n.log(),
 		n.kube,
-		n.cfg.Installer.Namespace,
+		cfg.Installer.Namespace,
 	)
 }
 
 // secretName returns the secret name for the integration. The name is "lazy"
 // generated to make sure configuration is already loaded.
-func (n *NexusIntegration) secretName() types.NamespacedName {
+func (n *NexusIntegration) secretName(cfg *config.Config) types.NamespacedName {
 	return types.NamespacedName{
-		Namespace: n.cfg.Installer.Namespace,
+		Namespace: cfg.Installer.Namespace,
 		Name:      "rhtap-nexus-integration",
 	}
 }
 
 // prepareSecret checks if the secret already exists, and if so, it will delete
 // the secret if the force flag is enabled.
-func (n *NexusIntegration) prepareSecret(ctx context.Context) error {
+func (n *NexusIntegration) prepareSecret(
+	ctx context.Context,
+	cfg *config.Config,
+) error {
 	n.log().Debug("Checking if integration secret exists")
-	exists, err := k8s.SecretExists(ctx, n.kube, n.secretName())
+	exists, err := k8s.SecretExists(ctx, n.kube, n.secretName(cfg))
 	if err != nil {
 		return err
 	}
@@ -102,20 +107,21 @@ func (n *NexusIntegration) prepareSecret(ctx context.Context) error {
 	if !n.force {
 		n.log().Debug("Integration secret already exists")
 		return fmt.Errorf("%w: %s",
-			ErrSecretAlreadyExists, n.secretName().String())
+			ErrSecretAlreadyExists, n.secretName(cfg).String())
 	}
 	n.log().Debug("Integration secret already exists, recreating it")
-	return k8s.DeleteSecret(ctx, n.kube, n.secretName())
+	return k8s.DeleteSecret(ctx, n.kube, n.secretName(cfg))
 }
 
 // store creates the secret with the integration data.
 func (n *NexusIntegration) store(
 	ctx context.Context,
+	cfg *config.Config,
 ) error {
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: n.secretName().Namespace,
-			Name:      n.secretName().Name,
+			Namespace: n.secretName(cfg).Namespace,
+			Name:      n.secretName(cfg).Name,
 		},
 		Type: corev1.SecretTypeDockerConfigJson,
 		Data: map[string][]byte{
@@ -129,11 +135,11 @@ func (n *NexusIntegration) store(
 	)
 
 	logger.Debug("Creating integration secret")
-	coreClient, err := n.kube.CoreV1ClientSet(n.secretName().Namespace)
+	coreClient, err := n.kube.CoreV1ClientSet(n.secretName(cfg).Namespace)
 	if err != nil {
 		return err
 	}
-	_, err = coreClient.Secrets(n.secretName().Namespace).
+	_, err = coreClient.Secrets(n.secretName(cfg).Namespace).
 		Create(ctx, secret, metav1.CreateOptions{})
 	if err == nil {
 		logger.Info("Integration secret created successfully!")
@@ -142,23 +148,24 @@ func (n *NexusIntegration) store(
 }
 
 // Create creates the Nexus integration Kubernetes secret.
-func (n *NexusIntegration) Create(ctx context.Context) error {
+func (n *NexusIntegration) Create(
+	ctx context.Context,
+	cfg *config.Config,
+) error {
 	logger := n.log()
 	logger.Info("Inspecting the cluster for an existing Nexus integration secret")
-	if err := n.prepareSecret(ctx); err != nil {
+	if err := n.prepareSecret(ctx, cfg); err != nil {
 		return err
 	}
-	return n.store(ctx)
+	return n.store(ctx, cfg)
 }
 
 func NewNexusIntegration(
 	logger *slog.Logger,
-	cfg *config.Config,
 	kube *k8s.Kube,
 ) *NexusIntegration {
 	return &NexusIntegration{
 		logger: logger,
-		cfg:    cfg,
 		kube:   kube,
 
 		force:            false,

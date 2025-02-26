@@ -18,9 +18,8 @@ import (
 
 // ArtifactoryIntegration represents the RHTAP Artifactory integration.
 type ArtifactoryIntegration struct {
-	logger *slog.Logger   // application logger
-	cfg    *config.Config // installer configuration
-	kube   *k8s.Kube      // kubernetes client
+	logger *slog.Logger // application logger
+	kube   *k8s.Kube    // kubernetes client
 
 	force bool // overwrite the existing secret
 
@@ -76,29 +75,37 @@ func (a *ArtifactoryIntegration) Validate() error {
 
 // EnsureNamespace ensures the namespace needed for the Artifactory integration secret
 // is created on the cluster.
-func (a *ArtifactoryIntegration) EnsureNamespace(ctx context.Context) error {
+func (a *ArtifactoryIntegration) EnsureNamespace(
+	ctx context.Context,
+	cfg *config.Config,
+) error {
 	return k8s.EnsureOpenShiftProject(
 		ctx,
 		a.log(),
 		a.kube,
-		a.cfg.Installer.Namespace,
+		cfg.Installer.Namespace,
 	)
 }
 
 // secretName returns the secret name for the integration. The name is "lazy"
 // generated to make sure configuration is already loaded.
-func (a *ArtifactoryIntegration) secretName() types.NamespacedName {
+func (a *ArtifactoryIntegration) secretName(
+	cfg *config.Config,
+) types.NamespacedName {
 	return types.NamespacedName{
-		Namespace: a.cfg.Installer.Namespace,
+		Namespace: cfg.Installer.Namespace,
 		Name:      "rhtap-artifactory-integration",
 	}
 }
 
 // prepareSecret checks if the secret already exists, and if so, it will delete
 // the secret if the force flag is enabled.
-func (a *ArtifactoryIntegration) prepareSecret(ctx context.Context) error {
+func (a *ArtifactoryIntegration) prepareSecret(
+	ctx context.Context,
+	cfg *config.Config,
+) error {
 	a.log().Debug("Checking if integration secret exists")
-	exists, err := k8s.SecretExists(ctx, a.kube, a.secretName())
+	exists, err := k8s.SecretExists(ctx, a.kube, a.secretName(cfg))
 	if err != nil {
 		return err
 	}
@@ -109,20 +116,21 @@ func (a *ArtifactoryIntegration) prepareSecret(ctx context.Context) error {
 	if !a.force {
 		a.log().Debug("Integration secret already exists")
 		return fmt.Errorf("%w: %s",
-			ErrSecretAlreadyExists, a.secretName().String())
+			ErrSecretAlreadyExists, a.secretName(cfg).String())
 	}
 	a.log().Debug("Integration secret already exists, recreating it")
-	return k8s.DeleteSecret(ctx, a.kube, a.secretName())
+	return k8s.DeleteSecret(ctx, a.kube, a.secretName(cfg))
 }
 
 // store creates the secret with the integration data.
 func (a *ArtifactoryIntegration) store(
 	ctx context.Context,
+	cfg *config.Config,
 ) error {
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: a.secretName().Namespace,
-			Name:      a.secretName().Name,
+			Namespace: a.secretName(cfg).Namespace,
+			Name:      a.secretName(cfg).Name,
 		},
 		Type: corev1.SecretTypeDockerConfigJson,
 		Data: map[string][]byte{
@@ -137,11 +145,11 @@ func (a *ArtifactoryIntegration) store(
 	)
 
 	logger.Debug("Creating integration secret")
-	coreClient, err := a.kube.CoreV1ClientSet(a.secretName().Namespace)
+	coreClient, err := a.kube.CoreV1ClientSet(a.secretName(cfg).Namespace)
 	if err != nil {
 		return err
 	}
-	_, err = coreClient.Secrets(a.secretName().Namespace).
+	_, err = coreClient.Secrets(a.secretName(cfg).Namespace).
 		Create(ctx, secret, metav1.CreateOptions{})
 	if err == nil {
 		logger.Info("Integration secret created successfully!")
@@ -150,23 +158,24 @@ func (a *ArtifactoryIntegration) store(
 }
 
 // Create creates the Artifactory integration Kubernetes secret.
-func (a *ArtifactoryIntegration) Create(ctx context.Context) error {
+func (a *ArtifactoryIntegration) Create(
+	ctx context.Context,
+	cfg *config.Config,
+) error {
 	logger := a.log()
 	logger.Info("Inspecting the cluster for an existing Artifactory integration secret")
-	if err := a.prepareSecret(ctx); err != nil {
+	if err := a.prepareSecret(ctx, cfg); err != nil {
 		return err
 	}
-	return a.store(ctx)
+	return a.store(ctx, cfg)
 }
 
 func NewArtifactoryIntegration(
 	logger *slog.Logger,
-	cfg *config.Config,
 	kube *k8s.Kube,
 ) *ArtifactoryIntegration {
 	return &ArtifactoryIntegration{
 		logger: logger,
-		cfg:    cfg,
 		kube:   kube,
 
 		force:            false,

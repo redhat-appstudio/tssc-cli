@@ -154,7 +154,6 @@ func (t *Template) Run() error {
 func NewTemplate(
 	logger *slog.Logger,
 	f *flags.Flags,
-	cfg *config.Config,
 	cfs *chartfs.ChartFS,
 	kube *k8s.Kube,
 ) *Template {
@@ -167,7 +166,6 @@ func NewTemplate(
 		},
 		logger:        logger.WithGroup("template"),
 		flags:         f,
-		cfg:           cfg,
 		cfs:           cfs,
 		kube:          kube,
 		dep:           config.Dependency{Namespace: "default"},

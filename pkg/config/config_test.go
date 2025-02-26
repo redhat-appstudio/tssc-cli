@@ -4,8 +4,9 @@ import (
 	"log/slog"
 	"testing"
 
-	o "github.com/onsi/gomega"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/chartfs"
+
+	o "github.com/onsi/gomega"
 )
 
 func TestNewConfigFromFile(t *testing.T) {
@@ -38,5 +39,19 @@ func TestNewConfigFromFile(t *testing.T) {
 		g.Expect(err).To(o.Succeed())
 		g.Expect(feature).NotTo(o.BeNil())
 		g.Expect(feature.GetNamespace()).NotTo(o.BeEmpty())
+	})
+
+	t.Run("MarshalYAML and UnmarshalYAML", func(t *testing.T) {
+		payload, err := cfg.MarshalYAML()
+		g.Expect(err).To(o.Succeed())
+		g.Expect(string(payload)).To(o.ContainSubstring("rhtapCLI:"))
+
+		err = cfg.UnmarshalYAML()
+		g.Expect(err).To(o.Succeed())
+	})
+
+	t.Run("String", func(t *testing.T) {
+		payload := cfg.String()
+		g.Expect(string(payload)).To(o.ContainSubstring("rhtapCLI:"))
 	})
 }

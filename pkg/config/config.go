@@ -4,21 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"path/filepath"
 
 	"github.com/redhat-appstudio/rhtap-cli/pkg/chartfs"
-	"github.com/spf13/pflag"
+
 	"gopkg.in/yaml.v3"
 )
-
-// ErrInvalidConfig indicates the configuration content is invalid.
-var ErrInvalidConfig = errors.New("invalid configuration")
-
-// ErrEmptyConfig indicates the configuration file is empty.
-var ErrEmptyConfig = errors.New("empty configuration")
-
-// ErrUnmarshalConfig indicates the configuration file structure is invalid.
-var ErrUnmarshalConfig = errors.New("failed to unmarshal configuration")
 
 // Spec contains all configuration sections.
 type Spec struct {
@@ -34,26 +24,23 @@ type Spec struct {
 
 // Config root configuration structure.
 type Config struct {
-	cfs        *chartfs.ChartFS // embedded filesystem
-	configPath string           // configuration file path
+	cfs     *chartfs.ChartFS // embedded filesystem
+	payload []byte           // original configuration payload
 
 	Installer Spec `yaml:"rhtapCLI"` // root configuration for the installer
 }
 
-// PersistentFlags defines the persistent flags for the CLI.
-func (c *Config) PersistentFlags(f *pflag.FlagSet) {
-	f.StringVar(
-		&c.configPath,
-		"config",
-		c.configPath,
-		"Path to the installer configuration file",
-	)
-}
+var (
+	// ErrInvalidConfig indicates the configuration content is invalid.
+	ErrInvalidConfig = errors.New("invalid configuration")
+	// ErrEmptyConfig indicates the configuration file is empty.
+	ErrEmptyConfig = errors.New("empty configuration")
+	// ErrUnmarshalConfig indicates the configuration file structure is invalid.
+	ErrUnmarshalConfig = errors.New("failed to unmarshal configuration")
+)
 
-// GetBaseDir returns the base directory of the configuration file.
-func (c *Config) GetBaseDir() string {
-	return filepath.Dir(c.configPath)
-}
+// DefaultRelativeConfigPath default relative path to YAML configuration file.
+var DefaultRelativeConfigPath = fmt.Sprintf("installer/%s", Filename)
 
 // GetDependency returns a dependency chart configuration.
 func (c *Config) GetDependency(logger *slog.Logger, chart string) (*Dependency, error) {
@@ -123,34 +110,47 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-// UnmarshalYAML reads the configuration file and unmarshal it into the Config.
+// MarshalYAML marshals the Config into a YAML byte array.
+func (c *Config) MarshalYAML() ([]byte, error) {
+	return yaml.Marshal(c)
+}
+
+// UnmarshalYAML Un-marshals the YAML payload into the Config struct, checking the
+// validity of the configuration.
 func (c *Config) UnmarshalYAML() error {
-	payload, err := c.cfs.ReadFile(c.configPath)
-	if err != nil {
-		return err
+	if len(c.payload) == 0 {
+		return ErrEmptyConfig
 	}
-	if len(payload) == 0 {
-		return fmt.Errorf("%w: %s", ErrEmptyConfig, c.configPath)
-	}
-	if err = yaml.Unmarshal(payload, c); err != nil {
-		return fmt.Errorf("%w: %s %w", ErrUnmarshalConfig, c.configPath, err)
+	if err := yaml.Unmarshal(c.payload, c); err != nil {
+		return fmt.Errorf("%w: %w", ErrUnmarshalConfig, err)
 	}
 	return c.Validate()
 }
 
-// NewConfigFromFile returns a new Config instance based on the informed file. The
-// config file path is kept as a private attribute.
-func NewConfigFromFile(cfs *chartfs.ChartFS, configPath string) (*Config, error) {
-	c := NewConfig(cfs)
-	c.configPath = configPath
-	return c, c.UnmarshalYAML()
+// String returns this configuration as string, indented with two spaces.
+func (c *Config) String() string {
+	return string(c.payload)
 }
 
-// NewConfig returns a new Config instance, pointing to the default "config.yaml"
-// file location.
-func NewConfig(cfs *chartfs.ChartFS) *Config {
-	return &Config{
-		configPath: "installer/config.yaml",
-		cfs:        cfs,
+// NewConfigFromFile returns a new Config instance based on the informed file.
+func NewConfigFromFile(cfs *chartfs.ChartFS, configPath string) (*Config, error) {
+	c := &Config{cfs: cfs}
+	var err error
+	c.payload, err = c.cfs.ReadFile(configPath)
+	if err != nil {
+		return nil, err
 	}
+	if err = c.UnmarshalYAML(); err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
+// NewConfigFromBytes instantiates a new Config from the bytes payload informed.
+func NewConfigFromBytes(payload []byte) (*Config, error) {
+	c := &Config{payload: payload}
+	if err := yaml.Unmarshal(payload, c); err != nil {
+		return nil, fmt.Errorf("%w: %s", ErrUnmarshalConfig, err)
+	}
+	return c, nil
 }

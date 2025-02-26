@@ -29,18 +29,16 @@ Install the `rhtap-cli` binary on your local machine following [these instructio
 
 Follow the below steps to deploy RHTAP on Openshift cluster. 
 
-1. Edit the [`config.yaml`](installer/config.yaml) file for select or deselect the components from installation. See the [configuration](#configuration) section for more details.
+1. Create the installer's cluster configuration. You can use a local configuration file, or default settings. To use the default settings, run the command bellow, and see the [configuration](#configuration) section for more details.
 
-  For instance: change the lines as below to disable installation of components ACS and Quay .
+```bash
+# Shows the options to manage cluster's configuration.
+rhtap-cli config --help
 
-```yaml
-# ...
-redHatAdvancedClusterSecurity: 
-  enabled: false 
-redHatQuay: 
-  enabled: false
+# Creates a new default configuration in the cluster, showing the result.
+rhtap-cli config --create --get
 ```
-      
+
 2. Run the command `rhtap-cli` to display help text that shows all the supported commands and options. 
 
 3. Run the command `rhtap-cli integration` to provide integrations to external components. The command below lists the options supported: 

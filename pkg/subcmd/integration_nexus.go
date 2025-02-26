@@ -41,7 +41,9 @@ func (d *IntegrationNexus) Cmd() *cobra.Command {
 
 // Complete is a no-op in this case.
 func (d *IntegrationNexus) Complete(args []string) error {
-	return nil
+	var err error
+	d.cfg, err = bootstrapConfig(d.cmd.Context(), d.kube)
+	return err
 }
 
 // Validate checks if the required configuration is set.
@@ -58,20 +60,20 @@ func (d *IntegrationNexus) Validate() error {
 
 // Run creates or updates the Nexus integration secret.
 func (d *IntegrationNexus) Run() error {
-	if err := d.nexusIntegration.EnsureNamespace(d.cmd.Context()); err != nil {
+	err := d.nexusIntegration.EnsureNamespace(d.cmd.Context(), d.cfg)
+	if err != nil {
 		return err
 	}
-	return d.nexusIntegration.Create(d.cmd.Context())
+	return d.nexusIntegration.Create(d.cmd.Context(), d.cfg)
 }
 
 // NewIntegrationNexus creates the sub-command for the "integration nexus"
 // responsible to manage the RHTAP integrations with a Nexus image registry.
 func NewIntegrationNexus(
 	logger *slog.Logger,
-	cfg *config.Config,
 	kube *k8s.Kube,
 ) *IntegrationNexus {
-	nexusIntegration := integrations.NewNexusIntegration(logger, cfg, kube)
+	nexusIntegration := integrations.NewNexusIntegration(logger, kube)
 
 	d := &IntegrationNexus{
 		cmd: &cobra.Command{
@@ -82,7 +84,6 @@ func NewIntegrationNexus(
 		},
 
 		logger: logger,
-		cfg:    cfg,
 		kube:   kube,
 
 		nexusIntegration: nexusIntegration,

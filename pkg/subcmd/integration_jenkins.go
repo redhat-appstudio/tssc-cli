@@ -43,7 +43,9 @@ func (d *IntegrationJenkins) Cmd() *cobra.Command {
 
 // Complete is a no-op in this case.
 func (d *IntegrationJenkins) Complete(args []string) error {
-	return nil
+	var err error
+	d.cfg, err = bootstrapConfig(d.cmd.Context(), d.kube)
+	return err
 }
 
 // Validate checks if the required configuration is set.
@@ -60,20 +62,20 @@ func (d *IntegrationJenkins) Validate() error {
 
 // Run creates or updates the Jenkins integration secret.
 func (d *IntegrationJenkins) Run() error {
-	if err := d.jenkinsIntegration.EnsureNamespace(d.cmd.Context()); err != nil {
+	err := d.jenkinsIntegration.EnsureNamespace(d.cmd.Context(), d.cfg)
+	if err != nil {
 		return err
 	}
-	return d.jenkinsIntegration.Create(d.cmd.Context())
+	return d.jenkinsIntegration.Create(d.cmd.Context(), d.cfg)
 }
 
 // NewIntegrationJenkins creates the sub-command for the "integration jenkins"
 // responsible to manage the RHTAP integrations with the Jenkins service.
 func NewIntegrationJenkins(
 	logger *slog.Logger,
-	cfg *config.Config,
 	kube *k8s.Kube,
 ) *IntegrationJenkins {
-	jenkinsIntegration := integrations.NewJenkinsIntegration(logger, cfg, kube)
+	jenkinsIntegration := integrations.NewJenkinsIntegration(logger, kube)
 
 	d := &IntegrationJenkins{
 		cmd: &cobra.Command{
@@ -84,7 +86,6 @@ func NewIntegrationJenkins(
 		},
 
 		logger: logger,
-		cfg:    cfg,
 		kube:   kube,
 
 		jenkinsIntegration: jenkinsIntegration,

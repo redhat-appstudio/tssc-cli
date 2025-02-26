@@ -21,9 +21,8 @@ const defaultPublicQuayURL = "https://quay.io"
 
 // QuayIntegration represents the RHTAP Quay integration.
 type QuayIntegration struct {
-	logger *slog.Logger   // application logger
-	cfg    *config.Config // installer configuration
-	kube   *k8s.Kube      // kubernetes client
+	logger *slog.Logger // application logger
+	kube   *k8s.Kube    // kubernetes client
 
 	force bool // overwrite the existing secret
 
@@ -79,29 +78,35 @@ func (q *QuayIntegration) Validate() error {
 
 // EnsureNamespace ensures the namespace needed for the Quay integration secret
 // is created on the cluster.
-func (q *QuayIntegration) EnsureNamespace(ctx context.Context) error {
+func (q *QuayIntegration) EnsureNamespace(
+	ctx context.Context,
+	cfg *config.Config,
+) error {
 	return k8s.EnsureOpenShiftProject(
 		ctx,
 		q.log(),
 		q.kube,
-		q.cfg.Installer.Namespace,
+		cfg.Installer.Namespace,
 	)
 }
 
 // secretName returns the secret name for the integration. The name is "lazy"
 // generated to make sure configuration is already loaded.
-func (q *QuayIntegration) secretName() types.NamespacedName {
+func (q *QuayIntegration) secretName(cfg *config.Config) types.NamespacedName {
 	return types.NamespacedName{
-		Namespace: q.cfg.Installer.Namespace,
+		Namespace: cfg.Installer.Namespace,
 		Name:      "rhtap-quay-integration",
 	}
 }
 
 // prepareSecret checks if the secret already exists, and if so, it will delete
 // the secret if the force flag is enabled.
-func (q *QuayIntegration) prepareSecret(ctx context.Context) error {
+func (q *QuayIntegration) prepareSecret(
+	ctx context.Context,
+	cfg *config.Config,
+) error {
 	q.log().Debug("Checking if integration secret exists")
-	exists, err := k8s.SecretExists(ctx, q.kube, q.secretName())
+	exists, err := k8s.SecretExists(ctx, q.kube, q.secretName(cfg))
 	if err != nil {
 		return err
 	}
@@ -112,20 +117,21 @@ func (q *QuayIntegration) prepareSecret(ctx context.Context) error {
 	if !q.force {
 		q.log().Debug("Integration secret already exists")
 		return fmt.Errorf("%w: %s",
-			ErrSecretAlreadyExists, q.secretName().String())
+			ErrSecretAlreadyExists, q.secretName(cfg).String())
 	}
 	q.log().Debug("Integration secret already exists, recreating it")
-	return k8s.DeleteSecret(ctx, q.kube, q.secretName())
+	return k8s.DeleteSecret(ctx, q.kube, q.secretName(cfg))
 }
 
 // store creates the secret with the integration data.
 func (q *QuayIntegration) store(
 	ctx context.Context,
+	cfg *config.Config,
 ) error {
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: q.secretName().Namespace,
-			Name:      q.secretName().Name,
+			Namespace: q.secretName(cfg).Namespace,
+			Name:      q.secretName(cfg).Name,
 		},
 		Type: corev1.SecretTypeDockerConfigJson,
 		Data: map[string][]byte{
@@ -140,11 +146,11 @@ func (q *QuayIntegration) store(
 	)
 
 	logger.Debug("Creating integration secret")
-	coreClient, err := q.kube.CoreV1ClientSet(q.secretName().Namespace)
+	coreClient, err := q.kube.CoreV1ClientSet(q.secretName(cfg).Namespace)
 	if err != nil {
 		return err
 	}
-	_, err = coreClient.Secrets(q.secretName().Namespace).
+	_, err = coreClient.Secrets(q.secretName(cfg).Namespace).
 		Create(ctx, secret, metav1.CreateOptions{})
 	if err == nil {
 		logger.Info("Integration secret created successfully!")
@@ -153,23 +159,24 @@ func (q *QuayIntegration) store(
 }
 
 // Create creates the Quay integration Kubernetes secret.
-func (q *QuayIntegration) Create(ctx context.Context) error {
+func (q *QuayIntegration) Create(
+	ctx context.Context,
+	cfg *config.Config,
+) error {
 	logger := q.log()
 	logger.Info("Inspecting the cluster for an existing Quay integration secret")
-	if err := q.prepareSecret(ctx); err != nil {
+	if err := q.prepareSecret(ctx, cfg); err != nil {
 		return err
 	}
-	return q.store(ctx)
+	return q.store(ctx, cfg)
 }
 
 func NewQuayIntegration(
 	logger *slog.Logger,
-	cfg *config.Config,
 	kube *k8s.Kube,
 ) *QuayIntegration {
 	return &QuayIntegration{
 		logger: logger,
-		cfg:    cfg,
 		kube:   kube,
 
 		force:            false,

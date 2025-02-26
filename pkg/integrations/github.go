@@ -20,9 +20,8 @@ import (
 
 // GithubIntegration represents the Developer Hub GitHub integration.
 type GithubIntegration struct {
-	logger *slog.Logger   // application logger
-	cfg    *config.Config // installer configuration
-	kube   *k8s.Kube      // kubernetes client
+	logger *slog.Logger // application logger
+	kube   *k8s.Kube    // kubernetes client
 
 	gitHubApp *githubapp.GitHubApp // github app client
 
@@ -74,26 +73,32 @@ func (g *GithubIntegration) Validate() error {
 
 // EnsureNamespace ensures the namespace needed for the GitHub integration secret
 // is created on the cluster.
-func (g *GithubIntegration) EnsureNamespace(ctx context.Context) error {
+func (g *GithubIntegration) EnsureNamespace(
+	ctx context.Context,
+	cfg *config.Config,
+) error {
 	return k8s.EnsureOpenShiftProject(
 		ctx,
 		g.log(),
 		g.kube,
-		g.cfg.Installer.Namespace,
+		cfg.Installer.Namespace,
 	)
 }
 
 // setOpenShiftURLs sets the OpenShift cluster's URLs for the GitHub integration.
 // When the URLs are empty it checks the cluster to define them based on the
 // installer configuration and current Kubernetes context.
-func (g *GithubIntegration) setOpenShiftURLs(ctx context.Context) error {
+func (g *GithubIntegration) setOpenShiftURLs(
+	ctx context.Context,
+	cfg *config.Config,
+) error {
 	ingressDomain, err := k8s.GetOpenShiftIngressDomain(ctx, g.kube)
 	if err != nil {
 		return err
 	}
 	g.log().Debug("OpenShift ingress domain", "domain", ingressDomain)
 
-	featureRHDH, err := g.cfg.GetFeature(config.RedHatDeveloperHub)
+	featureRHDH, err := cfg.GetFeature(config.RedHatDeveloperHub)
 	if err != nil {
 		return err
 	}
@@ -107,7 +112,7 @@ func (g *GithubIntegration) setOpenShiftURLs(ctx context.Context) error {
 		g.log().Debug("Using OpenShift cluster for GitHub App callback URL")
 	}
 	if g.webhookURL == "" {
-		feature, err := g.cfg.GetFeature(config.OpenShiftPipelines)
+		feature, err := cfg.GetFeature(config.OpenShiftPipelines)
 		if err != nil {
 			return err
 		}
@@ -131,18 +136,21 @@ func (g *GithubIntegration) setOpenShiftURLs(ctx context.Context) error {
 
 // secretName returns the secret name for the integration. The name is "lazy"
 // generated to make sure configuration is already loaded.
-func (g *GithubIntegration) secretName() types.NamespacedName {
+func (g *GithubIntegration) secretName(cfg *config.Config) types.NamespacedName {
 	return types.NamespacedName{
-		Namespace: g.cfg.Installer.Namespace,
+		Namespace: cfg.Installer.Namespace,
 		Name:      "rhtap-github-integration",
 	}
 }
 
 // prepareSecret checks if the secret already exists, and if so, it will delete
 // the secret if the force flag is enabled.
-func (g *GithubIntegration) prepareSecret(ctx context.Context) error {
+func (g *GithubIntegration) prepareSecret(
+	ctx context.Context,
+	cfg *config.Config,
+) error {
 	g.log().Debug("Checking if integration secret exists")
-	exists, err := k8s.SecretExists(ctx, g.kube, g.secretName())
+	exists, err := k8s.SecretExists(ctx, g.kube, g.secretName(cfg))
 	if err != nil {
 		return err
 	}
@@ -153,15 +161,16 @@ func (g *GithubIntegration) prepareSecret(ctx context.Context) error {
 	if !g.force {
 		g.log().Debug("Integration secret already exists")
 		return fmt.Errorf("%w: %s",
-			ErrSecretAlreadyExists, g.secretName().String())
+			ErrSecretAlreadyExists, g.secretName(cfg).String())
 	}
 	g.log().Debug("Integration secret already exists, recreating it")
-	return k8s.DeleteSecret(ctx, g.kube, g.secretName())
+	return k8s.DeleteSecret(ctx, g.kube, g.secretName(cfg))
 }
 
 // store creates the secret with the integration data.
 func (g *GithubIntegration) store(
 	ctx context.Context,
+	cfg *config.Config,
 	appConfig *github.AppConfig,
 ) error {
 	u, err := url.Parse(appConfig.GetHTMLURL())
@@ -170,8 +179,8 @@ func (g *GithubIntegration) store(
 	}
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: g.secretName().Namespace,
-			Name:      g.secretName().Name,
+			Namespace: g.secretName(cfg).Namespace,
+			Name:      g.secretName(cfg).Name,
 		},
 		Type: corev1.SecretTypeOpaque,
 		Data: map[string][]byte{
@@ -199,11 +208,11 @@ func (g *GithubIntegration) store(
 	)
 
 	logger.Debug("Creating integration secret")
-	coreClient, err := g.kube.CoreV1ClientSet(g.secretName().Namespace)
+	coreClient, err := g.kube.CoreV1ClientSet(g.secretName(cfg).Namespace)
 	if err != nil {
 		return err
 	}
-	_, err = coreClient.Secrets(g.secretName().Namespace).
+	_, err = coreClient.Secrets(g.secretName(cfg).Namespace).
 		Create(ctx, secret, metav1.CreateOptions{})
 	if err == nil {
 		logger.Info("Integration secret created successfully!")
@@ -248,14 +257,18 @@ func (g *GithubIntegration) generateAppManifest(name string) scrape.AppManifest 
 
 // Create creates the GitHub integration, creating the GitHub App and storing the
 // whole application manifest on the cluster, in a Kubernetes secret.
-func (g *GithubIntegration) Create(ctx context.Context, name string) error {
+func (g *GithubIntegration) Create(
+	ctx context.Context,
+	cfg *config.Config,
+	name string,
+) error {
 	logger := g.log().With("app-name", name)
 	logger.Info("Inspecting the cluster forexisting GitHub integration secret")
-	if err := g.prepareSecret(ctx); err != nil {
+	if err := g.prepareSecret(ctx, cfg); err != nil {
 		return err
 	}
 	logger.Info("Setting the OpenShift based URLs for the GitHub integration")
-	if err := g.setOpenShiftURLs(ctx); err != nil {
+	if err := g.setOpenShiftURLs(ctx, cfg); err != nil {
 		return err
 	}
 
@@ -268,18 +281,16 @@ func (g *GithubIntegration) Create(ctx context.Context, name string) error {
 	}
 
 	logger.Info("GitHub application created successfully!")
-	return g.store(ctx, appConfig)
+	return g.store(ctx, cfg, appConfig)
 }
 
 func NewGithubIntegration(
 	logger *slog.Logger,
-	cfg *config.Config,
 	kube *k8s.Kube,
 	gitHubApp *githubapp.GitHubApp,
 ) *GithubIntegration {
 	return &GithubIntegration{
 		logger:    logger,
-		cfg:       cfg,
 		kube:      kube,
 		gitHubApp: gitHubApp,
 

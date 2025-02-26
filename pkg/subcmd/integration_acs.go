@@ -40,9 +40,11 @@ func (d *IntegrationACS) Cmd() *cobra.Command {
 	return d.cmd
 }
 
-// Complete is a no-op in this case.
+// Complete loads the configuration from cluster.
 func (d *IntegrationACS) Complete(args []string) error {
-	return nil
+	var err error
+	d.cfg, err = bootstrapConfig(d.cmd.Context(), d.kube)
+	return err
 }
 
 // Validate checks if the required configuration is set.
@@ -59,20 +61,19 @@ func (d *IntegrationACS) Validate() error {
 
 // Run creates or updates the ACS integration secret.
 func (d *IntegrationACS) Run() error {
-	if err := d.acsIntegration.EnsureNamespace(d.cmd.Context()); err != nil {
+	if err := d.acsIntegration.EnsureNamespace(d.cmd.Context(), d.cfg); err != nil {
 		return err
 	}
-	return d.acsIntegration.Create(d.cmd.Context())
+	return d.acsIntegration.Create(d.cmd.Context(), d.cfg)
 }
 
 // NewIntegrationACS creates the sub-command for the "integration acs"
 // responsible to manage the RHTAP integrations with the ACS service.
 func NewIntegrationACS(
 	logger *slog.Logger,
-	cfg *config.Config,
 	kube *k8s.Kube,
 ) *IntegrationACS {
-	acsIntegration := integrations.NewACSIntegration(logger, cfg, kube)
+	acsIntegration := integrations.NewACSIntegration(logger, kube)
 
 	d := &IntegrationACS{
 		cmd: &cobra.Command{
@@ -83,7 +84,6 @@ func NewIntegrationACS(
 		},
 
 		logger: logger,
-		cfg:    cfg,
 		kube:   kube,
 
 		acsIntegration: acsIntegration,

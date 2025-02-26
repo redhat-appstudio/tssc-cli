@@ -42,7 +42,9 @@ func (d *IntegrationArtifactory) Cmd() *cobra.Command {
 
 // Complete is a no-op in this case.
 func (d *IntegrationArtifactory) Complete(args []string) error {
-	return nil
+	var err error
+	d.cfg, err = bootstrapConfig(d.cmd.Context(), d.kube)
+	return err
 }
 
 // Validate checks if the required configuration is set.
@@ -59,20 +61,20 @@ func (d *IntegrationArtifactory) Validate() error {
 
 // Run creates or updates the Artifactory integration secret.
 func (d *IntegrationArtifactory) Run() error {
-	if err := d.artifactoryIntegration.EnsureNamespace(d.cmd.Context()); err != nil {
+	err := d.artifactoryIntegration.EnsureNamespace(d.cmd.Context(), d.cfg)
+	if err != nil {
 		return err
 	}
-	return d.artifactoryIntegration.Create(d.cmd.Context())
+	return d.artifactoryIntegration.Create(d.cmd.Context(), d.cfg)
 }
 
 // NewIntegrationArtifactory creates the sub-command for the "integration artifactory"
 // responsible to manage the RHTAP integrations with a Artifactory image registry.
 func NewIntegrationArtifactory(
 	logger *slog.Logger,
-	cfg *config.Config,
 	kube *k8s.Kube,
 ) *IntegrationArtifactory {
-	artifactoryIntegration := integrations.NewArtifactoryIntegration(logger, cfg, kube)
+	artifactoryIntegration := integrations.NewArtifactoryIntegration(logger, kube)
 
 	d := &IntegrationArtifactory{
 		cmd: &cobra.Command{
@@ -83,7 +85,6 @@ func NewIntegrationArtifactory(
 		},
 
 		logger: logger,
-		cfg:    cfg,
 		kube:   kube,
 
 		artifactoryIntegration: artifactoryIntegration,

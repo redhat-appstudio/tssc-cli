@@ -45,7 +45,9 @@ func (d *IntegrationTrustification) Cmd() *cobra.Command {
 
 // Complete is a no-op in this case.
 func (d *IntegrationTrustification) Complete(args []string) error {
-	return nil
+	var err error
+	d.cfg, err = bootstrapConfig(d.cmd.Context(), d.kube)
+	return err
 }
 
 // Validate checks if the required configuration is set.
@@ -62,20 +64,21 @@ func (d *IntegrationTrustification) Validate() error {
 
 // Run creates or updates the Trustification integration secret.
 func (d *IntegrationTrustification) Run() error {
-	if err := d.trustificationIntegration.EnsureNamespace(d.cmd.Context()); err != nil {
+	err := d.trustificationIntegration.EnsureNamespace(d.cmd.Context(), d.cfg)
+	if err != nil {
 		return err
 	}
-	return d.trustificationIntegration.Create(d.cmd.Context())
+	return d.trustificationIntegration.Create(d.cmd.Context(), d.cfg)
 }
 
-// NewIntegrationTrustification creates the sub-command for the "integration trustification"
-// responsible to manage the RHTAP integrations with the Trustification service.
+// NewIntegrationTrustification creates the sub-command for the "integration
+// trustification" responsible to manage the RHTAP integrations with the
+// Trustification service.
 func NewIntegrationTrustification(
 	logger *slog.Logger,
-	cfg *config.Config,
 	kube *k8s.Kube,
 ) *IntegrationTrustification {
-	trustificationIntegration := integrations.NewTrustificationIntegration(logger, cfg, kube)
+	trustificationIntegration := integrations.NewTrustificationIntegration(logger, kube)
 
 	d := &IntegrationTrustification{
 		cmd: &cobra.Command{
@@ -86,7 +89,6 @@ func NewIntegrationTrustification(
 		},
 
 		logger: logger,
-		cfg:    cfg,
 		kube:   kube,
 
 		trustificationIntegration: trustificationIntegration,

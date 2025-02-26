@@ -61,6 +61,10 @@ func (d *Deploy) log() *slog.Logger {
 
 // Complete verifies the object is complete.
 func (d *Deploy) Complete(args []string) error {
+	var err error
+	if d.cfg, err = bootstrapConfig(d.cmd.Context(), d.kube); err != nil {
+		return err
+	}
 	if len(args) == 1 {
 		d.chartPath = args[0]
 	}
@@ -145,7 +149,6 @@ func (d *Deploy) Run() error {
 func NewDeploy(
 	logger *slog.Logger,
 	f *flags.Flags,
-	cfg *config.Config,
 	cfs *chartfs.ChartFS,
 	kube *k8s.Kube,
 ) Interface {
@@ -158,7 +161,6 @@ func NewDeploy(
 		},
 		logger:    logger.WithGroup("deploy"),
 		flags:     f,
-		cfg:       cfg,
 		cfs:       cfs,
 		kube:      kube,
 		chartPath: "",

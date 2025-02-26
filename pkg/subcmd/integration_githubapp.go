@@ -50,6 +50,12 @@ func (d *IntegrationGitHubApp) Cmd() *cobra.Command {
 
 // Complete captures the application name, and ensures it's ready to run.
 func (d *IntegrationGitHubApp) Complete(args []string) error {
+	var err error
+	d.cfg, err = bootstrapConfig(d.cmd.Context(), d.kube)
+	if err != nil {
+		return err
+	}
+
 	if d.create && d.update {
 		return fmt.Errorf("cannot create and update at the same time")
 	}
@@ -92,11 +98,12 @@ func (d *IntegrationGitHubApp) Validate() error {
 
 // Manages the GitHub App and integration secret.
 func (d *IntegrationGitHubApp) Run() error {
-	if err := d.gitHubIntegration.EnsureNamespace(d.cmd.Context()); err != nil {
+	err := d.gitHubIntegration.EnsureNamespace(d.cmd.Context(), d.cfg)
+	if err != nil {
 		return err
 	}
 	if d.create {
-		return d.gitHubIntegration.Create(d.cmd.Context(), d.name)
+		return d.gitHubIntegration.Create(d.cmd.Context(), d.cfg, d.name)
 	}
 	if d.update {
 		// TODO: implement update.
@@ -111,11 +118,10 @@ func (d *IntegrationGitHubApp) Run() error {
 // github-app", which manages the RHTAP integration with a GitHub App.
 func NewIntegrationGitHubApp(
 	logger *slog.Logger,
-	cfg *config.Config,
 	kube *k8s.Kube,
 ) *IntegrationGitHubApp {
 	gitHubApp := githubapp.NewGitHubApp(logger)
-	gitHubIntegration := integrations.NewGithubIntegration(logger, cfg, kube, gitHubApp)
+	gitHubIntegration := integrations.NewGithubIntegration(logger, kube, gitHubApp)
 
 	d := &IntegrationGitHubApp{
 		cmd: &cobra.Command{
@@ -126,7 +132,6 @@ func NewIntegrationGitHubApp(
 		},
 
 		logger: logger,
-		cfg:    cfg,
 		kube:   kube,
 
 		gitHubIntegration: gitHubIntegration,

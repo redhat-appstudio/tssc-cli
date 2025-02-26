@@ -49,7 +49,9 @@ func (d *IntegrationQuay) Cmd() *cobra.Command {
 
 // Complete is a no-op in this case.
 func (d *IntegrationQuay) Complete(args []string) error {
-	return nil
+	var err error
+	d.cfg, err = bootstrapConfig(d.cmd.Context(), d.kube)
+	return err
 }
 
 // Validate checks if the required configuration is set.
@@ -66,20 +68,17 @@ func (d *IntegrationQuay) Validate() error {
 
 // Run creates or updates the Quay integration secret.
 func (d *IntegrationQuay) Run() error {
-	if err := d.quayIntegration.EnsureNamespace(d.cmd.Context()); err != nil {
+	err := d.quayIntegration.EnsureNamespace(d.cmd.Context(), d.cfg)
+	if err != nil {
 		return err
 	}
-	return d.quayIntegration.Create(d.cmd.Context())
+	return d.quayIntegration.Create(d.cmd.Context(), d.cfg)
 }
 
 // NewIntegrationQuay creates the sub-command for the "integration quay"
 // responsible to manage the RHTAP integrations with a Quay image registry.
-func NewIntegrationQuay(
-	logger *slog.Logger,
-	cfg *config.Config,
-	kube *k8s.Kube,
-) *IntegrationQuay {
-	quayIntegration := integrations.NewQuayIntegration(logger, cfg, kube)
+func NewIntegrationQuay(logger *slog.Logger, kube *k8s.Kube) *IntegrationQuay {
+	quayIntegration := integrations.NewQuayIntegration(logger, kube)
 
 	d := &IntegrationQuay{
 		cmd: &cobra.Command{
@@ -90,7 +89,6 @@ func NewIntegrationQuay(
 		},
 
 		logger: logger,
-		cfg:    cfg,
 		kube:   kube,
 
 		quayIntegration: quayIntegration,

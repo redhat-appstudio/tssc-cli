@@ -17,9 +17,8 @@ import (
 
 // ACSIntegration represents the RHTAP ACS integration.
 type ACSIntegration struct {
-	logger *slog.Logger   // application logger
-	cfg    *config.Config // installer configuration
-	kube   *k8s.Kube      // kubernetes client
+	logger *slog.Logger // application logger
+	kube   *k8s.Kube    // kubernetes client
 
 	force bool // overwrite the existing secret
 
@@ -66,29 +65,35 @@ func (a *ACSIntegration) Validate() error {
 
 // EnsureNamespace ensures the namespace needed for the ACS integration secret
 // is created on the cluster.
-func (a *ACSIntegration) EnsureNamespace(ctx context.Context) error {
+func (a *ACSIntegration) EnsureNamespace(
+	ctx context.Context,
+	cfg *config.Config,
+) error {
 	return k8s.EnsureOpenShiftProject(
 		ctx,
 		a.log(),
 		a.kube,
-		a.cfg.Installer.Namespace,
+		cfg.Installer.Namespace,
 	)
 }
 
 // secretName returns the secret name for the integration. The name is "lazy"
 // generated to make sure configuration is already loaded.
-func (a *ACSIntegration) secretName() types.NamespacedName {
+func (a *ACSIntegration) secretName(cfg *config.Config) types.NamespacedName {
 	return types.NamespacedName{
-		Namespace: a.cfg.Installer.Namespace,
+		Namespace: cfg.Installer.Namespace,
 		Name:      "rhtap-acs-integration",
 	}
 }
 
 // prepareSecret checks if the secret already exists, and if so, it will delete
 // the secret if the force flag is enabled.
-func (a *ACSIntegration) prepareSecret(ctx context.Context) error {
+func (a *ACSIntegration) prepareSecret(
+	ctx context.Context,
+	cfg *config.Config,
+) error {
 	a.log().Debug("Checking if integration secret exists")
-	exists, err := k8s.SecretExists(ctx, a.kube, a.secretName())
+	exists, err := k8s.SecretExists(ctx, a.kube, a.secretName(cfg))
 	if err != nil {
 		return err
 	}
@@ -99,20 +104,21 @@ func (a *ACSIntegration) prepareSecret(ctx context.Context) error {
 	if !a.force {
 		a.log().Debug("Integration secret already exists")
 		return fmt.Errorf("%w: %s",
-			ErrSecretAlreadyExists, a.secretName().String())
+			ErrSecretAlreadyExists, a.secretName(cfg).String())
 	}
 	a.log().Debug("Integration secret already exists, recreating it")
-	return k8s.DeleteSecret(ctx, a.kube, a.secretName())
+	return k8s.DeleteSecret(ctx, a.kube, a.secretName(cfg))
 }
 
 // store creates the secret with the integration data.
 func (a *ACSIntegration) store(
 	ctx context.Context,
+	cfg *config.Config,
 ) error {
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: a.secretName().Namespace,
-			Name:      a.secretName().Name,
+			Namespace: a.secretName(cfg).Namespace,
+			Name:      a.secretName(cfg).Name,
 		},
 		Type: corev1.SecretTypeOpaque,
 		Data: map[string][]byte{
@@ -126,11 +132,11 @@ func (a *ACSIntegration) store(
 	)
 
 	logger.Debug("Creating integration secret")
-	coreClient, err := a.kube.CoreV1ClientSet(a.secretName().Namespace)
+	coreClient, err := a.kube.CoreV1ClientSet(a.secretName(cfg).Namespace)
 	if err != nil {
 		return err
 	}
-	_, err = coreClient.Secrets(a.secretName().Namespace).
+	_, err = coreClient.Secrets(a.secretName(cfg).Namespace).
 		Create(ctx, secret, metav1.CreateOptions{})
 	if err == nil {
 		logger.Info("Integration secret created successfully!")
@@ -139,23 +145,24 @@ func (a *ACSIntegration) store(
 }
 
 // Create creates the ACS integration Kubernetes secret.
-func (a *ACSIntegration) Create(ctx context.Context) error {
+func (a *ACSIntegration) Create(
+	ctx context.Context,
+	cfg *config.Config,
+) error {
 	logger := a.log()
 	logger.Info("Inspecting the cluster for an existing ACS integration secret")
-	if err := a.prepareSecret(ctx); err != nil {
+	if err := a.prepareSecret(ctx, cfg); err != nil {
 		return err
 	}
-	return a.store(ctx)
+	return a.store(ctx, cfg)
 }
 
 func NewACSIntegration(
 	logger *slog.Logger,
-	cfg *config.Config,
 	kube *k8s.Kube,
 ) *ACSIntegration {
 	return &ACSIntegration{
 		logger: logger,
-		cfg:    cfg,
 		kube:   kube,
 
 		force:    false,

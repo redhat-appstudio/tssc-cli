@@ -19,9 +19,8 @@ const defaultPublicBitBucketHost = "bitbucket.org"
 
 // BitBucketIntegration represents the RHTAP BitBucket integration.
 type BitBucketIntegration struct {
-	logger *slog.Logger   // application logger
-	cfg    *config.Config // installer configuration
-	kube   *k8s.Kube      // kubernetes client
+	logger *slog.Logger // application logger
+	kube   *k8s.Kube    // kubernetes client
 
 	force bool // overwrite the existing secret
 
@@ -67,31 +66,37 @@ func (g *BitBucketIntegration) Validate() error {
 	return nil
 }
 
-// EnsureNamespace ensures the namespace needed for the BitBucket integration secret
-// is created on the cluster.
-func (g *BitBucketIntegration) EnsureNamespace(ctx context.Context) error {
+// EnsureNamespace ensures the namespace needed for the BitBucket integration
+// secret is created on the cluster.
+func (g *BitBucketIntegration) EnsureNamespace(
+	ctx context.Context,
+	cfg *config.Config,
+) error {
 	return k8s.EnsureOpenShiftProject(
 		ctx,
 		g.log(),
 		g.kube,
-		g.cfg.Installer.Namespace,
+		cfg.Installer.Namespace,
 	)
 }
 
 // secretName returns the secret name for the integration. The name is "lazy"
 // generated to make sure configuration is already loaded.
-func (g *BitBucketIntegration) secretName() types.NamespacedName {
+func (g *BitBucketIntegration) secretName(cfg *config.Config) types.NamespacedName {
 	return types.NamespacedName{
-		Namespace: g.cfg.Installer.Namespace,
+		Namespace: cfg.Installer.Namespace,
 		Name:      "rhtap-bitbucket-integration",
 	}
 }
 
 // prepareSecret checks if the secret already exists, and if so, it will delete
 // the secret if the force flag is enabled.
-func (g *BitBucketIntegration) prepareSecret(ctx context.Context) error {
+func (g *BitBucketIntegration) prepareSecret(
+	ctx context.Context,
+	cfg *config.Config,
+) error {
 	g.log().Debug("Checking if integration secret exists")
-	exists, err := k8s.SecretExists(ctx, g.kube, g.secretName())
+	exists, err := k8s.SecretExists(ctx, g.kube, g.secretName(cfg))
 	if err != nil {
 		return err
 	}
@@ -102,20 +107,21 @@ func (g *BitBucketIntegration) prepareSecret(ctx context.Context) error {
 	if !g.force {
 		g.log().Debug("Integration secret already exists")
 		return fmt.Errorf("%w: %s",
-			ErrSecretAlreadyExists, g.secretName().String())
+			ErrSecretAlreadyExists, g.secretName(cfg).String())
 	}
 	g.log().Debug("Integration secret already exists, recreating it")
-	return k8s.DeleteSecret(ctx, g.kube, g.secretName())
+	return k8s.DeleteSecret(ctx, g.kube, g.secretName(cfg))
 }
 
 // store creates the secret with the integration data.
 func (g *BitBucketIntegration) store(
 	ctx context.Context,
+	cfg *config.Config,
 ) error {
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: g.secretName().Namespace,
-			Name:      g.secretName().Name,
+			Namespace: g.secretName(cfg).Namespace,
+			Name:      g.secretName(cfg).Name,
 		},
 		Type: corev1.SecretTypeOpaque,
 		Data: map[string][]byte{
@@ -130,11 +136,11 @@ func (g *BitBucketIntegration) store(
 	)
 
 	logger.Debug("Creating integration secret")
-	coreClient, err := g.kube.CoreV1ClientSet(g.secretName().Namespace)
+	coreClient, err := g.kube.CoreV1ClientSet(g.secretName(cfg).Namespace)
 	if err != nil {
 		return err
 	}
-	_, err = coreClient.Secrets(g.secretName().Namespace).
+	_, err = coreClient.Secrets(g.secretName(cfg).Namespace).
 		Create(ctx, secret, metav1.CreateOptions{})
 	if err == nil {
 		logger.Info("Integration secret created successfully!")
@@ -143,23 +149,24 @@ func (g *BitBucketIntegration) store(
 }
 
 // Create creates the BitBucket integration Kubernetes secret.
-func (g *BitBucketIntegration) Create(ctx context.Context) error {
+func (g *BitBucketIntegration) Create(
+	ctx context.Context,
+	cfg *config.Config,
+) error {
 	logger := g.log()
 	logger.Info("Inspecting the cluster for an existing BitBucket integration secret")
-	if err := g.prepareSecret(ctx); err != nil {
+	if err := g.prepareSecret(ctx, cfg); err != nil {
 		return err
 	}
-	return g.store(ctx)
+	return g.store(ctx, cfg)
 }
 
 func NewBitBucketIntegration(
 	logger *slog.Logger,
-	cfg *config.Config,
 	kube *k8s.Kube,
 ) *BitBucketIntegration {
 	return &BitBucketIntegration{
 		logger: logger,
-		cfg:    cfg,
 		kube:   kube,
 
 		force:       false,
