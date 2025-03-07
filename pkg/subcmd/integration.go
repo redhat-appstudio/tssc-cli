@@ -20,6 +20,7 @@ func NewIntegration(
 
 	cmd.AddCommand(NewRunner(NewIntegrationACS(logger, cfg, kube)).Cmd())
 	cmd.AddCommand(NewRunner(NewIntegrationArtifactory(logger, cfg, kube)).Cmd())
+	cmd.AddCommand(NewRunner(NewIntegrationAzure(logger, cfg, kube)).Cmd())
 	cmd.AddCommand(NewRunner(NewIntegrationBitBucket(logger, cfg, kube)).Cmd())
 	cmd.AddCommand(NewRunner(NewIntegrationGitHubApp(logger, cfg, kube)).Cmd())
 	cmd.AddCommand(NewRunner(NewIntegrationGitLab(logger, cfg, kube)).Cmd())
