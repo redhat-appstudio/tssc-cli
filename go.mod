@@ -5,7 +5,7 @@ go 1.22.5
 require (
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/google/go-github/scrape v0.0.0-20250215155042-81dc7a9416fb
-	github.com/google/go-github/v61 v61.0.0
+	github.com/google/go-github/v69 v69.0.0
 	github.com/onsi/gomega v1.33.1
 	github.com/openshift/api v0.0.0-20241107155230-d37bb9f7e380
 	github.com/openshift/client-go v0.0.0-20241107164952-923091dd2b1a
@@ -71,7 +71,6 @@ require (
 	github.com/google/btree v1.1.2 // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
-	github.com/google/go-github/v69 v69.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
