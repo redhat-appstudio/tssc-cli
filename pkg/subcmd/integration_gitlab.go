@@ -20,12 +20,6 @@ type IntegrationGitLab struct {
 	kube   *k8s.Kube      // kubernetes client
 
 	gitlabIntegration *integrations.GitLabIntegration // gitlab integration
-
-	host         string // E.g. 'gitlab.com'
-	clientId     string // Application client id
-	clientSecret string // Application client secret
-	token        string // API token
-	group        string // Group name
 }
 
 var _ Interface = &IntegrationGitLab{}
