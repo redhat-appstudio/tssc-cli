@@ -88,6 +88,11 @@ func (t *Template) Complete(args []string) error {
 		return fmt.Errorf("expecting one chart, got %d", len(args))
 	}
 	t.dep.Chart = args[0]
+
+	var err error
+	if t.cfg, err = bootstrapConfig(t.cmd.Context(), t.kube); err != nil {
+		return err
+	}
 	return nil
 }
 
