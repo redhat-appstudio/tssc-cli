@@ -72,20 +72,6 @@ func (d *IntegrationGitHubApp) Complete(args []string) error {
 
 // Validate checks if the required configuration is set.
 func (d *IntegrationGitHubApp) Validate() error {
-	feature, err := d.cfg.GetFeature(config.RedHatDeveloperHub)
-	if err != nil {
-		return err
-	}
-	if !feature.Enabled {
-		return fmt.Errorf("The 'redHatDeveloperHub' feature is not enabled")
-	}
-	feature, err = d.cfg.GetFeature(config.OpenShiftPipelines)
-	if err != nil {
-		return err
-	}
-	if !feature.Enabled {
-		return fmt.Errorf("The 'openShiftPipelines' feature is not enabled")
-	}
 	// TODO: make the name optional, the user will inform the GitHub App name on
 	// the web-form, which can be later extracted.
 	if d.name == "" {
