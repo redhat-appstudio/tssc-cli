@@ -167,6 +167,29 @@ func (g *GithubIntegration) prepareSecret(
 	return k8s.DeleteSecret(ctx, g.kube, g.secretName(cfg))
 }
 
+// getCurrentGitHubUser gets the current user name authenticated with github token
+func (g *GithubIntegration) getCurrentGitHubUser(ctx context.Context, ghHost string) (string, error) {
+	gc := github.NewClient(nil).WithAuthToken(g.token)
+	if ghHost != "github.com" {
+		ghUrl := fmt.Sprintf("https://%s/api/v3/", ghHost)
+		ghuUrl := fmt.Sprintf("https://%s/api/uploads/", ghHost)
+		gce, err := gc.WithEnterpriseURLs(ghUrl, ghuUrl)
+		if err != nil {
+			return "", err
+		}
+		gc = gce
+	}
+
+	user, _, err := gc.Users.Get(ctx, "")
+	if err != nil {
+		return "", err
+	}
+
+	username := user.GetLogin()
+
+	return username, nil
+}
+
 // store creates the secret with the integration data.
 func (g *GithubIntegration) store(
 	ctx context.Context,
@@ -177,6 +200,13 @@ func (g *GithubIntegration) store(
 	if err != nil {
 		return err
 	}
+
+	// Getting the user name
+	username, err := g.getCurrentGitHubUser(ctx, u.Hostname())
+	if err != nil {
+		return err
+	}
+
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: g.secretName(cfg).Namespace,
@@ -200,6 +230,7 @@ func (g *GithubIntegration) store(
 			"updatedAt":     []byte(appConfig.UpdatedAt.String()),
 			"webhookSecret": []byte(appConfig.GetWebhookSecret()),
 			"token":         []byte(g.token),
+			"username":      []byte(username),
 		},
 	}
 	logger := g.log().With(
