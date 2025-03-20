@@ -1,7 +1,6 @@
 package subcmd
 
 import (
-	"fmt"
 	"log/slog"
 
 	"github.com/redhat-appstudio/rhtap-cli/pkg/config"
@@ -52,13 +51,6 @@ func (d *IntegrationTrustification) Complete(args []string) error {
 
 // Validate checks if the required configuration is set.
 func (d *IntegrationTrustification) Validate() error {
-	feature, err := d.cfg.GetFeature(config.RedHatDeveloperHub)
-	if err != nil {
-		return err
-	}
-	if !feature.Enabled {
-		return fmt.Errorf("Red Hat Developer Hub feature is not enabled")
-	}
 	return d.trustificationIntegration.Validate()
 }
 
