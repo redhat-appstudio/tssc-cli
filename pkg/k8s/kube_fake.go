@@ -10,6 +10,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
+	rbacv1client "k8s.io/client-go/kubernetes/typed/rbac/v1"
 	cmdtesting "k8s.io/kubectl/pkg/cmd/testing"
 )
 
@@ -86,6 +87,16 @@ func (f *FakeKube) GetDynamicClientForObjectRef(
 		return dynamicClient.Resource(gvr).Namespace(objectRef.Namespace), nil
 	}
 	return dynamicClient.Resource(gvr), nil
+}
+
+func (f *FakeKube) RBACV1ClientSet(
+	namespace string,
+) (rbacv1client.RbacV1Interface, error) {
+	cs, err := f.ClientSet(namespace)
+	if err != nil {
+		return nil, err
+	}
+	return cs.RbacV1(), nil
 }
 
 func (f *FakeKube) RESTClientGetter(_ string) genericclioptions.RESTClientGetter {

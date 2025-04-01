@@ -7,6 +7,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
+	rbacv1client "k8s.io/client-go/kubernetes/typed/rbac/v1"
 )
 
 type Interface interface {
@@ -16,5 +17,6 @@ type Interface interface {
 	DiscoveryClient(string) (discovery.DiscoveryInterface, error)
 	DynamicClient(string) (dynamic.Interface, error)
 	GetDynamicClientForObjectRef(*corev1.ObjectReference) (dynamic.ResourceInterface, error)
+	RBACV1ClientSet(string) (rbacv1client.RbacV1Interface, error)
 	RESTClientGetter(string) genericclioptions.RESTClientGetter
 }

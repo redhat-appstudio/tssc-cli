@@ -13,6 +13,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
+	rbacv1client "k8s.io/client-go/kubernetes/typed/rbac/v1"
 )
 
 // Kube represents the Kubernetes client helper.
@@ -69,6 +70,15 @@ func (k *Kube) DynamicClient(namespace string) (dynamic.Interface, error) {
 		return nil, err
 	}
 	return dynamic.NewForConfig(restConfig)
+}
+
+// RBACV1ClientSet returns a "rbacv1" Kubernetes Clientset.
+func (k *Kube) RBACV1ClientSet(namespace string) (rbacv1client.RbacV1Interface, error) {
+	restConfig, err := k.RESTClientGetter(namespace).ToRESTConfig()
+	if err != nil {
+		return nil, err
+	}
+	return rbacv1client.NewForConfig(restConfig)
 }
 
 // GetDynamicClientForObjectRef returns a dynamic client for the object reference.
