@@ -81,9 +81,6 @@ func (t *Template) Complete(args []string) error {
 	// to false it will return a validation error.
 	t.flags.DryRun = true
 
-	if !t.showManifests {
-		return nil
-	}
 	if len(args) != 1 {
 		return fmt.Errorf("expecting one chart, got %d", len(args))
 	}
