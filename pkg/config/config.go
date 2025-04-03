@@ -50,7 +50,7 @@ func (c *Config) GetDependency(logger *slog.Logger, chart string) (*Dependency, 
 			return &dep, nil
 		}
 	}
-	return nil, fmt.Errorf("chart %s not found", chart)
+	return nil, fmt.Errorf("chart '%s' not found", chart)
 }
 
 // GetEnabledDependencies returns a list of enabled dependencies.
@@ -72,7 +72,7 @@ func (c *Config) GetEnabledDependencies(logger *slog.Logger) []Dependency {
 func (c *Config) GetFeature(name string) (*FeatureSpec, error) {
 	feature, ok := c.Installer.Features[name]
 	if !ok {
-		return nil, fmt.Errorf("feature %s not found", name)
+		return nil, fmt.Errorf("feature '%s' not found", name)
 	}
 	return &feature, nil
 }
