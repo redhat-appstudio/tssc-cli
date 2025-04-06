@@ -95,6 +95,11 @@ type Value interface {
 	// structure through this API will fail dynamically, making the
 	// data structure immutable and safe for publishing to other
 	// Starlark interpreters running concurrently.
+	//
+	// Implementations of Freeze must be defensive against
+	// reference cycles; this can be achieved by first checking
+	// the value's frozen state, then setting it, and only then
+	// visiting any other values that it references.
 	Freeze()
 
 	// Truth returns the truth value of an object.
@@ -535,7 +540,7 @@ func (f Float) Unary(op syntax.Token) (Value, error) {
 
 // String is the type of a Starlark text string.
 //
-// A String encapsulates an an immutable sequence of bytes,
+// A String encapsulates an immutable sequence of bytes,
 // but strings are not directly iterable. Instead, iterate
 // over the result of calling one of these four methods:
 // codepoints, codepoint_ords, elems, elem_ords.
@@ -775,6 +780,15 @@ func (fn *Function) ParamDefault(i int) Value {
 func (fn *Function) HasVarargs() bool { return fn.funcode.HasVarargs }
 func (fn *Function) HasKwargs() bool  { return fn.funcode.HasKwargs }
 
+// NumFreeVars returns the number of free variables of this function.
+func (fn *Function) NumFreeVars() int { return len(fn.funcode.FreeVars) }
+
+// FreeVar returns the binding (name and binding position) and value
+// of the i'th free variable of function fn.
+func (fn *Function) FreeVar(i int) (Binding, Value) {
+	return Binding(fn.funcode.FreeVars[i]), fn.freevars[i].(*cell).v
+}
+
 // A Builtin is a function implemented in Go.
 type Builtin struct {
 	name string
@@ -854,7 +868,6 @@ func (d *Dict) Type() string                                    { return "dict" 
 func (d *Dict) Freeze()                                         { d.ht.freeze() }
 func (d *Dict) Truth() Bool                                     { return d.Len() > 0 }
 func (d *Dict) Hash() (uint32, error)                           { return 0, fmt.Errorf("unhashable type: dict") }
-func (d *Dict) Entries(yield func(k, v Value) bool)             { d.ht.entries(yield) }
 
 func (x *Dict) Union(y *Dict) *Dict {
 	z := new(Dict)
@@ -962,23 +975,6 @@ func (l *List) Iterate() Iterator {
 	return &listIterator{l: l}
 }
 
-// Elements is a go1.23 iterator over the elements of the list.
-//
-// Example:
-//
-//	for elem := range list.Elements { ... }
-func (l *List) Elements(yield func(Value) bool) {
-	if !l.frozen {
-		l.itercount++
-		defer func() { l.itercount-- }()
-	}
-	for _, x := range l.elems {
-		if !yield(x) {
-			break
-		}
-	}
-}
-
 func (x *List) CompareSameType(op syntax.Token, y_ Value, depth int) (bool, error) {
 	y := y_.(*List)
 	// It's tempting to check x == y as an optimization here,
@@ -1079,19 +1075,6 @@ func (t Tuple) Slice(start, end, step int) Value {
 
 func (t Tuple) Iterate() Iterator { return &tupleIterator{elems: t} }
 
-// Elements is a go1.23 iterator over the elements of the tuple.
-//
-// (A Tuple is a slice, so it is of course directly iterable. This
-// method exists to provide a fast path for the [Elements] standalone
-// function.)
-func (t Tuple) Elements(yield func(Value) bool) {
-	for _, x := range t {
-		if !yield(x) {
-			break
-		}
-	}
-}
-
 func (t Tuple) Freeze() {
 	for _, elem := range t {
 		elem.Freeze()
@@ -1163,9 +1146,6 @@ func (s *Set) Truth() Bool                            { return s.Len() > 0 }
 
 func (s *Set) Attr(name string) (Value, error) { return builtinAttr(s, name, setMethods) }
 func (s *Set) AttrNames() []string             { return builtinAttrNames(setMethods) }
-func (s *Set) Elements(yield func(k Value) bool) {
-	s.ht.entries(func(k, _ Value) bool { return yield(k) })
-}
 
 func (x *Set) CompareSameType(op syntax.Token, y_ Value, depth int) (bool, error) {
 	y := y_.(*Set)
@@ -1250,6 +1230,16 @@ func (s *Set) Union(iter Iterator) (Value, error) {
 		}
 	}
 	return set, nil
+}
+
+func (s *Set) InsertAll(iter Iterator) error {
+	var x Value
+	for iter.Next(&x) {
+		if err := s.Insert(x); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *Set) Difference(other Iterator) (Value, error) {
@@ -1601,74 +1591,6 @@ func Iterate(x Value) Iterator {
 		return x.Iterate()
 	}
 	return nil
-}
-
-// Elements returns an iterator for the elements of the iterable value.
-//
-// Example of go1.23 iteration:
-//
-//	for elem := range Elements(iterable) { ... }
-//
-// Push iterators are provided as a convience for Go client code. The
-// core iteration behavior of Starlark for-loops is defined by the
-// [Iterable] interface.
-//
-// TODO(adonovan): change return type to go1.23 iter.Seq[Value].
-func Elements(iterable Iterable) func(yield func(Value) bool) {
-	// Use specialized push iterator if available (*List, Tuple, *Set).
-	type hasElements interface {
-		Elements(yield func(k Value) bool)
-	}
-	if iterable, ok := iterable.(hasElements); ok {
-		return iterable.Elements
-	}
-
-	iter := iterable.Iterate()
-	return func(yield func(Value) bool) {
-		defer iter.Done()
-		var x Value
-		for iter.Next(&x) && yield(x) {
-		}
-	}
-}
-
-// Entries returns an iterator over the entries (key/value pairs) of
-// the iterable mapping.
-//
-// Example of go1.23 iteration:
-//
-//	for k, v := range Entries(mapping) { ... }
-//
-// Push iterators are provided as a convience for Go client code. The
-// core iteration behavior of Starlark for-loops is defined by the
-// [Iterable] interface.
-//
-// TODO(adonovan): change return type to go1.23 iter.Seq2[Value, Value].
-func Entries(mapping IterableMapping) func(yield func(k, v Value) bool) {
-	// If available (e.g. *Dict), use specialized push iterator,
-	// as it gets k and v in one shot.
-	type hasEntries interface {
-		Entries(yield func(k, v Value) bool)
-	}
-	if mapping, ok := mapping.(hasEntries); ok {
-		return mapping.Entries
-	}
-
-	iter := mapping.Iterate()
-	return func(yield func(k, v Value) bool) {
-		defer iter.Done()
-		var k Value
-		for iter.Next(&k) {
-			v, found, err := mapping.Get(k)
-			if err != nil || !found {
-				panic(fmt.Sprintf("Iterate and Get are inconsistent (mapping=%v, key=%v)",
-					mapping.Type(), k.Type()))
-			}
-			if !yield(k, v) {
-				break
-			}
-		}
-	}
 }
 
 // Bytes is the type of a Starlark binary string.
