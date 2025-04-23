@@ -28,9 +28,14 @@ func (v *Variables) SetOpenShift(ctx context.Context, kube *k8s.Kube) error {
 	if err != nil {
 		return err
 	}
+	ingressRouterCA, err := k8s.GetOpenShiftIngressRouteCA(ctx, kube)
+	if err != nil {
+		return err
+	}
 	v.OpenShift = chartutil.Values{
 		"Ingress": chartutil.Values{
-			"Domain": ingressDomain,
+			"Domain":   ingressDomain,
+			"RouterCA": ingressRouterCA,
 		},
 	}
 	return nil
