@@ -2,6 +2,8 @@ package engine
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/redhat-appstudio/rhtap-cli/pkg/config"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/k8s"
@@ -22,6 +24,16 @@ func (v *Variables) SetInstaller(cfg *config.Spec) error {
 	return err
 }
 
+func getMinorVersion(version string) (string, error) {
+	parts := strings.Split(version, ".")
+	if len(parts) < 2 {
+		return "", fmt.Errorf("version does not include a minor part")
+	}
+	minorVersion := strings.Join(parts[:2], ".")
+
+	return minorVersion, nil
+}
+
 // SetOpenShift sets the OpenShift context variables.
 func (v *Variables) SetOpenShift(ctx context.Context, kube *k8s.Kube) error {
 	ingressDomain, err := k8s.GetOpenShiftIngressDomain(ctx, kube)
@@ -32,12 +44,23 @@ func (v *Variables) SetOpenShift(ctx context.Context, kube *k8s.Kube) error {
 	if err != nil {
 		return err
 	}
+	clusterVersion, err := k8s.GetOpenShiftVersion(ctx, kube)
+	if err != nil {
+		return err
+	}
+	minorVersion, err := getMinorVersion(clusterVersion)
+	if err != nil {
+		return err
+	}
 	v.OpenShift = chartutil.Values{
 		"Ingress": chartutil.Values{
 			"Domain":   ingressDomain,
 			"RouterCA": ingressRouterCA,
 		},
+		"Version": clusterVersion,
+		"MinorVersion": minorVersion,
 	}
+
 	return nil
 }
 
