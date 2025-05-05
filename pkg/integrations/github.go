@@ -11,7 +11,7 @@ import (
 	"github.com/redhat-appstudio/rhtap-cli/pkg/k8s"
 
 	"github.com/google/go-github/scrape"
-	"github.com/google/go-github/v69/github"
+	"github.com/google/go-github/v71/github"
 	"github.com/spf13/pflag"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -254,14 +254,14 @@ func (g *GithubIntegration) store(
 // generateAppManifest creates the application manifest for the RHDH GitHub App
 func (g *GithubIntegration) generateAppManifest(name string) scrape.AppManifest {
 	return scrape.AppManifest{
-		Name: github.String(name),
-		URL:  github.String(g.homepageURL),
+		Name: github.Ptr(name),
+		URL:  github.Ptr(g.homepageURL),
 		CallbackURLs: []string{
 			g.callbackURL,
 		},
-		Description:    github.String(g.description),
+		Description:    github.Ptr(g.description),
 		HookAttributes: map[string]string{"url": g.webhookURL},
-		Public:         github.Bool(true),
+		Public:         github.Ptr(true),
 		DefaultEvents: []string{
 			"check_run",
 			"check_suite",
@@ -272,16 +272,16 @@ func (g *GithubIntegration) generateAppManifest(name string) scrape.AppManifest 
 		},
 		DefaultPermissions: &github.InstallationPermissions{
 			// Permissions for Pipeline-as-Code.
-			Checks:           github.String("write"),
-			Contents:         github.String("write"),
-			Issues:           github.String("write"),
-			Members:          github.String("read"),
-			Metadata:         github.String("read"),
-			OrganizationPlan: github.String("read"),
-			PullRequests:     github.String("write"),
+			Checks:           github.Ptr("write"),
+			Contents:         github.Ptr("write"),
+			Issues:           github.Ptr("write"),
+			Members:          github.Ptr("read"),
+			Metadata:         github.Ptr("read"),
+			OrganizationPlan: github.Ptr("read"),
+			PullRequests:     github.Ptr("write"),
 			// Permissions for Red Hat Developer Hub (RHDH).
-			Administration: github.String("write"),
-			Workflows:      github.String("write"),
+			Administration: github.Ptr("write"),
+			Workflows:      github.Ptr("write"),
 		},
 	}
 }
