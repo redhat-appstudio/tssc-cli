@@ -18,10 +18,10 @@ func bootstrapConfig(
 	if err != nil {
 		fmt.Fprintf(os.Stderr, `
 Unable to find the configuration in the cluster, or the configuration is invalid.
-Please refer to the subcommand "rhtap-cli config" to manage installer's
+Please refer to the subcommand "tssc config" to manage installer's
 configuration for the target cluster.
 
-	$ rhtap-cli config --help
+	$ tssc config --help
 		`)
 	}
 	return cfg, err

@@ -1,4 +1,4 @@
-APP = rhtap-cli
+APP = tssc
 
 BIN_DIR ?= ./bin
 BIN ?= $(BIN_DIR)/$(APP)

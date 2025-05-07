@@ -10,22 +10,22 @@
     </a>
 </p>
 
-Red Hat Trusted Application Pipeline Installer (`rhtap-cli`)
+Red Hat Trusted Software Supply Chain CLI (`tssc`)
 ------------------------------------------------------------
 
 # Abstract
 
-The `rhtap-cli` is designed as a sophisticated installer for Kubernetes [Helm Charts][helm], addressing the complexity of managing interdependent resources in Kubernetes environments. Unlike Kubernetes, which orchestrates resources individually without acknowledging their interdependencies, `rhtap-cli` enhances the deployment process by considering these relationships, thereby improving the user experience.
+The `tssc` binary is designed as a sophisticated installer via Kubernetes [Helm Charts][helm], addressing the complexity of managing interdependent resources in Kubernetes environments. Unlike Kubernetes, which orchestrates resources individually without acknowledging their interdependencies, `tssc` enhances the deployment process by considering these relationships, thereby improving the user experience.
 
 This CLI leverages a [`config.yaml`](installer/config.yaml) file to sequence Helm Chart deployments meticulously. It ensures the integrity of each deployment phase by executing a comprehensive test suite before proceeding to the next Chart installation. This methodical approach guarantees that each phase is successfully completed, enhancing reliability and stability.
 
-Helm, serving as the foundation of `rhtap-cli`, provides a detailed blueprint of resources within Kubernetes. This allows for thorough inspection and troubleshooting of deployment issues, offering users detailed documentation and tips for resolution. By integrating with Helm Charts, `rhtap-cli` not only adheres to industry standards but also opens the door to more sophisticated features, further enriching the deployment experience.
+Helm, serving as the foundation of `tssc`, provides a detailed blueprint of resources within Kubernetes. This allows for thorough inspection and troubleshooting of deployment issues, offering users detailed documentation and tips for resolution. By integrating with Helm Charts, `tssc` not only adheres to industry standards but also opens the door to more sophisticated features, further enriching the deployment experience.
 
-The `rhtap-cli` is designed to be user-friendly, providing a seamless installation process for users of all skill levels. 
+The `tssc` is designed to be user-friendly, providing a seamless installation process for users of all skill levels. 
 
 # Deploy RHTAP
 
-Install the `rhtap-cli` binary on your local machine following [these instructions](#installing-rhtap-cli).
+Install the `tssc` binary on your local machine following [these instructions](#installing-tssc).
 
 Follow the below steps to deploy RHTAP on Openshift cluster. 
 
@@ -33,24 +33,24 @@ Follow the below steps to deploy RHTAP on Openshift cluster.
 
 ```bash
 # Shows the options to manage cluster's configuration.
-rhtap-cli config --help
+tssc config --help
 
 # Creates a new default configuration in the cluster, showing the result.
-rhtap-cli config --create --get
+tssc config --create --get
 ```
 
-2. Run the command `rhtap-cli` to display help text that shows all the supported commands and options. 
+2. Run the command `tssc` to display help text that shows all the supported commands and options. 
 
-3. Run the command `rhtap-cli integration` to provide integrations to external components. The command below lists the options supported: 
+3. Run the command `tssc integration` to provide integrations to external components. The command below lists the options supported: 
   
 ```bash
-rhtap-cli integration --help
+tssc integration --help
 ```
   
 4. Finally, run the below command to proceed with RHTAP deployment. 
 
 ```bash
-rhtap-cli deploy
+tssc deploy
 ```
 
 # Configuration
@@ -135,19 +135,19 @@ developerHub:
   ingressDomain: {{ $ingressDomain }}
 ```
 
-# Installing `rhtap-cli`
+# Installing `tssc`
 
 ## Pre-Compiled Binaries
 
 Check the lastest release from the [releases page][releases] and download the binary for your operating system and executable architecture. Then, either use the binary directly or move it to a directory in your `PATH`, for instance:
 
 ```bash
-install --mode=755 bin/rhtap-cli /usr/local/bin
+install --mode=755 bin/tssc /usr/local/bin
 ```
 
 ## From Source
 
-Please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) for more information on building the project from source requirements. Then, follow the steps below to install the `rhtap-cli` binary from source:
+Please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) for more information on building the project from source requirements. Then, follow the steps below to install the `tssc` binary from source:
 
 1. Clone [the repository][rhtapCLI], and navigate to the `rhtap-cli` directory.
 
@@ -162,10 +162,10 @@ git clone --depth=1 https://github.com/redhat-appstudio/rhtap-cli.git && \
 make
 ```
 
-3. Move the `rhtap-cli` to the desired location, for instance `/usr/local/bin`.
+3. Move the `tssc` to the desired location, for instance `/usr/local/bin`.
 
 ```bash
-install --mode=755 bin/rhtap-cli /usr/local/bin
+install --mode=755 bin/tssc /usr/local/bin
 ```
 
 # Contributing
