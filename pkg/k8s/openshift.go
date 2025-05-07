@@ -9,8 +9,10 @@ import (
 
 	v1 "github.com/openshift/api/operator/v1"
 	projectv1 "github.com/openshift/api/project/v1"
+	configv1 "github.com/openshift/api/config/v1"
 	operatorv1client "github.com/openshift/client-go/operator/clientset/versioned/typed/operator/v1"
 	projectv1client "github.com/openshift/client-go/project/clientset/versioned/typed/project/v1"
+	configv1client "github.com/openshift/client-go/config/clientset/versioned/typed/config/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -47,6 +49,35 @@ func getIngressControllerCR(ctx context.Context, kube *Kube) (*v1.IngressControl
 		return nil, err
 	}
 	return ingressController, nil
+}
+
+// Returns `version` ClusterVersion CR if exists.
+func getConfigVersionCR(ctx context.Context, kube *Kube) (*configv1.ClusterVersion, error) {
+	objectRef := &corev1.ObjectReference{
+		APIVersion: "config.openshift.io/v1",
+		Namespace:  "",
+		Name:       "version",
+	}
+
+	restConfig, err := kube.RESTClientGetter(objectRef.Namespace).ToRESTConfig()
+	if err != nil {
+		return nil, err
+	}
+	configClient, err := configv1client.NewForConfig(restConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	version, err := configClient.
+		ClusterVersions().
+		Get(ctx, objectRef.Name, metav1.GetOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil, fmt.Errorf("cluster version not found")
+		}
+		return nil, err
+	}
+	return version, nil
 }
 
 // Returns name of the defaultCertificate as specified in default IngressController
@@ -106,6 +137,20 @@ func GetOpenShiftIngressDomain(ctx context.Context, kube *Kube) (string, error) 
 		return "", ErrIngressDomainNotFound
 	}
 	return ingressDomain, nil
+}
+
+// GetOpenShiftVersion returns the OpenShift version.
+func GetOpenShiftVersion(ctx context.Context, kube *Kube) (string, error) {
+	clusterVersion, err := getConfigVersionCR(ctx, kube)
+	if err != nil {
+		return "", err
+	}
+
+	version := clusterVersion.Status.Desired.Version
+	if version == "" {
+		return "", fmt.Errorf("cluster desired version not found")
+	}
+	return version, nil
 }
 
 // EnsureOpenShiftProject ensures the OpenShift project exists.
