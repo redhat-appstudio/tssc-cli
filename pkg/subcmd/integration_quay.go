@@ -20,8 +20,9 @@ type IntegrationQuay struct {
 
 	quayIntegration *integrations.QuayIntegration // quay integration
 
-	apiToken         string // web API token
-	dockerconfigjson string // credentials to push/pull from the registry
+	apiToken                 string // web API token
+	dockerconfigjson         string // credentials to push/pull from the registry
+	dockerconfigjsonreadonly string // credentials to read from the registry
 }
 
 var _ Interface = &IntegrationQuay{}

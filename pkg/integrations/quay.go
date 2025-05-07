@@ -26,9 +26,10 @@ type QuayIntegration struct {
 
 	force bool // overwrite the existing secret
 
-	dockerconfigjson string // dockerconfig credentials
-	token            string // API token credentials
-	url              string // quay URL
+	dockerconfigjson         string // dockerconfig credentials
+	dockerconfigjsonreadonly string // dockerconfigjsonreadonly credentials
+	token                    string // API token credentials
+	url                      string // quay URL
 }
 
 // PersistentFlags sets the persistent flags for the Quay integration.
@@ -38,6 +39,8 @@ func (q *QuayIntegration) PersistentFlags(p *pflag.FlagSet) {
 
 	p.StringVar(&q.dockerconfigjson, "dockerconfigjson", q.dockerconfigjson,
 		"Quay dockerconfigjson, e.g. '{ \"auths\": { \"quay.io\": { \"auth\": \"****\", \"email\": \"\" }}}'")
+	p.StringVar(&q.dockerconfigjsonreadonly, "dockerconfigjsonreadonly", q.dockerconfigjsonreadonly,
+		"Quay dockerconfigjson for read only account, e.g. '{ \"auths\": { \"quay.io\": { \"auth\": \"****\", \"email\": \"\" }}}")
 	p.StringVar(&q.token, "token", q.token,
 		"Quay API token")
 	p.StringVar(&q.url, "url", q.url,
@@ -50,6 +53,7 @@ func (q *QuayIntegration) log() *slog.Logger {
 		"url", q.url,
 		"force", q.force,
 		"dockerconfigjson-len", len(q.dockerconfigjson),
+		"dockerconfigjsonreadonly-len", len(q.dockerconfigjsonreadonly),
 		"token-len", len(q.token),
 	)
 }
@@ -135,9 +139,10 @@ func (q *QuayIntegration) store(
 		},
 		Type: corev1.SecretTypeDockerConfigJson,
 		Data: map[string][]byte{
-			".dockerconfigjson": []byte(q.dockerconfigjson),
-			"token":             []byte(q.token),
-			"url":               []byte(q.url),
+			".dockerconfigjson":         []byte(q.dockerconfigjson),
+			".dockerconfigjsonreadonly": []byte(q.dockerconfigjsonreadonly),
+			"token":                     []byte(q.token),
+			"url":                       []byte(q.url),
 		},
 	}
 	logger := q.log().With(
@@ -179,9 +184,10 @@ func NewQuayIntegration(
 		logger: logger,
 		kube:   kube,
 
-		force:            false,
-		dockerconfigjson: "",
-		token:            "",
-		url:              "",
+		force:                    false,
+		dockerconfigjson:         "",
+		dockerconfigjsonreadonly: "",
+		token:                    "",
+		url:                      "",
 	}
 }
