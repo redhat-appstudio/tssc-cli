@@ -1,6 +1,6 @@
 ---
 apiVersion: v2
 name: testing
-description: Testing Helm Chart for `rhtap-cli`
+description: Testing Helm Chart for `tssc`
 type: application
 version: 0.0.1

@@ -38,14 +38,14 @@ For instance:
 
 	1. Extract the installer resources to a directory:
 		$ mkdir /path/to/directory
-		$ rhtap-cli installer --list
-		$ rhtap-cli installer --extract /path/to/directory
+		$ tssc installer --list
+		$ tssc installer --extract /path/to/directory
 
 	2. Customize the installer resources on '/path/to/directory' and edit the
 		'config.yaml' configuration file (in the same directory).
 
 	3. Deploy the customized installer resources:
-		$ rhtap-cli deploy --config /path/to/directory/config.yaml
+		$ tssc deploy --config /path/to/directory/config.yaml
 `
 
 // dirMode is the default directory permissions.

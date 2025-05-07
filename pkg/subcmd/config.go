@@ -31,7 +31,7 @@ type Config struct {
 var _ Interface = &Config{}
 
 const configDesc = `
-Manages installer's cluster configuration. Before "rhtap-cli deploy", you need to
+Manages installer's cluster configuration. Before "tssc deploy", you need to
 create a cluster configuration, responsible to define all installation settings
 for the whole Kubernetes cluster.
 

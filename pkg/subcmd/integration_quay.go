@@ -37,7 +37,7 @@ for RHDH.
 
 If you experience push issues, add the image repository path in the "dockerconfig.json". For example, instead of "quay.io", specify the full repository path "quay.io/my-repository", as shown below:
 
-/bin/rhtap-cli integration quay --kube-config ~/my/kube/config --dockerconfigjson '{ "auths": { "quay.io/my-repository": { "auth": "REDACTED", "email": "" }  } }' --token "REDACTED" --url 'https://quay.io'
+/bin/tssc integration quay --kube-config ~/my/kube/config --dockerconfigjson '{ "auths": { "quay.io/my-repository": { "auth": "REDACTED", "email": "" }  } }' --token "REDACTED" --url 'https://quay.io'
 
 The given API token (--token) must have push/pull permissions on the target repository.
 `
