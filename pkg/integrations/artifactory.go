@@ -94,7 +94,7 @@ func (a *ArtifactoryIntegration) secretName(
 ) types.NamespacedName {
 	return types.NamespacedName{
 		Namespace: cfg.Installer.Namespace,
-		Name:      "rhtap-artifactory-integration",
+		Name:      "tssc-artifactory-integration",
 	}
 }
 

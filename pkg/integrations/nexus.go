@@ -85,7 +85,7 @@ func (n *NexusIntegration) EnsureNamespace(
 func (n *NexusIntegration) secretName(cfg *config.Config) types.NamespacedName {
 	return types.NamespacedName{
 		Namespace: cfg.Installer.Namespace,
-		Name:      "rhtap-nexus-integration",
+		Name:      "tssc-nexus-integration",
 	}
 }
 

@@ -82,7 +82,7 @@ func (a *ACSIntegration) EnsureNamespace(
 func (a *ACSIntegration) secretName(cfg *config.Config) types.NamespacedName {
 	return types.NamespacedName{
 		Namespace: cfg.Installer.Namespace,
-		Name:      "rhtap-acs-integration",
+		Name:      "tssc-acs-integration",
 	}
 }
 

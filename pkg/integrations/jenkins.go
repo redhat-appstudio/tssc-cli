@@ -96,7 +96,7 @@ func (j *JenkinsIntegration) EnsureNamespace(
 func (j *JenkinsIntegration) secretName(cfg *config.Config) types.NamespacedName {
 	return types.NamespacedName{
 		Namespace: cfg.Installer.Namespace,
-		Name:      "rhtap-jenkins-integration",
+		Name:      "tssc-jenkins-integration",
 	}
 }
 

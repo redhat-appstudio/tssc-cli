@@ -21,7 +21,7 @@ const (
 	// Filename the default
 	Filename = "config.yaml"
 	// Label label selector to find the cluster's installer configuration.
-	Label = "rhtap-cli.redhat-appstudio.github.com/config"
+	Label = "tssc.redhat-appstudio.github.com/config"
 )
 
 var (
@@ -111,7 +111,7 @@ func (m *ConfigMapManager) configMapForConfig(
 ) (*corev1.ConfigMap, error) {
 	return &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "rhtap-cli-config",
+			Name:      "tssc-config",
 			Namespace: cfg.Installer.Namespace,
 			Labels: map[string]string{
 				Label: "true",

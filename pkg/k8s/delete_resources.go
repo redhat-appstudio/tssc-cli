@@ -8,7 +8,7 @@ import (
 )
 
 // labelSelector is the label set for resources to be deleted.
-const labelSelector = "rhtap-cli.redhat-appstudio.github.com/post-deploy=delete"
+const labelSelector = "tssc.redhat-appstudio.github.com/post-deploy=delete"
 
 // DeleteClusterRoleBindings deletes Kubernetes ClusterRoleBindings by label.
 func DeleteClusterRoleBindings(

@@ -56,7 +56,7 @@ func (h *Hooks) runHookScript(name string, vals map[string]interface{}) error {
 
 	// Storing the script payload in a temporary file, adding permissions to
 	// execute as a regular shell script.
-	tmpfile, err := os.CreateTemp("/tmp", "rhtap-cli-hook-*.sh")
+	tmpfile, err := os.CreateTemp("/tmp", "tssc-hook-*.sh")
 	if err != nil {
 		return err
 	}

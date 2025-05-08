@@ -85,7 +85,7 @@ func (g *BitBucketIntegration) EnsureNamespace(
 func (g *BitBucketIntegration) secretName(cfg *config.Config) types.NamespacedName {
 	return types.NamespacedName{
 		Namespace: cfg.Installer.Namespace,
-		Name:      "rhtap-bitbucket-integration",
+		Name:      "tssc-bitbucket-integration",
 	}
 }
 

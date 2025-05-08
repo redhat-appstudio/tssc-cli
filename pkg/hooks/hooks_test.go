@@ -21,7 +21,7 @@ func TestNewHooks(t *testing.T) {
 		cfs,
 		&config.Dependency{
 			Chart:     "charts/testing",
-			Namespace: "rhtap",
+			Namespace: "tssc",
 		},
 		&stdout,
 		&stderr,

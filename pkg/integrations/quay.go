@@ -99,7 +99,7 @@ func (q *QuayIntegration) EnsureNamespace(
 func (q *QuayIntegration) secretName(cfg *config.Config) types.NamespacedName {
 	return types.NamespacedName{
 		Namespace: cfg.Installer.Namespace,
-		Name:      "rhtap-quay-integration",
+		Name:      "tssc-quay-integration",
 	}
 }
 

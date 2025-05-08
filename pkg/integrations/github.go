@@ -139,7 +139,7 @@ func (g *GithubIntegration) setOpenShiftURLs(
 func (g *GithubIntegration) secretName(cfg *config.Config) types.NamespacedName {
 	return types.NamespacedName{
 		Namespace: cfg.Installer.Namespace,
-		Name:      "rhtap-github-integration",
+		Name:      "tssc-github-integration",
 	}
 }
 

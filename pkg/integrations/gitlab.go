@@ -99,7 +99,7 @@ func (g *GitLabIntegration) EnsureNamespace(
 func (g *GitLabIntegration) secretName(cfg *config.Config) types.NamespacedName {
 	return types.NamespacedName{
 		Namespace: cfg.Installer.Namespace,
-		Name:      "rhtap-gitlab-integration",
+		Name:      "tssc-gitlab-integration",
 	}
 }
 

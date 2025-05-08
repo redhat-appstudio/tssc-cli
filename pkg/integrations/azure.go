@@ -108,7 +108,7 @@ func (g *AzureIntegration) EnsureNamespace(
 func (g *AzureIntegration) secretName(cfg *config.Config) types.NamespacedName {
 	return types.NamespacedName{
 		Namespace: cfg.Installer.Namespace,
-		Name:      "rhtap-azure-integration",
+		Name:      "tssc-azure-integration",
 	}
 }
 

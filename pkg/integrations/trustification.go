@@ -102,7 +102,7 @@ func (i *TrustificationIntegration) secretName(
 ) types.NamespacedName {
 	return types.NamespacedName{
 		Namespace: cfg.Installer.Namespace,
-		Name:      "rhtap-trustification-integration",
+		Name:      "tssc-trustification-integration",
 	}
 }
 
