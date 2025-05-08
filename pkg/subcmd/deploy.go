@@ -45,7 +45,7 @@ employed by default, to use local files just point the "config.yaml" file to
 find the dependencies in the local filesystem.
 
 A single chart can be deployed by specifying its path. E.g.:
-	tssc deploy charts/rhtap-openshift
+	tssc deploy charts/tssc-openshift
 `
 
 // Cmd exposes the cobra instance.

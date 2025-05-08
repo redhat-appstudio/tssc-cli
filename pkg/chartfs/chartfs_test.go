@@ -20,10 +20,10 @@ func TestNewChartFS(t *testing.T) {
 	})
 
 	t.Run("GetChartForDep", func(t *testing.T) {
-		chart, err := c.GetChartFiles("charts/rhtap-openshift")
+		chart, err := c.GetChartFiles("charts/tssc-openshift")
 		g.Expect(err).To(o.Succeed())
 		g.Expect(chart).ToNot(o.BeNil())
-		g.Expect(chart.Name()).To(o.Equal("rhtap-openshift"))
+		g.Expect(chart.Name()).To(o.Equal("tssc-openshift"))
 		g.Expect(chart.Files).ToNot(o.BeEmpty())
 		g.Expect(chart.Templates).ToNot(o.BeEmpty())
 

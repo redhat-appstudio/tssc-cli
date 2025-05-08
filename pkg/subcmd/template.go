@@ -55,10 +55,10 @@ Examples:
   $ tssc template --show-manifests=false
 
   # Rendering only the templates of a single Helm Chart.
-  $ tssc template --show-values=false charts/rhtap-subscriptions
+  $ tssc template --show-values=false charts/tssc-subscriptions
 
   # Rendering all resources of a Helm Chart.
-  $ tssc template charts/rhtap-subscriptions
+  $ tssc template charts/tssc-subscriptions
 `
 
 // Cmd exposes the cobra instance.
