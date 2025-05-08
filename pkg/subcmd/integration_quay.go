@@ -28,8 +28,8 @@ type IntegrationQuay struct {
 var _ Interface = &IntegrationQuay{}
 
 const quayIntegrationLongDesc = `
-Manages the Quay integration with RHTAP, by storing the required
-credentials required by the RHTAP services to interact with Quay.
+Manages the Quay integration with TSSC, by storing the required
+credentials required by the TSSC services to interact with Quay.
 
 The credentials are stored in a Kubernetes Secret in the configured namespace
 for RHDH.
@@ -69,14 +69,14 @@ func (d *IntegrationQuay) Run() error {
 }
 
 // NewIntegrationQuay creates the sub-command for the "integration quay"
-// responsible to manage the RHTAP integrations with a Quay image registry.
+// responsible to manage the TSSC integrations with a Quay image registry.
 func NewIntegrationQuay(logger *slog.Logger, kube *k8s.Kube) *IntegrationQuay {
 	quayIntegration := integrations.NewQuayIntegration(logger, kube)
 
 	d := &IntegrationQuay{
 		cmd: &cobra.Command{
 			Use:          "quay [flags]",
-			Short:        "Integrates a Quay instance into RHTAP",
+			Short:        "Integrates a Quay instance into TSSC",
 			Long:         quayIntegrationLongDesc,
 			SilenceUsage: true,
 		},

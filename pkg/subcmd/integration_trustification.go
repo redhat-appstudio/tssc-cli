@@ -30,8 +30,8 @@ type IntegrationTrustification struct {
 var _ Interface = &IntegrationTrustification{}
 
 const trustificationIntegrationLongDesc = `
-Manages the Trustification integration with RHTAP, by storing the required
-credentials required by the RHTAP services to interact with Trustification.
+Manages the Trustification integration with TSSC, by storing the required
+credentials required by the TSSC services to interact with Trustification.
 
 The credentials are stored in a Kubernetes Secret in the configured namespace
 for RHDH.
@@ -64,7 +64,7 @@ func (d *IntegrationTrustification) Run() error {
 }
 
 // NewIntegrationTrustification creates the sub-command for the "integration
-// trustification" responsible to manage the RHTAP integrations with the
+// trustification" responsible to manage the TSSC integrations with the
 // Trustification service.
 func NewIntegrationTrustification(
 	logger *slog.Logger,
@@ -75,7 +75,7 @@ func NewIntegrationTrustification(
 	d := &IntegrationTrustification{
 		cmd: &cobra.Command{
 			Use:          "trustification [flags]",
-			Short:        "Integrates a Trustification instance into RHTAP",
+			Short:        "Integrates a Trustification instance into TSSC",
 			Long:         trustificationIntegrationLongDesc,
 			SilenceUsage: true,
 		},

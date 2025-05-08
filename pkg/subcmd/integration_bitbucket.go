@@ -29,8 +29,8 @@ type IntegrationBitBucket struct {
 var _ Interface = &IntegrationBitBucket{}
 
 const bitbucketIntegrationLongDesc = `
-Manages the BitBucket integration with RHTAP, by storing the required
-credentials required by the RHTAP services to interact with BitBucket.
+Manages the BitBucket integration with TSSC, by storing the required
+credentials required by the TSSC services to interact with BitBucket.
 
 The credentials are stored in a Kubernetes Secret in the configured namespace
 for RHDH.
@@ -63,7 +63,7 @@ func (d *IntegrationBitBucket) Run() error {
 }
 
 // NewIntegrationBitBucket creates the sub-command for the "integration bitbucket"
-// responsible to manage the RHTAP integrations with the BitBucket service.
+// responsible to manage the TSSC integrations with the BitBucket service.
 func NewIntegrationBitBucket(
 	logger *slog.Logger,
 	kube *k8s.Kube,
@@ -73,7 +73,7 @@ func NewIntegrationBitBucket(
 	d := &IntegrationBitBucket{
 		cmd: &cobra.Command{
 			Use:          "bitbucket [flags]",
-			Short:        "Integrates a BitBucket instance into RHTAP",
+			Short:        "Integrates a BitBucket instance into TSSC",
 			Long:         bitbucketIntegrationLongDesc,
 			SilenceUsage: true,
 		},

@@ -31,8 +31,8 @@ type IntegrationAzure struct {
 var _ Interface = &IntegrationAzure{}
 
 const azureIntegrationLongDesc = `
-Manages the Azure integration with RHTAP, by storing the required
-credentials required by the RHTAP services to interact with Azure.
+Manages the Azure integration with TSSC, by storing the required
+credentials required by the TSSC services to interact with Azure.
 The credentials are stored in a Kubernetes Secret in the default
 installation namespace.
 `
@@ -64,7 +64,7 @@ func (d *IntegrationAzure) Run() error {
 }
 
 // NewIntegrationAzure creates the sub-command for the "integration azure"
-// responsible to manage the RHTAP integrations with the Azure service.
+// responsible to manage the TSSC integrations with the Azure service.
 func NewIntegrationAzure(
 	logger *slog.Logger,
 	kube *k8s.Kube,
@@ -74,7 +74,7 @@ func NewIntegrationAzure(
 	d := &IntegrationAzure{
 		cmd: &cobra.Command{
 			Use:          "azure [flags]",
-			Short:        "Integrates a Azure instance into RHTAP",
+			Short:        "Integrates a Azure instance into TSSC",
 			Long:         azureIntegrationLongDesc,
 			SilenceUsage: true,
 		},

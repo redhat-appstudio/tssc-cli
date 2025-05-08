@@ -28,8 +28,8 @@ type IntegrationJenkins struct {
 var _ Interface = &IntegrationJenkins{}
 
 const jenkinsIntegrationLongDesc = `
-Manages the Jenkins integration with RHTAP, by storing the required
-credentials required by the RHTAP services to interact with Jenkins.
+Manages the Jenkins integration with TSSC, by storing the required
+credentials required by the TSSC services to interact with Jenkins.
 
 The credentials are stored in a Kubernetes Secret in the configured namespace
 for RHDH.
@@ -62,7 +62,7 @@ func (d *IntegrationJenkins) Run() error {
 }
 
 // NewIntegrationJenkins creates the sub-command for the "integration jenkins"
-// responsible to manage the RHTAP integrations with the Jenkins service.
+// responsible to manage the TSSC integrations with the Jenkins service.
 func NewIntegrationJenkins(
 	logger *slog.Logger,
 	kube *k8s.Kube,
@@ -72,7 +72,7 @@ func NewIntegrationJenkins(
 	d := &IntegrationJenkins{
 		cmd: &cobra.Command{
 			Use:          "jenkins [flags]",
-			Short:        "Integrates a Jenkins instance into RHTAP",
+			Short:        "Integrates a Jenkins instance into TSSC",
 			Long:         jenkinsIntegrationLongDesc,
 			SilenceUsage: true,
 		},

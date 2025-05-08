@@ -30,7 +30,7 @@ type Deploy struct {
 var _ Interface = &Deploy{}
 
 const deployDesc = `
-Deploys the RHTAP platform components. The installer looks the the informed
+Deploys the TSSC platform components. The installer looks the the informed
 configuration to identify the features to be installed, and the dependencies to be
 resolved.
 
@@ -160,7 +160,7 @@ func NewDeploy(
 	d := &Deploy{
 		cmd: &cobra.Command{
 			Use:          "deploy [chart]",
-			Short:        "Rollout RHTAP platform components",
+			Short:        "Rollout TSSC platform components",
 			Long:         deployDesc,
 			SilenceUsage: true,
 		},

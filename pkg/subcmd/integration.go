@@ -10,7 +10,7 @@ import (
 func NewIntegration(logger *slog.Logger, kube *k8s.Kube) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "integration <type>",
-		Short: "Configures an external service provider for RHTAP",
+		Short: "Configures an external service provider for TSSC",
 	}
 
 	cmd.AddCommand(NewRunner(NewIntegrationACS(logger, kube)).Cmd())

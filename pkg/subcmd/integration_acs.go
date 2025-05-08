@@ -27,8 +27,8 @@ type IntegrationACS struct {
 var _ Interface = &IntegrationACS{}
 
 const acsIntegrationLongDesc = `
-Manages the ACS integration with RHTAP, by storing the required
-credentials required by the RHTAP services to interact with ACS.
+Manages the ACS integration with TSSC, by storing the required
+credentials required by the TSSC services to interact with ACS.
 
 The credentials are stored in a Kubernetes Secret in the configured namespace
 for RHDH.
@@ -60,7 +60,7 @@ func (d *IntegrationACS) Run() error {
 }
 
 // NewIntegrationACS creates the sub-command for the "integration acs"
-// responsible to manage the RHTAP integrations with the ACS service.
+// responsible to manage the TSSC integrations with the ACS service.
 func NewIntegrationACS(
 	logger *slog.Logger,
 	kube *k8s.Kube,
@@ -70,7 +70,7 @@ func NewIntegrationACS(
 	d := &IntegrationACS{
 		cmd: &cobra.Command{
 			Use:          "acs [flags]",
-			Short:        "Integrates a ACS instance into RHTAP",
+			Short:        "Integrates a ACS instance into TSSC",
 			Long:         acsIntegrationLongDesc,
 			SilenceUsage: true,
 		},

@@ -36,7 +36,7 @@ var _ Interface = &Template{}
 const templateDesc = `
 The Template subcommand is used to render the values template file and,
 optionally, the Helm chart manifests. It is particularly useful for
-troubleshooting and developing Helm charts for the RHTAP installation process.
+troubleshooting and developing Helm charts for the TSSC installation process.
 
 By using the '--show-manifest=false' flag, only the global values template
 ('--values-template') will be rendered as YAML, thus the last argument, with the

@@ -26,8 +26,8 @@ type IntegrationNexus struct {
 var _ Interface = &IntegrationNexus{}
 
 const nexusIntegrationLongDesc = `
-Manages the Nexus integration with RHTAP, by storing the required
-credentials required by the RHTAP services to interact with Nexus.
+Manages the Nexus integration with TSSC, by storing the required
+credentials required by the TSSC services to interact with Nexus.
 
 The credentials are stored in a Kubernetes Secret in the configured namespace
 for RHDH.
@@ -60,7 +60,7 @@ func (d *IntegrationNexus) Run() error {
 }
 
 // NewIntegrationNexus creates the sub-command for the "integration nexus"
-// responsible to manage the RHTAP integrations with a Nexus image registry.
+// responsible to manage the TSSC integrations with a Nexus image registry.
 func NewIntegrationNexus(
 	logger *slog.Logger,
 	kube *k8s.Kube,
@@ -70,7 +70,7 @@ func NewIntegrationNexus(
 	d := &IntegrationNexus{
 		cmd: &cobra.Command{
 			Use:          "nexus [flags]",
-			Short:        "Integrates a Nexus instance into RHTAP",
+			Short:        "Integrates a Nexus instance into TSSC",
 			Long:         nexusIntegrationLongDesc,
 			SilenceUsage: true,
 		},

@@ -27,8 +27,8 @@ type IntegrationArtifactory struct {
 var _ Interface = &IntegrationArtifactory{}
 
 const artifactoryIntegrationLongDesc = `
-Manages the artifactory integration with RHTAP, by storing the required
-credentials required by the RHTAP services to interact with artifactory.
+Manages the artifactory integration with TSSC, by storing the required
+credentials required by the TSSC services to interact with artifactory.
 
 The credentials are stored in a Kubernetes Secret in the configured namespace
 for RHDH.
@@ -61,7 +61,7 @@ func (d *IntegrationArtifactory) Run() error {
 }
 
 // NewIntegrationArtifactory creates the sub-command for the "integration artifactory"
-// responsible to manage the RHTAP integrations with a Artifactory image registry.
+// responsible to manage the TSSC integrations with a Artifactory image registry.
 func NewIntegrationArtifactory(
 	logger *slog.Logger,
 	kube *k8s.Kube,
@@ -71,7 +71,7 @@ func NewIntegrationArtifactory(
 	d := &IntegrationArtifactory{
 		cmd: &cobra.Command{
 			Use:          "artifactory [flags]",
-			Short:        "Integrates a Artifactory instance into RHTAP",
+			Short:        "Integrates a Artifactory instance into TSSC",
 			Long:         artifactoryIntegrationLongDesc,
 			SilenceUsage: true,
 		},

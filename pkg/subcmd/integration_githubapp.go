@@ -31,8 +31,8 @@ type IntegrationGitHubApp struct {
 var _ Interface = &IntegrationGitHubApp{}
 
 const integrationLongDesc = `
-Manages the GitHub App integration with RHTAP, by creating a new application
-using the GitHub API, and storing the credentials required by the RHTAP services
+Manages the GitHub App integration with TSSC, by creating a new application
+using the GitHub API, and storing the credentials required by the TSSC services
 to interact with the GitHub App.
 
 The App credentials are stored in a Kubernetes Secret in the configured namespace
@@ -101,7 +101,7 @@ func (d *IntegrationGitHubApp) Run() error {
 }
 
 // NewIntegrationGitHubApp creates the sub-command for the "integration
-// github-app", which manages the RHTAP integration with a GitHub App.
+// github-app", which manages the TSSC integration with a GitHub App.
 func NewIntegrationGitHubApp(
 	logger *slog.Logger,
 	kube *k8s.Kube,
@@ -112,7 +112,7 @@ func NewIntegrationGitHubApp(
 	d := &IntegrationGitHubApp{
 		cmd: &cobra.Command{
 			Use:          "github-app <name> [--create|--update] [flags]",
-			Short:        "Prepares a GitHub App for RHTAP integration",
+			Short:        "Prepares a GitHub App for TSSC integration",
 			Long:         integrationLongDesc,
 			SilenceUsage: true,
 		},

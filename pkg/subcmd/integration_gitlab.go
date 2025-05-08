@@ -24,8 +24,8 @@ type IntegrationGitLab struct {
 var _ Interface = &IntegrationGitLab{}
 
 const gitlabIntegrationLongDesc = `
-Manages the GitLab integration with RHTAP, by storing the required
-credentials required by the RHTAP services to interact with GitLab.
+Manages the GitLab integration with TSSC, by storing the required
+credentials required by the TSSC services to interact with GitLab.
 
 The credentials are stored in a Kubernetes Secret in the configured namespace
 for RHDH.
@@ -58,7 +58,7 @@ func (d *IntegrationGitLab) Run() error {
 }
 
 // NewIntegrationGitLab creates the sub-command for the "integration gitlab"
-// responsible to manage the RHTAP integrations with the GitLab service.
+// responsible to manage the TSSC integrations with the GitLab service.
 func NewIntegrationGitLab(
 	logger *slog.Logger,
 	kube *k8s.Kube,
@@ -68,7 +68,7 @@ func NewIntegrationGitLab(
 	d := &IntegrationGitLab{
 		cmd: &cobra.Command{
 			Use:          "gitlab [flags]",
-			Short:        "Integrates a GitLab instance into RHTAP",
+			Short:        "Integrates a GitLab instance into TSSC",
 			Long:         gitlabIntegrationLongDesc,
 			SilenceUsage: true,
 		},
