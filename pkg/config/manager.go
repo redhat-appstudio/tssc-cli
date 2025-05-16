@@ -22,6 +22,8 @@ const (
 	Filename = "config.yaml"
 	// Label label selector to find the cluster's installer configuration.
 	Label = "tssc.redhat-appstudio.github.com/config"
+	// Name name of the installer's configuration ConfigMap.
+	Name = "tssc-config"
 )
 
 var (
@@ -111,7 +113,7 @@ func (m *ConfigMapManager) configMapForConfig(
 ) (*corev1.ConfigMap, error) {
 	return &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "tssc-config",
+			Name:      Name,
 			Namespace: cfg.Installer.Namespace,
 			Labels: map[string]string{
 				Label: "true",

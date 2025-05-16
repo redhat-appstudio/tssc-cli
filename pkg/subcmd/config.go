@@ -6,6 +6,7 @@ import (
 
 	"github.com/redhat-appstudio/rhtap-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/config"
+	"github.com/redhat-appstudio/rhtap-cli/pkg/flags"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/k8s"
 
 	"github.com/spf13/cobra"
@@ -16,6 +17,7 @@ import (
 type Config struct {
 	cmd    *cobra.Command   // cobra command
 	logger *slog.Logger     // application logger
+	flags  *flags.Flags     // global flags
 	cfs    *chartfs.ChartFS // embedded filesystem
 	kube   *k8s.Kube        // kubernetes client
 
@@ -54,7 +56,7 @@ func (c *Config) Cmd() *cobra.Command {
 
 // log returns a decorated logger.
 func (c *Config) log() *slog.Logger {
-	return c.logger.With("config-path", c.configPath)
+	return c.flags.LoggerWith(c.logger.With("config-path", c.configPath))
 }
 
 // PersistentFlags injects the sub-command flags.
@@ -144,6 +146,18 @@ func (c *Config) runCreate() error {
 		return err
 	}
 
+	if c.flags.DryRun {
+		c.log().Debug("[DRY-RUN] Only showing the configuration payload")
+		fmt.Printf(
+			"[DRY-RUN] Creating the ConfigMap %q/%q, with the label selector %q\n",
+			cfg.Installer.Namespace,
+			config.Name,
+			fmt.Sprintf("%s=true", config.Label),
+		)
+		fmt.Print(cfg.String())
+		return nil
+	}
+
 	c.log().Debug("Making sure the OpenShift project is created")
 	if err = k8s.EnsureOpenShiftProject(
 		c.cmd.Context(),
@@ -169,6 +183,37 @@ func (c *Config) runCreate() error {
 	return err
 }
 
+// runDelete controls the deletion process.
+func (c *Config) runDelete() error {
+	if c.flags.DryRun {
+		c.log().Debug("[DRY-RUN] Configuration is not removed from the cluster")
+		fmt.Printf(
+			"[DRY-RUN] Removing the ConfigMap %q, with the label selector %q\n",
+			config.Name,
+			fmt.Sprintf("%s=true", config.Label),
+		)
+		return nil
+	}
+	return c.manager.Delete(c.cmd.Context())
+}
+
+// runGet controls the cluster configuration retrieval process.
+func (c *Config) runGet() error {
+	c.log().Debug("Retrieving the cluster configuration")
+	cfg, err := c.manager.GetConfig(c.cmd.Context())
+	if err != nil {
+		if c.create && c.flags.DryRun {
+			c.log().Warn(
+				"[DRY-RUN] Configuration does not exist in the cluster, yet.")
+			return nil
+		}
+		return err
+	}
+	c.log().Debug("Formatting the configuration as string")
+	fmt.Print(cfg.String())
+	return nil
+}
+
 // Run runs the subcommand main action, checks which flags are enabled to interact
 // with cluster's configuration.
 func (c *Config) Run() error {
@@ -179,19 +224,17 @@ func (c *Config) Run() error {
 			return err
 		}
 	case c.delete:
-		if err = c.manager.Delete(c.cmd.Context()); err != nil {
+		if err = c.runDelete(); err != nil {
 			return err
 		}
 	}
 
+	// The --get flag can take place together with other flags, thus this block
+	// evaluation takes place after the switch block.
 	if c.get {
-		c.log().Debug("Retrieving the cluster configuration")
-		cfg, err := c.manager.GetConfig(c.cmd.Context())
-		if err != nil {
+		if err = c.runGet(); err != nil {
 			return err
 		}
-		c.log().Debug("Formatting the configuration as string")
-		fmt.Print(cfg.String())
 	}
 	return nil
 }
@@ -199,6 +242,7 @@ func (c *Config) Run() error {
 // NewConfig instantiates the "config" subcommand.
 func NewConfig(
 	logger *slog.Logger,
+	f *flags.Flags,
 	cfs *chartfs.ChartFS,
 	kube *k8s.Kube,
 ) Interface {
@@ -210,6 +254,7 @@ func NewConfig(
 			SilenceUsage: true,
 		},
 		logger:  logger.WithGroup("config"),
+		flags:   f,
 		cfs:     cfs,
 		kube:    kube,
 		manager: config.NewConfigMapManager(kube),
