@@ -16,14 +16,14 @@ const testYamlTmpl = `
 ---
 root:
   namespace: {{ .Installer.Namespace }} 
-  features:
-{{- range $k, $v := .Installer.Features }}
+  products:
+{{- range $k, $v := .Installer.Products }}
   {{- $k | nindent 4 }}:
   {{- $v | toYaml | nindent 6 }}
 {{- end }}
   dependencies:
 	{{- .Installer.Dependencies | toYaml | nindent 4 }}
-  catalogURL: {{ .Installer.Features.redHatDeveloperHub.Properties.catalogURL }}
+  catalogURL: {{ .Installer.Products.redHatDeveloperHub.Properties.catalogURL }}
 `
 
 func TestEngine_Render(t *testing.T) {
@@ -62,8 +62,8 @@ func TestEngine_Render(t *testing.T) {
 	g.Expect(root).To(o.HaveKey("namespace"))
 	g.Expect(root["namespace"]).To(o.Equal(cfg.Installer.Namespace))
 
-	g.Expect(root).To(o.HaveKey("features"))
-	g.Expect(root["features"]).NotTo(o.BeNil())
+	g.Expect(root).To(o.HaveKey("products"))
+	g.Expect(root["products"]).NotTo(o.BeNil())
 
 	g.Expect(root).To(o.HaveKey("dependencies"))
 	g.Expect(root["dependencies"]).NotTo(o.BeNil())
@@ -71,7 +71,7 @@ func TestEngine_Render(t *testing.T) {
 	g.Expect(root).To(o.HaveKey("catalogURL"))
 	g.Expect(root["catalogURL"]).NotTo(o.BeNil())
 
-	feature, err := cfg.GetFeature(config.RedHatDeveloperHub)
+	product, err := cfg.GetProduct(config.RedHatDeveloperHub)
 	g.Expect(err).To(o.Succeed())
-	g.Expect(root["catalogURL"]).To(o.Equal(feature.Properties["catalogURL"]))
+	g.Expect(root["catalogURL"]).To(o.Equal(product.Properties["catalogURL"]))
 }

@@ -79,7 +79,7 @@ func (j *JenkinsIntegration) EnsureNamespace(
 	ctx context.Context,
 	cfg *config.Config,
 ) error {
-	feature, err := cfg.GetFeature(config.RedHatDeveloperHub)
+	product, err := cfg.GetProduct(config.RedHatDeveloperHub)
 	if err != nil {
 		return err
 	}
@@ -87,7 +87,7 @@ func (j *JenkinsIntegration) EnsureNamespace(
 		ctx,
 		j.log(),
 		j.kube,
-		feature.GetNamespace(),
+		product.GetNamespace(),
 	)
 }
 

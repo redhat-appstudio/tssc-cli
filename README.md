@@ -61,25 +61,25 @@ The [`config.yaml`](installer/config.yaml) file is structured to outline key com
 ---
 tssc:
   namespace: tssc
-  features: {}
+  products: {}
   dependencies: {}
 ```
 
 The attributes of the `tssc` object are as follows:
 
 - `.namespace`: Specifies the default namespace used by the installer, set to `tssc`. This namespace acts as the primary operational area for the installation process.
-- `.features`: Defines the features to be deployed by the installer. Each feature is identified by a unique name and a set of properties.
+- `.products`: Defines the features to be deployed by the installer. Each feature is identified by a unique name and a set of properties.
 - `.dependencies`: Specifies the dependencies rolled out by the installer in the specific order defined in the configuration file.
 
-## `tssc.features`
+## `tssc.products`
 
-Defines the features the installer will deploy. Each feature is defined by a unique name and a set of properties. For instance, the following snippet defines a `featureName` block:
+Defines the products the installer will deploy. Each product is defined by a unique name and a set of properties. For instance, the following snippet defines a `productName` block:
 
 ```yaml
 ---
 tssc:
-  features:
-    featureName:
+  products:
+    productName:
       enabled: true
       namespace: namespace
       properties:
@@ -87,9 +87,9 @@ tssc:
 ```
 
 With the following attributes:
-- `enabled`: A boolean value to toggle the unique feature
-- `namespace`: The namespace in which the feature will be deployed
-- `properties`: A set of key-value pairs to define the feature's properties
+- `enabled`: A boolean value to toggle the unique product
+- `namespace`: The namespace in which the product will be deployed
+- `properties`: A set of key-value pairs to define the product's properties
 
 This data can be leveraged for templating using the [`values.yaml.tpl`](#template-functions) file.
 
@@ -118,11 +118,11 @@ Windows users must be aware that the hook scripts are written in Bash and may no
 
 The following functions are available for use in the [`values.yaml.tpl`](./installer/charts/values.yaml.tpl) file:
 
-### `{{ .Installer.Features.* }}`
+### `{{ .Installer.Products.* }}`
 
-- `{{ .Installer.Features.*.Enabled }}`: Returns the boolean value of the feature's `enabled` field.
-- `{{ .Installer.Features.*.Namespace }}`: Returns the namespace in which the feature will be deployed.
-- `{{ .Installer.Features.*.Properties.*}}`: Returns a dictionary of key-value pairs for the feature's properties.
+- `{{ .Installer.Products.*.Enabled }}`: Returns the boolean value of the product's `enabled` field.
+- `{{ .Installer.Products.*.Namespace }}`: Returns the namespace in which the product will be deployed.
+- `{{ .Installer.Products.*.Properties.*}}`: Returns a dictionary of key-value pairs for the product's properties.
 
 ### `{{ .OpenShift.Ingress }}`
 

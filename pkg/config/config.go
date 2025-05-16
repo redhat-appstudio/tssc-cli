@@ -16,8 +16,8 @@ type Spec struct {
 	// deployed. Note, Helm charts deployed by the installer are likely to use a
 	// different namespace.
 	Namespace string `yaml:"namespace"`
-	// Features contains the configuration for the installer features.
-	Features map[string]FeatureSpec `yaml:"features"`
+	// Products contains the configuration for the installer products.
+	Products map[string]ProductSpec `yaml:"products"`
 	// Dependencies contains the installer Helm chart dependencies.
 	Dependencies []Dependency `yaml:"dependencies"`
 }
@@ -68,13 +68,13 @@ func (c *Config) GetEnabledDependencies(logger *slog.Logger) []Dependency {
 	return enabled
 }
 
-// GetFeature returns a feature by name, or an error if the feature is not found.
-func (c *Config) GetFeature(name string) (*FeatureSpec, error) {
-	feature, ok := c.Installer.Features[name]
+// GetProduct returns a product by name, or an error if the product is not found.
+func (c *Config) GetProduct(name string) (*ProductSpec, error) {
+	product, ok := c.Installer.Products[name]
 	if !ok {
-		return nil, fmt.Errorf("feature '%s' not found", name)
+		return nil, fmt.Errorf("product '%s' not found", name)
 	}
-	return &feature, nil
+	return &product, nil
 }
 
 // Validate validates the configuration, checking for missing fields.
@@ -85,9 +85,9 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("%w: missing namespace", ErrInvalidConfig)
 	}
 
-	// Validating the features, making sure every feature entry is valid.
-	for _, feature := range root.Features {
-		if err := feature.Validate(); err != nil {
+	// Validating the products, making sure every product entry is valid.
+	for _, product := range root.Products {
+		if err := product.Validate(); err != nil {
 			return err
 		}
 	}

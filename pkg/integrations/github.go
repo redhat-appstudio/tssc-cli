@@ -98,7 +98,7 @@ func (g *GithubIntegration) setOpenShiftURLs(
 	}
 	g.log().Debug("OpenShift ingress domain", "domain", ingressDomain)
 
-	featureRHDH, err := cfg.GetFeature(config.RedHatDeveloperHub)
+	productRHDH, err := cfg.GetProduct(config.RedHatDeveloperHub)
 	if err != nil {
 		return err
 	}
@@ -106,19 +106,19 @@ func (g *GithubIntegration) setOpenShiftURLs(
 	if g.callbackURL == "" {
 		g.callbackURL = fmt.Sprintf(
 			"https://backstage-developer-hub-%s.%s/api/auth/github/handler/frame",
-			featureRHDH.GetNamespace(),
+			productRHDH.GetNamespace(),
 			ingressDomain,
 		)
 		g.log().Debug("Using OpenShift cluster for GitHub App callback URL")
 	}
 	if g.webhookURL == "" {
-		feature, err := cfg.GetFeature(config.OpenShiftPipelines)
+		product, err := cfg.GetProduct(config.OpenShiftPipelines)
 		if err != nil {
 			return err
 		}
 		g.webhookURL = fmt.Sprintf(
 			"https://pipelines-as-code-controller-%s.%s",
-			feature.GetNamespace(),
+			product.GetNamespace(),
 			ingressDomain,
 		)
 		g.log().Debug("Using OpenShift cluster for GitHub App webhook URL")
@@ -126,7 +126,7 @@ func (g *GithubIntegration) setOpenShiftURLs(
 	if g.homepageURL == "" {
 		g.homepageURL = fmt.Sprintf(
 			"https://backstage-developer-hub-%s.%s",
-			featureRHDH.GetNamespace(),
+			productRHDH.GetNamespace(),
 			ingressDomain,
 		)
 		g.log().Debug("Using OpenShift cluster for GitHub App homepage URL")
