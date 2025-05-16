@@ -35,7 +35,7 @@ configuration to identify the features to be installed, and the dependencies to 
 resolved.
 
 The deployment configuration file describes the sequence of Helm charts to be
-applied, on the attribute 'rhtapCLI.dependencies[]'.
+applied, on the attribute 'tssc.dependencies[]'.
 
 The platform configuration is rendered from the values template file
 (--values-template), this configuration payload is given to all Helm charts.

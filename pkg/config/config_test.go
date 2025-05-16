@@ -44,7 +44,7 @@ func TestNewConfigFromFile(t *testing.T) {
 	t.Run("MarshalYAML and UnmarshalYAML", func(t *testing.T) {
 		payload, err := cfg.MarshalYAML()
 		g.Expect(err).To(o.Succeed())
-		g.Expect(string(payload)).To(o.ContainSubstring("rhtapCLI:"))
+		g.Expect(string(payload)).To(o.ContainSubstring("tssc:"))
 
 		err = cfg.UnmarshalYAML()
 		g.Expect(err).To(o.Succeed())
@@ -52,6 +52,6 @@ func TestNewConfigFromFile(t *testing.T) {
 
 	t.Run("String", func(t *testing.T) {
 		payload := cfg.String()
-		g.Expect(string(payload)).To(o.ContainSubstring("rhtapCLI:"))
+		g.Expect(string(payload)).To(o.ContainSubstring("tssc:"))
 	})
 }

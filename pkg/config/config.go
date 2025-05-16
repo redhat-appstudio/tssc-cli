@@ -27,7 +27,7 @@ type Config struct {
 	cfs     *chartfs.ChartFS // embedded filesystem
 	payload []byte           // original configuration payload
 
-	Installer Spec `yaml:"rhtapCLI"` // root configuration for the installer
+	Installer Spec `yaml:"tssc"` // root configuration for the installer
 }
 
 var (
