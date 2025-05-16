@@ -16,7 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-// NexusIntegration represents the RHTAP Nexus integration.
+// NexusIntegration represents the TSSC Nexus integration.
 type NexusIntegration struct {
 	logger *slog.Logger // application logger
 	kube   *k8s.Kube    // kubernetes client

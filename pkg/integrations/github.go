@@ -325,7 +325,7 @@ func NewGithubIntegration(
 		kube:      kube,
 		gitHubApp: gitHubApp,
 
-		description: "Red Hat Trusted Application Pipeline (RHTAP)",
+		description: "Trusted Software Supply Chain (TSSC)",
 		force:       false,
 		callbackURL: "",
 		webhookURL:  "",

@@ -15,7 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-// TrustificationIntegration represents the RHTAP Trustification integration.
+// TrustificationIntegration represents the TSSC Trustification integration.
 type TrustificationIntegration struct {
 	logger *slog.Logger // application logger
 	kube   *k8s.Kube    // kubernetes client

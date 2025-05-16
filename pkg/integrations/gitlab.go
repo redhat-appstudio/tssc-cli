@@ -17,7 +17,7 @@ import (
 // defaultPublicGitLabHost is the default host for public GitLab.
 const defaultPublicGitLabHost = "gitlab.com"
 
-// GitLabIntegration represents the RHTAP GitLab integration.
+// GitLabIntegration represents the TSSC GitLab integration.
 type GitLabIntegration struct {
 	logger *slog.Logger // application logger
 	kube   *k8s.Kube    // kubernetes client

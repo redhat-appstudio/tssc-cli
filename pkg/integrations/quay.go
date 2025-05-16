@@ -19,7 +19,7 @@ import (
 // defaultPublicQuayURL is the default URL for public Quay.
 const defaultPublicQuayURL = "https://quay.io"
 
-// QuayIntegration represents the RHTAP Quay integration.
+// QuayIntegration represents the TSSC Quay integration.
 type QuayIntegration struct {
 	logger *slog.Logger // application logger
 	kube   *k8s.Kube    // kubernetes client

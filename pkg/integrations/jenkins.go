@@ -16,7 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-// JenkinsIntegration represents the RHTAP Jenkins integration.
+// JenkinsIntegration represents the TSSC Jenkins integration.
 type JenkinsIntegration struct {
 	logger *slog.Logger // application logger
 	kube   *k8s.Kube    // kubernetes client

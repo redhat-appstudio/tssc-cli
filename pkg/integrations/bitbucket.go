@@ -17,7 +17,7 @@ import (
 // defaultPublicBitBucketHost is the default host for public BitBucket.
 const defaultPublicBitBucketHost = "bitbucket.org"
 
-// BitBucketIntegration represents the RHTAP BitBucket integration.
+// BitBucketIntegration represents the TSSC BitBucket integration.
 type BitBucketIntegration struct {
 	logger *slog.Logger // application logger
 	kube   *k8s.Kube    // kubernetes client

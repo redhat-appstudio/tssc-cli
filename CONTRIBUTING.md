@@ -1,9 +1,9 @@
-Contributing to `rhtap-cli`
+Contributing to `tssc`
 ---------------------------
 
 In order to contribute to this project you need the following requirements:
 
-- [Golang 1.16 or higher][golang]
+- [Golang 1.23 or higher][golang]
 - [GNU Make][gnuMake]
 - [GNU Tar][gnuTar]
 - [Podman][podman] or [Buildah][buildah] (optional)

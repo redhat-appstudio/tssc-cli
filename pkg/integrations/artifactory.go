@@ -16,7 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-// ArtifactoryIntegration represents the RHTAP Artifactory integration.
+// ArtifactoryIntegration represents the TSSC Artifactory integration.
 type ArtifactoryIntegration struct {
 	logger *slog.Logger // application logger
 	kube   *k8s.Kube    // kubernetes client

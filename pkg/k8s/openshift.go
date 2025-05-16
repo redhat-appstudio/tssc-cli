@@ -7,12 +7,12 @@ import (
 	"log/slog"
 	"time"
 
+	configv1 "github.com/openshift/api/config/v1"
 	v1 "github.com/openshift/api/operator/v1"
 	projectv1 "github.com/openshift/api/project/v1"
-	configv1 "github.com/openshift/api/config/v1"
+	configv1client "github.com/openshift/client-go/config/clientset/versioned/typed/config/v1"
 	operatorv1client "github.com/openshift/client-go/operator/clientset/versioned/typed/operator/v1"
 	projectv1client "github.com/openshift/client-go/project/clientset/versioned/typed/project/v1"
-	configv1client "github.com/openshift/client-go/config/clientset/versioned/typed/config/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -185,7 +185,7 @@ func EnsureOpenShiftProject(
 
 	projectRequest := &projectv1.ProjectRequest{
 		DisplayName: projectName,
-		Description: fmt.Sprintf("RHTAP: %s", projectName),
+		Description: fmt.Sprintf("TSSC: %s", projectName),
 		ObjectMeta: metav1.ObjectMeta{
 			Name: projectName,
 		},

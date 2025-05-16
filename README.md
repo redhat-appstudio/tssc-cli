@@ -23,11 +23,11 @@ Helm, serving as the foundation of `tssc`, provides a detailed blueprint of reso
 
 The `tssc` is designed to be user-friendly, providing a seamless installation process for users of all skill levels. 
 
-# Deploy RHTAP
+# Deploy TSSC
 
 Install the `tssc` binary on your local machine following [these instructions](#installing-tssc).
 
-Follow the below steps to deploy RHTAP on Openshift cluster. 
+Follow the below steps to deploy TSSC on Openshift cluster. 
 
 1. Create the installer's cluster configuration. You can use a local configuration file, or default settings. To use the default settings, run the command bellow, and see the [configuration](#configuration) section for more details.
 
@@ -47,7 +47,7 @@ tssc config --create --get
 tssc integration --help
 ```
   
-4. Finally, run the below command to proceed with RHTAP deployment. 
+4. Finally, run the below command to proceed with TSSC deployment. 
 
 ```bash
 tssc deploy
@@ -60,14 +60,14 @@ The [`config.yaml`](installer/config.yaml) file is structured to outline key com
 ```yaml
 ---
 rhtapCLI:
-  namespace: rhtap
+  namespace: tssc
   features: {}
   dependencies: {}
 ```
 
 The attributes of the `rhtapCLI` object are as follows:
 
-- `.namespace`: Specifies the default namespace used by the installer, set to rhtap. This namespace acts as the primary operational area for the installation process.
+- `.namespace`: Specifies the default namespace used by the installer, set to `tssc`. This namespace acts as the primary operational area for the installation process.
 - `.features`: Defines the features to be deployed by the installer. Each feature is identified by a unique name and a set of properties.
 - `.dependencies`: Specifies the dependencies rolled out by the installer in the specific order defined in the configuration file.
 

@@ -17,7 +17,7 @@ import (
 // defaultPublicAzureHost is the default host for public Azure.
 const defaultPublicAzureHost = "dev.azure.com"
 
-// AzureIntegration represents the RHTAP Azure integration.
+// AzureIntegration represents the TSSC Azure integration.
 type AzureIntegration struct {
 	logger *slog.Logger // application logger
 	kube   *k8s.Kube    // kubernetes client
