@@ -98,7 +98,7 @@ func (g *GithubIntegration) setOpenShiftURLs(
 	}
 	g.log().Debug("OpenShift ingress domain", "domain", ingressDomain)
 
-	productRHDH, err := cfg.GetProduct(config.RedHatDeveloperHub)
+	productRHDH, err := cfg.GetProduct(config.DeveloperHub)
 	if err != nil {
 		return err
 	}

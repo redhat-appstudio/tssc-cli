@@ -13,12 +13,12 @@ const (
 	TrustedProfileAnalyzer = "trustedProfileAnalyzer"
 	// TrustedArtifactSigner Trusted Artifact Signer (TAS).
 	TrustedArtifactSigner = "trustedArtifactSigner"
-	// RedHatDeveloperHub Red Hat Developer Hub (RHDH).
-	RedHatDeveloperHub = "redHatDeveloperHub"
-	// RedHatAdvancedClusterSecurity Red Hat Advanced Cluster Security (RHACS).
-	RedHatAdvancedClusterSecurity = "redHatAdvancedClusterSecurity"
-	// RedHatQuay Red Hat Quay (RHDH).
-	RedHatQuay = "redHatQuay"
+	// DeveloperHub Red Hat Developer Hub (RHDH).
+	DeveloperHub = "developerHub"
+	// AdvancedClusterSecurity Red Hat Advanced Cluster Security (RHACS).
+	AdvancedClusterSecurity = "advancedClusterSecurity"
+	// Quay Red Hat Quay (RHDH).
+	Quay = "quay"
 	// OpenShiftPipelines OpenShift Pipelines.
 	OpenShiftPipelines = "openShiftPipelines"
 )

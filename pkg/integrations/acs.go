@@ -15,7 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-// ACSIntegration represents the RHTAP ACS integration.
+// ACSIntegration represents the TSSC ACS integration.
 type ACSIntegration struct {
 	logger *slog.Logger // application logger
 	kube   *k8s.Kube    // kubernetes client

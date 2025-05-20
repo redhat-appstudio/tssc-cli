@@ -79,7 +79,7 @@ func (j *JenkinsIntegration) EnsureNamespace(
 	ctx context.Context,
 	cfg *config.Config,
 ) error {
-	product, err := cfg.GetProduct(config.RedHatDeveloperHub)
+	product, err := cfg.GetProduct(config.DeveloperHub)
 	if err != nil {
 		return err
 	}

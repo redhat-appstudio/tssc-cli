@@ -35,7 +35,7 @@ func TestNewConfigFromFile(t *testing.T) {
 		_, err := cfg.GetProduct("product1")
 		g.Expect(err).NotTo(o.Succeed())
 
-		product, err := cfg.GetProduct(RedHatDeveloperHub)
+		product, err := cfg.GetProduct(DeveloperHub)
 		g.Expect(err).To(o.Succeed())
 		g.Expect(product).NotTo(o.BeNil())
 		g.Expect(product.GetNamespace()).NotTo(o.BeEmpty())
