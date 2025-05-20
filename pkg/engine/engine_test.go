@@ -16,6 +16,8 @@ const testYamlTmpl = `
 ---
 root:
   namespace: {{ .Installer.Namespace }} 
+  settings:
+    key: value
   products:
 {{- range $k, $v := .Installer.Products }}
   {{- $k | nindent 4 }}:
@@ -61,6 +63,9 @@ func TestEngine_Render(t *testing.T) {
 	root := outputMap["root"].(map[string]interface{})
 	g.Expect(root).To(o.HaveKey("namespace"))
 	g.Expect(root["namespace"]).To(o.Equal(cfg.Installer.Namespace))
+
+	g.Expect(root).To(o.HaveKey("settings"))
+	g.Expect(root["settings"]).NotTo(o.BeNil())
 
 	g.Expect(root).To(o.HaveKey("products"))
 	g.Expect(root["products"]).NotTo(o.BeNil())
