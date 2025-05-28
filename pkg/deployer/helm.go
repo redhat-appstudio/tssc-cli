@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"time"
 
 	"github.com/redhat-appstudio/rhtap-cli/pkg/flags"
 	"github.com/redhat-appstudio/rhtap-cli/pkg/k8s"
@@ -144,6 +145,19 @@ func (h *Helm) Verify() error {
 	}
 	h.logger.Info("Release verified!")
 	return nil
+}
+
+func (h *Helm) VerifyWithRetry() error {
+	var err error
+	var retries = 3
+	for i := 1; i <= retries; i++ {
+		err = h.Verify()
+		if err == nil || i == retries {
+			break
+		}
+		time.Sleep(time.Minute)
+	}
+	return err
 }
 
 // VisitReleaseResources collects the resources created by the Helm chart release.

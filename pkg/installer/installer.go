@@ -118,7 +118,7 @@ func (i *Installer) Install(ctx context.Context) error {
 	// Verifying if the installation was successful, by running the Helm chart
 	// tests interactively.
 	i.logger.Debug("Verifying the Helm chart release")
-	if err = hc.Verify(); err != nil {
+	if err = hc.VerifyWithRetry(); err != nil {
 		return err
 	}
 
