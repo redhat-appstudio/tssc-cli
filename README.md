@@ -61,6 +61,7 @@ The [`config.yaml`](installer/config.yaml) file is structured to outline key com
 ---
 tssc:
   namespace: tssc
+  settings: {}
   products: {}
   dependencies: {}
 ```
@@ -68,8 +69,20 @@ tssc:
 The attributes of the `tssc` object are as follows:
 
 - `.namespace`: Specifies the default namespace used by the installer, set to `tssc`. This namespace acts as the primary operational area for the installation process.
+- `.settings`: Defines the settings of the deployment. This can control a wide set of properties.
 - `.products`: Defines the features to be deployed by the installer. Each feature is identified by a unique name and a set of properties.
 - `.dependencies`: Specifies the dependencies rolled out by the installer in the specific order defined in the configuration file.
+
+## `tssc.settings`
+
+Defines the settings of the deployment. This can control a wide set of properties. For example the following snippet flags the deployment as a CRC deployment, so that the configuration can be tuned to that particular usecase.
+
+```yaml
+---
+tssc:
+  settings:
+    crc: true
+```
 
 ## `tssc.products`
 
@@ -117,6 +130,12 @@ Windows users must be aware that the hook scripts are written in Bash and may no
 ## Template Functions
 
 The following functions are available for use in the [`values.yaml.tpl`](./installer/charts/values.yaml.tpl) file:
+
+### `{{ .Installer.Settings.* }}`
+
+A dictionary of key-value pairs for the installer's settings.
+
+This is currently mainly a placeholder for future configuration settings that would impact more than a single product.
 
 ### `{{ .Installer.Products.* }}`
 

@@ -16,6 +16,8 @@ type Spec struct {
 	// deployed. Note, Helm charts deployed by the installer are likely to use a
 	// different namespace.
 	Namespace string `yaml:"namespace"`
+	// Settings contains the configuration for the installer settings.
+	Settings map[string]interface{} `yaml:"settings"`
 	// Products contains the configuration for the installer products.
 	Products map[string]ProductSpec `yaml:"products"`
 	// Dependencies contains the installer Helm chart dependencies.
