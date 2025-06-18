@@ -81,7 +81,7 @@ github.com/containerd/log
 # github.com/containerd/platforms v0.2.1
 ## explicit; go 1.20
 github.com/containerd/platforms
-# github.com/cyphar/filepath-securejoin v0.3.6
+# github.com/cyphar/filepath-securejoin v0.4.1
 ## explicit; go 1.18
 github.com/cyphar/filepath-securejoin
 # github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
@@ -151,7 +151,7 @@ github.com/go-errors/errors
 # github.com/go-gorp/gorp/v3 v3.1.0
 ## explicit; go 1.18
 github.com/go-gorp/gorp/v3
-# github.com/go-logr/logr v1.4.2
+# github.com/go-logr/logr v1.4.3
 ## explicit; go 1.18
 github.com/go-logr/logr
 github.com/go-logr/logr/funcr
@@ -349,7 +349,7 @@ github.com/opencontainers/go-digest
 ## explicit; go 1.18
 github.com/opencontainers/image-spec/specs-go
 github.com/opencontainers/image-spec/specs-go/v1
-# github.com/openshift/api v0.0.0-20250502141415-7152b1b11175
+# github.com/openshift/api v0.0.0-20250613225054-29b831646a5f
 ## explicit; go 1.23.0
 github.com/openshift/api/config/v1
 github.com/openshift/api/config/v1alpha1

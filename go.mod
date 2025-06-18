@@ -7,7 +7,7 @@ require (
 	github.com/google/go-github/scrape v0.0.0-20250505194155-9a4137d1ff1d
 	github.com/google/go-github/v71 v71.0.0
 	github.com/onsi/gomega v1.35.1
-	github.com/openshift/api v0.0.0-20250502141415-7152b1b11175
+	github.com/openshift/api v0.0.0-20250613225054-29b831646a5f
 	github.com/openshift/client-go v0.0.0-20250425165505-5f55ff6979a1
 	github.com/pkg/errors v0.9.1
 	github.com/quay/claircore v1.5.37
@@ -43,7 +43,7 @@ require (
 	github.com/containerd/errdefs v0.3.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v0.2.1 // indirect
-	github.com/cyphar/filepath-securejoin v0.3.6 // indirect
+	github.com/cyphar/filepath-securejoin v0.4.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/docker/cli v27.5.1+incompatible // indirect
@@ -60,7 +60,7 @@ require (
 	github.com/fxamacker/cbor/v2 v2.7.1 // indirect
 	github.com/go-errors/errors v1.5.1 // indirect
 	github.com/go-gorp/gorp/v3 v3.1.0 // indirect
-	github.com/go-logr/logr v1.4.2 // indirect
+	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/jsonpointer v0.21.1 // indirect
 	github.com/go-openapi/jsonreference v0.21.0 // indirect
