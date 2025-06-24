@@ -7,10 +7,10 @@ require (
 	github.com/google/go-github/scrape v0.0.0-20250610212921-ad671c46a896
 	github.com/google/go-github/v71 v71.0.0
 	github.com/onsi/gomega v1.35.1
-	github.com/openshift/api v0.0.0-20250613225054-29b831646a5f
+	github.com/openshift/api v0.0.0-20250620202921-c3cf9bb5ccab
 	github.com/openshift/client-go v0.0.0-20250603093317-900624865677
 	github.com/pkg/errors v0.9.1
-	github.com/quay/claircore v1.5.37
+	github.com/quay/claircore v1.5.39
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.6
 	gopkg.in/yaml.v3 v3.0.1
@@ -130,9 +130,9 @@ require (
 	github.com/xlzd/gotp v0.1.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.53.0 // indirect
-	go.opentelemetry.io/otel v1.35.0 // indirect
-	go.opentelemetry.io/otel/metric v1.35.0 // indirect
-	go.opentelemetry.io/otel/trace v1.35.0 // indirect
+	go.opentelemetry.io/otel v1.36.0 // indirect
+	go.opentelemetry.io/otel/metric v1.36.0 // indirect
+	go.opentelemetry.io/otel/trace v1.36.0 // indirect
 	golang.org/x/crypto v0.39.0 // indirect
 	golang.org/x/net v0.41.0 // indirect
 	golang.org/x/oauth2 v0.24.0 // indirect
@@ -140,7 +140,7 @@ require (
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/term v0.32.0 // indirect
 	golang.org/x/text v0.26.0 // indirect
-	golang.org/x/time v0.11.0 // indirect
+	golang.org/x/time v0.12.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250505200425-f936aa4a68b2 // indirect
 	google.golang.org/grpc v1.67.3 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
