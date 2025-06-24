@@ -8,7 +8,7 @@ github.com/AdaLogics/go-fuzz-headers
 ## explicit; go 1.16
 github.com/Azure/go-ansiterm
 github.com/Azure/go-ansiterm/winterm
-# github.com/BurntSushi/toml v1.4.0
+# github.com/BurntSushi/toml v1.5.0
 ## explicit; go 1.18
 github.com/BurntSushi/toml
 github.com/BurntSushi/toml/internal
@@ -90,7 +90,7 @@ github.com/davecgh/go-spew/spew
 # github.com/distribution/reference v0.6.0
 ## explicit; go 1.20
 github.com/distribution/reference
-# github.com/docker/cli v27.1.2+incompatible
+# github.com/docker/cli v27.5.1+incompatible
 ## explicit
 github.com/docker/cli/cli/config
 github.com/docker/cli/cli/config/configfile
@@ -108,7 +108,7 @@ github.com/docker/distribution/registry/client/auth/challenge
 github.com/docker/distribution/registry/client/transport
 github.com/docker/distribution/registry/storage/cache
 github.com/docker/distribution/registry/storage/cache/memory
-# github.com/docker/docker v27.1.2+incompatible
+# github.com/docker/docker v27.5.1+incompatible
 ## explicit
 github.com/docker/docker/api/types/filters
 github.com/docker/docker/api/types/registry
@@ -353,10 +353,11 @@ github.com/opencontainers/image-spec/specs-go/v1
 ## explicit; go 1.23.0
 github.com/openshift/api/config/v1
 github.com/openshift/api/config/v1alpha1
+github.com/openshift/api/config/v1alpha2
 github.com/openshift/api/operator/v1
 github.com/openshift/api/operator/v1alpha1
 github.com/openshift/api/project/v1
-# github.com/openshift/client-go v0.0.0-20250425165505-5f55ff6979a1
+# github.com/openshift/client-go v0.0.0-20250603093317-900624865677
 ## explicit; go 1.23.0
 github.com/openshift/client-go/config/applyconfigurations/config/v1
 github.com/openshift/client-go/config/applyconfigurations/internal
@@ -1028,7 +1029,7 @@ k8s.io/klog/v2/internal/dbg
 k8s.io/klog/v2/internal/serialize
 k8s.io/klog/v2/internal/severity
 k8s.io/klog/v2/internal/sloghandler
-# k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff
+# k8s.io/kube-openapi v0.0.0-20250610211856-8b98d1ed966a
 ## explicit; go 1.21
 k8s.io/kube-openapi/pkg/cached
 k8s.io/kube-openapi/pkg/common

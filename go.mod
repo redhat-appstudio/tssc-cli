@@ -8,7 +8,7 @@ require (
 	github.com/google/go-github/v71 v71.0.0
 	github.com/onsi/gomega v1.35.1
 	github.com/openshift/api v0.0.0-20250620202921-c3cf9bb5ccab
-	github.com/openshift/client-go v0.0.0-20250425165505-5f55ff6979a1
+	github.com/openshift/client-go v0.0.0-20250603093317-900624865677
 	github.com/pkg/errors v0.9.1
 	github.com/quay/claircore v1.5.37
 	github.com/spf13/cobra v1.8.1
@@ -26,7 +26,7 @@ require (
 	dario.cat/mergo v1.0.1 // indirect
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20240806141605-e8a1dd7889d6 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
-	github.com/BurntSushi/toml v1.4.0 // indirect
+	github.com/BurntSushi/toml v1.5.0 // indirect
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.3.1 // indirect
@@ -46,9 +46,9 @@ require (
 	github.com/cyphar/filepath-securejoin v0.4.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/distribution/reference v0.6.0 // indirect
-	github.com/docker/cli v27.1.2+incompatible // indirect
+	github.com/docker/cli v27.5.1+incompatible // indirect
 	github.com/docker/distribution v2.8.3+incompatible // indirect
-	github.com/docker/docker v27.1.2+incompatible // indirect
+	github.com/docker/docker v27.5.1+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.8.2 // indirect
 	github.com/docker/go-connections v0.5.0 // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
@@ -149,7 +149,7 @@ require (
 	k8s.io/apiserver v0.32.2 // indirect
 	k8s.io/component-base v0.32.2 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
-	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff // indirect
+	k8s.io/kube-openapi v0.0.0-20250610211856-8b98d1ed966a // indirect
 	k8s.io/utils v0.0.0-20250502105355-0f33e8f1c979 // indirect
 	oras.land/oras-go v1.2.6 // indirect
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect
