@@ -5,7 +5,7 @@ go 1.23.6
 require (
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/google/go-github/scrape v0.0.0-20250610212921-ad671c46a896
-	github.com/google/go-github/v71 v71.0.0
+	github.com/google/go-github/v72 v72.0.0
 	github.com/onsi/gomega v1.35.1
 	github.com/openshift/api v0.0.0-20250620202921-c3cf9bb5ccab
 	github.com/openshift/client-go v0.0.0-20250603093317-900624865677
@@ -55,7 +55,7 @@ require (
 	github.com/emicklei/go-restful/v3 v3.12.2 // indirect
 	github.com/evanphx/json-patch v5.9.11+incompatible // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
-	github.com/fatih/color v1.13.0 // indirect
+	github.com/fatih/color v1.18.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.1 // indirect
 	github.com/go-errors/errors v1.5.1 // indirect
@@ -71,7 +71,6 @@ require (
 	github.com/google/btree v1.1.3 // indirect
 	github.com/google/gnostic-models v0.6.9 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
-	github.com/google/go-github/v72 v72.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
