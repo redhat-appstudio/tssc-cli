@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/google/go-github/scrape"
-	"github.com/google/go-github/v72/github"
+	"github.com/google/go-github/v73/github"
 	"github.com/spf13/pflag"
 )
 

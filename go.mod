@@ -4,8 +4,8 @@ go 1.23.6
 
 require (
 	github.com/Masterminds/sprig/v3 v3.3.0
-	github.com/google/go-github/scrape v0.0.0-20250610212921-ad671c46a896
-	github.com/google/go-github/v72 v72.0.0
+	github.com/google/go-github/scrape v0.0.0-20250627155722-0c6bd9186d03
+	github.com/google/go-github/v73 v73.0.0
 	github.com/onsi/gomega v1.35.1
 	github.com/openshift/api v0.0.0-20250620202921-c3cf9bb5ccab
 	github.com/openshift/client-go v0.0.0-20250603093317-900624865677
@@ -55,7 +55,7 @@ require (
 	github.com/emicklei/go-restful/v3 v3.12.2 // indirect
 	github.com/evanphx/json-patch v5.9.11+incompatible // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
-	github.com/fatih/color v1.13.0 // indirect
+	github.com/fatih/color v1.18.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fxamacker/cbor/v2 v2.8.0 // indirect
 	github.com/go-errors/errors v1.5.1 // indirect
