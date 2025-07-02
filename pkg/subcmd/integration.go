@@ -22,7 +22,6 @@ func NewIntegration(logger *slog.Logger, kube *k8s.Kube) *cobra.Command {
 	cmd.AddCommand(NewRunner(NewIntegrationJenkins(logger, kube)).Cmd())
 	cmd.AddCommand(NewRunner(NewIntegrationNexus(logger, kube)).Cmd())
 	cmd.AddCommand(NewRunner(NewIntegrationQuay(logger, kube)).Cmd())
-	cmd.AddCommand(NewRunner(NewIntegrationTAS(logger, kube)).Cmd())
 	cmd.AddCommand(NewRunner(NewIntegrationTrustification(logger, kube)).Cmd())
 
 	return cmd

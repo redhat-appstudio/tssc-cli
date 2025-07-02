@@ -87,6 +87,11 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("%w: missing namespace", ErrInvalidConfig)
 	}
 
+	// The installer must have a settings section.
+	if root.Settings == nil {
+		return fmt.Errorf("%w: missing settings", ErrInvalidConfig)
+	}
+
 	// Validating the products, making sure every product entry is valid.
 	for _, product := range root.Products {
 		if err := product.Validate(); err != nil {
