@@ -202,7 +202,7 @@ github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/google/go-github/scrape v0.0.0-20250627155722-0c6bd9186d03
+# github.com/google/go-github/scrape v0.0.0-20250704171703-b7589288884b
 ## explicit; go 1.23.0
 github.com/google/go-github/scrape
 # github.com/google/go-github/v73 v73.0.0
