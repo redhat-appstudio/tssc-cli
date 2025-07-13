@@ -1,13 +1,15 @@
 module github.com/redhat-appstudio/rhtap-cli
 
-go 1.23.6
+go 1.24.0
+
+toolchain go1.24.5
 
 require (
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/google/go-github/scrape v0.0.0-20250710113627-eeac201e2139
 	github.com/google/go-github/v73 v73.0.0
 	github.com/onsi/gomega v1.35.1
-	github.com/openshift/api v0.0.0-20250704153732-ad766c4e6d8e
+	github.com/openshift/api v0.0.0-20250710082954-674ad74beffc
 	github.com/openshift/client-go v0.0.0-20250701093119-6d8e53714277
 	github.com/pkg/errors v0.9.1
 	github.com/quay/claircore v1.5.39
@@ -15,8 +17,8 @@ require (
 	github.com/spf13/pflag v1.0.6
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.17.3
-	k8s.io/api v0.32.4
-	k8s.io/apimachinery v0.32.4
+	k8s.io/api v0.33.2
+	k8s.io/apimachinery v0.33.2
 	k8s.io/cli-runtime v0.32.2
 	k8s.io/client-go v0.32.4
 	k8s.io/kubectl v0.32.2
@@ -72,7 +74,6 @@ require (
 	github.com/google/gnostic-models v0.7.0 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
-	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
