@@ -8,7 +8,7 @@ import (
 	"github.com/redhat-appstudio/tssc/pkg/config"
 	"github.com/redhat-appstudio/tssc/pkg/k8s"
 
-	"github.com/spf13/pflag"
+	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -32,7 +32,9 @@ type GitLabIntegration struct {
 }
 
 // PersistentFlags sets the persistent flags for the GitLab integration.
-func (g *GitLabIntegration) PersistentFlags(p *pflag.FlagSet) {
+func (g *GitLabIntegration) PersistentFlags(c *cobra.Command) {
+	p := c.PersistentFlags()
+
 	p.BoolVar(&g.force, "force", g.force,
 		"Overwrite the existing secret")
 
@@ -46,6 +48,12 @@ func (g *GitLabIntegration) PersistentFlags(p *pflag.FlagSet) {
 		"GitLab API token")
 	p.StringVar(&g.group, "group", g.group,
 		"GitLab group name")
+
+	for _, f := range []string{"token", "group"} {
+		if err := c.MarkPersistentFlagRequired(f); err != nil {
+			panic(err)
+		}
+	}
 }
 
 // log logger with contextual information.
@@ -62,20 +70,11 @@ func (g *GitLabIntegration) log() *slog.Logger {
 
 // Validate checks if the required configuration is set.
 func (g *GitLabIntegration) Validate() error {
-	if g.host == "" {
-		g.host = defaultPublicGitLabHost
-	}
 	if g.clientId != "" && g.clientSecret == "" {
 		return fmt.Errorf("app-secret is required when id is specified")
 	}
 	if g.clientId == "" && g.clientSecret != "" {
 		return fmt.Errorf("app-id is required when app-secret is specified")
-	}
-	if g.token == "" {
-		return fmt.Errorf("token is required")
-	}
-	if g.group == "" {
-		return fmt.Errorf("group is required")
 	}
 	return nil
 }
@@ -186,7 +185,7 @@ func NewGitLabIntegration(
 		kube:   kube,
 
 		force:        false,
-		host:         "",
+		host:         defaultPublicGitLabHost,
 		clientId:     "",
 		clientSecret: "",
 		token:        "",

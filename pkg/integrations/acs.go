@@ -9,7 +9,7 @@ import (
 	"github.com/redhat-appstudio/tssc/pkg/config"
 	"github.com/redhat-appstudio/tssc/pkg/k8s"
 
-	"github.com/spf13/pflag"
+	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -27,7 +27,9 @@ type ACSIntegration struct {
 }
 
 // PersistentFlags sets the persistent flags for the ACS integration.
-func (a *ACSIntegration) PersistentFlags(p *pflag.FlagSet) {
+func (a *ACSIntegration) PersistentFlags(c *cobra.Command) {
+	p := c.PersistentFlags()
+
 	p.BoolVar(&a.force, "force", a.force,
 		"Overwrite the existing secret")
 
@@ -35,6 +37,12 @@ func (a *ACSIntegration) PersistentFlags(p *pflag.FlagSet) {
 		"ACS service endpoint, formatted as 'hostname:port'")
 	p.StringVar(&a.token, "token", a.token,
 		"ACS API token")
+
+	for _, f := range []string{"endpoint", "token"} {
+		if err := c.MarkPersistentFlagRequired(f); err != nil {
+			panic(err)
+		}
+	}
 }
 
 // log logger with contextual information.
@@ -48,17 +56,11 @@ func (a *ACSIntegration) log() *slog.Logger {
 
 // Validate checks if the required configuration is set.
 func (a *ACSIntegration) Validate() error {
-	if a.endpoint == "" {
-		return fmt.Errorf("endpoint is required")
-	}
 	if strings.Contains(a.endpoint, "://") {
 		return fmt.Errorf("invalid endpoint, the protocol should not be specified")
 	}
 	if !strings.Contains(a.endpoint, ":") {
 		return fmt.Errorf("invalid endpoint, the port should be specified")
-	}
-	if a.token == "" {
-		return fmt.Errorf("token is required")
 	}
 	return nil
 }

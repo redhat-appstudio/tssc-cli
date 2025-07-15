@@ -8,7 +8,7 @@ import (
 	"github.com/redhat-appstudio/tssc/pkg/config"
 	"github.com/redhat-appstudio/tssc/pkg/k8s"
 
-	"github.com/spf13/pflag"
+	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -33,12 +33,14 @@ type AzureIntegration struct {
 }
 
 // PersistentFlags sets the persistent flags for the Azure integration.
-func (g *AzureIntegration) PersistentFlags(p *pflag.FlagSet) {
+func (g *AzureIntegration) PersistentFlags(c *cobra.Command) {
+	p := c.PersistentFlags()
+
 	p.BoolVar(&g.force, "force", g.force,
 		"Overwrite the existing secret")
 
 	p.StringVar(&g.host, "host", g.host,
-		"Azure host, defaults to 'dev.azure.com'")
+		"Azure host")
 	p.StringVar(&g.token, "token", g.token,
 		"Azure API token")
 	p.StringVar(&g.org, "organization", g.org,
@@ -49,6 +51,12 @@ func (g *AzureIntegration) PersistentFlags(p *pflag.FlagSet) {
 		"Azure client secret")
 	p.StringVar(&g.tenantId, "tenant-id", g.tenantId,
 		"Azure tenant ID")
+
+	for _, f := range []string{"host", "organization", "token"} {
+		if err := c.MarkPersistentFlagRequired(f); err != nil {
+			panic(err)
+		}
+	}
 }
 
 // log logger with contextual information.
@@ -66,13 +74,6 @@ func (g *AzureIntegration) log() *slog.Logger {
 
 // Validate checks if the required configuration is set.
 func (g *AzureIntegration) Validate() error {
-	if g.host == "" {
-		g.host = defaultPublicAzureHost
-	}
-	// Personal access token is required in register existing component
-	if g.token == "" {
-		return fmt.Errorf("personal access token is required")
-	}
 	if g.clientId == "" && (g.clientSecret != "" || g.tenantId != "") {
 		return fmt.Errorf("client-id is required when client-secret or tenant-id is specified")
 	}
@@ -82,10 +83,6 @@ func (g *AzureIntegration) Validate() error {
 	if g.clientSecret != "" && g.tenantId == "" {
 		return fmt.Errorf("tenant-id is required when client-secret is specified")
 	}
-	if g.org == "" {
-		return fmt.Errorf("organization is required")
-	}
-
 	return nil
 }
 
@@ -193,7 +190,7 @@ func NewAzureIntegration(logger *slog.Logger, kube *k8s.Kube) *AzureIntegration 
 		kube:   kube,
 
 		force:        false,
-		host:         "",
+		host:         defaultPublicAzureHost,
 		token:        "",
 		org:          "",
 		clientId:     "",

@@ -83,7 +83,6 @@ func NewIntegrationJenkins(
 		jenkinsIntegration: jenkinsIntegration,
 	}
 
-	p := d.cmd.PersistentFlags()
-	jenkinsIntegration.PersistentFlags(p)
+	jenkinsIntegration.PersistentFlags(d.cmd)
 	return d
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/redhat-appstudio/tssc/pkg/config"
 	"github.com/redhat-appstudio/tssc/pkg/k8s"
 
-	"github.com/spf13/pflag"
+	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -30,7 +30,9 @@ type TrustificationIntegration struct {
 }
 
 // PersistentFlags sets the persistent flags for the Trustification integration.
-func (i *TrustificationIntegration) PersistentFlags(p *pflag.FlagSet) {
+func (i *TrustificationIntegration) PersistentFlags(c *cobra.Command) {
+	p := c.PersistentFlags()
+
 	p.BoolVar(&i.force, "force", i.force,
 		"Overwrite the existing secret")
 
@@ -44,6 +46,17 @@ func (i *TrustificationIntegration) PersistentFlags(p *pflag.FlagSet) {
 		"OIDC client secret")
 	p.StringVar(&i.supportedCycloneDXVersion, "supported-cyclonedx-version", i.supportedCycloneDXVersion,
 		"If the SBOM uses a higher CycloneDX version, Syft convert to the supported version before uploading.")
+
+	for _, f := range []string{
+		"bombastic-api-url",
+		"oidc-issuer-url",
+		"oidc-client-id",
+		"oidc-client-secret",
+	} {
+		if err := c.MarkPersistentFlagRequired(f); err != nil {
+			panic(err)
+		}
+	}
 }
 
 // log logger with contextual information.

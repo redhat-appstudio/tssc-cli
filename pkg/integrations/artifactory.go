@@ -10,7 +10,7 @@ import (
 	"github.com/redhat-appstudio/tssc/pkg/config"
 	"github.com/redhat-appstudio/tssc/pkg/k8s"
 
-	"github.com/spf13/pflag"
+	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -29,7 +29,9 @@ type ArtifactoryIntegration struct {
 }
 
 // PersistentFlags sets the persistent flags for the Artifactory integration.
-func (a *ArtifactoryIntegration) PersistentFlags(p *pflag.FlagSet) {
+func (a *ArtifactoryIntegration) PersistentFlags(c *cobra.Command) {
+	p := c.PersistentFlags()
+
 	p.BoolVar(&a.force, "force", a.force,
 		"Overwrite the existing secret")
 
@@ -39,6 +41,12 @@ func (a *ArtifactoryIntegration) PersistentFlags(p *pflag.FlagSet) {
 		"Artifactory API token")
 	p.StringVar(&a.url, "url", a.url,
 		"Artifactory URL")
+
+	for _, f := range []string{"dockerconfigjson", "token", "url"} {
+		if err := c.MarkPersistentFlagRequired(f); err != nil {
+			panic(err)
+		}
+	}
 }
 
 // log logger with contextual information.
@@ -53,22 +61,12 @@ func (a *ArtifactoryIntegration) log() *slog.Logger {
 
 // Validate checks if the required configuration is set.
 func (a *ArtifactoryIntegration) Validate() error {
-	if a.dockerconfigjson == "" {
-		return fmt.Errorf("dockerconfigjson is required")
+	u, err := url.Parse(a.url)
+	if err != nil {
+		return fmt.Errorf("invalid url")
 	}
-	if a.token == "" {
-		return fmt.Errorf("token is required")
-	}
-	if a.url == "" {
-		return fmt.Errorf("url is required")
-	} else {
-		u, err := url.Parse(a.url)
-		if err != nil {
-			return fmt.Errorf("invalid url")
-		}
-		if !strings.HasPrefix(u.Scheme, "http") {
-			return fmt.Errorf("invalid url scheme, expected one of 'http', 'https'")
-		}
+	if !strings.HasPrefix(u.Scheme, "http") {
+		return fmt.Errorf("invalid url scheme, expected one of 'http', 'https'")
 	}
 	return nil
 }

@@ -87,7 +87,6 @@ func NewIntegrationQuay(logger *slog.Logger, kube *k8s.Kube) *IntegrationQuay {
 		quayIntegration: quayIntegration,
 	}
 
-	p := d.cmd.PersistentFlags()
-	quayIntegration.PersistentFlags(p)
+	quayIntegration.PersistentFlags(d.cmd)
 	return d
 }

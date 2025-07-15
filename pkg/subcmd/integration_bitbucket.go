@@ -84,7 +84,6 @@ func NewIntegrationBitBucket(
 		bitbucketIntegration: bitbucketIntegration,
 	}
 
-	p := d.cmd.PersistentFlags()
-	bitbucketIntegration.PersistentFlags(p)
+	bitbucketIntegration.PersistentFlags(d.cmd)
 	return d
 }

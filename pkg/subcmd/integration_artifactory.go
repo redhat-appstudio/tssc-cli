@@ -82,7 +82,6 @@ func NewIntegrationArtifactory(
 		artifactoryIntegration: artifactoryIntegration,
 	}
 
-	p := d.cmd.PersistentFlags()
-	artifactoryIntegration.PersistentFlags(p)
+	artifactoryIntegration.PersistentFlags(d.cmd)
 	return d
 }

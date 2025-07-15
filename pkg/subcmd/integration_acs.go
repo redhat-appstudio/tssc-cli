@@ -81,7 +81,6 @@ func NewIntegrationACS(
 		acsIntegration: acsIntegration,
 	}
 
-	p := d.cmd.PersistentFlags()
-	acsIntegration.PersistentFlags(p)
+	acsIntegration.PersistentFlags(d.cmd)
 	return d
 }
