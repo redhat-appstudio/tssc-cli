@@ -10,7 +10,7 @@ require (
 	github.com/google/go-github/v73 v73.0.0
 	github.com/onsi/gomega v1.35.1
 	github.com/openshift/api v0.0.0-20250710082954-674ad74beffc
-	github.com/openshift/client-go v0.0.0-20250701093119-6d8e53714277
+	github.com/openshift/client-go v0.0.0-20250710075018-396b36f983ee
 	github.com/pkg/errors v0.9.1
 	github.com/quay/claircore v1.5.39
 	github.com/spf13/cobra v1.8.1
@@ -20,7 +20,7 @@ require (
 	k8s.io/api v0.33.2
 	k8s.io/apimachinery v0.33.2
 	k8s.io/cli-runtime v0.32.2
-	k8s.io/client-go v0.32.4
+	k8s.io/client-go v0.33.2
 	k8s.io/kubectl v0.32.2
 )
 
@@ -69,7 +69,6 @@ require (
 	github.com/go-openapi/swag v0.23.1 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/btree v1.1.3 // indirect
 	github.com/google/gnostic-models v0.7.0 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
@@ -77,7 +76,7 @@ require (
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
-	github.com/gorilla/websocket v1.5.3 // indirect
+	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect
 	github.com/gosuri/uitable v0.0.4 // indirect
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
