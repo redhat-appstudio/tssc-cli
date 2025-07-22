@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/redhat-appstudio/rhtap-cli/pkg/chartfs"
-	"github.com/redhat-appstudio/rhtap-cli/pkg/config"
+	"github.com/redhat-appstudio/tssc/pkg/chartfs"
+	"github.com/redhat-appstudio/tssc/pkg/config"
 
 	o "github.com/onsi/gomega"
 )

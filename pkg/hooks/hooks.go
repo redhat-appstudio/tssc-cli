@@ -7,8 +7,8 @@ import (
 	"os/exec"
 	"path"
 
-	"github.com/redhat-appstudio/rhtap-cli/pkg/chartfs"
-	"github.com/redhat-appstudio/rhtap-cli/pkg/config"
+	"github.com/redhat-appstudio/tssc/pkg/config"
+	"github.com/redhat-appstudio/tssc/pkg/chartfs"
 )
 
 // Hooks represent the hooks that can be executed before and after the Helm Chart

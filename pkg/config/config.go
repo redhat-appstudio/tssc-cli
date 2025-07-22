@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/redhat-appstudio/rhtap-cli/pkg/chartfs"
+	"github.com/redhat-appstudio/tssc/pkg/chartfs"
 
 	"gopkg.in/yaml.v3"
 )

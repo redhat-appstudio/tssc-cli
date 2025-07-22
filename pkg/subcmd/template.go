@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/redhat-appstudio/rhtap-cli/pkg/chartfs"
-	"github.com/redhat-appstudio/rhtap-cli/pkg/config"
-	"github.com/redhat-appstudio/rhtap-cli/pkg/flags"
-	"github.com/redhat-appstudio/rhtap-cli/pkg/installer"
-	"github.com/redhat-appstudio/rhtap-cli/pkg/k8s"
+	"github.com/redhat-appstudio/tssc/pkg/chartfs"
+	"github.com/redhat-appstudio/tssc/pkg/config"
+	"github.com/redhat-appstudio/tssc/pkg/flags"
+	"github.com/redhat-appstudio/tssc/pkg/installer"
+	"github.com/redhat-appstudio/tssc/pkg/k8s"
 
 	"github.com/spf13/cobra"
 )

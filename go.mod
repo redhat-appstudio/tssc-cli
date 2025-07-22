@@ -1,4 +1,4 @@
-module github.com/redhat-appstudio/rhtap-cli
+module github.com/redhat-appstudio/tssc
 
 go 1.24.0
 

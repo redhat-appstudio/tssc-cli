@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/redhat-appstudio/rhtap-cli/installer"
+	"github.com/redhat-appstudio/tssc/installer"
 
 	"github.com/quay/claircore/pkg/tarfs"
 	"helm.sh/helm/v3/pkg/chart"

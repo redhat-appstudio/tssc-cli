@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/redhat-appstudio/rhtap-cli/pkg/config"
-	"github.com/redhat-appstudio/rhtap-cli/pkg/k8s"
+	"github.com/redhat-appstudio/tssc/pkg/config"
+	"github.com/redhat-appstudio/tssc/pkg/k8s"
 )
 
 func bootstrapConfig(

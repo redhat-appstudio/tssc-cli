@@ -6,9 +6,9 @@ import (
 	"log/slog"
 	"net/url"
 
-	"github.com/redhat-appstudio/rhtap-cli/pkg/config"
-	"github.com/redhat-appstudio/rhtap-cli/pkg/githubapp"
-	"github.com/redhat-appstudio/rhtap-cli/pkg/k8s"
+	"github.com/redhat-appstudio/tssc/pkg/config"
+	"github.com/redhat-appstudio/tssc/pkg/githubapp"
+	"github.com/redhat-appstudio/tssc/pkg/k8s"
 
 	"github.com/google/go-github/scrape"
 	"github.com/google/go-github/v73/github"

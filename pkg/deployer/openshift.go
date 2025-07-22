@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/redhat-appstudio/rhtap-cli/pkg/k8s"
+	"github.com/redhat-appstudio/tssc/pkg/k8s"
 
 	projectv1 "github.com/openshift/api/project/v1"
 	projectv1client "github.com/openshift/client-go/project/clientset/versioned/typed/project/v1"
