@@ -1,0 +1,18 @@
+{
+    "templates": [
+        "go"
+    ],
+    "tssc": [
+        {
+            "git": "github",
+            "ci": "tekton",
+            "registry": "quay.io",
+            "tpa": "local",
+            "acs": "local"
+        }
+    ],
+    "tests": [
+        "test1",
+        "test2"
+    ]
+}
