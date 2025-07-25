@@ -10,6 +10,15 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// Settings represents a map of configuration settings.
+type Settings map[string]interface{}
+
+// ProductSpec represents a map of product name and specification.
+type Products map[string]ProductSpec
+
+// Dependencies a slice of Dependency instances.
+type Dependencies []Dependency
+
 // Spec contains all configuration sections.
 type Spec struct {
 	// Namespace installer's namespace, where the installer's resources will be
@@ -17,11 +26,11 @@ type Spec struct {
 	// different namespace.
 	Namespace string `yaml:"namespace"`
 	// Settings contains the configuration for the installer settings.
-	Settings map[string]interface{} `yaml:"settings"`
+	Settings Settings `yaml:"settings"`
 	// Products contains the configuration for the installer products.
-	Products map[string]ProductSpec `yaml:"products"`
+	Products Products `yaml:"products"`
 	// Dependencies contains the installer Helm chart dependencies.
-	Dependencies []Dependency `yaml:"dependencies"`
+	Dependencies Dependencies `yaml:"dependencies"`
 }
 
 // Config root configuration structure.
@@ -160,4 +169,14 @@ func NewConfigFromBytes(payload []byte) (*Config, error) {
 		return nil, fmt.Errorf("%w: %s", ErrUnmarshalConfig, err)
 	}
 	return c, nil
+}
+
+// NewConfigDefault returns a new Config instance with default values, i.e. the
+// configuration payload is loading embedded data.
+func NewConfigDefault() (*Config, error) {
+	cfs, err := chartfs.NewChartFSForCWD()
+	if err != nil {
+		return nil, err
+	}
+	return NewConfigFromFile(cfs, DefaultRelativeConfigPath)
 }
