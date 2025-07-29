@@ -6,10 +6,10 @@ toolchain go1.24.5
 
 require (
 	github.com/Masterminds/sprig/v3 v3.3.0
-	github.com/google/go-github/scrape v0.0.0-20250719180140-ff1666c90626
-	github.com/google/go-github/v73 v73.0.0
-	github.com/onsi/gomega v1.35.1
-	github.com/openshift/api v0.0.0-20250725072657-92b1455121e1
+	github.com/google/go-github/scrape v0.0.0-20250728160345-9f2b91b688f7
+	github.com/google/go-github/v74 v74.0.0
+	github.com/onsi/gomega v1.38.0
+	github.com/openshift/api v0.0.0-20250729005210-6d3c4e25a8d3
 	github.com/openshift/client-go v0.0.0-20250710075018-396b36f983ee
 	github.com/pkg/errors v0.9.1
 	github.com/quay/claircore v1.5.39
@@ -25,7 +25,7 @@ require (
 )
 
 require (
-	dario.cat/mergo v1.0.1 // indirect
+	dario.cat/mergo v1.0.2 // indirect
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20240806141605-e8a1dd7889d6 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
 	github.com/BurntSushi/toml v1.5.0 // indirect
@@ -122,6 +122,7 @@ require (
 	golang.org/x/term v0.33.0 // indirect
 	golang.org/x/text v0.27.0 // indirect
 	golang.org/x/time v0.12.0 // indirect
+	golang.org/x/tools v0.35.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250721164621-a45f3dfb1074 // indirect
 	google.golang.org/grpc v1.74.2 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
@@ -132,14 +133,14 @@ require (
 	k8s.io/component-base v0.33.3 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20250701173324-9bd5c66d9911 // indirect
-	k8s.io/utils v0.0.0-20250502105355-0f33e8f1c979 // indirect
+	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397 // indirect
 	oras.land/oras-go/v2 v2.6.0 // indirect
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect
 	sigs.k8s.io/kustomize/api v0.20.1 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.20.1 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
-	sigs.k8s.io/structured-merge-diff/v4 v4.6.0 // indirect
-	sigs.k8s.io/yaml v1.5.0 // indirect
+	sigs.k8s.io/structured-merge-diff/v4 v4.7.0 // indirect
+	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
 replace github.com/Microsoft/hcsshim => github.com/Microsoft/hcsshim v0.13.0
