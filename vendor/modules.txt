@@ -137,12 +137,12 @@ github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/google/go-github/scrape v0.0.0-20250719180140-ff1666c90626
+# github.com/google/go-github/scrape v0.0.0-20250728160345-9f2b91b688f7
 ## explicit; go 1.23.0
 github.com/google/go-github/scrape
-# github.com/google/go-github/v73 v73.0.0
+# github.com/google/go-github/v74 v74.0.0
 ## explicit; go 1.23.0
-github.com/google/go-github/v73/github
+github.com/google/go-github/v74/github
 # github.com/google/go-querystring v1.1.0
 ## explicit; go 1.10
 github.com/google/go-querystring/query

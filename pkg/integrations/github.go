@@ -11,7 +11,7 @@ import (
 	"github.com/redhat-appstudio/tssc/pkg/k8s"
 
 	"github.com/google/go-github/scrape"
-	"github.com/google/go-github/v73/github"
+	"github.com/google/go-github/v74/github"
 	"github.com/spf13/pflag"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
