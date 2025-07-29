@@ -9,7 +9,7 @@ require (
 	github.com/google/go-github/scrape v0.0.0-20250719180140-ff1666c90626
 	github.com/google/go-github/v73 v73.0.0
 	github.com/onsi/gomega v1.38.0
-	github.com/openshift/api v0.0.0-20250725072657-92b1455121e1
+	github.com/openshift/api v0.0.0-20250729005210-6d3c4e25a8d3
 	github.com/openshift/client-go v0.0.0-20250710075018-396b36f983ee
 	github.com/pkg/errors v0.9.1
 	github.com/quay/claircore v1.5.39
@@ -132,14 +132,14 @@ require (
 	k8s.io/component-base v0.33.3 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20250701173324-9bd5c66d9911 // indirect
-	k8s.io/utils v0.0.0-20250502105355-0f33e8f1c979 // indirect
+	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397 // indirect
 	oras.land/oras-go/v2 v2.6.0 // indirect
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect
 	sigs.k8s.io/kustomize/api v0.20.1 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.20.1 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
-	sigs.k8s.io/structured-merge-diff/v4 v4.6.0 // indirect
-	sigs.k8s.io/yaml v1.5.0 // indirect
+	sigs.k8s.io/structured-merge-diff/v4 v4.7.0 // indirect
+	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
 replace github.com/Microsoft/hcsshim => github.com/Microsoft/hcsshim v0.13.0
