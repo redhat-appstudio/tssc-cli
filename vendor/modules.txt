@@ -311,8 +311,8 @@ github.com/pmezard/go-difflib/difflib
 # github.com/quay/claircore v1.5.39
 ## explicit; go 1.23.0
 github.com/quay/claircore/pkg/tarfs
-# github.com/rivo/uniseg v0.2.0
-## explicit; go 1.12
+# github.com/rivo/uniseg v0.4.7
+## explicit; go 1.18
 github.com/rivo/uniseg
 # github.com/rubenv/sql-migrate v1.8.0
 ## explicit; go 1.23.0
