@@ -54,7 +54,7 @@ github.com/containerd/containerd/images
 github.com/containerd/containerd/labels
 github.com/containerd/containerd/pkg/randutil
 github.com/containerd/containerd/remotes
-# github.com/containerd/errdefs v0.3.0
+# github.com/containerd/errdefs v1.0.0
 ## explicit; go 1.20
 github.com/containerd/errdefs
 # github.com/containerd/log v0.1.0
@@ -71,6 +71,8 @@ github.com/cyphar/filepath-securejoin
 github.com/davecgh/go-spew/spew
 # github.com/docker/docker-credential-helpers v0.9.3
 ## explicit; go 1.21
+# github.com/docker/go-events v0.0.0-20250114142523-c867878c5e32
+## explicit
 # github.com/emicklei/go-restful/v3 v3.12.2
 ## explicit; go 1.13
 github.com/emicklei/go-restful/v3
@@ -137,7 +139,7 @@ github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/google/go-github/scrape v0.0.0-20250728160345-9f2b91b688f7
+# github.com/google/go-github/scrape v0.0.0-20250729191901-f46ce3682f91
 ## explicit; go 1.23.0
 github.com/google/go-github/scrape
 # github.com/google/go-github/v74 v74.0.0
@@ -361,6 +363,8 @@ github.com/xlab/treeprint
 # github.com/xlzd/gotp v0.1.0
 ## explicit; go 1.17
 github.com/xlzd/gotp
+# go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.62.0
+## explicit; go 1.23.0
 # go.yaml.in/yaml/v2 v2.4.2
 ## explicit; go 1.15
 go.yaml.in/yaml/v2
@@ -438,7 +442,9 @@ golang.org/x/text/unicode/norm
 golang.org/x/time/rate
 # golang.org/x/tools v0.35.0
 ## explicit; go 1.23.0
-# google.golang.org/genproto/googleapis/rpc v0.0.0-20250721164621-a45f3dfb1074
+# google.golang.org/genproto/googleapis/api v0.0.0-20250728155136-f173205681a0
+## explicit; go 1.23.0
+# google.golang.org/genproto/googleapis/rpc v0.0.0-20250728155136-f173205681a0
 ## explicit; go 1.23.0
 google.golang.org/genproto/googleapis/rpc/status
 # google.golang.org/grpc v1.74.2
