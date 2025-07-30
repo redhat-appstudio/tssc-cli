@@ -30,9 +30,13 @@ type Deploy struct {
 var _ Interface = &Deploy{}
 
 const deployDesc = `
-Deploys the TSSC platform components. The installer looks the the informed
-configuration to identify the products to be installed, and the dependencies to be
-resolved.
+Deploys the TSSC platform components.
+
+It should only be used to for experimental deployments. Production
+deployments are not supported.
+
+The installer looks at the configuration to identify the products to be
+installed, and the dependencies to be resolved.
 
 The deployment configuration file describes the sequence of Helm charts to be
 applied, on the attribute 'tssc.dependencies[]'.
@@ -41,8 +45,7 @@ The platform configuration is rendered from the values template file
 (--values-template), this configuration payload is given to all Helm charts.
 
 The installer resources are embedded in the executable, these resources are
-employed by default, to use local files just point the "config.yaml" file to
-find the dependencies in the local filesystem.
+employed by default.
 
 A single chart can be deployed by specifying its path. E.g.:
 	tssc deploy charts/tssc-openshift
@@ -83,6 +86,9 @@ func (d *Deploy) Validate() error {
 
 // Run deploys the enabled dependencies listed on the configuration.
 func (d *Deploy) Run() error {
+	// Disclaimer
+	fmt.Printf("\n!!! DISCLAIMER: ONLY FOR EXPERIMENTAL DEPLOYMENTS - PRODUCTION IS UNSUPPORTED !!!\n")
+
 	cwd, err := os.Getwd()
 	if err != nil {
 		return err

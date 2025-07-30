@@ -33,7 +33,12 @@ type Config struct {
 var _ Interface = &Config{}
 
 const configDesc = `
-Manages installer's cluster configuration. Before "tssc deploy", you need to
+Manages installer's cluster configuration.
+
+It should only be used to for experimental deployments. Production
+deployments are not supported.
+
+Before "tssc deploy", you need to
 create a cluster configuration, responsible to define all installation settings
 for the whole Kubernetes cluster.
 
@@ -97,7 +102,7 @@ func (c *Config) validateFlags() error {
 		return fmt.Errorf("cannot get and delete at the same time")
 	}
 	if !c.create && !c.force && !c.get && !c.delete {
-		return fmt.Errorf("either apply, update, get or delete must be set")
+		return fmt.Errorf("either create, get or delete must be set")
 	}
 	return nil
 }
@@ -140,6 +145,9 @@ func (c *Config) Validate() error {
 // runCreate runs create action, makes sure a new configuration is applied in the
 // cluster and update when using the --force flag.
 func (c *Config) runCreate() error {
+	// Disclaimer
+	fmt.Printf("\n!!! DISCLAIMER: ONLY FOR EXPERIMENTAL DEPLOYMENTS - PRODUCTION IS UNSUPPORTED !!!\n")
+
 	c.log().Debug("Loading configuration from file")
 	cfg, err := config.NewConfigFromFile(c.cfs, c.configPath)
 	if err != nil {
