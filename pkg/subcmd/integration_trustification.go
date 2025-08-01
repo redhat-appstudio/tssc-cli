@@ -86,7 +86,6 @@ func NewIntegrationTrustification(
 		trustificationIntegration: trustificationIntegration,
 	}
 
-	p := d.cmd.PersistentFlags()
-	trustificationIntegration.PersistentFlags(p)
+	trustificationIntegration.PersistentFlags(d.cmd)
 	return d
 }

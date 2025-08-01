@@ -81,7 +81,6 @@ func NewIntegrationNexus(
 		nexusIntegration: nexusIntegration,
 	}
 
-	p := d.cmd.PersistentFlags()
-	nexusIntegration.PersistentFlags(p)
+	nexusIntegration.PersistentFlags(d.cmd)
 	return d
 }

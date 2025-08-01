@@ -13,7 +13,7 @@ import (
 
 	"github.com/google/go-github/scrape"
 	"github.com/google/go-github/v74/github"
-	"github.com/spf13/pflag"
+	"github.com/spf13/cobra"
 )
 
 // GitHubApp represents a GitHub App, is responsible to provide the necessary
@@ -39,7 +39,9 @@ type AppConfigResult struct {
 const defaultPublicGitHubURL = "https://github.com"
 
 // PersistentFlags sets the persistent flags for the GitHub App.
-func (g *GitHubApp) PersistentFlags(p *pflag.FlagSet) {
+func (g *GitHubApp) PersistentFlags(cmd *cobra.Command) {
+	p := cmd.PersistentFlags()
+
 	p.StringVar(&g.gitHubURL, "github-url", g.gitHubURL,
 		"GitHub URL")
 	p.StringVar(&g.gitHubOrgName, "org", g.gitHubOrgName,
@@ -48,13 +50,14 @@ func (g *GitHubApp) PersistentFlags(p *pflag.FlagSet) {
 		"Callback webserver listen address")
 	p.IntVar(&g.webServerPort, "webserver-port", g.webServerPort,
 		"Callback webserver port number")
+
+	if err := cmd.MarkPersistentFlagRequired("org"); err != nil {
+		panic(err)
+	}
 }
 
 // Validate validates the GitHub App configuration.
 func (g *GitHubApp) Validate() error {
-	if g.gitHubOrgName == "" {
-		return errors.New("GitHub organization name is required")
-	}
 	return nil
 }
 

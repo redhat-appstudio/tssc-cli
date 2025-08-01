@@ -129,7 +129,7 @@ func NewIntegrationGitHubApp(
 	p := d.cmd.PersistentFlags()
 	p.BoolVar(&d.create, "create", d.create, "Create a new GitHub App")
 	p.BoolVar(&d.update, "update", d.update, "Update an existing GitHub App")
-	gitHubIntegration.PersistentFlags(p)
-	gitHubApp.PersistentFlags(p)
+	gitHubIntegration.PersistentFlags(d.cmd)
+	gitHubApp.PersistentFlags(d.cmd)
 	return d
 }

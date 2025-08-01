@@ -53,6 +53,10 @@ tssc integration --help
 tssc deploy
 ```
 
+## Model Context Protocol Server (MCP)
+
+The TSSC features are also available via the Model Context Protocol server (MCP), please consider the [MCP documentation](docs/mcp.md) for more details.
+
 # Configuration
 
 The [`config.yaml`](installer/config.yaml) file is structured to outline key components essential for the setup, for instance:
@@ -168,7 +172,7 @@ install --mode=755 bin/tssc /usr/local/bin
 
 Please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) for more information on building the project from source requirements. Then, follow the steps below to install the `tssc` binary from source:
 
-1. Clone [the repository][https://github.com/redhat-appstudio/rhtap-cli.git], and navigate to the `rhtap-cli` directory.
+1. Clone [the repository](https://github.com/redhat-appstudio/rhtap-cli.git), and navigate to the `rhtap-cli` directory.
 
 ```bash
 git clone --depth=1 https://github.com/redhat-appstudio/rhtap-cli.git && \

@@ -1,4 +1,5 @@
 /__debug*
+/.gemini
 /.vscode
 /*.dll
 /*.dylib

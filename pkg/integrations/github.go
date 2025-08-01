@@ -9,10 +9,10 @@ import (
 	"github.com/redhat-appstudio/tssc/pkg/config"
 	"github.com/redhat-appstudio/tssc/pkg/githubapp"
 	"github.com/redhat-appstudio/tssc/pkg/k8s"
+	"github.com/spf13/cobra"
 
 	"github.com/google/go-github/scrape"
 	"github.com/google/go-github/v74/github"
-	"github.com/spf13/pflag"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -36,7 +36,10 @@ type GithubIntegration struct {
 }
 
 // PersistentFlags sets the persistent flags for the GitHub integration.
-func (g *GithubIntegration) PersistentFlags(p *pflag.FlagSet) {
+// func (g *GithubIntegration) PersistentFlags(p *pflag.FlagSet) {
+func (g *GithubIntegration) PersistentFlags(cmd *cobra.Command) {
+	p := cmd.PersistentFlags()
+
 	p.BoolVar(&g.force, "force", g.force,
 		"Overwrite the existing secret")
 
@@ -50,6 +53,10 @@ func (g *GithubIntegration) PersistentFlags(p *pflag.FlagSet) {
 		"GitHub App webhook URL")
 	p.StringVar(&g.token, "token", g.token,
 		"GitHub personal access token")
+
+	if err := cmd.MarkPersistentFlagRequired("token"); err != nil {
+		panic(err)
+	}
 }
 
 // log logger with contextual information.
@@ -65,9 +72,6 @@ func (g *GithubIntegration) log() *slog.Logger {
 
 // Validate checks if the required configuration is set.
 func (g *GithubIntegration) Validate() error {
-	if g.token == "" {
-		return fmt.Errorf("github token is required")
-	}
 	return g.gitHubApp.Validate()
 }
 

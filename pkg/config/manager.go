@@ -48,7 +48,7 @@ func (m *ConfigMapManager) GetConfigMap(
 ) (*corev1.ConfigMap, error) {
 	coreClient, err := m.kube.CoreV1ClientSet("")
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 
 	// Listing all ConfigMaps matching the label selector.

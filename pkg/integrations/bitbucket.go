@@ -8,7 +8,7 @@ import (
 	"github.com/redhat-appstudio/tssc/pkg/config"
 	"github.com/redhat-appstudio/tssc/pkg/k8s"
 
-	"github.com/spf13/pflag"
+	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -30,16 +30,24 @@ type BitBucketIntegration struct {
 }
 
 // PersistentFlags sets the persistent flags for the BitBucket integration.
-func (g *BitBucketIntegration) PersistentFlags(p *pflag.FlagSet) {
+func (g *BitBucketIntegration) PersistentFlags(c *cobra.Command) {
+	p := c.PersistentFlags()
+
 	p.BoolVar(&g.force, "force", g.force,
 		"Overwrite the existing secret")
 
 	p.StringVar(&g.appPassword, "app-password", g.appPassword,
 		"BitBucket application password")
 	p.StringVar(&g.host, "host", g.host,
-		"BitBucket host, defaults to 'bitbucket.org'")
+		fmt.Sprintf("BitBucket host, defaults to %q", defaultPublicBitBucketHost))
 	p.StringVar(&g.username, "username", g.username,
 		"BitBucket username")
+
+	for _, f := range []string{"app-password", "username"} {
+		if err := c.MarkPersistentFlagRequired(f); err != nil {
+			panic(err)
+		}
+	}
 }
 
 // log logger with contextual information.
@@ -54,15 +62,6 @@ func (g *BitBucketIntegration) log() *slog.Logger {
 
 // Validate checks if the required configuration is set.
 func (g *BitBucketIntegration) Validate() error {
-	if g.appPassword == "" {
-		return fmt.Errorf("app-password is required")
-	}
-	if g.host == "" {
-		g.host = defaultPublicBitBucketHost
-	}
-	if g.username == "" {
-		return fmt.Errorf("username is required")
-	}
 	return nil
 }
 
@@ -171,7 +170,7 @@ func NewBitBucketIntegration(
 
 		force:       false,
 		appPassword: "",
-		host:        "",
+		host:        defaultPublicBitBucketHost,
 		username:    "",
 	}
 }

@@ -85,7 +85,6 @@ func NewIntegrationAzure(
 		azureIntegration: azureIntegration,
 	}
 
-	p := d.cmd.PersistentFlags()
-	azureIntegration.PersistentFlags(p)
+	azureIntegration.PersistentFlags(d.cmd)
 	return d
 }

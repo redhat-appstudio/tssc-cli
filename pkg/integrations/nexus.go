@@ -10,7 +10,7 @@ import (
 	"github.com/redhat-appstudio/tssc/pkg/config"
 	"github.com/redhat-appstudio/tssc/pkg/k8s"
 
-	"github.com/spf13/pflag"
+	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -28,7 +28,9 @@ type NexusIntegration struct {
 }
 
 // PersistentFlags sets the persistent flags for the Nexus integration.
-func (n *NexusIntegration) PersistentFlags(p *pflag.FlagSet) {
+func (n *NexusIntegration) PersistentFlags(c *cobra.Command) {
+	p := c.PersistentFlags()
+
 	p.BoolVar(&n.force, "force", n.force,
 		"Overwrite the existing secret")
 
@@ -36,6 +38,12 @@ func (n *NexusIntegration) PersistentFlags(p *pflag.FlagSet) {
 		"Nexus dockerconfigjson, e.g. '{ \"auths\": { \"****\": { \"auth\": \"****\", \"email\": \"\" }}}'")
 	p.StringVar(&n.url, "url", n.url,
 		"Nexus URL")
+
+	for _, f := range []string{"dockerconfigjson", "url"} {
+		if err := c.MarkPersistentFlagRequired(f); err != nil {
+			panic(err)
+		}
+	}
 }
 
 // log logger with contextual information.
@@ -49,19 +57,12 @@ func (n *NexusIntegration) log() *slog.Logger {
 
 // Validate checks if the required configuration is set.
 func (n *NexusIntegration) Validate() error {
-	if n.dockerconfigjson == "" {
-		return fmt.Errorf("dockerconfigjson is required")
+	u, err := url.Parse(n.url)
+	if err != nil {
+		return fmt.Errorf("invalid url")
 	}
-	if n.url == "" {
-		return fmt.Errorf("url is required")
-	} else {
-		u, err := url.Parse(n.url)
-		if err != nil {
-			return fmt.Errorf("invalid url")
-		}
-		if !strings.HasPrefix(u.Scheme, "http") {
-			return fmt.Errorf("invalid url scheme, expected one of 'http', 'https'")
-		}
+	if !strings.HasPrefix(u.Scheme, "http") {
+		return fmt.Errorf("invalid url scheme, expected one of 'http', 'https'")
 	}
 	return nil
 }

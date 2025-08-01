@@ -10,7 +10,7 @@ import (
 	"github.com/redhat-appstudio/tssc/pkg/config"
 	"github.com/redhat-appstudio/tssc/pkg/k8s"
 
-	"github.com/spf13/pflag"
+	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -33,7 +33,9 @@ type QuayIntegration struct {
 }
 
 // PersistentFlags sets the persistent flags for the Quay integration.
-func (q *QuayIntegration) PersistentFlags(p *pflag.FlagSet) {
+func (q *QuayIntegration) PersistentFlags(c *cobra.Command) {
+	p := c.PersistentFlags()
+
 	p.BoolVar(&q.force, "force", q.force,
 		"Overwrite the existing secret")
 
@@ -45,6 +47,12 @@ func (q *QuayIntegration) PersistentFlags(p *pflag.FlagSet) {
 		"Quay API token")
 	p.StringVar(&q.url, "url", q.url,
 		"Quay URL")
+
+	for _, f := range []string{"dockerconfigjson", "token", "url"} {
+		if err := c.MarkPersistentFlagRequired(f); err != nil {
+			panic(err)
+		}
+	}
 }
 
 // log logger with contextual information.
@@ -60,22 +68,12 @@ func (q *QuayIntegration) log() *slog.Logger {
 
 // Validate checks if the required configuration is set.
 func (q *QuayIntegration) Validate() error {
-	if q.dockerconfigjson == "" {
-		return fmt.Errorf("dockerconfigjson is required")
+	u, err := url.Parse(q.url)
+	if err != nil {
+		return fmt.Errorf("invalid url: %s", err)
 	}
-	if q.token == "" {
-		return fmt.Errorf("token is required")
-	}
-	if q.url == "" {
-		q.url = defaultPublicQuayURL
-	} else {
-		u, err := url.Parse(q.url)
-		if err != nil {
-			return fmt.Errorf("invalid url")
-		}
-		if !strings.HasPrefix(u.Scheme, "http") {
-			return fmt.Errorf("invalid url scheme, expected one of 'http', 'https'")
-		}
+	if !strings.HasPrefix(u.Scheme, "http") {
+		return fmt.Errorf("invalid url scheme, expected one of 'http', 'https'")
 	}
 	return nil
 }
@@ -188,6 +186,6 @@ func NewQuayIntegration(
 		dockerconfigjson:         "",
 		dockerconfigjsonreadonly: "",
 		token:                    "",
-		url:                      "",
+		url:                      defaultPublicQuayURL,
 	}
 }

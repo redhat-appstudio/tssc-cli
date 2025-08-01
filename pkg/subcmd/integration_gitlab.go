@@ -79,7 +79,6 @@ func NewIntegrationGitLab(
 		gitlabIntegration: gitlabIntegration,
 	}
 
-	p := d.cmd.PersistentFlags()
-	gitlabIntegration.PersistentFlags(p)
+	gitlabIntegration.PersistentFlags(d.cmd)
 	return d
 }
