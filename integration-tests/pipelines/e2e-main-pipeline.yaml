@@ -77,141 +77,34 @@ spec:
 
               cat rhads-config | tee $(results.rhads-config.path)
     - name: start-nested-pipelines
-      params:
-        - name: job-spec
-          value: "$(tasks.test-metadata.results.job-spec)"
       runAfter:
         - test-metadata
         - process-rhads-config
-      taskSpec:
-        steps:
-          - name: start-pipeline
-            image: quay.io/openshift-pipeline/ci
-            env:
-              - name: SNAPSHOT
-                value: $(params.SNAPSHOT)
-              - name: JOB_SPEC
-                value: $(tasks.test-metadata.results.job-spec)
-              - name: RHADS_CONFIG
-                value: $(tasks.process-rhads-config.results.rhads-config)
-              - name: KONFLUX_APPLICATION_NAME
-                valueFrom:
-                  fieldRef:
-                    fieldPath: metadata.labels['appstudio.openshift.io/application']
-              - name: KONFLUX_COMPONENT_NAME
-                valueFrom:
-                  fieldRef:
-                    fieldPath: metadata.labels['appstudio.openshift.io/component']
-              - name: KONFLUX_NAMESPACE
-                valueFrom:
-                  fieldRef:
-                    fieldPath: metadata.namespace
-            script: |
-              #!/usr/bin/env bash
-
-              # Load the RHADS configuration
-              RHADS_CONFIG_CONTENT=$(echo $RHADS_CONFIG)
-              echo "$RHADS_CONFIG_CONTENT"
-
-              # get the tssc image and tssc-test image from the snapshot
-              tssc_image=$(echo "${SNAPSHOT}" | jq -r '.components[] |select(.name=="tssc-cli").containerImage')
-              tssc_test_image=$(echo "${SNAPSHOT}" | jq -r '.components[] |select(.name=="tssc-test").containerImage')
-
-              # Extract OCP versions from RHADS config
-              [[ $RHADS_CONFIG_CONTENT =~ OCP=\"([^\"]+)\" ]] && IFS=',' read -ra OCP_VERSIONS <<< "${BASH_REMATCH[1]}"
-
-              echo "Running tests for OCP versions: ${OCP_VERSIONS[*]}"
-
-              # Waits for condition for all started pipelines
-              function waitFor() {
-                  CONDITION=$1 MESSAGE_RUNNING=$2 MESSAGE_DONE=$3 timeout --foreground 120m /bin/bash -c '
-                    #deserialize plrs array
-                    set -x
-                    read -r -a PIPELINERUNS_ARRAY <<< "$PIPELINERUNS_ARRAY_SERIALIZED"
-                    echo "${PIPELINERUNS_ARRAY[*]}"
-                    while true; do
-                      CONDITION_MET=false
-                      for PIPELINE_RUN in "${PIPELINERUNS_ARRAY[@]}"; do
-                        if eval "$CONDITION"; then
-                          #something is still running. Break this cycle and wait one minute.
-                          CONDITION_MET=true
-                          break
-                        fi
-                      done
-                      if $CONDITION_MET ; then
-                        echo "$MESSAGE_RUNNING"
-                        sleep 60
-                      else
-                        echo "$MESSAGE_DONE"
-                        break
-                      fi
-                    done
-                  '
-              }
-
-              set -euo pipefail
-
-              GIT_REPO="$(jq -r '.git.repo // empty' <<< $JOB_SPEC)"
-              KONFLUX_URL="https://konflux-ui.apps.stone-prd-rh01.pg1f.p1.openshiftapps.com"
-              if [[ "${GIT_REPO}" = "tssc-cli" ]]; then
-                REPO_ORG=$(jq -r '.git.source_repo_org' <<< $JOB_SPEC)
-                BRANCH=$(jq -r '.git.source_repo_branch' <<< $JOB_SPEC)
-              else
-                REPO_ORG="redhat-appstudio"
-                BRANCH="main"
-              fi
-
-              PIPELINERUNS_ARRAY=()
-
-              # Loop through each OCP version and start a sub-pipeline for each
-              for OCP_VERSION in "${OCP_VERSIONS[@]}"; do
-                echo "Starting sub-pipeline for OCP version: $OCP_VERSION"
-                PIPELINE_RUN=$(tkn pipeline start -f https://raw.githubusercontent.com/$REPO_ORG/tssc-cli/refs/heads/$BRANCH/integration-tests/pipelines/tssc-cli-e2e.yaml \
-                  --param ocp-version="$OCP_VERSION"\
-                  --param job-spec="$JOB_SPEC"\
-                  --param konflux-test-infra-secret="$(params.konflux-test-infra-secret)" \
-                  --param rhads-config="$RHADS_CONFIG_CONTENT" \
-                  --param cloud-credential-key="$(params.cloud-credential-key)" \
-                  --param machine-type="$(params.ocp-instance-type)" \
-                  --param replicas="$(params.ocp-replicas)" \
-                  $(if [[ "${tssc_image}" != "" ]]; then echo "--param tssc-image=${tssc_image}"; fi) \
-                  $(if [[ "${tssc_test_image}" != "" ]]; then echo "--param tssc-test-image=${tssc_test_image}"; fi) \
-                  --use-param-defaults \
-                  --labels "appstudio.openshift.io/component=${KONFLUX_COMPONENT_NAME}" \
-                  --labels "appstudio.openshift.io/application=${KONFLUX_APPLICATION_NAME}" \
-                  --labels "pipelines.appstudio.openshift.io/type=$(context.pipelineRun.name)" \
-                  --labels "test.appstudio.openshift.io/scenario=pr-e2e-tests" \
-                  --labels "custom.appstudio.openshift.io/main-pipeline-run=$(context.pipelineRun.name)" \
-                  --prefix-name "e2e-$OCP_VERSION"\
-                  -o name)
-
-                echo "Started new pipelinerun: ${KONFLUX_URL}/ns/${KONFLUX_NAMESPACE}/applications/${KONFLUX_APPLICATION_NAME}/pipelineruns/${PIPELINE_RUN}"
-                PIPELINERUNS_ARRAY+=($PIPELINE_RUN)
-              done
-
-              #Serialize plrs array to be able to export it as var
-              export PIPELINERUNS_ARRAY_SERIALIZED="${PIPELINERUNS_ARRAY[*]}"
-
-              waitFor '! oc get pipelinerun/$PIPELINE_RUN -n ${KONFLUX_NAMESPACE} &>/dev/null' "Pipelines are still starting. Waiting 1 minute" "All pipelines have started"
-              waitFor '[[ $(oc get pipelinerun/$PIPELINE_RUN -n ${KONFLUX_NAMESPACE} -o jsonpath="{.status.conditions[?(@.type==\"Succeeded\")].status}") == "" ]]' "Waiting for nested pipelinerun status to be set. Waiting 1 minute" "Nested pipelinerun status is set"
-              waitFor '[[ $(oc get pipelinerun/$PIPELINE_RUN -n ${KONFLUX_NAMESPACE} -o jsonpath="{.status.conditions[?(@.type==\"Succeeded\")].status}") == "Unknown" ]]' "Nested pipelines are still running. Waiting 1 minute" "All nested pipelines finished"
-
-              ## Explore and report status of all failed pipelineruns. Fail if anything failed
-              SOME_PIPELINE_FAILED=false
-              SOME_PIPELINE_SUCCEEDED=false
-              for PIPELINE_RUN in "${PIPELINERUNS_ARRAY[@]}"; do
-                if [[ $(oc get pipelinerun/$PIPELINE_RUN -n ${KONFLUX_NAMESPACE} -o jsonpath="{.status.conditions[?(@.type==\"Succeeded\")].status}") == "False" ]]; then
-                  if ! $SOME_PIPELINE_FAILED ; then
-                    echo "List of failed PLRs:"
-                  fi
-                  echo "${KONFLUX_URL}/ns/${KONFLUX_NAMESPACE}/applications/${KONFLUX_APPLICATION_NAME}/pipelineruns/${PIPELINE_RUN}"
-                  SOME_PIPELINE_FAILED=true
-                elif [[ $(oc get pipelinerun/$PIPELINE_RUN -n ${KONFLUX_NAMESPACE} -o jsonpath="{.status.conditions[?(@.type==\"Succeeded\")].status}") == "True" ]]; then
-                  SOME_PIPELINE_SUCCEEDED=true
-                fi
-              done
-              if $SOME_PIPELINE_SUCCEEDED ; then
-                exit 0
-              fi
-              # If we reach here, no pipelines succeeded - fail the main pipeline
-              exit 1
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/jkopriva/tssc-cli.git
+          - name: revision
+            value: RHTAP-5290
+          - name: pathInRepo
+            value: integration-tests/tasks/start-pipelines.yaml
+      params:
+        - name: snapshot
+          value: $(params.SNAPSHOT)
+        - name: job-spec
+          value: $(tasks.test-metadata.results.job-spec)
+        - name: rhads-config
+          value: $(tasks.process-rhads-config.results.rhads-config)
+        - name: mode
+          value: "single"
+        - name: konflux-test-infra-secret
+          value: $(params.konflux-test-infra-secret)
+        - name: cloud-credential-key
+          value: $(params.cloud-credential-key)
+        - name: ocp-instance-type
+          value: $(params.ocp-instance-type)
+        - name: ocp-replicas
+          value: $(params.ocp-replicas)
+        - name: context-pipeline-run-name
+          value: $(context.pipelineRun.name)
