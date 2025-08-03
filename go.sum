@@ -124,8 +124,8 @@ github.com/google/go-cmp v0.5.9/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeN
 github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
 github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
-github.com/google/go-github/scrape v0.0.0-20250729191901-f46ce3682f91 h1:EdySc0vmSgVxuW72p/UCI40szMD1dIL+sXsENbmeoxQ=
-github.com/google/go-github/scrape v0.0.0-20250729191901-f46ce3682f91/go.mod h1:03/M1DP4ua8C0gXVw9IekqNhf8NbY11olxmvWuL7keo=
+github.com/google/go-github/scrape v0.0.0-20250730133930-17f7ee43df9d h1:k1DQi32pK3wuEr9tguR7AxbZ3FvUZOHIgDgNTqZ14FQ=
+github.com/google/go-github/scrape v0.0.0-20250730133930-17f7ee43df9d/go.mod h1:03/M1DP4ua8C0gXVw9IekqNhf8NbY11olxmvWuL7keo=
 github.com/google/go-github/v74 v74.0.0 h1:yZcddTUn8DPbj11GxnMrNiAnXH14gNs559AsUpNpPgM=
 github.com/google/go-github/v74 v74.0.0/go.mod h1:ubn/YdyftV80VPSI26nSJvaEsTOnsjrxG3o9kJhcyak=
 github.com/google/go-querystring v1.1.0 h1:AnCroh3fv4ZBgVIf1Iwtovgjaw/GiKJo8M8yD/fhyJ8=
