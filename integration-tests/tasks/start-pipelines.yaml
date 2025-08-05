@@ -9,7 +9,7 @@ metadata:
     tekton.dev/tags: "pipeline,start,rhtap"
 spec:
   description: >-
-    This task starts one or more rhtap-cli-e2e pipelines based on configuration.
+    This task starts one or more tssc-cli-e2e pipelines based on configuration.
     It supports both single configuration mode and periodic configuration mode
     (multiple configs with separators and testplans).
   params:
@@ -58,7 +58,6 @@ spec:
           value: $(params.rhads-config)
         - name: MODE
           value: $(params.mode)
-
         - name: CONTEXT_PIPELINE_RUN_NAME
           value: $(params.context-pipeline-run-name)
         - name: KONFLUX_TEST_INFRA_SECRET
@@ -69,30 +68,32 @@ spec:
           value: $(params.ocp-instance-type)
         - name: OCP_REPLICAS
           value: $(params.ocp-replicas)
+        - name: KONFLUX_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: KONFLUX_APPLICATION_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['appstudio.openshift.io/application']
+        - name: KONFLUX_COMPONENT_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['appstudio.openshift.io/component']
       script: |
         #!/usr/bin/env bash
         set -euo pipefail
 
         echo "Starting pipelines in mode: $MODE"
-        # Extract konflux metadata from current pod environment
-        # These environment variables are automatically set by Tekton
-        KONFLUX_NAMESPACE="${KONFLUX_NAMESPACE:-$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)}"
-        # Extract labels from the current pipeline run using oc/kubectl
-        CURRENT_PR=$(oc get pipelinerun -n "${KONFLUX_NAMESPACE}" --field-selector metadata.name="${CONTEXT_PIPELINE_RUN_NAME}" -o json 2>/dev/null || echo '{}')
-        KONFLUX_APPLICATION_NAME=$(echo "$CURRENT_PR" | jq -r '.items[0].metadata.labels["appstudio.openshift.io/application"] // "rhtap-cli"')
-        KONFLUX_COMPONENT_NAME=$(echo "$CURRENT_PR" | jq -r '.items[0].metadata.labels["appstudio.openshift.io/component"] // "rhtap-cli"')
-        # Fallback values if extraction fails
-        KONFLUX_APPLICATION_NAME="${KONFLUX_APPLICATION_NAME:-rhtap-cli}"
-        KONFLUX_COMPONENT_NAME="${KONFLUX_COMPONENT_NAME:-rhtap-cli}"
         echo "Using Konflux metadata: namespace=$KONFLUX_NAMESPACE, app=$KONFLUX_APPLICATION_NAME, component=$KONFLUX_COMPONENT_NAME"
         # Extract images from snapshot
-        tssc_image=$(echo "${SNAPSHOT}" | jq -r '.components[] |select(.name=="rhtap-cli").containerImage')
+        tssc_image=$(echo "${SNAPSHOT}" | jq -r '.components[] |select(.name=="tssc-cli").containerImage')
         tssc_test_image=$(echo "${SNAPSHOT}" | jq -r '.components[] |select(.name=="tssc-test").containerImage')
 
         GIT_REPO="$(jq -r '.git.repo // empty' <<< $JOB_SPEC)"
         KONFLUX_URL="https://konflux-ui.apps.stone-prd-rh01.pg1f.p1.openshiftapps.com"
 
-        if [[ "${GIT_REPO}" = "rhtap-cli" ]]; then
+        if [[ "${GIT_REPO}" = "tssc-cli" ]]; then
           REPO_ORG=$(jq -r '.git.source_repo_org' <<< $JOB_SPEC)
           BRANCH=$(jq -r '.git.source_repo_branch' <<< $JOB_SPEC)
         else
@@ -110,7 +111,6 @@ spec:
           local config_suffix="$4"
           echo "Starting pipeline for OCP version: $ocp_version"
           local pipeline_run
-          
           # Build the tkn command with proper parameter handling
           local tkn_params=(
             "--param" "ocp-version=$ocp_version"
@@ -122,7 +122,7 @@ spec:
             "--param" "machine-type=$OCP_INSTANCE_TYPE"
             "--param" "replicas=$OCP_REPLICAS"
           )
-          
+
           # Add optional image parameters
           if [[ "${tssc_image}" != "" ]]; then
             tkn_params+=("--param" "tssc-image=${tssc_image}")
@@ -130,7 +130,7 @@ spec:
           if [[ "${tssc_test_image}" != "" ]]; then
             tkn_params+=("--param" "tssc-test-image=${tssc_test_image}")
           fi
-          
+
           # Add labels and other flags
           tkn_params+=(
             "--use-param-defaults"
@@ -142,10 +142,9 @@ spec:
             "--prefix-name" "e2e-$ocp_version$config_suffix"
             "-o" "name"
           )
-          
           echo "Starting pipeline with testplan (${#testplan_b64} chars): ${testplan_b64:0:50}..."
-          pipeline_run=$(tkn pipeline start -f https://raw.githubusercontent.com/jkopriva/rhtap-cli/refs/heads/RHTAP-5290/integration-tests/pipelines/rhtap-cli-e2e.yaml "${tkn_params[@]}")
-          #pipeline_run=$(tkn pipeline start -f https://raw.githubusercontent.com/$REPO_ORG/rhtap-cli/refs/heads/$BRANCH/integration-tests/pipelines/rhtap-cli-e2e.yaml "${tkn_params[@]}")
+          pipeline_run=$(tkn pipeline start -f https://raw.githubusercontent.com/jkopriva/tssc-cli/refs/heads/RHTAP-5290/integration-tests/pipelines/tssc-cli-e2e.yaml "${tkn_params[@]}")
+          #pipeline_run=$(tkn pipeline start -f https://raw.githubusercontent.com/$REPO_ORG/tssc-cli/refs/heads/$BRANCH/integration-tests/pipelines/tssc-cli-e2e.yaml "${tkn_params[@]}")
           echo "Started new pipelinerun: ${KONFLUX_URL}/ns/${KONFLUX_NAMESPACE}/applications/${KONFLUX_APPLICATION_NAME}/pipelineruns/${pipeline_run}"
           PIPELINERUNS_ARRAY+=($pipeline_run)
         }

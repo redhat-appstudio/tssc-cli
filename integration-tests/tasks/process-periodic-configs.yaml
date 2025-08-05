@@ -1,0 +1,112 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: process-periodic-configs
+  annotations:
+    tekton.dev/displayName: "Process Periodic Configs"
+    tekton.dev/categories: "Pipeline"
+    tekton.dev/tags: "config,periodic,pict"
+spec:
+  description: >-
+    This task processes periodic configurations using PICT to generate multiple test configurations
+    with corresponding testplans for comprehensive testing.
+  params:
+    - name: job-spec
+      description: "Job specification metadata"
+      type: string
+  results:
+    - name: rhads-config
+      description: "JSON formatted configuration data (array of configs from PICT)"
+  steps:
+    - name: download-pict-file
+      image: quay.io/konflux-ci/appstudio-utils:ab6b0b8e40e440158e7288c73aff1cf83a2cc8a9@sha256:24179f0efd06c65d16868c2d7eb82573cce8e43533de6cea14fec3b7446e0b14
+      env:
+        - name: JOB_SPEC
+          value: $(params.job-spec)
+      script: |
+        #!/usr/bin/env bash
+        set -euo pipefail
+
+        echo "Using periodic configurations generated from PICT"
+        # Download periodic.pict file
+        curl -o periodic.pict https://raw.githubusercontent.com/jkopriva/tssc-cli/refs/heads/RHTAP-5290/integration-tests/config/periodic/periodic.pict
+
+        cat periodic.pict
+
+    - name: generate-pict-output
+      image: quay.io/apodhrad/pict:latest
+      script: |
+        #!/usr/bin/env bash
+        set -euo pipefail
+        echo "Running PICT to generate test configurations..."
+        pict periodic.pict -r -o:1 > pict_output.txt
+        cat pict_output.txt
+
+    - name: process-config
+      image: quay.io/konflux-ci/appstudio-utils:ab6b0b8e40e440158e7288c73aff1cf83a2cc8a9@sha256:24179f0efd06c65d16868c2d7eb82573cce8e43533de6cea14fec3b7446e0b14
+      script: |
+        #!/usr/bin/env bash
+        set -euo pipefail
+
+        echo "Converting PICT output to RHADS configuration format..."
+        # Debug: Check if pict_output.txt exists and show its content
+        if [[ ! -f pict_output.txt ]]; then
+          echo "ERROR: pict_output.txt not found!"
+          ls -la
+          exit 1
+        fi
+        echo "Content of pict_output.txt:"
+        cat pict_output.txt
+        echo "--- End of pict_output.txt ---"
+        # Download testplan template
+        echo "Downloading testplan template..."
+        curl -o testplan_template.json https://raw.githubusercontent.com/jkopriva/tssc-cli/refs/heads/RHTAP-5290/integration-tests/config/periodic/testplan_template.json
+
+        if [[ ! -f testplan_template.json ]]; then
+          echo "ERROR: Failed to download testplan_template.json"
+          exit 1
+        fi
+        echo "Testplan template content:"
+        cat testplan_template.json
+        # Convert PICT output to multiple RHADS configurations
+        CONFIG_COUNT=0
+        OUTPUT_FILE="/tmp/rhads_output.txt"
+        > "$OUTPUT_FILE"  # Initialize empty file
+        while IFS=$'\t' read -r -a fields; do
+          echo "Processing line: ${fields[*]}"
+          if [[ "${fields[0]}" != "OCP" && -n "${fields[0]:-}" ]]; then  # Skip header line and empty lines
+            if [[ $CONFIG_COUNT -gt 0 ]]; then
+              echo "---CONFIG_SEPARATOR---" >> "$OUTPUT_FILE"
+            fi
+            # Build RHADS config format for this PICT line
+            echo "OCP=\"${fields[0]:-4.18}\"" >> "$OUTPUT_FILE"
+            echo "AUTH=\"${fields[1]:-github}\"" >> "$OUTPUT_FILE"
+            echo "ACS=\"${fields[2]:-new}\"" >> "$OUTPUT_FILE"
+            echo "REGISTRY=\"${fields[3]:-quay.io}\"" >> "$OUTPUT_FILE"
+            echo "TPA=\"${fields[4]:-new}\"" >> "$OUTPUT_FILE"
+            echo "SCM=\"${fields[5]:-github}\"" >> "$OUTPUT_FILE"
+            echo "PIPELINE=\"${fields[6]:-tekton}\"" >> "$OUTPUT_FILE"
+            # Generate corresponding testplan
+            echo "---TESTPLAN_START---" >> "$OUTPUT_FILE"
+            # Extract values for testplan
+            SCM_VALUE="${fields[5]:-github}"
+            PIPELINE_VALUE="${fields[6]:-tekton}"
+            REGISTRY_VALUE="${fields[3]:-quay.io}"
+            TPA_VALUE="${fields[4]:-new}"
+            ACS_VALUE="${fields[2]:-new}"
+            # Create testplan by replacing placeholders in template more precisely
+            sed "s/\"git\": \"github\"/\"git\": \"$SCM_VALUE\"/g; s/\"ci\": \"tekton\"/\"ci\": \"$PIPELINE_VALUE\"/g; s/\"registry\": \"quay.io\"/\"registry\": \"$REGISTRY_VALUE\"/g; s/\"tpa\": \"local\"/\"tpa\": \"$TPA_VALUE\"/g; s/\"acs\": \"local\"/\"acs\": \"$ACS_VALUE\"/g" testplan_template.json >> "$OUTPUT_FILE"
+            echo "---TESTPLAN_END---" >> "$OUTPUT_FILE"
+            CONFIG_COUNT=$((CONFIG_COUNT + 1))
+            echo "Generated configuration $CONFIG_COUNT with testplan"
+          else
+            echo "Skipping line: ${fields[*]}"
+          fi
+        done < pict_output.txt
+        echo "Generated $CONFIG_COUNT RHADS configurations with testplans"
+        # Copy output to result path
+        echo "Final output:"
+        cat "$OUTPUT_FILE"
+        cat "$OUTPUT_FILE" > "$(results.rhads-config.path)"
+        echo "Configuration processing completed successfully"

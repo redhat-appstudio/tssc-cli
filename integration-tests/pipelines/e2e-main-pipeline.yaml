@@ -44,38 +44,18 @@ spec:
         - name: test-name
           value: $(context.pipelineRun.name)
     - name: process-rhads-config
-      taskSpec:
-        volumes:
-          - name: shared-data
-            emptyDir: {}
-        results:
-          - name: rhads-config
-            description: JSON formatted configuration data
-        steps:
-          - name: get-rhads-config
-            image: quay.io/konflux-ci/appstudio-utils:ab6b0b8e40e440158e7288c73aff1cf83a2cc8a9@sha256:24179f0efd06c65d16868c2d7eb82573cce8e43533de6cea14fec3b7446e0b14
-            env:
-              - name: JOB_SPEC
-                value: $(tasks.test-metadata.results.job-spec)
-            volumeMounts:
-              - name: shared-data
-                mountPath: /shared
-            script: |
-              #!/usr/bin/env bash
-              echo "Downloading rhads-config file:"
-              GIT_REPO="$(jq -r '.git.repo // empty' <<< $JOB_SPEC)"
-              REPO_ORG=$(jq -r '.git.source_repo_org' <<< $JOB_SPEC)
-              # Determine the branch name for the curl command.
-              # If source_repo_branch starts with "refs/heads/", strip that prefix; otherwise, use as is.
-              BRANCH=$(jq -r '.git.source_repo_branch' <<< $JOB_SPEC)
-              if [[ "$BRANCH" == refs/heads/* ]]; then
-                BRANCH="${BRANCH#refs/heads/}"
-              fi
-
-              rhads_config_file_location="integration-tests/config/rhads-config"
-              curl -o rhads-config https://raw.githubusercontent.com/$REPO_ORG/$GIT_REPO/refs/heads/$BRANCH/$rhads_config_file_location
-
-              cat rhads-config | tee $(results.rhads-config.path)
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/jkopriva/tssc-cli.git
+          - name: revision
+            value: RHTAP-5290
+          - name: pathInRepo
+            value: integration-tests/tasks/get-rhads-config.yaml
+      params:
+        - name: job-spec
+          value: $(tasks.test-metadata.results.job-spec)
     - name: start-nested-pipelines
       runAfter:
         - test-metadata
