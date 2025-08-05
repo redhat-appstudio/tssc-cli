@@ -2,13 +2,15 @@ package integrations
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"log/slog"
+	"net/http"
 
 	"github.com/redhat-appstudio/tssc/pkg/config"
 	"github.com/redhat-appstudio/tssc/pkg/k8s"
-
 	"github.com/spf13/cobra"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -22,7 +24,8 @@ type GitLabIntegration struct {
 	logger *slog.Logger // application logger
 	kube   *k8s.Kube    // kubernetes client
 
-	force bool // overwrite the existing secret
+	force    bool // overwrite the existing secret
+	insecure bool // Skips tls verification on api calls
 
 	host         string // GitLab host
 	clientId     string // GitLab application client id
@@ -37,6 +40,8 @@ func (g *GitLabIntegration) PersistentFlags(c *cobra.Command) {
 
 	p.BoolVar(&g.force, "force", g.force,
 		"Overwrite the existing secret")
+	p.BoolVar(&g.insecure, "insecure", g.insecure,
+		"Skips tls verification on api calls")
 
 	p.StringVar(&g.host, "host", g.host,
 		"GitLab host, defaults to 'gitlab.com'")
@@ -60,6 +65,7 @@ func (g *GitLabIntegration) PersistentFlags(c *cobra.Command) {
 func (g *GitLabIntegration) log() *slog.Logger {
 	return g.logger.With(
 		"force", g.force,
+		"insecure", g.insecure,
 		"host", g.host,
 		"clientId", g.clientId,
 		"clientSecret-len", len(g.clientSecret),
@@ -126,11 +132,51 @@ func (g *GitLabIntegration) prepareSecret(
 	return k8s.DeleteSecret(ctx, g.kube, g.secretName(cfg))
 }
 
+// getCurrentGitLabUser gets the current user name authenticated with access token
+func (g *GitLabIntegration) getCurrentGitLabUser() (string, error) {
+	url := fmt.Sprintf("https://%s", g.host)
+	logger := g.log()
+
+	cl, err := gitlab.NewClient(g.token, gitlab.WithBaseURL(url))
+	if err != nil {
+		logger.Error("Error building gitlab client")
+		return "", err
+	}
+
+	if g.insecure {
+		insecureTransport := &http.Transport{
+		    TLSClientConfig: &tls.Config{InsecureSkipVerify: true, MinVersion: tls.VersionTLS12},
+	    }
+
+	    hcl := &http.Client{Transport: insecureTransport}
+
+	    cl, err = gitlab.NewClient(g.token, gitlab.WithBaseURL(url), gitlab.WithHTTPClient(hcl))
+	    if err != nil {
+		    logger.Error("Error building gitlab client")
+		    return "", err
+	    }
+	}
+
+	user, _, err := cl.Users.CurrentUser()
+	if err != nil {
+		logger.Error("Error getting user")
+		return "", err
+	}
+
+	return user.Username, nil
+}
+
 // store creates the secret with the integration data.
 func (g *GitLabIntegration) store(
 	ctx context.Context,
 	cfg *config.Config,
 ) error {
+	// Getting the user name
+	username, err := g.getCurrentGitLabUser()
+	if err != nil {
+		return err
+	}
+
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: g.secretName(cfg).Namespace,
@@ -143,6 +189,7 @@ func (g *GitLabIntegration) store(
 			"host":         []byte(g.host),
 			"token":        []byte(g.token),
 			"group":        []byte(g.group),
+			"username":     []byte(username),
 		},
 	}
 	logger := g.log().With(
@@ -185,6 +232,7 @@ func NewGitLabIntegration(
 		kube:   kube,
 
 		force:        false,
+		insecure:     false,
 		host:         defaultPublicGitLabHost,
 		clientId:     "",
 		clientSecret: "",
