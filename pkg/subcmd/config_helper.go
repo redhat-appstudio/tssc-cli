@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/redhat-appstudio/tssc/pkg/config"
-	"github.com/redhat-appstudio/tssc/pkg/k8s"
+	"github.com/redhat-appstudio/tssc-cli/pkg/config"
+	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
 )
 
 func bootstrapConfig(

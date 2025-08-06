@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/redhat-appstudio/tssc/pkg/k8s"
+	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

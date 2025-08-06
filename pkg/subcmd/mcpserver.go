@@ -4,12 +4,12 @@ import (
 	"io"
 	"log/slog"
 
-	"github.com/redhat-appstudio/tssc/pkg/config"
-	"github.com/redhat-appstudio/tssc/pkg/flags"
-	"github.com/redhat-appstudio/tssc/pkg/installer"
-	"github.com/redhat-appstudio/tssc/pkg/k8s"
-	"github.com/redhat-appstudio/tssc/pkg/mcpserver"
-	"github.com/redhat-appstudio/tssc/pkg/mcptools"
+	"github.com/redhat-appstudio/tssc-cli/pkg/config"
+	"github.com/redhat-appstudio/tssc-cli/pkg/flags"
+	"github.com/redhat-appstudio/tssc-cli/pkg/installer"
+	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
+	"github.com/redhat-appstudio/tssc-cli/pkg/mcpserver"
+	"github.com/redhat-appstudio/tssc-cli/pkg/mcptools"
 
 	"github.com/spf13/cobra"
 )

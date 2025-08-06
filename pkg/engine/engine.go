@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"html/template"
 
-	"github.com/redhat-appstudio/tssc/pkg/k8s"
+	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
 
 	"github.com/Masterminds/sprig/v3"
 )

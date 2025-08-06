@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"testing"
 
-	"github.com/redhat-appstudio/tssc/pkg/chartfs"
+	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 
 	o "github.com/onsi/gomega"
 )

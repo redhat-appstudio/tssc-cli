@@ -3,7 +3,7 @@ package subcmd
 import (
 	"log/slog"
 
-	"github.com/redhat-appstudio/tssc/pkg/k8s"
+	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
 
 	"github.com/spf13/cobra"
 )

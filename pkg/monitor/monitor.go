@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/redhat-appstudio/tssc/pkg/k8s"
+	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
 
 	"k8s.io/cli-runtime/pkg/resource"
 )

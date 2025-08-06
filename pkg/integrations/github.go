@@ -6,9 +6,9 @@ import (
 	"log/slog"
 	"net/url"
 
-	"github.com/redhat-appstudio/tssc/pkg/config"
-	"github.com/redhat-appstudio/tssc/pkg/githubapp"
-	"github.com/redhat-appstudio/tssc/pkg/k8s"
+	"github.com/redhat-appstudio/tssc-cli/pkg/config"
+	"github.com/redhat-appstudio/tssc-cli/pkg/githubapp"
+	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
 	"github.com/spf13/cobra"
 
 	"github.com/google/go-github/scrape"

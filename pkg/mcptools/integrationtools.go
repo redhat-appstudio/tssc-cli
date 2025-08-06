@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/redhat-appstudio/tssc/pkg/constants"
+	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"

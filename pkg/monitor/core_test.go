@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"testing"
 
-	"github.com/redhat-appstudio/tssc/pkg/k8s"
-	"github.com/redhat-appstudio/tssc/test/stubs"
+	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
+	"github.com/redhat-appstudio/tssc-cli/test/stubs"
 
 	"k8s.io/apimachinery/pkg/runtime"
 )

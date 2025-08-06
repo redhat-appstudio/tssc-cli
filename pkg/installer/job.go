@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/redhat-appstudio/tssc/pkg/constants"
-	"github.com/redhat-appstudio/tssc/pkg/k8s"
+	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
+	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
 
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"

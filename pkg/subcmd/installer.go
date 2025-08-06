@@ -9,8 +9,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/redhat-appstudio/tssc/installer"
-	"github.com/redhat-appstudio/tssc/pkg/flags"
+	"github.com/redhat-appstudio/tssc-cli/installer"
+	"github.com/redhat-appstudio/tssc-cli/pkg/flags"
 
 	"github.com/spf13/cobra"
 )

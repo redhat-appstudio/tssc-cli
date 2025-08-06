@@ -7,8 +7,8 @@ import (
 	"os/exec"
 	"path"
 
-	"github.com/redhat-appstudio/tssc/pkg/config"
-	"github.com/redhat-appstudio/tssc/pkg/chartfs"
+	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
+	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 )
 
 // Hooks represent the hooks that can be executed before and after the Helm Chart

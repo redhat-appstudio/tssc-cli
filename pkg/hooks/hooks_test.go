@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/redhat-appstudio/tssc/pkg/chartfs"
-	"github.com/redhat-appstudio/tssc/pkg/config"
+	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
+	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 
 	o "github.com/onsi/gomega"
 )

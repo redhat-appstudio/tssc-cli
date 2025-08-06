@@ -1,12 +1,12 @@
 <p align="center">
-    <a alt="Project quality report" href="https://goreportcard.com/report/github.com/redhat-appstudio/rhtap-cli">
-        <img src="https://goreportcard.com/badge/github.com/redhat-appstudio/rhtap-cli">
+    <a alt="Project quality report" href="https://goreportcard.com/report/github.com/redhat-appstudio/tssc-cli">
+        <img src="https://goreportcard.com/badge/github.com/redhat-appstudio/tssc-cli">
     </a>
-    <a alt="Release workflow status" href="https://github.com/redhat-appstudio/rhtap-cli/actions">
-        <img src="https://github.com/redhat-appstudio/rhtap-cli/actions/workflows/release.yaml/badge.svg">
+    <a alt="Release workflow status" href="https://github.com/redhat-appstudio/tssc-cli/actions">
+        <img src="https://github.com/redhat-appstudio/tssc-cli/actions/workflows/release.yaml/badge.svg">
     </a>
-    <a alt="Latest project release" href="https://github.com/redhat-appstudio/rhtap-cli/releases/latest">
-        <img src="https://img.shields.io/github/v/release/redhat-appstudio/rhtap-cli">
+    <a alt="Latest project release" href="https://github.com/redhat-appstudio/tssc-cli/releases/latest">
+        <img src="https://img.shields.io/github/v/release/redhat-appstudio/tssc-cli">
     </a>
 </p>
 
@@ -172,14 +172,14 @@ install --mode=755 bin/tssc /usr/local/bin
 
 Please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) for more information on building the project from source requirements. Then, follow the steps below to install the `tssc` binary from source:
 
-1. Clone [the repository](https://github.com/redhat-appstudio/rhtap-cli.git), and navigate to the `rhtap-cli` directory.
+1. Clone [the repository](https://github.com/redhat-appstudio/tssc-cli.git), and navigate to the `tssc-cli` directory.
 
 ```bash
-git clone --depth=1 https://github.com/redhat-appstudio/rhtap-cli.git && \
-  cd rhtap-cli
+git clone --depth=1 https://github.com/redhat-appstudio/tssc-cli.git && \
+  cd tssc-cli
 ```
 
-2. Run the command `make` from the `rhtap-cli` directory, this will create a `bin` folder
+2. Run the command `make` from the `tssc-cli` directory, this will create a `bin` folder
 
 ```bash
 make
@@ -196,5 +196,5 @@ install --mode=755 bin/tssc /usr/local/bin
 Please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) file for more information on contributing to this project.
  
 [helm]: https://helm.sh/
-[releases]: https://github.com/redhat-appstudio/rhtap-cli/releases
-[rhtapCLI]: https://github.com/redhat-appstudio/rhtap-cli
+[releases]: https://github.com/redhat-appstudio/tssc-cli/releases
+[tsscCLI]: https://github.com/redhat-appstudio/tssc-cli

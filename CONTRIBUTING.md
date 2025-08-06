@@ -120,7 +120,7 @@ To build the release assets for all platforms, run:
 make snapshot
 ```
 
-[actions]: https://github.com/redhat-appstudio/rhtap-cli/actions
+[actions]: https://github.com/redhat-appstudio/tssc-cli/actions
 [gitHubCLI]: https://cli.github.com
 [gitHubDocWorkflowEnvVars]: https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/variables#default-environment-variables
 [gnuMake]: https://www.gnu.org/software/make
@@ -128,5 +128,5 @@ make snapshot
 [goreleaser]: https://goreleaser.com
 [buildah]: https://buildah.io
 [podman]: https://podman.io
-[releases]: https://github.com/redhat-appstudio/rhtap-cli/releases
+[releases]: https://github.com/redhat-appstudio/tssc-cli/releases
 [gnuTar]: https://www.gnu.org/software/tar
