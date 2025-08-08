@@ -46,8 +46,14 @@ tssc config --create --get
 ```bash
 tssc integration --help
 ```
+
+4. Optionally, inspect the dependency topology before deploying TSSC by running:
+
+```bash
+tssc topology
+```
   
-4. Finally, run the below command to proceed with TSSC deployment. 
+5. Finally, run the below command to proceed with TSSC deployment. 
 
 ```bash
 tssc deploy
@@ -67,7 +73,6 @@ tssc:
   namespace: tssc
   settings: {}
   products: {}
-  dependencies: {}
 ```
 
 The attributes of the `tssc` object are as follows:
@@ -75,7 +80,6 @@ The attributes of the `tssc` object are as follows:
 - `.namespace`: Specifies the default namespace used by the installer, set to `tssc`. This namespace acts as the primary operational area for the installation process.
 - `.settings`: Defines the settings of the deployment. This can control a wide set of properties.
 - `.products`: Defines the features to be deployed by the installer. Each feature is identified by a unique name and a set of properties.
-- `.dependencies`: Specifies the dependencies rolled out by the installer in the specific order defined in the configuration file.
 
 ## `tssc.settings`
 
@@ -110,18 +114,6 @@ With the following attributes:
 
 This data can be leveraged for templating using the [`values.yaml.tpl`](#template-functions) file.
 
-## `tssc.dependencies`
-
-Each dependency is defined by a unique name and a set of attributes. The installer will deploy these dependencies in the order specified in the configuration file. For instance:
-
-```yaml
-tssc:
-  dependencies:
-    - chart: path/to/chart/directory 
-      namespace: namespace
-      enabled: true
-```
-
 ### Hook Scripts
 
 The installer supports hook scripts to execute custom logic before and after the installation of a Helm Chart. The hook scripts are stored in the `hooks` directory and are executed in the following order:
@@ -143,6 +135,8 @@ This is currently mainly a placeholder for future configuration settings that wo
 
 ### `{{ .Installer.Products.* }}`
 
+The product name, `.name` attribute, is sanitized to work as a template variable. For example, if the product name is `Developer Hub` it will be converted to `Developer_Hub`.
+
 - `{{ .Installer.Products.*.Enabled }}`: Returns the boolean value of the product's `enabled` field.
 - `{{ .Installer.Products.*.Namespace }}`: Returns the namespace in which the product will be deployed.
 - `{{ .Installer.Products.*.Properties.*}}`: Returns a dictionary of key-value pairs for the product's properties.
@@ -157,6 +151,10 @@ Helper function to inspect the target cluster's Ingress configuration.
 developerHub:
   ingressDomain: {{ $ingressDomain }}
 ```
+
+# Dependency Topology
+
+The dependency order and namespace is based on the products enabled in the cluster configuration, please consider the [topology](docs/topology.md) document for more details.
 
 # Installing `tssc`
 
