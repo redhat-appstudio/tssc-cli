@@ -17,12 +17,12 @@ func TestNewHooks(t *testing.T) {
 	var stderr bytes.Buffer
 	cfs, err := chartfs.NewChartFS("../../test")
 	g.Expect(err).To(o.Succeed())
+
+	chart, err := cfs.GetChartFiles("charts/testing")
+	g.Expect(err).To(o.Succeed())
+
 	h := NewHooks(
-		cfs,
-		&config.Dependency{
-			Chart:     "charts/testing",
-			Namespace: "tssc",
-		},
+		config.NewDependency(chart, "tssc"),
 		&stdout,
 		&stderr,
 	)

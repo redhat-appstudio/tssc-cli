@@ -1,7 +1,6 @@
 package config
 
 import (
-	"log/slog"
 	"testing"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
@@ -25,17 +24,17 @@ func TestNewConfigFromFile(t *testing.T) {
 		g.Expect(err).To(o.Succeed())
 	})
 
-	t.Run("GetEnabledDependencies", func(t *testing.T) {
-		deps := cfg.GetEnabledDependencies(slog.Default())
-		g.Expect(deps).NotTo(o.BeEmpty())
-		g.Expect(len(deps)).To(o.BeNumerically(">=", 1))
+	t.Run("GetEnabledProducts", func(t *testing.T) {
+		products := cfg.GetEnabledProducts()
+		g.Expect(products).NotTo(o.BeEmpty())
+		g.Expect(len(products)).To(o.BeNumerically(">", 1))
 	})
 
 	t.Run("GetProduct", func(t *testing.T) {
 		_, err := cfg.GetProduct("product1")
 		g.Expect(err).NotTo(o.Succeed())
 
-		product, err := cfg.GetProduct(DeveloperHub)
+		product, err := cfg.GetProduct("Developer Hub")
 		g.Expect(err).To(o.Succeed())
 		g.Expect(product).NotTo(o.BeNil())
 		g.Expect(product.GetNamespace()).NotTo(o.BeEmpty())

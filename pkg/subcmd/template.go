@@ -66,15 +66,6 @@ func (t *Template) Cmd() *cobra.Command {
 	return t.cmd
 }
 
-// log logger with contextual information.
-func (t *Template) log() *slog.Logger {
-	return t.flags.LoggerWith(
-		t.dep.LoggerWith(
-			t.logger.With(flags.ValuesTemplateFlag, t.valuesTemplatePath),
-		),
-	)
-}
-
 // Complete parse the informed args as charts, when valid.
 func (t *Template) Complete(args []string) error {
 	// Dry-run mode is always enabled by default for templating, when manually set
@@ -84,9 +75,10 @@ func (t *Template) Complete(args []string) error {
 	if len(args) != 1 {
 		return fmt.Errorf("expecting one chart, got %d", len(args))
 	}
-	t.dep.Chart = args[0]
-
 	var err error
+	if t.dep.Chart, err = t.cfs.GetChartFiles(args[0]); err != nil {
+		return err
+	}
 	if t.cfg, err = bootstrapConfig(t.cmd.Context(), t.kube); err != nil {
 		return err
 	}
@@ -101,7 +93,7 @@ func (t *Template) Validate() error {
 	if !t.flags.DryRun {
 		return fmt.Errorf("template command is only available in dry-run mode")
 	}
-	if t.dep.Chart == "" {
+	if t.dep.Chart == nil {
 		return fmt.Errorf("missing chart path")
 	}
 	return nil
@@ -114,12 +106,7 @@ func (t *Template) Run() error {
 		return fmt.Errorf("failed to read values template file: %w", err)
 	}
 
-	// Installer for the specific dependency
-	dep, err := t.cfg.GetDependency(t.log(), t.dep.Chart)
-	if err != nil {
-		return err
-	}
-	i := installer.NewInstaller(t.logger, t.flags, t.kube, t.cfs, dep)
+	i := installer.NewInstaller(t.logger, t.flags, t.kube, &t.dep)
 
 	// Setting values and loading cluster's information.
 	if err = i.SetValues(

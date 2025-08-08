@@ -7,7 +7,6 @@ import (
 	"os/exec"
 	"path"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 )
 
@@ -18,7 +17,6 @@ import (
 // Ideally these scripts are temporary measures, and should be replaced by Helm
 // Chart related resources as soon as possible.
 type Hooks struct {
-	cfs    *chartfs.ChartFS   // chart file system
 	dep    *config.Dependency // helm chart dependency
 	stdout io.Writer          // standard output
 	stderr io.Writer          // standard error
@@ -41,37 +39,40 @@ func (h *Hooks) exec(scriptPath string, vals map[string]interface{}) error {
 
 // runHookScript executes the hook script with the given values.
 func (h *Hooks) runHookScript(name string, vals map[string]interface{}) error {
-	// Extracting the script payload from the Chart directory, using the "hook"
+	// Extracting the script payload from the Chart instance, using the "hook"
 	// directory as default location.
-	scriptPath := path.Join(h.dep.Chart, "hooks", name)
-	scriptBytes, err := h.cfs.ReadFile(scriptPath)
-	if err != nil {
-		// Ignoring when the script is not found, it means the given Chart does
-		// not carry any hook scripts.
-		if os.IsNotExist(err) {
-			return nil
+	scriptBytes := []byte{}
+	for _, f := range h.dep.Chart.Files {
+		if f.Name != path.Join("hooks", name) {
+			continue
 		}
-		return fmt.Errorf("running script %q: %w", scriptPath, err)
+		scriptBytes = f.Data
+		break
+	}
+	// Ignoring when the script is not found, it means the given Chart does not
+	// carry any hook scripts.
+	if len(scriptBytes) == 0 {
+		return nil
 	}
 
 	// Storing the script payload in a temporary file, adding permissions to
 	// execute as a regular shell script.
-	tmpfile, err := os.CreateTemp("/tmp", "tssc-hook-*.sh")
+	tmpFile, err := os.CreateTemp("/tmp", "tssc-hook-*.sh")
 	if err != nil {
 		return err
 	}
-	defer os.Remove(tmpfile.Name())
-	if _, err := tmpfile.Write(scriptBytes); err != nil {
+	defer os.Remove(tmpFile.Name())
+	if _, err := tmpFile.Write(scriptBytes); err != nil {
 		return err
 	}
-	if err := tmpfile.Close(); err != nil {
+	if err := tmpFile.Close(); err != nil {
 		return err
 	}
-	if err := os.Chmod(tmpfile.Name(), 0o755); err != nil {
+	if err := os.Chmod(tmpFile.Name(), 0o755); err != nil {
 		return err
 	}
 
-	return h.exec(tmpfile.Name(), vals)
+	return h.exec(tmpFile.Name(), vals)
 }
 
 // PreDeploy executes the "pre-deploy.sh" hook script with the given values.
@@ -86,13 +87,11 @@ func (h *Hooks) PostDeploy(vals map[string]interface{}) error {
 
 // NewHooks instantiates a hooks handler for the given ChartFS and Dependency.
 func NewHooks(
-	cfs *chartfs.ChartFS,
 	dep *config.Dependency,
 	stdout io.Writer,
 	stderr io.Writer,
 ) *Hooks {
 	return &Hooks{
-		cfs:    cfs,
 		dep:    dep,
 		stdout: stdout,
 		stderr: stderr,

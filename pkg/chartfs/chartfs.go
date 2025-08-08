@@ -14,6 +14,7 @@ import (
 	"github.com/quay/claircore/pkg/tarfs"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
+	"helm.sh/helm/v3/pkg/chartutil"
 )
 
 // installerDir represents the directory where the installer tarball is stored.
@@ -95,6 +96,52 @@ func (c *ChartFS) GetChartFiles(chartPath string) (*chart.Chart, error) {
 		return chartFiles, nil
 	}
 	return c.walkChartDir(c.embeddedFS, chartPath)
+}
+
+// walkAndFindChartDirs walks through the filesystem and finds all directories
+// that contain a Helm chart.
+func (c *ChartFS) walkAndFindChartDirs(
+	fsys fs.FS, // filesystem instance
+	root string, // starting path
+) ([]string, error) {
+	chartDirs := []string{}
+	fn := func(name string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		// Skipping non-directory entries, we are looking for Helm chart dirs.
+		if !d.IsDir() {
+			return nil
+		}
+		// Check if the "Chart.yaml" exists in this directory.
+		chartYamlPath := filepath.Join(name, chartutil.ChartfileName)
+		if _, err := fs.Stat(fsys, chartYamlPath); err == nil {
+			chartDirs = append(chartDirs, name)
+		}
+		return nil
+	}
+	if err := fs.WalkDir(fsys, root, fn); err != nil {
+		return nil, err
+	}
+	return chartDirs, nil
+}
+
+// GetAllCharts retrieves all Helm charts from the filesystem, using the embedded
+// FS as the source of information to find Helm charts.
+func (c *ChartFS) GetAllCharts() ([]chart.Chart, error) {
+	charts := []chart.Chart{}
+	chartDirs, err := c.walkAndFindChartDirs(c.embeddedFS, ".")
+	if err != nil {
+		return nil, err
+	}
+	for _, chartDir := range chartDirs {
+		chart, err := c.GetChartFiles(chartDir)
+		if err != nil {
+			return nil, err
+		}
+		charts = append(charts, *chart)
+	}
+	return charts, nil
 }
 
 // NewChartFS instantiates a ChartFS instance using the embedded tarball,

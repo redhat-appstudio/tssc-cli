@@ -3,13 +3,15 @@ package subcmd
 import (
 	"fmt"
 	"log/slog"
-	"os"
+	"strings"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/flags"
 	"github.com/redhat-appstudio/tssc-cli/pkg/installer"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
+	"github.com/redhat-appstudio/tssc-cli/pkg/printer"
+	"github.com/redhat-appstudio/tssc-cli/pkg/resolver"
 
 	"github.com/spf13/cobra"
 )
@@ -23,8 +25,9 @@ type Deploy struct {
 	cfs    *chartfs.ChartFS // embedded filesystem
 	kube   *k8s.Kube        // kubernetes client
 
-	chartPath          string // path of the chart when deploying a single chart
-	valuesTemplatePath string // path to the values template file
+	collection         *resolver.Collection // chart collection
+	chartPath          string               // single chart path
+	valuesTemplatePath string               // values template file path
 }
 
 var _ Interface = &Deploy{}
@@ -64,7 +67,16 @@ func (d *Deploy) log() *slog.Logger {
 
 // Complete verifies the object is complete.
 func (d *Deploy) Complete(args []string) error {
-	var err error
+	// Load all charts from the embedded filesystem, or from a local directory.
+	charts, err := d.cfs.GetAllCharts()
+	if err != nil {
+		return err
+	}
+	// Create a new chart collection from the loaded charts.
+	if d.collection, err = resolver.NewCollection(charts); err != nil {
+		return err
+	}
+	// Load the installer configuration from the cluster.
 	if d.cfg, err = bootstrapConfig(d.cmd.Context(), d.kube); err != nil {
 		return err
 	}
@@ -86,45 +98,46 @@ func (d *Deploy) Validate() error {
 
 // Run deploys the enabled dependencies listed on the configuration.
 func (d *Deploy) Run() error {
-	// Disclaimer
-	fmt.Printf("\n!!! DISCLAIMER: ONLY FOR EXPERIMENTAL DEPLOYMENTS - PRODUCTION IS UNSUPPORTED !!!\n")
-
-	cwd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-
-	cfs, err := chartfs.NewChartFS(cwd)
-	if err != nil {
-		return err
-	}
+	printer.Disclaimer()
 
 	d.log().Debug("Reading values template file")
-	valuesTmpl, err := cfs.ReadFile(d.valuesTemplatePath)
+	valuesTmpl, err := d.cfs.ReadFile(d.valuesTemplatePath)
 	if err != nil {
 		return fmt.Errorf("failed to read values template file: %w", err)
 	}
 
-	d.log().Debug("Installing dependencies...")
+	d.log().Debug("Resolving dependencies...")
+	topology := resolver.NewTopology()
+	r := resolver.NewResolver(d.cfg, d.collection, topology)
+	if err := r.Resolve(); err != nil {
+		return err
+	}
+
 	var deps []config.Dependency
 	if d.chartPath == "" {
-		// Installing each Helm Chart dependency from the configuration, only
-		// selecting the Helm Charts that are enabled.
-		deps = d.cfg.GetEnabledDependencies(d.log())
+		d.log().Debug("Installing all dependencies...")
+		deps = topology.GetDependencies()
 	} else {
-		// Installing a single Chart dependency
-		dep, err := d.cfg.GetDependency(d.log(), d.chartPath)
+		d.log().Debug("Installing a single Helm chart...")
+		dep, err := topology.GetDependencyForChart(d.chartPath)
 		if err != nil {
 			return err
 		}
 		deps = append(deps, *dep)
 	}
-	for ix, dep := range deps {
-		fmt.Printf("\n\n############################################################\n")
-		fmt.Printf("# [%d/%d] Deploying '%s' in '%s'.\n", ix+1, len(deps), dep.Chart, dep.Namespace)
-		fmt.Printf("############################################################\n")
 
-		i := installer.NewInstaller(d.log(), d.flags, d.kube, cfs, &dep)
+	for index, dep := range deps {
+		fmt.Printf("\n\n%s\n", strings.Repeat("#", 60))
+		fmt.Printf(
+			"# [%d/%d] Deploying '%s' in '%s'.\n",
+			index+1,
+			len(deps),
+			dep.Chart.Name(),
+			dep.Namespace,
+		)
+		fmt.Printf("%s\n", strings.Repeat("#", 60))
+
+		i := installer.NewInstaller(d.log(), d.flags, d.kube, &dep)
 
 		err := i.SetValues(d.cmd.Context(), &d.cfg.Installer, string(valuesTmpl))
 		if err != nil {
@@ -141,15 +154,18 @@ func (d *Deploy) Run() error {
 			i.PrintValues()
 		}
 
-		err = i.Install(d.cmd.Context())
-		// Delete temporary resources
-		if err := k8s.RetryDeleteResources(d.cmd.Context(), d.kube, d.cfg.Installer.Namespace); err != nil {
-			d.log().Debug(err.Error())
-		}
-		if err != nil {
+		if err = i.Install(d.cmd.Context()); err != nil {
 			return err
 		}
-		fmt.Printf("############################################################\n\n")
+		// Cleaning up temporary resources.
+		if err = k8s.RetryDeleteResources(
+			d.cmd.Context(),
+			d.kube,
+			d.cfg.Installer.Namespace,
+		); err != nil {
+			d.log().Debug(err.Error())
+		}
+		fmt.Printf("%s\n", strings.Repeat("#", 60))
 	}
 
 	fmt.Printf("Deployment complete!\n")

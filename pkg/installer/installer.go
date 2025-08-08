@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/deployer"
 	"github.com/redhat-appstudio/tssc-cli/pkg/engine"
@@ -24,23 +23,9 @@ type Installer struct {
 	flags  *flags.Flags       // global flags
 	kube   *k8s.Kube          // kubernetes client
 	dep    *config.Dependency // dependency to install
-	cfs    *chartfs.ChartFS   // chart file system
 
 	valuesBytes []byte           // rendered values
 	values      chartutil.Values // helm chart values
-}
-
-// prepareHelmClient prepares the Helm client for the given dependency, which also
-// specifies the default namespace for the Helm Chart.
-func (i *Installer) prepareHelmClient() (*deployer.Helm, error) {
-	i.logger.Debug("Loading dependency Helm chart...")
-	cf, err := i.cfs.GetChartFiles(i.dep.Chart)
-	if err != nil {
-		return nil, err
-	}
-
-	i.logger.Debug("Loading Helm client for dependency and namespace")
-	return deployer.NewHelm(i.logger, i.flags, i.kube, i.dep.Namespace, cf)
 }
 
 // SetValues prepares the values template for the Helm chart installation.
@@ -94,12 +79,20 @@ func (i *Installer) Install(ctx context.Context) error {
 	if i.values == nil {
 		return fmt.Errorf("values not set")
 	}
-	hc, err := i.prepareHelmClient()
+
+	i.logger.Debug("Loading Helm client for dependency and namespace")
+	hc, err := deployer.NewHelm(
+		i.logger,
+		i.flags,
+		i.kube,
+		i.dep.Namespace,
+		i.dep.Chart,
+	)
 	if err != nil {
 		return err
 	}
 
-	hook := hooks.NewHooks(i.cfs, i.dep, os.Stdout, os.Stderr)
+	hook := hooks.NewHooks(i.dep, os.Stdout, os.Stderr)
 	if !i.flags.DryRun {
 		i.logger.Debug("Running pre-deploy hook script...")
 		if err = hook.PreDeploy(i.values); err != nil {
@@ -151,14 +144,12 @@ func NewInstaller(
 	logger *slog.Logger,
 	f *flags.Flags,
 	kube *k8s.Kube,
-	cfs *chartfs.ChartFS,
 	dep *config.Dependency,
 ) *Installer {
 	return &Installer{
 		logger: dep.LoggerWith(logger),
 		flags:  f,
 		kube:   kube,
-		cfs:    cfs,
 		dep:    dep,
 	}
 }
