@@ -42,7 +42,7 @@ require (
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/chai2010/gettext-go v1.0.3 // indirect
-	github.com/containerd/containerd v1.7.27 // indirect
+	github.com/containerd/containerd v1.7.28 // indirect
 	github.com/containerd/errdefs v1.0.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v1.0.0-rc.1 // indirect
