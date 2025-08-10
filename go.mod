@@ -10,7 +10,7 @@ require (
 	github.com/google/go-github/v74 v74.0.0
 	github.com/mark3labs/mcp-go v0.36.0
 	github.com/onsi/gomega v1.38.0
-	github.com/openshift/api v0.0.0-20250731182533-c7fbd085e10c
+	github.com/openshift/api v0.0.0-20250808142411-c974eeafe3f1
 	github.com/openshift/client-go v0.0.0-20250710075018-396b36f983ee
 	github.com/pkg/errors v0.9.1
 	github.com/quay/claircore v1.5.39
