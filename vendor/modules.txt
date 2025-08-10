@@ -77,7 +77,7 @@ github.com/cyphar/filepath-securejoin
 github.com/davecgh/go-spew/spew
 # github.com/docker/docker-credential-helpers v0.9.3
 ## explicit; go 1.21
-# github.com/docker/go-events v0.0.0-20250114142523-c867878c5e32
+# github.com/docker/go-events v0.0.0-20250808211157-605354379745
 ## explicit
 # github.com/emicklei/go-restful/v3 v3.12.2
 ## explicit; go 1.13
