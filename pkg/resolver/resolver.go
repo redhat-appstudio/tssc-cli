@@ -116,8 +116,9 @@ func (r *Resolver) resolveEnabledProducts() error {
 	return nil
 }
 
-// resolveDependencies final inspection of the Helm charts in the collection to
-// ensure all dependencies are met.
+// resolveDependencies final inspection of the Helm charts in the Collection to
+// ensure all dependencies are met. It walks the charts in the Collection, and for
+// each entry verifies it it depends on any chart in the Topology.
 func (r *Resolver) resolveDependencies() error {
 	return r.collection.Walk(func(name string, hc chart.Chart) error {
 		// Skip charts that are associated with a product. These charts are
@@ -129,10 +130,15 @@ func (r *Resolver) resolveDependencies() error {
 		// chart, if any.
 		requiredBy := ""
 		for _, dependsOn := range r.collection.DependsOn(&hc) {
-			// Skip if the required chart is not in the collection.
+			// Ensure the required chart is in the topology, when not in the
+			// topology it is skipped.
+			if !r.topology.Contains(dependsOn) {
+				continue
+			}
+			// Ensures the if the required chart is in the collection.
 			if _, err := r.collection.Get(dependsOn); err != nil {
 				return fmt.Errorf(
-					"%w: depenency %s not found for chart %s",
+					"%w: dependency %s not found for chart %s",
 					ErrMissingDependency,
 					dependsOn,
 					name,

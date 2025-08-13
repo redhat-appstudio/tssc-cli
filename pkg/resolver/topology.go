@@ -29,10 +29,10 @@ func (t *Topology) GetDependencyForChart(
 	return nil, fmt.Errorf("dependency not found for chart %s", name)
 }
 
-// exists checks if a dependency exists in the topology.
-func (t *Topology) exists(dependency config.Dependency) bool {
+// Contains checks if a dependency Contains in the topology.
+func (t *Topology) Contains(name string) bool {
 	for _, d := range t.dependencies {
-		if d.Chart.Name() == dependency.Chart.Name() {
+		if d.Chart.Name() == name {
 			return true
 		}
 	}
@@ -43,7 +43,7 @@ func (t *Topology) exists(dependency config.Dependency) bool {
 func (t *Topology) PrependBefore(name string, dependencies ...config.Dependency) {
 	prefix := config.Dependencies{}
 	for _, dependency := range dependencies {
-		if !t.exists(dependency) {
+		if !t.Contains(dependency.Chart.Name()) {
 			prefix = append(prefix, dependency)
 		}
 	}
@@ -73,11 +73,11 @@ func (t *Topology) PrependBefore(name string, dependencies ...config.Dependency)
 }
 
 // AppendAfter inserts dependencies after a given chart name. If the chart does
-// not exist, it apends to the end the slice.
+// not exist, it appends to the end the slice.
 func (t *Topology) AppendAfter(name string, dependencies ...config.Dependency) {
 	suffix := config.Dependencies{}
 	for _, dependency := range dependencies {
-		if !t.exists(dependency) {
+		if !t.Contains(dependency.Chart.Name()) {
 			suffix = append(suffix, dependency)
 		}
 	}
@@ -108,7 +108,7 @@ func (t *Topology) AppendAfter(name string, dependencies ...config.Dependency) {
 
 // Append adds a new dependency to the end of the topology.
 func (t *Topology) Append(dependency config.Dependency) {
-	if t.exists(dependency) {
+	if t.Contains(dependency.Chart.Name()) {
 		return
 	}
 	t.dependencies = append(t.dependencies, dependency)
