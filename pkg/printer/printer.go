@@ -7,6 +7,14 @@ import (
 	"helm.sh/helm/v3/pkg/release"
 )
 
+// Disclaimer prints the support disclaimer message.
+func Disclaimer() {
+	fmt.Print(`
+!!! DISCLAIMER: ONLY FOR EXPERIMENTAL DEPLOYMENTS - PRODUCTION IS UNSUPPORTED !!!
+`,
+	)
+}
+
 // HelmReleasePrinter prints the release information.
 func HelmReleasePrinter(rel *release.Release) {
 	fmt.Println("#")

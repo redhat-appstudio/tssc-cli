@@ -3,7 +3,6 @@ package config
 import (
 	"errors"
 	"fmt"
-	"log/slog"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 
@@ -14,7 +13,7 @@ import (
 type Settings map[string]interface{}
 
 // ProductSpec represents a map of product name and specification.
-type Products map[string]ProductSpec
+type Products []Product
 
 // Dependencies a slice of Dependency instances.
 type Dependencies []Dependency
@@ -29,8 +28,6 @@ type Spec struct {
 	Settings Settings `yaml:"settings"`
 	// Products contains the configuration for the installer products.
 	Products Products `yaml:"products"`
-	// Dependencies contains the installer Helm chart dependencies.
-	Dependencies Dependencies `yaml:"dependencies"`
 }
 
 // Config root configuration structure.
@@ -53,39 +50,25 @@ var (
 // DefaultRelativeConfigPath default relative path to YAML configuration file.
 var DefaultRelativeConfigPath = fmt.Sprintf("installer/%s", Filename)
 
-// GetDependency returns a dependency chart configuration.
-func (c *Config) GetDependency(logger *slog.Logger, chart string) (*Dependency, error) {
-	logger.Debug("Getting dependency")
-	for _, dep := range c.Installer.Dependencies {
-		if dep.Chart == chart {
-			return &dep, nil
+// GetProduct returns a product by name, or an error if the product is not found.
+func (c *Config) GetProduct(name string) (*Product, error) {
+	for i := range c.Installer.Products {
+		if c.Installer.Products[i].Name == name {
+			return &c.Installer.Products[i], nil
 		}
 	}
-	return nil, fmt.Errorf("chart '%s' not found", chart)
+	return nil, fmt.Errorf("product '%s' not found", name)
 }
 
-// GetEnabledDependencies returns a list of enabled dependencies.
-func (c *Config) GetEnabledDependencies(logger *slog.Logger) []Dependency {
-	enabled := []Dependency{}
-	logger.Debug("Getting enabled dependencies")
-	for _, dep := range c.Installer.Dependencies {
-		if dep.Enabled {
-			logger.Debug("Using dependency...", "dep-chart", dep.Chart)
-			enabled = append(enabled, dep)
-		} else {
-			logger.Debug("Skipping dependency...", "dep-chart", dep.Chart)
+// GetEnabledProducts returns a map of enabled products.
+func (c *Config) GetEnabledProducts() Products {
+	enabled := Products{}
+	for _, product := range c.Installer.Products {
+		if product.Enabled {
+			enabled = append(enabled, product)
 		}
 	}
 	return enabled
-}
-
-// GetProduct returns a product by name, or an error if the product is not found.
-func (c *Config) GetProduct(name string) (*ProductSpec, error) {
-	product, ok := c.Installer.Products[name]
-	if !ok {
-		return nil, fmt.Errorf("product '%s' not found", name)
-	}
-	return &product, nil
 }
 
 // Validate validates the configuration, checking for missing fields.
@@ -105,22 +88,6 @@ func (c *Config) Validate() error {
 	for _, product := range root.Products {
 		if err := product.Validate(); err != nil {
 			return err
-		}
-	}
-
-	// Making sure the installer has a list of dependencies.
-	if len(root.Dependencies) == 0 {
-		return fmt.Errorf("%w: missing dependencies", ErrInvalidConfig)
-	}
-	// Validating each dependency, making sure they have the required fields.
-	for pos, dep := range root.Dependencies {
-		if dep.Chart == "" {
-			return fmt.Errorf(
-				"%w: missing chart in dependency %d", ErrInvalidConfig, pos)
-		}
-		if dep.Namespace == "" {
-			return fmt.Errorf(
-				"%w: missing namespace in dependency %d", ErrInvalidConfig, pos)
 		}
 	}
 	return nil

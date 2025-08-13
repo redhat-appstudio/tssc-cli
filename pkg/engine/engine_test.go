@@ -23,9 +23,7 @@ root:
   {{- $k | nindent 4 }}:
   {{- $v | toYaml | nindent 6 }}
 {{- end }}
-  dependencies:
-	{{- .Installer.Dependencies | toYaml | nindent 4 }}
-  catalogURL: {{ .Installer.Products.developerHub.Properties.catalogURL }}
+  catalogURL: {{ .Installer.Products.Developer_Hub.Properties.catalogURL }}
 `
 
 func TestEngine_Render(t *testing.T) {
@@ -69,9 +67,6 @@ func TestEngine_Render(t *testing.T) {
 
 	g.Expect(root).To(o.HaveKey("products"))
 	g.Expect(root["products"]).NotTo(o.BeNil())
-
-	g.Expect(root).To(o.HaveKey("dependencies"))
-	g.Expect(root["dependencies"]).NotTo(o.BeNil())
 
 	g.Expect(root).To(o.HaveKey("catalogURL"))
 	g.Expect(root["catalogURL"]).NotTo(o.BeNil())

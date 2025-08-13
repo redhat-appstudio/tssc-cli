@@ -36,4 +36,11 @@ func TestNewChartFS(t *testing.T) {
 		g.Expect(len(names)).To(o.BeNumerically(">", 1))
 		g.Expect(names).To(o.ContainElement("templates/NOTES.txt"))
 	})
+
+	t.Run("GetAllCharts", func(t *testing.T) {
+		charts, err := c.GetAllCharts()
+		g.Expect(err).To(o.Succeed())
+		g.Expect(charts).ToNot(o.BeNil())
+		g.Expect(len(charts)).To(o.BeNumerically(">", 1))
+	})
 }

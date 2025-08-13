@@ -2,29 +2,21 @@ package config
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
 )
 
 const (
-	// CRC Code Ready Containers (CRC).
-	CRC = "crc"
-	// Keycloak Keycloak IAM/SSO.
-	Keycloak = "keycloak"
-	// TrustedProfileAnalyzer Trusted Profile Analyzer (TPA).
-	TrustedProfileAnalyzer = "trustedProfileAnalyzer"
-	// TrustedArtifactSigner Trusted Artifact Signer (TAS).
-	TrustedArtifactSigner = "trustedArtifactSigner"
 	// DeveloperHub Red Hat Developer Hub (RHDH).
-	DeveloperHub = "developerHub"
-	// AdvancedClusterSecurity Red Hat Advanced Cluster Security (RHACS).
-	AdvancedClusterSecurity = "advancedClusterSecurity"
-	// Quay Red Hat Quay (RHDH).
-	Quay = "quay"
+	DeveloperHub = "Developer Hub"
 	// OpenShiftPipelines OpenShift Pipelines.
-	OpenShiftPipelines = "openShiftPipelines"
+	OpenShiftPipelines = "OpenShift Pipelines"
 )
 
 // ProductSpec contains the configuration for a specific product.
-type ProductSpec struct {
+type Product struct {
+	// Name of the product.
+	Name string `yaml:"name"`
 	// Enabled product toggle.
 	Enabled bool `yaml:"enabled"`
 	// Namespace target namespace for the product, which may involve different
@@ -35,17 +27,38 @@ type ProductSpec struct {
 	Properties map[string]interface{} `yaml:"properties"`
 }
 
+// KeyName returns a sanitized key name for the product.
+func (p *Product) KeyName() string {
+	// Replace any character that is not a letter, digit, or underscore with a
+	// single underscore.
+	reg := regexp.MustCompile(`[^a-zA-Z0-9_]+`)
+	key := reg.ReplaceAllString(p.Name, "_")
+
+	// Remove leading/trailing underscores that might result from the replacement.
+	key = strings.Trim(key, "_")
+
+	// Collapse multiple underscores into a single one.
+	key = regexp.MustCompile(`_+`).ReplaceAllString(key, "_")
+
+	// Ensure the name doesn't start with a digit by prefixing it with an
+	// underscore if it does.
+	if len(key) > 0 && '0' <= key[0] && key[0] <= '9' {
+		key = "_" + key
+	}
+	return key
+}
+
 // GetNamespace returns the product namespace, or an empty string if not set.
-func (f *ProductSpec) GetNamespace() string {
-	if f.Namespace == nil {
+func (p *Product) GetNamespace() string {
+	if p.Namespace == nil {
 		return ""
 	}
-	return *f.Namespace
+	return *p.Namespace
 }
 
 // Validate validates the product configuration, checking for missing fields.
-func (f *ProductSpec) Validate() error {
-	if f.Enabled && f.GetNamespace() == "" {
+func (p *Product) Validate() error {
+	if p.Enabled && p.GetNamespace() == "" {
 		return fmt.Errorf("%w: missing namespace", ErrInvalidConfig)
 	}
 	return nil

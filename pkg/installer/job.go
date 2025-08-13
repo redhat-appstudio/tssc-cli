@@ -26,7 +26,7 @@ type Job struct {
 }
 
 // JobLabelSelector finds the unique installer job in the cluster.
-const JobLabelSelector = "installer.tssc.redhat-appstudio.github.com"
+var JobLabelSelector = fmt.Sprintf("installer-job.%s", constants.RepoURI)
 
 // JobState represents the state of the installer job in the cluster.
 type JobState int
@@ -238,7 +238,7 @@ func (j *Job) Create(ctx context.Context, namespace, image string) error {
 		errMsg.WriteString("Only a single deployment job is allowed per cluster,")
 		errMsg.WriteString(" to inspect the existing job use: ")
 		errMsg.WriteString(j.GetJobLogFollowCmd(namespace))
-		return fmt.Errorf(errMsg.String())
+		return fmt.Errorf("%s", errMsg.String())
 	}
 
 	// Issuing the service account and cluster role binding first, the job needs
