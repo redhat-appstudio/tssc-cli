@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"path"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/config"
+	"github.com/redhat-appstudio/tssc-cli/pkg/resolver"
 )
 
 // Hooks represent the hooks that can be executed before and after the Helm Chart
@@ -17,9 +17,9 @@ import (
 // Ideally these scripts are temporary measures, and should be replaced by Helm
 // Chart related resources as soon as possible.
 type Hooks struct {
-	dep    *config.Dependency // helm chart dependency
-	stdout io.Writer          // standard output
-	stderr io.Writer          // standard error
+	dep    *resolver.Dependency // helm chart dependency
+	stdout io.Writer            // standard output
+	stderr io.Writer            // standard error
 }
 
 const envPrefix = "INSTALLER"
@@ -42,7 +42,7 @@ func (h *Hooks) runHookScript(name string, vals map[string]interface{}) error {
 	// Extracting the script payload from the Chart instance, using the "hook"
 	// directory as default location.
 	scriptBytes := []byte{}
-	for _, f := range h.dep.Chart.Files {
+	for _, f := range h.dep.Chart().Files {
 		if f.Name != path.Join("hooks", name) {
 			continue
 		}
@@ -87,7 +87,7 @@ func (h *Hooks) PostDeploy(vals map[string]interface{}) error {
 
 // NewHooks instantiates a hooks handler for the given ChartFS and Dependency.
 func NewHooks(
-	dep *config.Dependency,
+	dep *resolver.Dependency,
 	stdout io.Writer,
 	stderr io.Writer,
 ) *Hooks {

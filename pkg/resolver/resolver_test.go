@@ -32,24 +32,24 @@ func TestNewResolver(t *testing.T) {
 		g.Expect(err).To(o.Succeed())
 
 		// Extracting the Helm chart names and namespaces from the topology.
-		chartNamespaceMap := map[string]string{}
-		chartSlice := []string{}
-		for _, d := range topology.GetDependencies() {
-			chartNamespaceMap[d.Chart.Name()] = d.Namespace
-			chartSlice = append(chartSlice, d.Chart.Name())
+		dependencyNamespaceMap := map[string]string{}
+		dependencySlice := []string{}
+		for _, d := range topology.Dependencies() {
+			dependencyNamespaceMap[d.Name()] = d.Namespace()
+			dependencySlice = append(dependencySlice, d.Name())
 		}
 		// Showing the resolved dependencies.
-		t.Logf("Resolved dependencies (%d)", len(chartSlice))
+		t.Logf("Resolved dependencies (%d)", len(dependencySlice))
 		i := 1
-		for name, ns := range chartNamespaceMap {
+		for name, ns := range dependencyNamespaceMap {
 			t.Logf("(%2d) %s -> %s", i, name, ns)
 			i++
 		}
-		g.Expect(len(chartSlice)).To(o.Equal(14))
+		g.Expect(len(dependencySlice)).To(o.Equal(14))
 
 		// Validating the order of the resolved dependencies, as well as the
 		// namespace of each dependency.
-		g.Expect(chartNamespaceMap).To(o.Equal(map[string]string{
+		g.Expect(dependencyNamespaceMap).To(o.Equal(map[string]string{
 			"tssc-openshift":        "tssc",
 			"tssc-subscriptions":    "tssc",
 			"tssc-infrastructure":   "tssc",
@@ -65,7 +65,7 @@ func TestNewResolver(t *testing.T) {
 			"tssc-acs-test":         "tssc-acs",
 			"tssc-integrations":     "tssc",
 		}))
-		g.Expect(chartSlice).To(o.Equal([]string{
+		g.Expect(dependencySlice).To(o.Equal([]string{
 			"tssc-openshift",
 			"tssc-subscriptions",
 			"tssc-infrastructure",

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
-	"github.com/redhat-appstudio/tssc-cli/pkg/config"
+	"github.com/redhat-appstudio/tssc-cli/pkg/resolver"
 
 	o "github.com/onsi/gomega"
 )
@@ -22,7 +22,7 @@ func TestNewHooks(t *testing.T) {
 	g.Expect(err).To(o.Succeed())
 
 	h := NewHooks(
-		config.NewDependency(chart, "tssc"),
+		resolver.NewDependencyWithNamespace(chart, "tssc"),
 		&stdout,
 		&stderr,
 	)

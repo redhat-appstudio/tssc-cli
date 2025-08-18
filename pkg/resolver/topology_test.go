@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
-	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 
 	o "github.com/onsi/gomega"
 )
@@ -16,21 +15,22 @@ func TestNewTopology(t *testing.T) {
 	g.Expect(err).To(o.Succeed())
 	g.Expect(cfs).ToNot(o.BeNil())
 
+	ns := "default"
 	openShiftChart, err := cfs.GetChartFiles("charts/tssc-openshift")
 	g.Expect(err).To(o.Succeed())
-	openShiftDep := config.NewDependency(openShiftChart, "default")
+	openShiftDep := NewDependencyWithNamespace(openShiftChart, ns)
 
 	subscriptionsChart, err := cfs.GetChartFiles("charts/tssc-subscriptions")
 	g.Expect(err).To(o.Succeed())
-	subscriptionsDep := config.NewDependency(subscriptionsChart, "default")
+	subscriptionsDep := NewDependencyWithNamespace(subscriptionsChart, ns)
 
 	infrastructureChart, err := cfs.GetChartFiles("charts/tssc-infrastructure")
 	g.Expect(err).To(o.Succeed())
-	infrastructureDep := config.NewDependency(infrastructureChart, "default")
+	infrastructureDep := NewDependencyWithNamespace(infrastructureChart, ns)
 
 	backingServicesChart, err := cfs.GetChartFiles("charts/tssc-backing-services")
 	g.Expect(err).To(o.Succeed())
-	backingServicesDep := config.NewDependency(backingServicesChart, "default")
+	backingServicesDep := NewDependencyWithNamespace(backingServicesChart, ns)
 
 	topology := NewTopology()
 
@@ -51,11 +51,11 @@ func TestNewTopology(t *testing.T) {
 	})
 
 	t.Run("GetDependencies", func(t *testing.T) {
-		deps := topology.GetDependencies()
+		deps := topology.Dependencies()
 		g.Expect(deps).ToNot(o.BeNil())
 		names := []string{}
 		for _, d := range deps {
-			names = append(names, d.Chart.Name())
+			names = append(names, d.Name())
 		}
 		g.Expect(names).To(o.Equal([]string{
 			"tssc-openshift",

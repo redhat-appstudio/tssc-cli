@@ -15,9 +15,6 @@ type Settings map[string]interface{}
 // ProductSpec represents a map of product name and specification.
 type Products []Product
 
-// Dependencies a slice of Dependency instances.
-type Dependencies []Dependency
-
 // Spec contains all configuration sections.
 type Spec struct {
 	// Namespace installer's namespace, where the installer's resources will be

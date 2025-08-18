@@ -113,10 +113,10 @@ func (d *Deploy) Run() error {
 		return err
 	}
 
-	var deps []config.Dependency
+	var deps resolver.Dependencies
 	if d.chartPath == "" {
 		d.log().Debug("Installing all dependencies...")
-		deps = topology.GetDependencies()
+		deps = topology.Dependencies()
 	} else {
 		d.log().Debug("Installing a single Helm chart...")
 		dep, err := topology.GetDependencyForChart(d.chartPath)
@@ -132,8 +132,8 @@ func (d *Deploy) Run() error {
 			"# [%d/%d] Deploying '%s' in '%s'.\n",
 			index+1,
 			len(deps),
-			dep.Chart.Name(),
-			dep.Namespace,
+			dep.Name(),
+			dep.Namespace(),
 		)
 		fmt.Printf("%s\n", strings.Repeat("#", 60))
 
