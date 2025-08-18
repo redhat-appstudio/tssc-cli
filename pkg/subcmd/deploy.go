@@ -61,8 +61,10 @@ func (d *Deploy) Cmd() *cobra.Command {
 
 // log logger with contextual information.
 func (d *Deploy) log() *slog.Logger {
-	return d.flags.LoggerWith(
-		d.logger.With(flags.ValuesTemplateFlag, d.valuesTemplatePath))
+	return d.flags.LoggerWith(d.logger.With(
+		"chart-path", d.chartPath,
+		flags.ValuesTemplateFlag, d.valuesTemplatePath,
+	))
 }
 
 // Complete verifies the object is complete.
@@ -119,7 +121,11 @@ func (d *Deploy) Run() error {
 		deps = topology.Dependencies()
 	} else {
 		d.log().Debug("Installing a single Helm chart...")
-		dep, err := topology.GetDependencyForChart(d.chartPath)
+		hc, err := d.cfs.GetChartFiles(d.chartPath)
+		if err != nil {
+			return err
+		}
+		dep, err := topology.GetDependency(hc.Name())
 		if err != nil {
 			return err
 		}
