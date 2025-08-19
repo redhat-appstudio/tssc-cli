@@ -132,7 +132,7 @@ func (r *Resolver) resolveDependencies() error {
 		}
 		// Collecting the last dependency name that is required by the current
 		// chart (dependency), if any.
-		requiredBy := ""
+		requiredDependency := ""
 		for _, dependsOn := range d.DependsOn() {
 			// Ensure the required dependency is in the topology, when not in the
 			// topology it is skipped.
@@ -148,10 +148,10 @@ func (r *Resolver) resolveDependencies() error {
 					name,
 				)
 			}
-			requiredBy = dependsOn
+			requiredDependency = dependsOn
 		}
-		// If it's not required by any other dependency, skip it.
-		if requiredBy == "" {
+		// If there is no required dependency, skip it.
+		if requiredDependency == "" {
 			return nil
 		}
 		// Setting the desired namespace in the dependency.
@@ -160,7 +160,7 @@ func (r *Resolver) resolveDependencies() error {
 		}
 		// Append the current dependency after the last one in the collection that
 		// requires it.
-		r.topology.AppendAfter(requiredBy, d)
+		r.topology.AppendAfter(requiredDependency, d)
 		// Recursively resolve dependencies.
 		return r.dependsOn(name, &d, map[string]bool{})
 	})
