@@ -83,7 +83,7 @@ type ListActiveIntegrationsOptions struct {
 	ListOptions
 }
 
-// ListActiveIntegrations Get a list of all active group integrations.
+// ListActiveGroupIntegrations gets a list of all active group integrations.
 // The vulnerability_events field is only available for GitLab Enterprise Edition.
 //
 // GitLab API docs:

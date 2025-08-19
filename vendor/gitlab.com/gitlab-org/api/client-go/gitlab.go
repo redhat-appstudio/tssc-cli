@@ -100,6 +100,9 @@ type Client struct {
 	// once.
 	authSourceInit sync.Once
 
+	// jar is the cookie jar to use with the HTTP client
+	jar http.CookieJar
+
 	// Default request options applied to every request.
 	defaultRequestOptions []RequestOptionFunc
 
@@ -360,6 +363,18 @@ func NewAuthSourceClient(as AuthSource, options ...ClientOptionFunc) (*Client, e
 		if err := fn(c); err != nil {
 			return nil, err
 		}
+	}
+
+	// Wire up the cookie jar.
+	// The ClientOptionFunc can't do it directly,
+	// because the user may also specify HTTPClient
+	// and we want the order of passing those to matter
+	// as little as possible.
+	if c.jar != nil {
+		if c.client.HTTPClient.Jar != nil {
+			return nil, errors.New("conflicting option functions when creating client. The provided HTTP Client already has a Jar configured, therefore you can't use gitlab.WithCookieJar")
+		}
+		c.client.HTTPClient.Jar = c.jar
 	}
 
 	// If no custom limiter was set using a client option, configure
@@ -991,7 +1006,7 @@ func parseID(id any) (string, error) {
 	}
 }
 
-// Helper function to escape a project identifier.
+// PathEscape is a helper function to escape a project identifier.
 func PathEscape(s string) string {
 	return strings.ReplaceAll(url.PathEscape(s), ".", "%2E")
 }
@@ -1175,7 +1190,7 @@ func (s AccessTokenAuthSource) Header(_ context.Context) (string, string, error)
 	return AccessTokenHeaderName, s.Token, nil
 }
 
-// passwordTokenSource implements the AuthSource interface for the OAuth 2.0
+// PasswordCredentialsAuthSource implements the AuthSource interface for the OAuth 2.0
 // resource owner password credentials flow.
 type PasswordCredentialsAuthSource struct {
 	Username string

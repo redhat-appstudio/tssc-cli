@@ -241,12 +241,14 @@ type DataDogService struct {
 // GitLab API docs:
 // https://docs.gitlab.com/api/project_integrations/#datadog
 type DataDogServiceProperties struct {
-	APIURL             string `url:"api_url,omitempty" json:"api_url,omitempty"`
-	DataDogEnv         string `url:"datadog_env,omitempty" json:"datadog_env,omitempty"`
-	DataDogService     string `url:"datadog_service,omitempty" json:"datadog_service,omitempty"`
-	DataDogSite        string `url:"datadog_site,omitempty" json:"datadog_site,omitempty"`
-	DataDogTags        string `url:"datadog_tags,omitempty" json:"datadog_tags,omitempty"`
-	ArchiveTraceEvents bool   `url:"archive_trace_events,omitempty" json:"archive_trace_events,omitempty"`
+	APIURL               string `url:"api_url,omitempty" json:"api_url,omitempty"`
+	DataDogEnv           string `url:"datadog_env,omitempty" json:"datadog_env,omitempty"`
+	DataDogService       string `url:"datadog_service,omitempty" json:"datadog_service,omitempty"`
+	DataDogSite          string `url:"datadog_site,omitempty" json:"datadog_site,omitempty"`
+	DataDogTags          string `url:"datadog_tags,omitempty" json:"datadog_tags,omitempty"`
+	ArchiveTraceEvents   bool   `url:"archive_trace_events,omitempty" json:"archive_trace_events,omitempty"`
+	DataDogCIVisibility  bool   `url:"datadog_ci_visibility,omitempty" json:"datadog_ci_visibility,omitempty"`
+	UseInheritedSettings bool   `url:"use_inherited_settings,omitempty" json:"use_inherited_settings,omitempty"`
 }
 
 // GetDataDogService gets DataDog service settings for a project.
@@ -258,7 +260,7 @@ func (s *ServicesService) GetDataDogService(pid any, options ...RequestOptionFun
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("projects/%s/services/datadog", PathEscape(project))
+	u := fmt.Sprintf("projects/%s/integrations/datadog", PathEscape(project))
 
 	req, err := s.client.NewRequest(http.MethodGet, u, nil, options)
 	if err != nil {
@@ -280,13 +282,15 @@ func (s *ServicesService) GetDataDogService(pid any, options ...RequestOptionFun
 // GitLab API docs:
 // https://docs.gitlab.com/api/project_integrations/#set-up-datadog
 type SetDataDogServiceOptions struct {
-	APIKey             *string `url:"api_key,omitempty" json:"api_key,omitempty"`
-	APIURL             *string `url:"api_url,omitempty" json:"api_url,omitempty"`
-	DataDogEnv         *string `url:"datadog_env,omitempty" json:"datadog_env,omitempty"`
-	DataDogService     *string `url:"datadog_service,omitempty" json:"datadog_service,omitempty"`
-	DataDogSite        *string `url:"datadog_site,omitempty" json:"datadog_site,omitempty"`
-	DataDogTags        *string `url:"datadog_tags,omitempty" json:"datadog_tags,omitempty"`
-	ArchiveTraceEvents *bool   `url:"archive_trace_events,omitempty" json:"archive_trace_events,omitempty"`
+	APIKey               *string `url:"api_key,omitempty" json:"api_key,omitempty"`
+	APIURL               *string `url:"api_url,omitempty" json:"api_url,omitempty"`
+	DataDogEnv           *string `url:"datadog_env,omitempty" json:"datadog_env,omitempty"`
+	DataDogService       *string `url:"datadog_service,omitempty" json:"datadog_service,omitempty"`
+	DataDogSite          *string `url:"datadog_site,omitempty" json:"datadog_site,omitempty"`
+	DataDogTags          *string `url:"datadog_tags,omitempty" json:"datadog_tags,omitempty"`
+	ArchiveTraceEvents   *bool   `url:"archive_trace_events,omitempty" json:"archive_trace_events,omitempty"`
+	DataDogCIVisibility  *bool   `url:"datadog_ci_visibility,omitempty" json:"datadog_ci_visibility,omitempty"`
+	UseInheritedSettings *bool   `url:"use_inherited_settings,omitempty" json:"use_inherited_settings,omitempty"`
 }
 
 // SetDataDogService sets DataDog service settings for a project.
@@ -298,7 +302,7 @@ func (s *ServicesService) SetDataDogService(pid any, opt *SetDataDogServiceOptio
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("projects/%s/services/datadog", PathEscape(project))
+	u := fmt.Sprintf("projects/%s/integrations/datadog", PathEscape(project))
 
 	req, err := s.client.NewRequest(http.MethodPut, u, opt, options)
 	if err != nil {
@@ -323,7 +327,7 @@ func (s *ServicesService) DeleteDataDogService(pid any, options ...RequestOption
 	if err != nil {
 		return nil, err
 	}
-	u := fmt.Sprintf("projects/%s/services/datadog", PathEscape(project))
+	u := fmt.Sprintf("projects/%s/integrations/datadog", PathEscape(project))
 
 	req, err := s.client.NewRequest(http.MethodDelete, u, nil, options)
 	if err != nil {
