@@ -23,8 +23,7 @@ type ConfigTools struct {
 	cm     *config.ConfigMapManager // cluster config manager
 	kube   *k8s.Kube                // kubernetes client
 
-	defaultDependencies config.Dependencies // default config dependencies
-	defaultCfg          *config.Config      // default config (embedded)
+	defaultCfg *config.Config // default config (embedded)
 }
 
 const (

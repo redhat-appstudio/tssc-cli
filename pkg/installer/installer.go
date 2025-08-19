@@ -14,15 +14,18 @@ import (
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
 	"github.com/redhat-appstudio/tssc-cli/pkg/monitor"
 	"github.com/redhat-appstudio/tssc-cli/pkg/printer"
+	"github.com/redhat-appstudio/tssc-cli/pkg/resolver"
 
 	"helm.sh/helm/v3/pkg/chartutil"
 )
 
+// Installer represents the "helm install" using its APIs, this component deploys
+// the informed dependency on the pre-configured namespace.
 type Installer struct {
-	logger *slog.Logger       // application logger
-	flags  *flags.Flags       // global flags
-	kube   *k8s.Kube          // kubernetes client
-	dep    *config.Dependency // dependency to install
+	logger *slog.Logger         // application logger
+	flags  *flags.Flags         // global flags
+	kube   *k8s.Kube            // kubernetes client
+	dep    *resolver.Dependency // dependency to install
 
 	valuesBytes []byte           // rendered values
 	values      chartutil.Values // helm chart values
@@ -85,8 +88,8 @@ func (i *Installer) Install(ctx context.Context) error {
 		i.logger,
 		i.flags,
 		i.kube,
-		i.dep.Namespace,
-		i.dep.Chart,
+		i.dep.Namespace(),
+		i.dep.Chart(),
 	)
 	if err != nil {
 		return err
@@ -144,7 +147,7 @@ func NewInstaller(
 	logger *slog.Logger,
 	f *flags.Flags,
 	kube *k8s.Kube,
-	dep *config.Dependency,
+	dep *resolver.Dependency,
 ) *Installer {
 	return &Installer{
 		logger: dep.LoggerWith(logger),

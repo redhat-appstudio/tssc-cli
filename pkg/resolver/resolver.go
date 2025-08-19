@@ -7,8 +7,6 @@ import (
 	"text/tabwriter"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
-
-	"helm.sh/helm/v3/pkg/chart"
 )
 
 // Resolver represents the actor that resolves dependencies between charts.
@@ -24,32 +22,35 @@ var ErrCircularDependency = fmt.Errorf("circular dependency detected")
 // ErrMissingDependency reports an unmet dependency.
 var ErrMissingDependency = fmt.Errorf("unmet dependency detected")
 
-// dependency returns the dependency for a chart. If the chart is associated with
-// a product, the dependency use the product namespace. If the chart contains a
-// "use-product-namespace" annotation, the dependency use the product namespace.
-// If no product is associated with the chart, the dependency use the installer
-// namespace.
-func (r *Resolver) dependency(hc *chart.Chart) (*config.Dependency, error) {
+// setDependencyNamespace sets the desired namespace on the informed dependency.
+// By default, charts are deployed on the same namespace than the installer, while
+// product assossiated dependencies will use the namespace configured for it.
+func (r *Resolver) setDependencyNamespace(d *Dependency) error {
 	var product string
 	// Check if the Helm chart should use the product namespace.
-	if p := r.collection.UseProductNamespace(hc); p != "" {
+	if p := d.UseProductNamespace(); p != "" {
 		product = p
 	}
 	// Check if the Helm chart is associated with a product, which takes
-	// precedence the "use-product-namespace" annotation.
-	if p := r.collection.ProductName(hc); p != "" {
+	// precedence over the "use-product-namespace" annotation.
+	if p := d.ProductName(); p != "" {
 		product = p
 	}
-	// When no product is found, use the installer namespace.
+
+	// Choosing the namespace for the dependency, a product chart will use what's
+	// defined for it, while regular charts will use the installer's namespace.
+	var namespace string
 	if product == "" {
-		return config.NewDependency(hc, r.cfg.Installer.Namespace), nil
+		namespace = r.cfg.Installer.Namespace
+	} else {
+		spec, err := r.cfg.GetProduct(product)
+		if err != nil {
+			return err
+		}
+		namespace = *spec.Namespace
 	}
-	// Given a product name is found, using the product namespace.
-	spec, err := r.cfg.GetProduct(product)
-	if err != nil {
-		return nil, err
-	}
-	return config.NewDependency(hc, *spec.Namespace), nil
+	d.SetNamespace(namespace)
+	return nil
 }
 
 // dependsOn checks if the chart has dependencies and resolves them. The
@@ -57,25 +58,26 @@ func (r *Resolver) dependency(hc *chart.Chart) (*config.Dependency, error) {
 // found, they are also resolved.
 func (r *Resolver) dependsOn(
 	parent string, // partent chart name
-	hc *chart.Chart, // helm chart instance
+	d *Dependency, // dependency instance
 	visited map[string]bool, // visited charts
 ) error {
 	// Ensure the chart is not visited again, to prevent circular dependencies.
-	chartName := hc.Name()
-	if visited[chartName] {
+	dependencyName := d.Name()
+	if visited[dependencyName] {
 		return fmt.Errorf("%w: a %q dependency requires %q",
-			ErrCircularDependency, chartName, chartName)
+			ErrCircularDependency, dependencyName, dependencyName)
 	}
-	visited[chartName] = true
-	defer delete(visited, chartName)
+	visited[dependencyName] = true
+	defer delete(visited, dependencyName)
 
-	for _, dependsOn := range r.collection.DependsOn(hc) {
-		dependsOnHC, err := r.collection.Get(dependsOn)
+	for _, dependsOn := range d.DependsOn() {
+		// Picking up the dependency from the collection by name.
+		dependsOnDep, err := r.collection.Get(dependsOn)
 		if err != nil {
 			return err
 		}
-		// Skiping when the Helm chart is associated with a disabled product.
-		if product := r.collection.ProductName(dependsOnHC); product != "" {
+		// Skiping when the next dependency is associated with a disabled product.
+		if product := dependsOnDep.ProductName(); product != "" {
 			productSpec, err := r.cfg.GetProduct(product)
 			if err != nil {
 				return err
@@ -84,15 +86,15 @@ func (r *Resolver) dependsOn(
 				continue
 			}
 		}
-		dep, err := r.dependency(dependsOnHC)
-		if err != nil {
+		// Setting the correct namespace in the dependency.
+		if err := r.setDependencyNamespace(dependsOnDep); err != nil {
 			return err
 		}
 		// Adding the Helm chart to the topology before the parent chart. The
 		// namespace is the installer's default.
-		r.topology.PrependBefore(parent, *dep)
+		r.topology.PrependBefore(parent, *dependsOnDep)
 		// Recursively resolving the dependencies.
-		if err = r.dependsOn(dependsOn, dependsOnHC, visited); err != nil {
+		if err = r.dependsOn(dependsOn, dependsOnDep, visited); err != nil {
 			return err
 		}
 	}
@@ -102,14 +104,16 @@ func (r *Resolver) dependsOn(
 // resolveEnabledProducts resolves the dependencies of enabled products.
 func (r *Resolver) resolveEnabledProducts() error {
 	for _, product := range r.cfg.GetEnabledProducts() {
-		hc, err := r.collection.GetProductChart(product.Name)
+		d, err := r.collection.GetProductDependency(product.Name)
 		if err != nil {
 			return err
 		}
+		// Products uses the namespace specified in the configuration.
+		d.SetNamespace(*product.Namespace)
 		// Product charts are added to the topology before required charts.
-		r.topology.Append(*config.NewDependency(hc, *product.Namespace))
+		r.topology.Append(*d)
 		// Recursively resolving the dependencies, added before this chart.
-		if err = r.dependsOn(hc.Name(), hc, map[string]bool{}); err != nil {
+		if err = r.dependsOn(d.Name(), d, map[string]bool{}); err != nil {
 			return err
 		}
 	}
@@ -120,22 +124,22 @@ func (r *Resolver) resolveEnabledProducts() error {
 // ensure all dependencies are met. It walks the charts in the Collection, and for
 // each entry verifies it it depends on any chart in the Topology.
 func (r *Resolver) resolveDependencies() error {
-	return r.collection.Walk(func(name string, hc chart.Chart) error {
-		// Skip charts that are associated with a product. These charts are
-		// already added to the topology.
-		if productName := r.collection.ProductName(&hc); productName != "" {
+	return r.collection.Walk(func(name string, d Dependency) error {
+		// Skip dependencies that are associated with a product. These have
+		// already been added to the topology.
+		if product := d.ProductName(); product != "" {
 			return nil
 		}
-		// Collecting the last Helm chart name that is required by the current
-		// chart, if any.
+		// Collecting the last dependency name that is required by the current
+		// chart (dependency), if any.
 		requiredBy := ""
-		for _, dependsOn := range r.collection.DependsOn(&hc) {
-			// Ensure the required chart is in the topology, when not in the
+		for _, dependsOn := range d.DependsOn() {
+			// Ensure the required dependency is in the topology, when not in the
 			// topology it is skipped.
 			if !r.topology.Contains(dependsOn) {
 				continue
 			}
-			// Ensures the if the required chart is in the collection.
+			// Ensures the required dependency is in the collection.
 			if _, err := r.collection.Get(dependsOn); err != nil {
 				return fmt.Errorf(
 					"%w: dependency %s not found for chart %s",
@@ -146,24 +150,23 @@ func (r *Resolver) resolveDependencies() error {
 			}
 			requiredBy = dependsOn
 		}
-		// If it's not required by any other chart, skip it.
+		// If it's not required by any other dependency, skip it.
 		if requiredBy == "" {
 			return nil
 		}
-		dep, err := r.dependency(&hc)
-		if err != nil {
+		// Setting the desired namespace in the dependency.
+		if err := r.setDependencyNamespace(&d); err != nil {
 			return err
 		}
-		// Append the current chart after the last chart in the collection that
-		// required it.
-		r.topology.AppendAfter(requiredBy, *dep)
-		// Recursively resolve dependencies for the current chart.
-		return r.dependsOn(name, &hc, map[string]bool{})
+		// Append the current dependency after the last one in the collection that
+		// requires it.
+		r.topology.AppendAfter(requiredBy, d)
+		// Recursively resolve dependencies.
+		return r.dependsOn(name, &d, map[string]bool{})
 	})
 }
 
-// Resolve resolves the dependencies of the charts in the collection generating
-// the installer topology.
+// Resolve resolves the all dependencies in the collection to create the topology.
 func (r *Resolver) Resolve() error {
 	if err := r.resolveEnabledProducts(); err != nil {
 		return err
@@ -177,14 +180,14 @@ func (r *Resolver) Print(w io.Writer) {
 	row := func(a ...any) {
 		fmt.Fprintf(table, "%s\t%s\t%s\t%s\t%s\n", a...)
 	}
-	row("Index", "Chart", "Namespace", "Product", "Depends-On")
-	for i, d := range r.topology.GetDependencies() {
-		dependsOn := r.collection.DependsOn(d.Chart)
+	row("Index", "Dependency", "Namespace", "Product", "Depends-On")
+	for i, d := range r.topology.Dependencies() {
+		dependsOn := d.DependsOn()
 		row(
 			fmt.Sprintf("%2d", i+1),
-			d.Chart.Name(),
-			d.Namespace,
-			r.collection.ProductName(d.Chart),
+			d.Name(),
+			d.Namespace(),
+			d.ProductName(),
 			strings.Join(dependsOn, ", "),
 		)
 	}

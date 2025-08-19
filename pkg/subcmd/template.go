@@ -9,6 +9,7 @@ import (
 	"github.com/redhat-appstudio/tssc-cli/pkg/flags"
 	"github.com/redhat-appstudio/tssc-cli/pkg/installer"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
+	"github.com/redhat-appstudio/tssc-cli/pkg/resolver"
 
 	"github.com/spf13/cobra"
 )
@@ -25,10 +26,11 @@ type Template struct {
 	// TODO: add support for "--validate", so the rendered resources are validated
 	// against the cluster during templating.
 
-	valuesTemplatePath string            // path to the values template file
-	showValues         bool              // show rendered values
-	showManifests      bool              // show rendered manifests
-	dep                config.Dependency // chart to render
+	valuesTemplatePath string              // path to the values template file
+	showValues         bool                // show rendered values
+	showManifests      bool                // show rendered manifests
+	namespace          string              // dependency namespace
+	dep                resolver.Dependency // chart to render
 }
 
 var _ Interface = &Template{}
@@ -75,10 +77,13 @@ func (t *Template) Complete(args []string) error {
 	if len(args) != 1 {
 		return fmt.Errorf("expecting one chart, got %d", len(args))
 	}
-	var err error
-	if t.dep.Chart, err = t.cfs.GetChartFiles(args[0]); err != nil {
+
+	hc, err := t.cfs.GetChartFiles(args[0])
+	if err != nil {
 		return err
 	}
+	t.dep = *resolver.NewDependencyWithNamespace(hc, t.namespace)
+
 	if t.cfg, err = bootstrapConfig(t.cmd.Context(), t.kube); err != nil {
 		return err
 	}
@@ -93,7 +98,7 @@ func (t *Template) Validate() error {
 	if !t.flags.DryRun {
 		return fmt.Errorf("template command is only available in dry-run mode")
 	}
-	if t.dep.Chart == nil {
+	if t.dep.Chart() == nil {
 		return fmt.Errorf("missing chart path")
 	}
 	return nil
@@ -157,16 +162,16 @@ func NewTemplate(
 		flags:         f,
 		cfs:           cfs,
 		kube:          kube,
-		dep:           config.Dependency{Namespace: "default"},
 		showValues:    true,
 		showManifests: true,
+		namespace:     "default",
 	}
 
 	p := t.cmd.PersistentFlags()
 
 	flags.SetValuesTmplFlag(p, &t.valuesTemplatePath)
 
-	p.StringVar(&t.dep.Namespace, "namespace", t.dep.Namespace,
+	p.StringVar(&t.namespace, "namespace", t.namespace,
 		"namespace to use on template rendering")
 	p.BoolVar(&t.showValues, "show-values", t.showValues,
 		"show values template rendered payload")

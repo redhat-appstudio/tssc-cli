@@ -61,8 +61,10 @@ func (d *Deploy) Cmd() *cobra.Command {
 
 // log logger with contextual information.
 func (d *Deploy) log() *slog.Logger {
-	return d.flags.LoggerWith(
-		d.logger.With(flags.ValuesTemplateFlag, d.valuesTemplatePath))
+	return d.flags.LoggerWith(d.logger.With(
+		"chart-path", d.chartPath,
+		flags.ValuesTemplateFlag, d.valuesTemplatePath,
+	))
 }
 
 // Complete verifies the object is complete.
@@ -113,13 +115,17 @@ func (d *Deploy) Run() error {
 		return err
 	}
 
-	var deps []config.Dependency
+	var deps resolver.Dependencies
 	if d.chartPath == "" {
 		d.log().Debug("Installing all dependencies...")
-		deps = topology.GetDependencies()
+		deps = topology.Dependencies()
 	} else {
 		d.log().Debug("Installing a single Helm chart...")
-		dep, err := topology.GetDependencyForChart(d.chartPath)
+		hc, err := d.cfs.GetChartFiles(d.chartPath)
+		if err != nil {
+			return err
+		}
+		dep, err := topology.GetDependency(hc.Name())
 		if err != nil {
 			return err
 		}
@@ -132,8 +138,8 @@ func (d *Deploy) Run() error {
 			"# [%d/%d] Deploying '%s' in '%s'.\n",
 			index+1,
 			len(deps),
-			dep.Chart.Name(),
-			dep.Namespace,
+			dep.Name(),
+			dep.Namespace(),
 		)
 		fmt.Printf("%s\n", strings.Repeat("#", 60))
 

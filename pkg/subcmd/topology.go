@@ -31,7 +31,7 @@ Report the dependency topology of the installer based on the cluster configurati
 and Helm charts. It will output a table with the following columns: 
 
   - Index: the index of the chart in the dependency graph.
-  - Chart: the name of the Helm chart.
+  - Dependency: the name of the Helm chart.
   - Namespace: the OpenShift namespace where the chart is installed.
   - Product: the name of the product that the chart is associated with.
   - Depends-On: comma-separated list of charts that this chart depends on.
