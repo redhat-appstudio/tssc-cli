@@ -28,19 +28,19 @@ func TestNewTopology(t *testing.T) {
 	g.Expect(err).To(o.Succeed())
 	infrastructureDep := NewDependencyWithNamespace(infrastructureChart, ns)
 
-	backingServicesChart, err := cfs.GetChartFiles("charts/tssc-backing-services")
+	iamChart, err := cfs.GetChartFiles("charts/tssc-iam")
 	g.Expect(err).To(o.Succeed())
-	backingServicesDep := NewDependencyWithNamespace(backingServicesChart, ns)
+	iamDep := NewDependencyWithNamespace(iamChart, ns)
 
 	topology := NewTopology()
 
 	t.Run("Append", func(t *testing.T) {
-		topology.Append(*backingServicesDep)
+		topology.Append(*iamDep)
 	})
 
 	t.Run("PrependBefore", func(t *testing.T) {
 		topology.PrependBefore(
-			backingServicesChart.Name(),
+			iamDep.Name(),
 			*openShiftDep,
 			*infrastructureDep,
 		)
@@ -61,7 +61,7 @@ func TestNewTopology(t *testing.T) {
 			"tssc-openshift",
 			"tssc-subscriptions",
 			"tssc-infrastructure",
-			"tssc-backing-services",
+			"tssc-iam",
 		}))
 	})
 }
