@@ -20,7 +20,7 @@ spec:
       description: "Job specification metadata"
       type: string
     - name: rhads-config
-      description: "RHADS configuration data (single config or array of configs with separators)"
+      description: "RHADS configuration data (single config or array of configs with separators, base64 encoded)"
       type: string
     - name: mode
       description: "Pipeline mode: 'single' for single config, 'periodic' for multiple configs with separators"
@@ -43,6 +43,7 @@ spec:
     - name: context-pipeline-run-name
       description: "Context pipeline run name for labeling"
       type: string
+      default: ""
   results:
     - name: pipeline-runs
       description: "Array of started pipeline run names"
@@ -86,6 +87,13 @@ spec:
 
         echo "Starting pipelines in mode: $MODE"
         echo "Using Konflux metadata: namespace=$KONFLUX_NAMESPACE, app=$KONFLUX_APPLICATION_NAME, component=$KONFLUX_COMPONENT_NAME"
+        
+        # Decode base64 encoded rhads-config
+        echo "Decoding base64 encoded rhads-config..."
+        DECODED_RHADS_CONFIG=$(echo "$RHADS_CONFIG" | base64 -d)
+        echo "Decoded rhads-config content:"
+        echo "$DECODED_RHADS_CONFIG"
+        
         # Extract images from snapshot
         tssc_image=$(echo "${SNAPSHOT}" | jq -r '.components[] |select(.name=="tssc-cli").containerImage')
         tssc_test_image=$(echo "${SNAPSHOT}" | jq -r '.components[] |select(.name=="tssc-test").containerImage')
@@ -152,15 +160,87 @@ spec:
         if [[ "$MODE" == "periodic" ]]; then
           echo "Processing periodic configurations..."
           echo "RHADS Config data:"
-          echo "$RHADS_CONFIG"
+          echo "$DECODED_RHADS_CONFIG"
+          
+          # Validate that we have some content
+          if [[ -z "$DECODED_RHADS_CONFIG" ]]; then
+            echo "ERROR: No RHADS configuration data found"
+            exit 1
+          fi
+          
+          # Validate that the configuration contains expected content
+          if [[ ! "$DECODED_RHADS_CONFIG" =~ OCP= ]]; then
+            echo "ERROR: RHADS configuration does not contain OCP version information"
+            echo "Configuration content: $DECODED_RHADS_CONFIG"
+            exit 1
+          fi
+          
           # Count configurations for informational purposes
-          CONFIG_COUNT=$(echo "$RHADS_CONFIG" | grep -o -e "---CONFIG_SEPARATOR---" | wc -l)
-          CONFIG_COUNT=$((CONFIG_COUNT + 1))  # Add 1 because there's one more config than separators
+          if echo "$DECODED_RHADS_CONFIG" | grep -q "---CONFIG_SEPARATOR---"; then
+            SEPARATOR_COUNT=$(echo "$DECODED_RHADS_CONFIG" | grep -o -e "---CONFIG_SEPARATOR---" | wc -l)
+            echo "DEBUG: Found $SEPARATOR_COUNT separators using grep"
+          else
+            SEPARATOR_COUNT=0
+            echo "DEBUG: No separators found, setting SEPARATOR_COUNT=0"
+          fi
+          
+          CONFIG_COUNT=$((SEPARATOR_COUNT + 1))  # Add 1 because there's one more config than separators
           echo "Found $CONFIG_COUNT configurations to process"
-          # Create a pipeline for every RHADS config using pure bash string manipulation
-          CONFIG_INDEX=0
-          # Split the configurations using bash string manipulation
-          REMAINING_CONFIG="$RHADS_CONFIG"
+          
+          # Handle single configuration case more robustly
+          if [[ $CONFIG_COUNT -eq 1 ]]; then
+            echo "Processing single configuration in periodic mode..."
+            FULL_CONFIG="$DECODED_RHADS_CONFIG"
+            # Trim whitespace from config
+            FULL_CONFIG=$(echo "$FULL_CONFIG" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+            CONFIG_INDEX=1
+            echo "==================== Configuration $CONFIG_INDEX ===================="
+            echo "$FULL_CONFIG"
+            echo "================================================================"
+            
+            # Split RHADS config and testplan
+            if [[ "$FULL_CONFIG" == *"---TESTPLAN_START---"* ]]; then
+              # Extract RHADS config (before testplan)
+              CONFIG="${FULL_CONFIG%%---TESTPLAN_START---*}"
+              # Extract testplan (between markers)
+              TESTPLAN_PART="${FULL_CONFIG#*---TESTPLAN_START---}"
+              TESTPLAN="${TESTPLAN_PART%%---TESTPLAN_END---*}"
+              # Trim whitespace from both parts
+              CONFIG=$(echo "$CONFIG" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+              TESTPLAN=$(echo "$TESTPLAN" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+              echo "RHADS Config:"
+              echo "$CONFIG"
+              echo "Testplan:"
+              echo "$TESTPLAN"
+              # Encode testplan to base64
+              TESTPLAN_B64=$(echo "$TESTPLAN" | base64 -w 0)
+              echo "Testplan base64: $TESTPLAN_B64"
+            else
+              # No testplan found, use config as-is
+              CONFIG="$FULL_CONFIG"
+              TESTPLAN_B64=""
+              echo "No testplan found for this configuration"
+            fi
+            
+            # Extract OCP version from this configuration
+            if [[ $CONFIG =~ OCP=\"([^\"]+)\" ]]; then
+              OCP_VERSION="${BASH_REMATCH[1]}"
+              echo "Successfully extracted OCP version: $OCP_VERSION from configuration $CONFIG_INDEX"
+              # Start pipeline using shared function
+              start_single_pipeline "$OCP_VERSION" "$CONFIG" "$TESTPLAN_B64" "-config$CONFIG_INDEX"
+            else
+              echo "ERROR: Could not extract OCP version from configuration $CONFIG_INDEX"
+              echo "Configuration content: $CONFIG"
+              exit 1
+            fi
+          else
+            # Multiple configurations - use the existing separator-based logic
+            echo "DEBUG: CONFIG_COUNT is not 1, using multiple configuration logic"
+            echo "Processing multiple configurations using separator logic..."
+            # Create a pipeline for every RHADS config using pure bash string manipulation
+            CONFIG_INDEX=0
+            # Split the configurations using bash string manipulation
+            REMAINING_CONFIG="$DECODED_RHADS_CONFIG"
           while [[ -n "$REMAINING_CONFIG" ]]; do
             # Find the next separator
             if [[ "$REMAINING_CONFIG" == *"---CONFIG_SEPARATOR---"* ]]; then
@@ -209,13 +289,16 @@ spec:
               # Start pipeline using shared function
               start_single_pipeline "$OCP_VERSION" "$CONFIG" "$TESTPLAN_B64" "-config$CONFIG_INDEX"
             else
-              echo "Warning: Could not extract OCP version from configuration $CONFIG_INDEX"
+              echo "ERROR: Could not extract OCP version from configuration $CONFIG_INDEX"
+              echo "Configuration content: $CONFIG"
+              exit 1
             fi
-          done
-          echo "Started $CONFIG_INDEX sub-pipelines for periodic testing"
+                      done
+            echo "Started $CONFIG_INDEX sub-pipelines for periodic testing"
+          fi
         else
           echo "Processing single configuration..."
-          RHADS_CONFIG_CONTENT=$(echo "$RHADS_CONFIG")
+          RHADS_CONFIG_CONTENT=$(echo "$DECODED_RHADS_CONFIG")
           echo "Configuration:"
           echo "$RHADS_CONFIG_CONTENT"
           # Extract OCP versions from RHADS config
@@ -230,6 +313,12 @@ spec:
         fi
 
         echo "Total pipelines started: ${#PIPELINERUNS_ARRAY[@]}"
+        
+        # Validate that we started at least one pipeline
+        if [[ ${#PIPELINERUNS_ARRAY[@]} -eq 0 ]]; then
+          echo "ERROR: No pipelines were started. Check the configuration data and OCP version extraction."
+          exit 1
+        fi
 
         # Store results
         printf '%s\n' "${PIPELINERUNS_ARRAY[@]}" | jq -R . | jq -s . > $(results.pipeline-runs.path)

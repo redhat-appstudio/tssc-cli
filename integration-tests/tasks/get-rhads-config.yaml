@@ -16,7 +16,7 @@ spec:
       type: string
   results:
     - name: rhads-config
-      description: "The RHADS configuration content"
+      description: "The RHADS configuration content (base64 encoded)"
   steps:
     - name: get-rhads-config
       image: quay.io/konflux-ci/appstudio-utils:ab6b0b8e40e440158e7288c73aff1cf83a2cc8a9@sha256:24179f0efd06c65d16868c2d7eb82573cce8e43533de6cea14fec3b7446e0b14
@@ -40,4 +40,8 @@ spec:
         rhads_config_file_location="integration-tests/config/rhads-config"
         curl -o rhads-config https://raw.githubusercontent.com/$REPO_ORG/$GIT_REPO/refs/heads/$BRANCH/$rhads_config_file_location
 
-        cat rhads-config | tee $(results.rhads-config.path)
+        echo "Original rhads-config content:"
+        cat rhads-config
+        
+        echo "Encoding rhads-config to base64:"
+        cat rhads-config | base64 -w 0 | tee $(results.rhads-config.path)

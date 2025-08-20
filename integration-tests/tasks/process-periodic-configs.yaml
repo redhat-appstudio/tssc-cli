@@ -17,7 +17,11 @@ spec:
       type: string
   results:
     - name: rhads-config
-      description: "JSON formatted configuration data (array of configs from PICT)"
+      description: "JSON formatted configuration data (array of configs from PICT, base64 encoded)"
+    - name: periodic-pict
+      description: "Periodic PICT file content for sharing between steps"
+    - name: pict-output
+      description: "PICT output content for sharing between steps"
   steps:
     - name: download-pict-file
       image: quay.io/konflux-ci/appstudio-utils:ab6b0b8e40e440158e7288c73aff1cf83a2cc8a9@sha256:24179f0efd06c65d16868c2d7eb82573cce8e43533de6cea14fec3b7446e0b14
@@ -33,6 +37,8 @@ spec:
         curl -o periodic.pict https://raw.githubusercontent.com/jkopriva/tssc-cli/refs/heads/RHTAP-5290/integration-tests/config/periodic/periodic.pict
 
         cat periodic.pict
+        # Store the content as a result for the next step
+        cat periodic.pict > $(results.periodic-pict.path)
 
     - name: generate-pict-output
       image: quay.io/apodhrad/pict:latest
@@ -40,8 +46,12 @@ spec:
         #!/usr/bin/env bash
         set -euo pipefail
         echo "Running PICT to generate test configurations..."
+        # Get the periodic.pict content from the previous step
+        cat $(results.periodic-pict.path) > periodic.pict
         pict periodic.pict -r -o:1 > pict_output.txt
         cat pict_output.txt
+        # Store the PICT output as a result for the next step
+        cat pict_output.txt > $(results.pict-output.path)
 
     - name: process-config
       image: quay.io/konflux-ci/appstudio-utils:ab6b0b8e40e440158e7288c73aff1cf83a2cc8a9@sha256:24179f0efd06c65d16868c2d7eb82573cce8e43533de6cea14fec3b7446e0b14
@@ -50,6 +60,13 @@ spec:
         set -euo pipefail
 
         echo "Converting PICT output to RHADS configuration format..."
+        # Get the PICT output from the previous step
+        cat $(results.pict-output.path) > pict_output.txt
+        
+        # Set local variable for maximum configurations (0 = all configurations)
+        MAX_CONFIGS=1  # Change this value to limit configurations (e.g., 5, 10, etc.)
+        echo "Maximum configurations requested: $MAX_CONFIGS (0 = all configurations)"
+        
         # Debug: Check if pict_output.txt exists and show its content
         if [[ ! -f pict_output.txt ]]; then
           echo "ERROR: pict_output.txt not found!"
@@ -59,6 +76,7 @@ spec:
         echo "Content of pict_output.txt:"
         cat pict_output.txt
         echo "--- End of pict_output.txt ---"
+        
         # Download testplan template
         echo "Downloading testplan template..."
         curl -o testplan_template.json https://raw.githubusercontent.com/jkopriva/tssc-cli/refs/heads/RHTAP-5290/integration-tests/config/periodic/testplan_template.json
@@ -69,6 +87,7 @@ spec:
         fi
         echo "Testplan template content:"
         cat testplan_template.json
+        
         # Convert PICT output to multiple RHADS configurations
         CONFIG_COUNT=0
         OUTPUT_FILE="/tmp/rhads_output.txt"
@@ -76,6 +95,12 @@ spec:
         while IFS=$'\t' read -r -a fields; do
           echo "Processing line: ${fields[*]}"
           if [[ "${fields[0]}" != "OCP" && -n "${fields[0]:-}" ]]; then  # Skip header line and empty lines
+            # Check if we've reached the maximum number of configurations
+            if [[ $MAX_CONFIGS -gt 0 && $CONFIG_COUNT -ge $MAX_CONFIGS ]]; then
+              echo "Reached maximum number of configurations ($MAX_CONFIGS), stopping processing"
+              break
+            fi
+            
             if [[ $CONFIG_COUNT -gt 0 ]]; then
               echo "---CONFIG_SEPARATOR---" >> "$OUTPUT_FILE"
             fi
@@ -105,8 +130,17 @@ spec:
           fi
         done < pict_output.txt
         echo "Generated $CONFIG_COUNT RHADS configurations with testplans"
+        if [[ $MAX_CONFIGS -gt 0 ]]; then
+          echo "Limited to $MAX_CONFIGS configurations as requested"
+        else
+          echo "No limit applied - processed all available configurations"
+        fi
         # Copy output to result path
         echo "Final output:"
         cat "$OUTPUT_FILE"
-        cat "$OUTPUT_FILE" > "$(results.rhads-config.path)"
-        echo "Configuration processing completed successfully"
+        #cat "$OUTPUT_FILE" > "$(results.rhads-config.path)"
+
+        echo "Encoding rhads-config to base64:"
+        cat "$OUTPUT_FILE" | base64 -w 0 | tee $(results.rhads-config.path)
+        
+        echo "Configuration count: $CONFIG_COUNT"
