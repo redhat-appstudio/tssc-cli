@@ -116,13 +116,9 @@ func (g *GithubIntegration) setOpenShiftURLs(
 		g.log().Debug("Using OpenShift cluster for GitHub App callback URL")
 	}
 	if g.webhookURL == "" {
-		product, err := cfg.GetProduct(config.OpenShiftPipelines)
-		if err != nil {
-			return err
-		}
 		g.webhookURL = fmt.Sprintf(
 			"https://pipelines-as-code-controller-%s.%s",
-			product.GetNamespace(),
+			"openshift-pipelines", // Static namespace
 			ingressDomain,
 		)
 		g.log().Debug("Using OpenShift cluster for GitHub App webhook URL")
