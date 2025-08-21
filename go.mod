@@ -10,15 +10,15 @@ require (
 	github.com/google/go-github/v74 v74.0.0
 	github.com/mark3labs/mcp-go v0.37.0
 	github.com/onsi/gomega v1.38.0
-	github.com/openshift/api v0.0.0-20250819183553-4bbb180684bc
+	github.com/openshift/api v0.0.0-20250821122144-58dfa6dd85fa
 	github.com/openshift/client-go v0.0.0-20250811163556-6193816ae379
 	github.com/pkg/errors v0.9.1
 	github.com/quay/claircore v1.5.39
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/pflag v1.0.7
-	gitlab.com/gitlab-org/api/client-go v0.141.1
+	gitlab.com/gitlab-org/api/client-go v0.141.2
 	gopkg.in/yaml.v3 v3.0.1
-	helm.sh/helm/v3 v3.18.5
+	helm.sh/helm/v3 v3.18.6
 	k8s.io/api v0.33.4
 	k8s.io/apimachinery v0.33.4
 	k8s.io/cli-runtime v0.33.4
@@ -147,7 +147,7 @@ require (
 	k8s.io/component-base v0.33.4 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20250701173324-9bd5c66d9911 // indirect
-	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397 // indirect
+	k8s.io/utils v0.0.0-20250820121507-0af2bda4dd1d // indirect
 	oras.land/oras-go/v2 v2.6.0 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/kustomize/api v0.20.1 // indirect
