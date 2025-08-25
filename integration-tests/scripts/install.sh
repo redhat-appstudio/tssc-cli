@@ -118,6 +118,18 @@ jenkins_integration() {
   fi
 }
 
+azure_integration() {
+  if [[ " ${pipeline_config[*]} " =~ " azure " ]]; then
+    echo "[INFO] Integrates an exising Azure DevOps server into TSSC"
+
+    AZURE_TOKEN="${AZURE_TOKEN:-$(cat /usr/local/rhtap-cli-install/azure-token)}"
+    AZURE_HOST="${AZURE_HOST:-$(cat /usr/local/rhtap-cli-install/azure-host)}"
+    AZURE_ORGANIZATION="${AZURE_ORGANIZATION:-$(cat /usr/local/rhtap-cli-install/azure-organization)}"
+
+    "${TSSC_BINARY}" integration --kube-config "$KUBECONFIG" azure --token="$AZURE_TOKEN" --host="$AZURE_HOST" --organization="$AZURE_ORGANIZATION" --force
+  fi
+}
+
 gitlab_integration() {
   if [[ " ${scm_config[*]} " =~ " gitlab " ]]; then
     echo "[INFO] Configure Gitlab integration into TSSC"
@@ -253,6 +265,7 @@ install_tssc() {
   set +x
 
   jenkins_integration
+  azure_integration
   tpa_integration
   acs_integration
   github_integration
