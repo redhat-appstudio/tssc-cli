@@ -121,7 +121,7 @@ spec:
             TPA_VALUE="${fields[4]:-new}"
             ACS_VALUE="${fields[2]:-new}"
             # Create testplan by replacing placeholders in template more precisely
-            sed "s/\"git\": \"github\"/\"git\": \"$SCM_VALUE\"/g; s/\"ci\": \"tekton\"/\"ci\": \"$PIPELINE_VALUE\"/g; s/\"registry\": \"quay.io\"/\"registry\": \"$REGISTRY_VALUE\"/g; s/\"tpa\": \"local\"/\"tpa\": \"$TPA_VALUE\"/g; s/\"acs\": \"local\"/\"acs\": \"$ACS_VALUE\"/g" testplan_template.json >> "$OUTPUT_FILE"
+            sed "s/SCM_PROVIDER/$SCM_VALUE/g; s/CI_PROVIDER/$PIPELINE_VALUE/g; s/REGISTRY/$REGISTRY_VALUE/g; s/TPA_PROVIDER/$TPA_VALUE/g; s/ACS_PROVIDER/$ACS_VALUE/g" testplan_template.json >> "$OUTPUT_FILE"
             echo "---TESTPLAN_END---" >> "$OUTPUT_FILE"
             CONFIG_COUNT=$((CONFIG_COUNT + 1))
             echo "Generated configuration $CONFIG_COUNT with testplan"
@@ -138,7 +138,6 @@ spec:
         # Copy output to result path
         echo "Final output:"
         cat "$OUTPUT_FILE"
-        #cat "$OUTPUT_FILE" > "$(results.rhads-config.path)"
 
         echo "Encoding rhads-config to base64:"
         cat "$OUTPUT_FILE" | base64 -w 0 | tee $(results.rhads-config.path)

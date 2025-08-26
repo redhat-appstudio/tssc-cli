@@ -4,11 +4,11 @@
     ],
     "tssc": [
         {
-            "git": "github",
-            "ci": "tekton",
-            "registry": "quay.io",
-            "tpa": "local",
-            "acs": "local"
+            "git": "SCM_PROVIDER",
+            "ci": "CI_PROVIDER",
+            "registry": "REGISTRY",
+            "tpa": "TPA_PROVIDER",
+            "acs": "ACS_PROVIDER"
         }
     ],
     "tests": [
