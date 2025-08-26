@@ -62,11 +62,9 @@ spec:
         echo "Converting PICT output to RHADS configuration format..."
         # Get the PICT output from the previous step
         cat $(results.pict-output.path) > pict_output.txt
-        
         # Set local variable for maximum configurations (0 = all configurations)
         MAX_CONFIGS=1  # Change this value to limit configurations (e.g., 5, 10, etc.)
         echo "Maximum configurations requested: $MAX_CONFIGS (0 = all configurations)"
-        
         # Debug: Check if pict_output.txt exists and show its content
         if [[ ! -f pict_output.txt ]]; then
           echo "ERROR: pict_output.txt not found!"
@@ -76,7 +74,6 @@ spec:
         echo "Content of pict_output.txt:"
         cat pict_output.txt
         echo "--- End of pict_output.txt ---"
-        
         # Download testplan template
         echo "Downloading testplan template..."
         curl -o testplan_template.json https://raw.githubusercontent.com/jkopriva/tssc-cli/refs/heads/RHTAP-5290/integration-tests/config/periodic/testplan_template.json
@@ -87,14 +84,19 @@ spec:
         fi
         echo "Testplan template content:"
         cat testplan_template.json
-        
         # Convert PICT output to multiple RHADS configurations
         CONFIG_COUNT=0
         OUTPUT_FILE="/tmp/rhads_output.txt"
         > "$OUTPUT_FILE"  # Initialize empty file
         while IFS=$'\t' read -r -a fields; do
           echo "Processing line: ${fields[*]}"
+          echo "DEBUG: Number of fields: ${#fields[@]}"
           if [[ "${fields[0]}" != "OCP" && -n "${fields[0]:-}" ]]; then  # Skip header line and empty lines
+            # Validate that we have enough fields
+            if [[ ${#fields[@]} -lt 6 ]]; then
+              echo "ERROR: Expected at least 6 fields, got ${#fields[@]} fields: ${fields[*]}"
+              exit 1
+            fi
             # Check if we've reached the maximum number of configurations
             if [[ $MAX_CONFIGS -gt 0 && $CONFIG_COUNT -ge $MAX_CONFIGS ]]; then
               echo "Reached maximum number of configurations ($MAX_CONFIGS), stopping processing"
@@ -106,20 +108,27 @@ spec:
             fi
             # Build RHADS config format for this PICT line
             echo "OCP=\"${fields[0]:-4.18}\"" >> "$OUTPUT_FILE"
-            echo "AUTH=\"${fields[1]:-github}\"" >> "$OUTPUT_FILE"
-            echo "ACS=\"${fields[2]:-new}\"" >> "$OUTPUT_FILE"
-            echo "REGISTRY=\"${fields[3]:-quay.io}\"" >> "$OUTPUT_FILE"
-            echo "TPA=\"${fields[4]:-new}\"" >> "$OUTPUT_FILE"
-            echo "SCM=\"${fields[5]:-github}\"" >> "$OUTPUT_FILE"
-            echo "PIPELINE=\"${fields[6]:-tekton}\"" >> "$OUTPUT_FILE"
+            # Derive AUTH from SCM (github/gitlab/bitbucket -> github/gitlab)
+            SCM_VALUE="${fields[4]:-github}"
+            if [[ "$SCM_VALUE" == "bitbucket" ]]; then
+              AUTH_VALUE="github"  # bitbucket uses github auth
+            else
+              AUTH_VALUE="$SCM_VALUE"
+            fi
+            echo "AUTH=\"$AUTH_VALUE\"" >> "$OUTPUT_FILE"
+            echo "ACS=\"${fields[1]:-local}\"" >> "$OUTPUT_FILE"
+            echo "REGISTRY=\"${fields[2]:-quay}\"" >> "$OUTPUT_FILE"
+            echo "TPA=\"${fields[3]:-local}\"" >> "$OUTPUT_FILE"
+            echo "SCM=\"${fields[4]:-github}\"" >> "$OUTPUT_FILE"
+            echo "PIPELINE=\"${fields[5]:-tekton}\"" >> "$OUTPUT_FILE"
             # Generate corresponding testplan
             echo "---TESTPLAN_START---" >> "$OUTPUT_FILE"
             # Extract values for testplan
-            SCM_VALUE="${fields[5]:-github}"
-            PIPELINE_VALUE="${fields[6]:-tekton}"
-            REGISTRY_VALUE="${fields[3]:-quay.io}"
-            TPA_VALUE="${fields[4]:-new}"
-            ACS_VALUE="${fields[2]:-new}"
+            SCM_VALUE="${fields[4]:-github}"
+            PIPELINE_VALUE="${fields[5]:-tekton}"
+            REGISTRY_VALUE="${fields[2]:-quay}"
+            TPA_VALUE="${fields[3]:-local}"
+            ACS_VALUE="${fields[1]:-local}"
             # Create testplan by replacing placeholders in template more precisely
             sed "s/SCM_PROVIDER/$SCM_VALUE/g; s/CI_PROVIDER/$PIPELINE_VALUE/g; s/REGISTRY/$REGISTRY_VALUE/g; s/TPA_PROVIDER/$TPA_VALUE/g; s/ACS_PROVIDER/$ACS_VALUE/g" testplan_template.json >> "$OUTPUT_FILE"
             echo "---TESTPLAN_END---" >> "$OUTPUT_FILE"

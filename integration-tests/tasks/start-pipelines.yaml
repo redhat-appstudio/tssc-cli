@@ -87,13 +87,11 @@ spec:
 
         echo "Starting pipelines in mode: $MODE"
         echo "Using Konflux metadata: namespace=$KONFLUX_NAMESPACE, app=$KONFLUX_APPLICATION_NAME, component=$KONFLUX_COMPONENT_NAME"
-        
         # Decode base64 encoded rhads-config
         echo "Decoding base64 encoded rhads-config..."
         DECODED_RHADS_CONFIG=$(echo "$RHADS_CONFIG" | base64 -d)
         echo "Decoded rhads-config content:"
         echo "$DECODED_RHADS_CONFIG"
-        
         # Extract images from snapshot
         tssc_image=$(echo "${SNAPSHOT}" | jq -r '.components[] |select(.name=="tssc-cli").containerImage')
         tssc_test_image=$(echo "${SNAPSHOT}" | jq -r '.components[] |select(.name=="tssc-test").containerImage')
@@ -161,21 +159,12 @@ spec:
           echo "Processing periodic configurations..."
           echo "RHADS Config data:"
           echo "$DECODED_RHADS_CONFIG"
-          
           # Validate that we have some content
           if [[ -z "$DECODED_RHADS_CONFIG" ]]; then
             echo "ERROR: No RHADS configuration data found"
             exit 1
           fi
-          
-          # Validate that the configuration contains expected content
-          if [[ ! "$DECODED_RHADS_CONFIG" =~ OCP= ]]; then
-            echo "ERROR: RHADS configuration does not contain OCP version information"
-            echo "Configuration content: $DECODED_RHADS_CONFIG"
-            exit 1
-          fi
-          
-          # Count configurations for informational purposes
+          # Count configurations
           if echo "$DECODED_RHADS_CONFIG" | grep -q "---CONFIG_SEPARATOR---"; then
             SEPARATOR_COUNT=$(echo "$DECODED_RHADS_CONFIG" | grep -o -e "---CONFIG_SEPARATOR---" | wc -l)
             echo "DEBUG: Found $SEPARATOR_COUNT separators using grep"
@@ -187,7 +176,7 @@ spec:
           CONFIG_COUNT=$((SEPARATOR_COUNT + 1))  # Add 1 because there's one more config than separators
           echo "Found $CONFIG_COUNT configurations to process"
           
-          # Handle single configuration case more robustly
+          # Handle single configuration case
           if [[ $CONFIG_COUNT -eq 1 ]]; then
             echo "Processing single configuration in periodic mode..."
             FULL_CONFIG="$DECODED_RHADS_CONFIG"
@@ -234,8 +223,7 @@ spec:
               exit 1
             fi
           else
-            # Multiple configurations - use the existing separator-based logic
-            echo "DEBUG: CONFIG_COUNT is not 1, using multiple configuration logic"
+            # Multiple configurations
             echo "Processing multiple configurations using separator logic..."
             # Create a pipeline for every RHADS config using pure bash string manipulation
             CONFIG_INDEX=0

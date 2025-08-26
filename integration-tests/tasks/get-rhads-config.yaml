@@ -42,6 +42,5 @@ spec:
 
         echo "Original rhads-config content:"
         cat rhads-config
-        
         echo "Encoding rhads-config to base64:"
         cat rhads-config | base64 -w 0 | tee $(results.rhads-config.path)
