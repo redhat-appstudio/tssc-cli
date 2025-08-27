@@ -102,7 +102,6 @@ spec:
               echo "Reached maximum number of configurations ($MAX_CONFIGS), stopping processing"
               break
             fi
-            
             if [[ $CONFIG_COUNT -gt 0 ]]; then
               echo "---CONFIG_SEPARATOR---" >> "$OUTPUT_FILE"
             fi
@@ -150,5 +149,4 @@ spec:
 
         echo "Encoding rhads-config to base64:"
         cat "$OUTPUT_FILE" | base64 -w 0 | tee $(results.rhads-config.path)
-        
         echo "Configuration count: $CONFIG_COUNT"

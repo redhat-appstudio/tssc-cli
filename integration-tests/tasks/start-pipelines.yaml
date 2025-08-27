@@ -172,10 +172,8 @@ spec:
             SEPARATOR_COUNT=0
             echo "DEBUG: No separators found, setting SEPARATOR_COUNT=0"
           fi
-          
           CONFIG_COUNT=$((SEPARATOR_COUNT + 1))  # Add 1 because there's one more config than separators
           echo "Found $CONFIG_COUNT configurations to process"
-          
           # Handle single configuration case
           if [[ $CONFIG_COUNT -eq 1 ]]; then
             echo "Processing single configuration in periodic mode..."
@@ -186,7 +184,6 @@ spec:
             echo "==================== Configuration $CONFIG_INDEX ===================="
             echo "$FULL_CONFIG"
             echo "================================================================"
-            
             # Split RHADS config and testplan
             if [[ "$FULL_CONFIG" == *"---TESTPLAN_START---"* ]]; then
               # Extract RHADS config (before testplan)
@@ -210,7 +207,6 @@ spec:
               TESTPLAN_B64=""
               echo "No testplan found for this configuration"
             fi
-            
             # Extract OCP version from this configuration
             if [[ $CONFIG =~ OCP=\"([^\"]+)\" ]]; then
               OCP_VERSION="${BASH_REMATCH[1]}"
@@ -301,7 +297,6 @@ spec:
         fi
 
         echo "Total pipelines started: ${#PIPELINERUNS_ARRAY[@]}"
-        
         # Validate that we started at least one pipeline
         if [[ ${#PIPELINERUNS_ARRAY[@]} -eq 0 ]]; then
           echo "ERROR: No pipelines were started. Check the configuration data and OCP version extraction."
