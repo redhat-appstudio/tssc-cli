@@ -18,8 +18,8 @@
         "acs": "local"
       },
       {
-        "git": "gitlab",
-        "ci": "gitlabci",
+        "git": "github",
+        "ci": "tekton",
         "registry": "nexus",
         "tpa": "local",
         "acs": "local"
