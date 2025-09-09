@@ -1,176 +1,80 @@
-package integrations
+package integration
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
-	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
 
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 )
 
-// defaultPublicBitBucketHost is the default host for public BitBucket.
-const defaultPublicBitBucketHost = "bitbucket.org"
-
-// BitBucketIntegration represents the TSSC BitBucket integration.
-type BitBucketIntegration struct {
-	logger *slog.Logger // application logger
-	kube   *k8s.Kube    // kubernetes client
-
-	force bool // overwrite the existing secret
-
-	appPassword string // BitBucket application password
-	host        string // BitBucket host
-	username    string // BitBucket username
+// BitBucket represents the BitBucket integration coordinates.
+type BitBucket struct {
+	appPassword string // password
+	host        string // endpoint
+	username    string // username
 }
 
-// PersistentFlags sets the persistent flags for the BitBucket integration.
-func (g *BitBucketIntegration) PersistentFlags(c *cobra.Command) {
+var _ Interface = &BitBucket{}
+
+// PersistentFlags adds the persistent flags to the informed Cobra command.
+func (b *BitBucket) PersistentFlags(c *cobra.Command) {
 	p := c.PersistentFlags()
 
-	p.BoolVar(&g.force, "force", g.force,
-		"Overwrite the existing secret")
-
-	p.StringVar(&g.appPassword, "app-password", g.appPassword,
-		"BitBucket application password")
-	p.StringVar(&g.host, "host", g.host,
-		fmt.Sprintf("BitBucket host, defaults to %q", defaultPublicBitBucketHost))
-	p.StringVar(&g.username, "username", g.username,
+	p.StringVar(&b.host, "host", b.host,
+		"BitBucket API endpoint")
+	p.StringVar(&b.username, "username", b.username,
 		"BitBucket username")
+	p.StringVar(&b.appPassword, "app-password", b.appPassword,
+		"BitBucket application password")
 
-	for _, f := range []string{"app-password", "username"} {
+	for _, f := range []string{"host", "username", "app-password"} {
 		if err := c.MarkPersistentFlagRequired(f); err != nil {
 			panic(err)
 		}
 	}
 }
 
-// log logger with contextual information.
-func (g *BitBucketIntegration) log() *slog.Logger {
-	return g.logger.With(
-		"force", g.force,
-		"host", g.host,
-		"app-password", len(g.appPassword),
-		"username", g.username,
-	)
-}
-
-// Validate checks if the required configuration is set.
-func (g *BitBucketIntegration) Validate() error {
+// SetArgument sets additional arguments to the integration.
+func (b *BitBucket) SetArgument(_, _ string) error {
 	return nil
 }
 
-// EnsureNamespace ensures the namespace needed for the BitBucket integration
-// secret is created on the cluster.
-func (g *BitBucketIntegration) EnsureNamespace(
-	ctx context.Context,
-	cfg *config.Config,
-) error {
-	return k8s.EnsureOpenShiftProject(
-		ctx,
-		g.log(),
-		g.kube,
-		cfg.Installer.Namespace,
+// LoggerWith decorates the logger with the integration flags.
+func (b *BitBucket) LoggerWith(logger *slog.Logger) *slog.Logger {
+	return logger.With(
+		"username", b.username,
+		"app-password-len", len(b.appPassword),
+		"host", b.host,
 	)
 }
 
-// secretName returns the secret name for the integration. The name is "lazy"
-// generated to make sure configuration is already loaded.
-func (g *BitBucketIntegration) secretName(cfg *config.Config) types.NamespacedName {
-	return types.NamespacedName{
-		Namespace: cfg.Installer.Namespace,
-		Name:      "tssc-bitbucket-integration",
-	}
+// Validate validates the integration.
+func (b *BitBucket) Validate() error {
+	return nil
 }
 
-// prepareSecret checks if the secret already exists, and if so, it will delete
-// the secret if the force flag is enabled.
-func (g *BitBucketIntegration) prepareSecret(
-	ctx context.Context,
-	cfg *config.Config,
-) error {
-	g.log().Debug("Checking if integration secret exists")
-	exists, err := k8s.SecretExists(ctx, g.kube, g.secretName(cfg))
-	if err != nil {
-		return err
-	}
-	if !exists {
-		g.log().Debug("Integration secret does not exist")
-		return nil
-	}
-	if !g.force {
-		g.log().Debug("Integration secret already exists")
-		return fmt.Errorf("%w: %s",
-			ErrSecretAlreadyExists, g.secretName(cfg).String())
-	}
-	g.log().Debug("Integration secret already exists, recreating it")
-	return k8s.DeleteSecret(ctx, g.kube, g.secretName(cfg))
+// Type shares the Kubernetes secret type for this integration.
+func (b *BitBucket) Type() corev1.SecretType {
+	return corev1.SecretTypeOpaque
 }
 
-// store creates the secret with the integration data.
-func (g *BitBucketIntegration) store(
-	ctx context.Context,
-	cfg *config.Config,
-) error {
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: g.secretName(cfg).Namespace,
-			Name:      g.secretName(cfg).Name,
-		},
-		Type: corev1.SecretTypeOpaque,
-		Data: map[string][]byte{
-			"appPassword": []byte(g.appPassword),
-			"host":        []byte(g.host),
-			"username":    []byte(g.username),
-		},
-	}
-	logger := g.log().With(
-		"secret-namespace", secret.GetNamespace(),
-		"secret-name", secret.GetName(),
-	)
-
-	logger.Debug("Creating integration secret")
-	coreClient, err := g.kube.CoreV1ClientSet(g.secretName(cfg).Namespace)
-	if err != nil {
-		return err
-	}
-	_, err = coreClient.Secrets(g.secretName(cfg).Namespace).
-		Create(ctx, secret, metav1.CreateOptions{})
-	if err == nil {
-		logger.Info("Integration secret created successfully!")
-	}
-	return err
+// Data returns the BitBucket integration data.
+func (b *BitBucket) Data(
+	_ context.Context,
+	_ *config.Config,
+) (map[string][]byte, error) {
+	return map[string][]byte{
+		"host":        []byte(b.host),
+		"username":    []byte(b.username),
+		"appPassword": []byte(b.appPassword),
+	}, nil
 }
 
-// Create creates the BitBucket integration Kubernetes secret.
-func (g *BitBucketIntegration) Create(
-	ctx context.Context,
-	cfg *config.Config,
-) error {
-	logger := g.log()
-	logger.Info("Inspecting the cluster for an existing BitBucket integration secret")
-	if err := g.prepareSecret(ctx, cfg); err != nil {
-		return err
-	}
-	return g.store(ctx, cfg)
-}
-
-func NewBitBucketIntegration(
-	logger *slog.Logger,
-	kube *k8s.Kube,
-) *BitBucketIntegration {
-	return &BitBucketIntegration{
-		logger: logger,
-		kube:   kube,
-
-		force:       false,
-		appPassword: "",
-		host:        defaultPublicBitBucketHost,
-		username:    "",
-	}
+// NewBitBucket creates a new BitBucket integration instance. By default it uses
+// the public BitBucket host.
+func NewBitBucket() *BitBucket {
+	return &BitBucket{host: "bitbucket.org"}
 }

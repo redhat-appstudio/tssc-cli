@@ -4,8 +4,9 @@ import (
 	"log/slog"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
-	"github.com/redhat-appstudio/tssc-cli/pkg/integrations"
+	"github.com/redhat-appstudio/tssc-cli/pkg/integration"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/spf13/cobra"
 )
@@ -13,16 +14,11 @@ import (
 // IntegrationJenkins is the sub-command for the "integration jenkins",
 // responsible for creating and updating the Jenkins integration secret.
 type IntegrationJenkins struct {
-	cmd    *cobra.Command // cobra command
-	logger *slog.Logger   // application logger
-	cfg    *config.Config // installer configuration
-	kube   *k8s.Kube      // kubernetes client
-
-	jenkinsIntegration *integrations.JenkinsIntegration // jenkins integration
-
-	token    string // API token
-	url      string // service URL
-	username string // user to connect to the service
+	cmd         *cobra.Command           // cobra command
+	logger      *slog.Logger             // application logger
+	cfg         *config.Config           // installer configuration
+	kube        *k8s.Kube                // kubernetes client
+	integration *integration.Integration // integration instance
 }
 
 var _ Interface = &IntegrationJenkins{}
@@ -36,29 +32,28 @@ for RHDH.
 `
 
 // Cmd exposes the cobra instance.
-func (d *IntegrationJenkins) Cmd() *cobra.Command {
-	return d.cmd
+func (j *IntegrationJenkins) Cmd() *cobra.Command {
+	return j.cmd
 }
 
 // Complete is a no-op in this case.
-func (d *IntegrationJenkins) Complete(args []string) error {
+func (j *IntegrationJenkins) Complete(args []string) error {
 	var err error
-	d.cfg, err = bootstrapConfig(d.cmd.Context(), d.kube)
+	j.cfg, err = bootstrapConfig(j.cmd.Context(), j.kube)
 	return err
 }
 
 // Validate checks if the required configuration is set.
-func (d *IntegrationJenkins) Validate() error {
-	return d.jenkinsIntegration.Validate()
+func (j *IntegrationJenkins) Validate() error {
+	return j.integration.Validate()
 }
 
 // Run creates or updates the Jenkins integration secret.
-func (d *IntegrationJenkins) Run() error {
-	err := d.jenkinsIntegration.EnsureNamespace(d.cmd.Context(), d.cfg)
-	if err != nil {
-		return err
-	}
-	return d.jenkinsIntegration.Create(d.cmd.Context(), d.cfg)
+func (j *IntegrationJenkins) Run() error {
+	return j.integration.Create(j.cmd.Context(), j.cfg, types.NamespacedName{
+		Namespace: j.cfg.Installer.Namespace,
+		Name:      "tssc-jenkins-integration",
+	})
 }
 
 // NewIntegrationJenkins creates the sub-command for the "integration jenkins"
@@ -66,10 +61,9 @@ func (d *IntegrationJenkins) Run() error {
 func NewIntegrationJenkins(
 	logger *slog.Logger,
 	kube *k8s.Kube,
+	i *integration.Integration,
 ) *IntegrationJenkins {
-	jenkinsIntegration := integrations.NewJenkinsIntegration(logger, kube)
-
-	d := &IntegrationJenkins{
+	j := &IntegrationJenkins{
 		cmd: &cobra.Command{
 			Use:          "jenkins [flags]",
 			Short:        "Integrates a Jenkins instance into TSSC",
@@ -77,12 +71,10 @@ func NewIntegrationJenkins(
 			SilenceUsage: true,
 		},
 
-		logger: logger,
-		kube:   kube,
-
-		jenkinsIntegration: jenkinsIntegration,
+		logger:      logger,
+		kube:        kube,
+		integration: i,
 	}
-
-	jenkinsIntegration.PersistentFlags(d.cmd)
-	return d
+	i.PersistentFlags(j.cmd)
+	return j
 }

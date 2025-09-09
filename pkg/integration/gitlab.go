@@ -1,4 +1,4 @@
-package integrations
+package integration
 
 import (
 	"context"
@@ -8,51 +8,42 @@ import (
 	"net/http"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
-	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
+
 	"github.com/spf13/cobra"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 )
 
-// defaultPublicGitLabHost is the default host for public GitLab.
-const defaultPublicGitLabHost = "gitlab.com"
-
-// GitLabIntegration represents the TSSC GitLab integration.
-type GitLabIntegration struct {
+// GitLab represents the GitLab integration coordinates.
+type GitLab struct {
 	logger *slog.Logger // application logger
-	kube   *k8s.Kube    // kubernetes client
 
-	force    bool // overwrite the existing secret
-	insecure bool // Skips tls verification on api calls
-
-	host         string // GitLab host
-	clientId     string // GitLab application client id
-	clientSecret string // GitLab application client secret
-	token        string // API token credentials
-	group        string // GitLab group name
+	insecure  bool   // skip tls verification
+	host      string // gitlab host
+	group     string // gitlab group name
+	appID     string // gitlab application client id
+	appSecret string // gitlab application client secret
+	token     string // api token credentials
 }
 
-// PersistentFlags sets the persistent flags for the GitLab integration.
-func (g *GitLabIntegration) PersistentFlags(c *cobra.Command) {
+var _ Interface = &GitLab{}
+
+// PersistentFlags adds the persistent flags to the informed Cobra command.
+func (g *GitLab) PersistentFlags(c *cobra.Command) {
 	p := c.PersistentFlags()
 
-	p.BoolVar(&g.force, "force", g.force,
-		"Overwrite the existing secret")
-	p.BoolVar(&g.insecure, "insecure", g.insecure,
-		"Skips tls verification on api calls")
-
 	p.StringVar(&g.host, "host", g.host,
-		"GitLab host, defaults to 'gitlab.com'")
-	p.StringVar(&g.clientId, "app-id", g.clientId,
-		"GitLab application client id")
-	p.StringVar(&g.clientSecret, "app-secret", g.clientSecret,
+		"GitLab hostname")
+	p.BoolVar(&g.insecure, "insecure", g.insecure,
+		"Skips TLS verification on API calls")
+	p.StringVar(&g.group, "group", g.group,
+		"GitLab group name")
+	p.StringVar(&g.appID, "app-id", g.appID,
+		"GitLab application client ID")
+	p.StringVar(&g.appSecret, "app-secret", g.appSecret,
 		"GitLab application client secret")
 	p.StringVar(&g.token, "token", g.token,
 		"GitLab API token")
-	p.StringVar(&g.group, "group", g.group,
-		"GitLab group name")
 
 	for _, f := range []string{"token", "group"} {
 		if err := c.MarkPersistentFlagRequired(f); err != nil {
@@ -61,182 +52,100 @@ func (g *GitLabIntegration) PersistentFlags(c *cobra.Command) {
 	}
 }
 
-// log logger with contextual information.
-func (g *GitLabIntegration) log() *slog.Logger {
-	return g.logger.With(
-		"force", g.force,
-		"insecure", g.insecure,
+// SetArgument sets additional arguments to the integration.
+func (g *GitLab) SetArgument(string, string) error {
+	return nil
+}
+
+// LoggerWith decorates the logger with the integration flags.
+func (g *GitLab) LoggerWith(logger *slog.Logger) *slog.Logger {
+	return logger.With(
 		"host", g.host,
-		"clientId", g.clientId,
-		"clientSecret-len", len(g.clientSecret),
-		"token-len", len(g.token),
+		"insecure", g.insecure,
 		"group", g.group,
+		"app-id", g.appID,
+		"app-secret-len", len(g.appSecret),
+		"token-len", len(g.token),
 	)
 }
 
-// Validate checks if the required configuration is set.
-func (g *GitLabIntegration) Validate() error {
-	if g.clientId != "" && g.clientSecret == "" {
+// log logger with integration attributes.
+func (g *GitLab) log() *slog.Logger {
+	return g.LoggerWith(g.logger)
+}
+
+// Type returns the type of the integration.
+func (g *GitLab) Type() corev1.SecretType {
+	return corev1.SecretTypeOpaque
+}
+
+// Validate validates the integration configuration.
+func (g *GitLab) Validate() error {
+	if g.appID != "" && g.appSecret == "" {
 		return fmt.Errorf("app-secret is required when id is specified")
 	}
-	if g.clientId == "" && g.clientSecret != "" {
+	if g.appID == "" && g.appSecret != "" {
 		return fmt.Errorf("app-id is required when app-secret is specified")
 	}
 	return nil
 }
 
-// EnsureNamespace ensures the namespace needed for the GitLab integration secret
-// is created on the cluster.
-func (g *GitLabIntegration) EnsureNamespace(
-	ctx context.Context,
-	cfg *config.Config,
-) error {
-	return k8s.EnsureOpenShiftProject(
-		ctx,
-		g.log(),
-		g.kube,
-		cfg.Installer.Namespace,
+// getCurrentGitLabUser returns the current username authenticated, using the
+// informed access token.
+func (g *GitLab) getCurrentGitLabUser() (string, error) {
+	gitLabURL := fmt.Sprintf("https://%s", g.host)
+
+	transport := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: g.insecure,
+			MinVersion:         tls.VersionTLS12,
+		},
+	}
+
+	client, err := gitlab.NewClient(
+		g.token,
+		gitlab.WithBaseURL(gitLabURL),
+		gitlab.WithHTTPClient(&http.Client{Transport: transport}),
 	)
-}
-
-// secretName returns the secret name for the integration. The name is "lazy"
-// generated to make sure configuration is already loaded.
-func (g *GitLabIntegration) secretName(cfg *config.Config) types.NamespacedName {
-	return types.NamespacedName{
-		Namespace: cfg.Installer.Namespace,
-		Name:      "tssc-gitlab-integration",
-	}
-}
-
-// prepareSecret checks if the secret already exists, and if so, it will delete
-// the secret if the force flag is enabled.
-func (g *GitLabIntegration) prepareSecret(
-	ctx context.Context,
-	cfg *config.Config,
-) error {
-	g.log().Debug("Checking if integration secret exists")
-	exists, err := k8s.SecretExists(ctx, g.kube, g.secretName(cfg))
 	if err != nil {
-		return err
-	}
-	if !exists {
-		g.log().Debug("Integration secret does not exist")
-		return nil
-	}
-	if !g.force {
-		g.log().Debug("Integration secret already exists")
-		return fmt.Errorf("%w: %s",
-			ErrSecretAlreadyExists, g.secretName(cfg).String())
-	}
-	g.log().Debug("Integration secret already exists, recreating it")
-	return k8s.DeleteSecret(ctx, g.kube, g.secretName(cfg))
-}
-
-// getCurrentGitLabUser gets the current user name authenticated with access token
-func (g *GitLabIntegration) getCurrentGitLabUser() (string, error) {
-	url := fmt.Sprintf("https://%s", g.host)
-	logger := g.log()
-
-	cl, err := gitlab.NewClient(g.token, gitlab.WithBaseURL(url))
-	if err != nil {
-		logger.Error("Error building gitlab client")
+		g.log().Error("Error building gitlab client")
 		return "", err
 	}
 
-	if g.insecure {
-		insecureTransport := &http.Transport{
-		    TLSClientConfig: &tls.Config{InsecureSkipVerify: true, MinVersion: tls.VersionTLS12},
-	    }
-
-	    hcl := &http.Client{Transport: insecureTransport}
-
-	    cl, err = gitlab.NewClient(g.token, gitlab.WithBaseURL(url), gitlab.WithHTTPClient(hcl))
-	    if err != nil {
-		    logger.Error("Error building gitlab client")
-		    return "", err
-	    }
-	}
-
-	user, _, err := cl.Users.CurrentUser()
+	user, _, err := client.Users.CurrentUser()
 	if err != nil {
-		logger.Error("Error getting user")
+		g.log().Error("Error getting user")
 		return "", err
 	}
-
 	return user.Username, nil
 }
 
-// store creates the secret with the integration data.
-func (g *GitLabIntegration) store(
-	ctx context.Context,
-	cfg *config.Config,
-) error {
-	// Getting the user name
+// Data returns the GitLab integration data, using the local configuration and
+// username obtained on the fly.
+func (g *GitLab) Data(
+	_ context.Context,
+	_ *config.Config,
+) (map[string][]byte, error) {
 	username, err := g.getCurrentGitLabUser()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: g.secretName(cfg).Namespace,
-			Name:      g.secretName(cfg).Name,
-		},
-		Type: corev1.SecretTypeOpaque,
-		Data: map[string][]byte{
-			"clientId":     []byte(g.clientId),
-			"clientSecret": []byte(g.clientSecret),
-			"host":         []byte(g.host),
-			"token":        []byte(g.token),
-			"group":        []byte(g.group),
-			"username":     []byte(username),
-		},
-	}
-	logger := g.log().With(
-		"secret-namespace", secret.GetNamespace(),
-		"secret-name", secret.GetName(),
-	)
-
-	logger.Debug("Creating integration secret")
-	coreClient, err := g.kube.CoreV1ClientSet(g.secretName(cfg).Namespace)
-	if err != nil {
-		return err
-	}
-	_, err = coreClient.Secrets(g.secretName(cfg).Namespace).
-		Create(ctx, secret, metav1.CreateOptions{})
-	if err == nil {
-		logger.Info("Integration secret created successfully!")
-	}
-	return err
+	return map[string][]byte{
+		"host":         []byte(g.host),
+		"group":        []byte(g.group),
+		"clientId":     []byte(g.appID),
+		"clientSecret": []byte(g.appSecret),
+		"username":     []byte(username),
+		"token":        []byte(g.token),
+	}, nil
 }
 
-// Create creates the GitLab integration Kubernetes secret.
-func (g *GitLabIntegration) Create(
-	ctx context.Context,
-	cfg *config.Config,
-) error {
-	logger := g.log()
-	logger.Info("Inspecting the cluster for an existing GitLab integration secret")
-	if err := g.prepareSecret(ctx, cfg); err != nil {
-		return err
-	}
-	return g.store(ctx, cfg)
-}
-
-func NewGitLabIntegration(
-	logger *slog.Logger,
-	kube *k8s.Kube,
-) *GitLabIntegration {
-	return &GitLabIntegration{
+// NewGitLab instantiate a new GitLab integration. By default it uses the public
+// GitLab host.
+func NewGitLab(logger *slog.Logger) *GitLab {
+	return &GitLab{
 		logger: logger,
-		kube:   kube,
-
-		force:        false,
-		insecure:     false,
-		host:         defaultPublicGitLabHost,
-		clientId:     "",
-		clientSecret: "",
-		token:        "",
-		group:        "",
+		host:   "gitlab.com",
 	}
 }
