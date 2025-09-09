@@ -1,4 +1,4 @@
-package integrations
+package integration
 
 import (
 	"context"
@@ -6,50 +6,38 @@ import (
 	"log/slog"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
-	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
 
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 )
 
-// defaultPublicAzureHost is the default host for public Azure.
-const defaultPublicAzureHost = "dev.azure.com"
-
-// AzureIntegration represents the TSSC Azure integration.
-type AzureIntegration struct {
-	logger *slog.Logger // application logger
-	kube   *k8s.Kube    // kubernetes client
-
-	force bool // overwrite the existing secret
-
-	host         string // Azure host
-	token        string // API token credentials
-	org          string // Azure organization name
-	clientId     string // Azure client ID
-	clientSecret string // Azure client secret
-	tenantId     string // Azure tenant ID
+// Azure represents the Azure integration coordinates.
+type Azure struct {
+	host         string // azure host
+	token        string // api token credentials
+	org          string // azure organization name
+	clientID     string // azure client id
+	clientSecret string // azure client secret
+	tenantID     string // azure tenant id
 }
 
-// PersistentFlags sets the persistent flags for the Azure integration.
-func (g *AzureIntegration) PersistentFlags(c *cobra.Command) {
+var _ Interface = &Azure{}
+
+// PersistentFlags adds the persistent flags to the informed Cobra command.
+func (a *Azure) PersistentFlags(c *cobra.Command) {
 	p := c.PersistentFlags()
 
-	p.BoolVar(&g.force, "force", g.force,
-		"Overwrite the existing secret")
-
-	p.StringVar(&g.host, "host", g.host,
+	p.StringVar(&a.host, "host", a.host,
 		"Azure host")
-	p.StringVar(&g.token, "token", g.token,
+	p.StringVar(&a.token, "token", a.token,
 		"Azure API token")
-	p.StringVar(&g.org, "organization", g.org,
+	p.StringVar(&a.org, "organization", a.org,
 		"Azure organization name")
-	p.StringVar(&g.clientId, "client-id", g.clientId,
+	p.StringVar(&a.clientID, "client-id", a.clientID,
 		"Azure client ID")
-	p.StringVar(&g.clientSecret, "client-secret", g.clientSecret,
+	p.StringVar(&a.clientSecret, "client-secret", a.clientSecret,
 		"Azure client secret")
-	p.StringVar(&g.tenantId, "tenant-id", g.tenantId,
+	p.StringVar(&a.tenantID, "tenant-id", a.tenantID,
 		"Azure tenant ID")
 
 	for _, f := range []string{"host", "organization", "token"} {
@@ -59,142 +47,58 @@ func (g *AzureIntegration) PersistentFlags(c *cobra.Command) {
 	}
 }
 
-// log logger with contextual information.
-func (g *AzureIntegration) log() *slog.Logger {
-	return g.logger.With(
-		"force", g.force,
-		"host", g.host,
-		"token-len", len(g.token),
-		"organization", g.org,
-		"clientId", g.clientId,
-		"clientSecret-len", len(g.clientSecret),
-		"tenantId-len", len(g.tenantId),
+// SetArgument sets additional arguments to the integration.
+func (a *Azure) SetArgument(string, string) error {
+	return nil
+}
+
+// LoggerWith decorates the logger with the integration flags.
+func (a *Azure) LoggerWith(logger *slog.Logger) *slog.Logger {
+	return logger.With(
+		"host", a.host,
+		"token-len", len(a.token),
+		"organization", a.org,
+		"client-id", a.clientID,
+		"client-secret-len", len(a.clientSecret),
+		"tenant-id-len", len(a.tenantID),
 	)
 }
 
-// Validate checks if the required configuration is set.
-func (g *AzureIntegration) Validate() error {
-	if g.clientId == "" && (g.clientSecret != "" || g.tenantId != "") {
-		return fmt.Errorf("client-id is required when client-secret or tenant-id is specified")
+// Validate ensures the Azure flags are valid.
+func (a *Azure) Validate() error {
+	if a.clientID == "" && (a.clientSecret != "" || a.tenantID != "") {
+		return fmt.Errorf(
+			"client-id is required when client-secret or tenant-id is specified")
 	}
-	if g.clientSecret == "" && g.tenantId != "" {
+	if a.clientSecret == "" && a.tenantID != "" {
 		return fmt.Errorf("client-secret is required when tenant-id is specified")
 	}
-	if g.clientSecret != "" && g.tenantId == "" {
+	if a.clientSecret != "" && a.tenantID == "" {
 		return fmt.Errorf("tenant-id is required when client-secret is specified")
 	}
 	return nil
 }
 
-// EnsureNamespace ensures the namespace needed for the Azure integration secret
-// is created on the cluster.
-func (g *AzureIntegration) EnsureNamespace(
-	ctx context.Context,
-	cfg *config.Config,
-) error {
-	return k8s.EnsureOpenShiftProject(
-		ctx,
-		g.log(),
-		g.kube,
-		cfg.Installer.Namespace,
-	)
+// Type returns the type of the integration.
+func (a *Azure) Type() corev1.SecretType {
+	return corev1.SecretTypeOpaque
 }
 
-// secretName returns the secret name for the integration. The name is "lazy"
-// generated to make sure configuration is already loaded.
-func (g *AzureIntegration) secretName(cfg *config.Config) types.NamespacedName {
-	return types.NamespacedName{
-		Namespace: cfg.Installer.Namespace,
-		Name:      "tssc-azure-integration",
-	}
+// Data returns the data for the Azure integration secret.
+func (a *Azure) Data(context.Context, *config.Config) (map[string][]byte, error) {
+	return map[string][]byte{
+		"host":         []byte(a.host),
+		"token":        []byte(a.token),
+		"organization": []byte(a.org),
+		"clientId":     []byte(a.clientID),
+		"clientSecret": []byte(a.clientSecret),
+		"tenantId":     []byte(a.tenantID),
+	}, nil
 }
 
-// prepareSecret checks if the secret already exists, and if so, it will delete
-// the secret if the force flag is enabled.
-func (g *AzureIntegration) prepareSecret(
-	ctx context.Context,
-	cfg *config.Config,
-) error {
-	g.log().Debug("Checking if integration secret exists")
-	exists, err := k8s.SecretExists(ctx, g.kube, g.secretName(cfg))
-	if err != nil {
-		return err
-	}
-	if !exists {
-		g.log().Debug("Integration secret does not exist")
-		return nil
-	}
-	if !g.force {
-		g.log().Debug("Integration secret already exists")
-		return fmt.Errorf("%w: %s",
-			ErrSecretAlreadyExists, g.secretName(cfg).String())
-	}
-	g.log().Debug("Integration secret already exists, recreating it")
-	return k8s.DeleteSecret(ctx, g.kube, g.secretName(cfg))
-}
-
-// store creates the secret with the integration data.
-func (g *AzureIntegration) store(
-	ctx context.Context,
-	cfg *config.Config,
-) error {
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: g.secretName(cfg).Namespace,
-			Name:      g.secretName(cfg).Name,
-		},
-		Type: corev1.SecretTypeOpaque,
-		Data: map[string][]byte{
-			"host":         []byte(g.host),
-			"token":        []byte(g.token),
-			"organization": []byte(g.org),
-			"clientId":     []byte(g.clientId),
-			"clientSecret": []byte(g.clientSecret),
-			"tenantId":     []byte(g.tenantId),
-		},
-	}
-	logger := g.log().With(
-		"secret-namespace", secret.GetNamespace(),
-		"secret-name", secret.GetName(),
-	)
-
-	logger.Debug("Creating integration secret")
-	coreClient, err := g.kube.CoreV1ClientSet(g.secretName(cfg).Namespace)
-	if err != nil {
-		return err
-	}
-	_, err = coreClient.Secrets(g.secretName(cfg).Namespace).
-		Create(ctx, secret, metav1.CreateOptions{})
-	if err == nil {
-		logger.Info("Integration secret created successfully!")
-	}
-	return err
-}
-
-// Create creates the Azure integration Kubernetes secret.
-func (g *AzureIntegration) Create(
-	ctx context.Context,
-	cfg *config.Config,
-) error {
-	logger := g.log()
-	logger.Info("Inspecting the cluster for an existing Azure integration secret")
-	if err := g.prepareSecret(ctx, cfg); err != nil {
-		return err
-	}
-	return g.store(ctx, cfg)
-}
-
-func NewAzureIntegration(logger *slog.Logger, kube *k8s.Kube) *AzureIntegration {
-	return &AzureIntegration{
-		logger: logger,
-		kube:   kube,
-
-		force:        false,
-		host:         defaultPublicAzureHost,
-		token:        "",
-		org:          "",
-		clientId:     "",
-		clientSecret: "",
-		tenantId:     "",
+// NewAzure creates a new Azure integration instance with default public host.
+func NewAzure() *Azure {
+	return &Azure{
+		host: "dev.azure.com",
 	}
 }

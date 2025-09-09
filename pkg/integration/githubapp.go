@@ -1,4 +1,4 @@
-package integrations
+package integration
 
 import (
 	"context"
@@ -9,39 +9,37 @@ import (
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/githubapp"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
-	"github.com/spf13/cobra"
 
 	"github.com/google/go-github/scrape"
 	"github.com/google/go-github/v74/github"
+	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 )
 
-// GithubIntegration represents the Developer Hub GitHub integration.
-type GithubIntegration struct {
-	logger *slog.Logger // application logger
-	kube   *k8s.Kube    // kubernetes client
-
-	gitHubApp *githubapp.GitHubApp // github app client
-
-	force bool // overwrite the existing secret
+// GitHubApp represents the GitHub App integration attributes. It collects,
+// validates and issues the attributes to the GitHub App API.
+type GitHubApp struct {
+	logger *slog.Logger         // application logger
+	kube   *k8s.Kube            // kubernetes client
+	client *githubapp.GitHubApp // github API client
 
 	description string // application description
 	callbackURL string // github app callback URL
 	homepageURL string // github app homepage URL
 	webhookURL  string // github app webhook URL
+	token       string // github personal access token
 
-	token string // github personal access token
+	name string // application name
 }
 
-// PersistentFlags sets the persistent flags for the GitHub integration.
-// func (g *GithubIntegration) PersistentFlags(p *pflag.FlagSet) {
-func (g *GithubIntegration) PersistentFlags(cmd *cobra.Command) {
-	p := cmd.PersistentFlags()
+var _ Interface = &GitHubApp{}
 
-	p.BoolVar(&g.force, "force", g.force,
-		"Overwrite the existing secret")
+// GitHubAppName key to identify the GitHubApp name.
+const GitHubAppName = "name"
+
+// PersistentFlags adds the persistent flags to the informed Cobra command.
+func (g *GitHubApp) PersistentFlags(c *cobra.Command) {
+	p := c.PersistentFlags()
 
 	p.StringVar(&g.description, "description", g.description,
 		"GitHub App description")
@@ -54,55 +52,61 @@ func (g *GithubIntegration) PersistentFlags(cmd *cobra.Command) {
 	p.StringVar(&g.token, "token", g.token,
 		"GitHub personal access token")
 
-	if err := cmd.MarkPersistentFlagRequired("token"); err != nil {
+	if err := c.MarkPersistentFlagRequired("token"); err != nil {
 		panic(err)
 	}
+
+	// Including GitHub App API client flags.
+	g.client.PersistentFlags(c)
 }
 
-// log logger with contextual information.
-func (g *GithubIntegration) log() *slog.Logger {
-	return g.logger.With(
+// SetArgument sets the GitHub App name.
+func (g *GitHubApp) SetArgument(k, v string) error {
+	if k != GitHubAppName {
+		return fmt.Errorf("invalid argument %q (%q)", k, v)
+	}
+	g.name = v
+	return nil
+}
+
+// LoggerWith decorates the logger with the integration flags.
+func (g *GitHubApp) LoggerWith(logger *slog.Logger) *slog.Logger {
+	return logger.With(
+		"app-name", g.name,
 		"callback-url", g.callbackURL,
 		"webhook-url", g.webhookURL,
 		"homepage-url", g.homepageURL,
-		"force", g.force,
 		"token-len", len(g.token),
 	)
 }
 
-// Validate checks if the required configuration is set.
-func (g *GithubIntegration) Validate() error {
-	return g.gitHubApp.Validate()
+// log logger with integration attributes.
+func (g *GitHubApp) log() *slog.Logger {
+	return g.LoggerWith(g.logger)
 }
 
-// EnsureNamespace ensures the namespace needed for the GitHub integration secret
-// is created on the cluster.
-func (g *GithubIntegration) EnsureNamespace(
+// Validate validates the integration configuration.
+func (g *GitHubApp) Validate() error {
+	return g.client.Validate()
+}
+
+// Type returns the type of the integration.
+func (g *GitHubApp) Type() corev1.SecretType {
+	return corev1.SecretTypeOpaque
+}
+
+// setClusterURLs sets the cluster URLs for the integration. It uses the TSSC
+// configuration to identify Developer Hub's namespace, and queries the cluster to
+// obtain its ingress domain.
+func (g *GitHubApp) setClusterURLs(
 	ctx context.Context,
 	cfg *config.Config,
 ) error {
-	return k8s.EnsureOpenShiftProject(
-		ctx,
-		g.log(),
-		g.kube,
-		cfg.Installer.Namespace,
-	)
-}
-
-// setOpenShiftURLs sets the OpenShift cluster's URLs for the GitHub integration.
-// When the URLs are empty it checks the cluster to define them based on the
-// installer configuration and current Kubernetes context.
-func (g *GithubIntegration) setOpenShiftURLs(
-	ctx context.Context,
-	cfg *config.Config,
-) error {
-	ingressDomain, err := k8s.GetOpenShiftIngressDomain(ctx, g.kube)
+	developerHub, err := cfg.GetProduct(config.DeveloperHub)
 	if err != nil {
 		return err
 	}
-	g.log().Debug("OpenShift ingress domain", "domain", ingressDomain)
-
-	productRHDH, err := cfg.GetProduct(config.DeveloperHub)
+	ingressDomain, err := k8s.GetOpenShiftIngressDomain(ctx, g.kube)
 	if err != nil {
 		return err
 	}
@@ -110,151 +114,31 @@ func (g *GithubIntegration) setOpenShiftURLs(
 	if g.callbackURL == "" {
 		g.callbackURL = fmt.Sprintf(
 			"https://backstage-developer-hub-%s.%s/api/auth/github/handler/frame",
-			productRHDH.GetNamespace(),
+			developerHub.GetNamespace(),
 			ingressDomain,
 		)
-		g.log().Debug("Using OpenShift cluster for GitHub App callback URL")
 	}
 	if g.webhookURL == "" {
 		g.webhookURL = fmt.Sprintf(
 			"https://pipelines-as-code-controller-%s.%s",
-			"openshift-pipelines", // Static namespace
+			"openshift-pipelines",
 			ingressDomain,
 		)
-		g.log().Debug("Using OpenShift cluster for GitHub App webhook URL")
 	}
 	if g.homepageURL == "" {
 		g.homepageURL = fmt.Sprintf(
 			"https://backstage-developer-hub-%s.%s",
-			productRHDH.GetNamespace(),
+			developerHub.GetNamespace(),
 			ingressDomain,
 		)
-		g.log().Debug("Using OpenShift cluster for GitHub App homepage URL")
 	}
 	return nil
 }
 
-// secretName returns the secret name for the integration. The name is "lazy"
-// generated to make sure configuration is already loaded.
-func (g *GithubIntegration) secretName(cfg *config.Config) types.NamespacedName {
-	return types.NamespacedName{
-		Namespace: cfg.Installer.Namespace,
-		Name:      "tssc-github-integration",
-	}
-}
-
-// prepareSecret checks if the secret already exists, and if so, it will delete
-// the secret if the force flag is enabled.
-func (g *GithubIntegration) prepareSecret(
-	ctx context.Context,
-	cfg *config.Config,
-) error {
-	g.log().Debug("Checking if integration secret exists")
-	exists, err := k8s.SecretExists(ctx, g.kube, g.secretName(cfg))
-	if err != nil {
-		return err
-	}
-	if !exists {
-		g.log().Debug("Integration secret does not exist")
-		return nil
-	}
-	if !g.force {
-		g.log().Debug("Integration secret already exists")
-		return fmt.Errorf("%w: %s",
-			ErrSecretAlreadyExists, g.secretName(cfg).String())
-	}
-	g.log().Debug("Integration secret already exists, recreating it")
-	return k8s.DeleteSecret(ctx, g.kube, g.secretName(cfg))
-}
-
-// getCurrentGitHubUser gets the current user name authenticated with github token
-func (g *GithubIntegration) getCurrentGitHubUser(ctx context.Context, ghHost string) (string, error) {
-	gc := github.NewClient(nil).WithAuthToken(g.token)
-	if ghHost != "github.com" {
-		ghUrl := fmt.Sprintf("https://%s/api/v3/", ghHost)
-		ghuUrl := fmt.Sprintf("https://%s/api/uploads/", ghHost)
-		gce, err := gc.WithEnterpriseURLs(ghUrl, ghuUrl)
-		if err != nil {
-			return "", err
-		}
-		gc = gce
-	}
-
-	user, _, err := gc.Users.Get(ctx, "")
-	if err != nil {
-		return "", err
-	}
-
-	username := user.GetLogin()
-
-	return username, nil
-}
-
-// store creates the secret with the integration data.
-func (g *GithubIntegration) store(
-	ctx context.Context,
-	cfg *config.Config,
-	appConfig *github.AppConfig,
-) error {
-	u, err := url.Parse(appConfig.GetHTMLURL())
-	if err != nil {
-		return err
-	}
-
-	// Getting the user name
-	username, err := g.getCurrentGitHubUser(ctx, u.Hostname())
-	if err != nil {
-		return err
-	}
-
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: g.secretName(cfg).Namespace,
-			Name:      g.secretName(cfg).Name,
-		},
-		Type: corev1.SecretTypeOpaque,
-		Data: map[string][]byte{
-			"clientId":      []byte(appConfig.GetClientID()),
-			"clientSecret":  []byte(appConfig.GetClientSecret()),
-			"createdAt":     []byte(appConfig.CreatedAt.String()),
-			"externalURL":   []byte(appConfig.GetExternalURL()),
-			"htmlURL":       []byte(appConfig.GetHTMLURL()),
-			"host":          []byte(u.Hostname()),
-			"id":            []byte(github.Stringify(appConfig.GetID())),
-			"name":          []byte(appConfig.GetName()),
-			"nodeId":        []byte(appConfig.GetNodeID()),
-			"ownerLogin":    []byte(appConfig.Owner.GetLogin()),
-			"ownerId":       []byte(github.Stringify(appConfig.Owner.GetID())),
-			"pem":           []byte(appConfig.GetPEM()),
-			"slug":          []byte(appConfig.GetSlug()),
-			"updatedAt":     []byte(appConfig.UpdatedAt.String()),
-			"webhookSecret": []byte(appConfig.GetWebhookSecret()),
-			"token":         []byte(g.token),
-			"username":      []byte(username),
-		},
-	}
-	logger := g.log().With(
-		"secret-namespace", secret.GetNamespace(),
-		"secret-name", secret.GetName(),
-	)
-
-	logger.Debug("Creating integration secret")
-	coreClient, err := g.kube.CoreV1ClientSet(g.secretName(cfg).Namespace)
-	if err != nil {
-		return err
-	}
-	_, err = coreClient.Secrets(g.secretName(cfg).Namespace).
-		Create(ctx, secret, metav1.CreateOptions{})
-	if err == nil {
-		logger.Info("Integration secret created successfully!")
-	}
-	return err
-}
-
-// generateAppManifest creates the application manifest for the RHDH GitHub App
-func (g *GithubIntegration) generateAppManifest(name string) scrape.AppManifest {
+// generateAppManifest creates the application manifest for the GitHub-App.
+func (g *GitHubApp) generateAppManifest() scrape.AppManifest {
 	return scrape.AppManifest{
-		Name: github.Ptr(name),
+		Name: github.Ptr(g.name),
 		URL:  github.Ptr(g.homepageURL),
 		CallbackURLs: []string{
 			g.callbackURL,
@@ -286,50 +170,92 @@ func (g *GithubIntegration) generateAppManifest(name string) scrape.AppManifest 
 	}
 }
 
-// Create creates the GitHub integration, creating the GitHub App and storing the
-// whole application manifest on the cluster, in a Kubernetes secret.
-func (g *GithubIntegration) Create(
+// getCurrentGitHubUser executes a additional API call, with a new client, to
+// obtain the username for the informed GitHub App hostname.
+func (g *GitHubApp) getCurrentGitHubUser(
 	ctx context.Context,
-	cfg *config.Config,
-	name string,
-) error {
-	logger := g.log().With("app-name", name)
-	logger.Info("Inspecting the cluster forexisting GitHub integration secret")
-	if err := g.prepareSecret(ctx, cfg); err != nil {
-		return err
-	}
-	logger.Info("Setting the OpenShift based URLs for the GitHub integration")
-	if err := g.setOpenShiftURLs(ctx, cfg); err != nil {
-		return err
+	hostname string,
+) (string, error) {
+	client := github.NewClient(nil).WithAuthToken(g.token)
+	if hostname != "github.com" {
+		baseURL := fmt.Sprintf("https://%s/api/v3/", hostname)
+		uploadsURL := fmt.Sprintf("https://%s/api/uploads/", hostname)
+		enterpriseClient, err := client.WithEnterpriseURLs(baseURL, uploadsURL)
+		if err != nil {
+			return "", err
+		}
+		client = enterpriseClient
 	}
 
-	logger.Info("Generating the application manifest", "app-name", name)
-	manifest := g.generateAppManifest(name)
-	logger.Info("Creating the GitHub App", "app-name", name)
-	appConfig, err := g.gitHubApp.Create(ctx, manifest)
+	user, _, err := client.Users.Get(ctx, "")
 	if err != nil {
-		return err
+		return "", err
 	}
-
-	logger.Info("GitHub application created successfully!")
-	return g.store(ctx, cfg, appConfig)
+	return user.GetLogin(), nil
 }
 
-func NewGithubIntegration(
-	logger *slog.Logger,
-	kube *k8s.Kube,
-	gitHubApp *githubapp.GitHubApp,
-) *GithubIntegration {
-	return &GithubIntegration{
-		logger:    logger,
-		kube:      kube,
-		gitHubApp: gitHubApp,
+// Data generates the GitHub App integration data after interacting with the
+// service API to create the application, storing the results of this interaction.
+func (g *GitHubApp) Data(
+	ctx context.Context,
+	cfg *config.Config,
+) (map[string][]byte, error) {
+	g.log().Info("Configuring GitHub App URLs for Developer Hub")
+	err := g.setClusterURLs(ctx, cfg)
+	if err != nil {
+		return nil, err
+	}
 
-		description: "Trusted Software Supply Chain (TSSC)",
-		force:       false,
-		callbackURL: "",
-		webhookURL:  "",
-		homepageURL: "",
-		token:       "",
+	g.log().Info("Generating the GitHub application manifest")
+	manifest := g.generateAppManifest()
+
+	g.log().Info("Creating the GitHub App using the service API")
+	appConfig, err := g.client.Create(ctx, manifest)
+	if err != nil {
+		return nil, err
+	}
+
+	g.log().Info("Parsing the GitHub App endpoint URL")
+	u, err := url.Parse(appConfig.GetHTMLURL())
+	if err != nil {
+		return nil, err
+	}
+
+	g.log().With("hostname", u.Hostname()).
+		Info("Getting the current GitHub user from the application URL")
+	username, err := g.getCurrentGitHubUser(ctx, u.Hostname())
+	if err != nil {
+		return nil, err
+	}
+
+	g.log().With("username", username).
+		Debug("Generating the secret data for the GitHub App")
+	return map[string][]byte{
+		"clientId":      []byte(appConfig.GetClientID()),
+		"clientSecret":  []byte(appConfig.GetClientSecret()),
+		"createdAt":     []byte(appConfig.CreatedAt.String()),
+		"externalURL":   []byte(appConfig.GetExternalURL()),
+		"htmlURL":       []byte(appConfig.GetHTMLURL()),
+		"host":          []byte(u.Hostname()),
+		"id":            []byte(github.Stringify(appConfig.GetID())),
+		"name":          []byte(appConfig.GetName()),
+		"nodeId":        []byte(appConfig.GetNodeID()),
+		"ownerLogin":    []byte(appConfig.Owner.GetLogin()),
+		"ownerId":       []byte(github.Stringify(appConfig.Owner.GetID())),
+		"pem":           []byte(appConfig.GetPEM()),
+		"slug":          []byte(appConfig.GetSlug()),
+		"updatedAt":     []byte(appConfig.UpdatedAt.String()),
+		"webhookSecret": []byte(appConfig.GetWebhookSecret()),
+		"token":         []byte(g.token),
+		"username":      []byte(username),
+	}, nil
+}
+
+// NewGitHubApp instances a new GitHub App integration.
+func NewGitHubApp(logger *slog.Logger, kube *k8s.Kube) *GitHubApp {
+	return &GitHubApp{
+		logger: logger,
+		kube:   kube,
+		client: githubapp.NewGitHubApp(logger),
 	}
 }

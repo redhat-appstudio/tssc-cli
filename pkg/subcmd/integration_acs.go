@@ -4,8 +4,9 @@ import (
 	"log/slog"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
-	"github.com/redhat-appstudio/tssc-cli/pkg/integrations"
+	"github.com/redhat-appstudio/tssc-cli/pkg/integration"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/spf13/cobra"
 )
@@ -13,15 +14,11 @@ import (
 // IntegrationACS is the sub-command for the "integration acs",
 // responsible for creating and updating the ACS integration secret.
 type IntegrationACS struct {
-	cmd    *cobra.Command // cobra command
-	logger *slog.Logger   // application logger
-	cfg    *config.Config // installer configuration
-	kube   *k8s.Kube      // kubernetes client
-
-	acsIntegration *integrations.ACSIntegration // acs integration
-
-	apiToken string // API token
-	endpoint string // service endpoint
+	cmd         *cobra.Command           // cobra command
+	logger      *slog.Logger             // application logger
+	cfg         *config.Config           // installer configuration
+	kube        *k8s.Kube                // kubernetes client
+	integration *integration.Integration // integration instance
 }
 
 var _ Interface = &IntegrationACS{}
@@ -35,28 +32,28 @@ for RHDH.
 `
 
 // Cmd exposes the cobra instance.
-func (d *IntegrationACS) Cmd() *cobra.Command {
-	return d.cmd
+func (a *IntegrationACS) Cmd() *cobra.Command {
+	return a.cmd
 }
 
 // Complete loads the configuration from cluster.
-func (d *IntegrationACS) Complete(args []string) error {
+func (a *IntegrationACS) Complete(args []string) error {
 	var err error
-	d.cfg, err = bootstrapConfig(d.cmd.Context(), d.kube)
+	a.cfg, err = bootstrapConfig(a.cmd.Context(), a.kube)
 	return err
 }
 
 // Validate checks if the required configuration is set.
-func (d *IntegrationACS) Validate() error {
-	return d.acsIntegration.Validate()
+func (a *IntegrationACS) Validate() error {
+	return a.integration.Validate()
 }
 
 // Run creates or updates the ACS integration secret.
-func (d *IntegrationACS) Run() error {
-	if err := d.acsIntegration.EnsureNamespace(d.cmd.Context(), d.cfg); err != nil {
-		return err
-	}
-	return d.acsIntegration.Create(d.cmd.Context(), d.cfg)
+func (a *IntegrationACS) Run() error {
+	return a.integration.Create(a.cmd.Context(), a.cfg, types.NamespacedName{
+		Namespace: a.cfg.Installer.Namespace,
+		Name:      "tssc-acs-integration",
+	})
 }
 
 // NewIntegrationACS creates the sub-command for the "integration acs"
@@ -64,10 +61,9 @@ func (d *IntegrationACS) Run() error {
 func NewIntegrationACS(
 	logger *slog.Logger,
 	kube *k8s.Kube,
+	i *integration.Integration,
 ) *IntegrationACS {
-	acsIntegration := integrations.NewACSIntegration(logger, kube)
-
-	d := &IntegrationACS{
+	a := &IntegrationACS{
 		cmd: &cobra.Command{
 			Use:          "acs [flags]",
 			Short:        "Integrates a ACS instance into TSSC",
@@ -75,12 +71,10 @@ func NewIntegrationACS(
 			SilenceUsage: true,
 		},
 
-		logger: logger,
-		kube:   kube,
-
-		acsIntegration: acsIntegration,
+		logger:      logger,
+		kube:        kube,
+		integration: i,
 	}
-
-	acsIntegration.PersistentFlags(d.cmd)
-	return d
+	i.PersistentFlags(a.cmd)
+	return a
 }
