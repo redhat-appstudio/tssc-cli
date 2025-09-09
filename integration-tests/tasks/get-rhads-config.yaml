@@ -1,0 +1,41 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: get-rhads-config
+  annotations:
+    tekton.dev/displayName: "Get RHADS Config"
+    tekton.dev/categories: "Pipeline"
+    tekton.dev/tags: "config,rhads"
+spec:
+  description: >-
+    This task downloads and provides the RHADS configuration file from the repository.
+  params:
+    - name: job-spec
+      description: "Job specification metadata"
+      type: string
+  results:
+    - name: rhads-config
+      description: "The RHADS configuration content (base64 encoded)"
+  steps:
+    - name: get-rhads-config
+      image: quay.io/konflux-ci/appstudio-utils:ab6b0b8e40e440158e7288c73aff1cf83a2cc8a9@sha256:24179f0efd06c65d16868c2d7eb82573cce8e43533de6cea14fec3b7446e0b14
+      env:
+        - name: JOB_SPEC
+          value: $(params.job-spec)
+      script: |
+        #!/usr/bin/env bash
+        set -euo pipefail
+
+        echo "Downloading rhads-config file:"
+        GIT_REPO="$(jq -r '.git.repo // empty' <<< $JOB_SPEC)"
+        REPO_ORG=$(jq -r '.git.source_repo_org' <<< $JOB_SPEC)
+        BRANCH=$(jq -r '.git.source_repo_branch' <<< $JOB_SPEC)
+
+        rhads_config_file_location="integration-tests/config/rhads-config"
+        curl -o rhads-config https://raw.githubusercontent.com/$REPO_ORG/$GIT_REPO/refs/heads/$BRANCH/$rhads_config_file_location
+
+        echo "Original rhads-config content:"
+        cat rhads-config
+        echo "Encoding rhads-config to base64:"
+        cat rhads-config | base64 -w 0 | tee $(results.rhads-config.path)
