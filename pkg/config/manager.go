@@ -109,7 +109,7 @@ func (m *ConfigMapManager) GetConfig(ctx context.Context) (*Config, error) {
 
 // configMapForConfig generate a ConfigMap resource based on informed Config.
 func (m *ConfigMapManager) configMapForConfig(
-	cfg *Config,
+	cfg *Config, payload []byte,
 ) (*corev1.ConfigMap, error) {
 	return &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
@@ -120,14 +120,18 @@ func (m *ConfigMapManager) configMapForConfig(
 			},
 		},
 		Data: map[string]string{
-			Filename: cfg.String(),
+			Filename: cfg.String(payload),
 		},
 	}, nil
 }
 
 // Create Bootstrap a ConfigMap with the provided configuration.
 func (m *ConfigMapManager) Create(ctx context.Context, cfg *Config) error {
-	cm, err := m.configMapForConfig(cfg)
+	payload, err := cfg.MarshalYAML()
+	if err != nil {
+		return err
+	}
+	cm, err := m.configMapForConfig(cfg, payload)
 	if err != nil {
 		return err
 	}
@@ -143,7 +147,11 @@ func (m *ConfigMapManager) Create(ctx context.Context, cfg *Config) error {
 
 // Update updates a ConfigMap with informed configuration.
 func (m *ConfigMapManager) Update(ctx context.Context, cfg *Config) error {
-	cm, err := m.configMapForConfig(cfg)
+	payload, err := cfg.MarshalYAML()
+	if err != nil {
+		return err
+	}
+	cm, err := m.configMapForConfig(cfg, payload)
 	if err != nil {
 		return err
 	}

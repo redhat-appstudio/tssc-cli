@@ -41,11 +41,12 @@ func (c *ConfigTools) getHandler(
 	ctr mcp.CallToolRequest,
 ) (*mcp.CallToolResult, error) {
 	cfg, err := c.cm.GetConfig(ctx)
+	payload, err := cfg.MarshalYAML()
 	// The cluster is already configured, showing the user the existing
 	// configuration as text.
 	if err == nil {
 		return mcp.NewToolResultText(
-			fmt.Sprintf("Current TSSC configuration:\n%s", cfg.String()),
+			fmt.Sprintf("Current TSSC configuration:\n%s", cfg.String(payload)),
 		), nil
 	}
 
@@ -62,7 +63,7 @@ func (c *ConfigTools) getHandler(
 
 	// Using the data structure instead of the original configuration payload to
 	// avoid lists of dependencies that might be confusing.
-	payload, err := c.defaultCfg.MarshalYAML()
+	payload, err = c.defaultCfg.MarshalYAML()
 	if err != nil {
 		return nil, err
 	}
