@@ -4,8 +4,9 @@ import (
 	"log/slog"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
-	"github.com/redhat-appstudio/tssc-cli/pkg/integrations"
+	"github.com/redhat-appstudio/tssc-cli/pkg/integration"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/spf13/cobra"
 )
@@ -13,18 +14,11 @@ import (
 // IntegrationTrustification is the sub-command for the "integration trustification",
 // responsible for creating and updating the Trustification integration secret.
 type IntegrationTrustification struct {
-	cmd    *cobra.Command // cobra command
-	logger *slog.Logger   // application logger
-	cfg    *config.Config // installer configuration
-	kube   *k8s.Kube      // kubernetes client
-
-	trustificationIntegration *integrations.TrustificationIntegration // trustification integration
-
-	bombasticAPIURL           string // URL of the BOMbastic api host
-	oidcIssuerURL             string // URL of the OIDC token issuer
-	oidcClientId              string // OIDC client ID
-	oidcClientSecret          string // OIDC client secret
-	supportedCyclonedxVersion string // If specified the SBOM will be converted to the supported version before uploading.
+	cmd         *cobra.Command           // cobra command
+	logger      *slog.Logger             // application logger
+	cfg         *config.Config           // installer configuration
+	kube        *k8s.Kube                // kubernetes client
+	integration *integration.Integration // integration instance
 }
 
 var _ Interface = &IntegrationTrustification{}
@@ -38,29 +32,28 @@ for RHDH.
 `
 
 // Cmd exposes the cobra instance.
-func (d *IntegrationTrustification) Cmd() *cobra.Command {
-	return d.cmd
+func (t *IntegrationTrustification) Cmd() *cobra.Command {
+	return t.cmd
 }
 
 // Complete is a no-op in this case.
-func (d *IntegrationTrustification) Complete(args []string) error {
+func (t *IntegrationTrustification) Complete(args []string) error {
 	var err error
-	d.cfg, err = bootstrapConfig(d.cmd.Context(), d.kube)
+	t.cfg, err = bootstrapConfig(t.cmd.Context(), t.kube)
 	return err
 }
 
 // Validate checks if the required configuration is set.
-func (d *IntegrationTrustification) Validate() error {
-	return d.trustificationIntegration.Validate()
+func (t *IntegrationTrustification) Validate() error {
+	return t.integration.Validate()
 }
 
 // Run creates or updates the Trustification integration secret.
-func (d *IntegrationTrustification) Run() error {
-	err := d.trustificationIntegration.EnsureNamespace(d.cmd.Context(), d.cfg)
-	if err != nil {
-		return err
-	}
-	return d.trustificationIntegration.Create(d.cmd.Context(), d.cfg)
+func (t *IntegrationTrustification) Run() error {
+	return t.integration.Create(t.cmd.Context(), t.cfg, types.NamespacedName{
+		Namespace: t.cfg.Installer.Namespace,
+		Name:      "tssc-trustification-integration",
+	})
 }
 
 // NewIntegrationTrustification creates the sub-command for the "integration
@@ -69,10 +62,9 @@ func (d *IntegrationTrustification) Run() error {
 func NewIntegrationTrustification(
 	logger *slog.Logger,
 	kube *k8s.Kube,
+	i *integration.Integration,
 ) *IntegrationTrustification {
-	trustificationIntegration := integrations.NewTrustificationIntegration(logger, kube)
-
-	d := &IntegrationTrustification{
+	t := &IntegrationTrustification{
 		cmd: &cobra.Command{
 			Use:          "trustification [flags]",
 			Short:        "Integrates a Trustification instance into TSSC",
@@ -80,12 +72,10 @@ func NewIntegrationTrustification(
 			SilenceUsage: true,
 		},
 
-		logger: logger,
-		kube:   kube,
-
-		trustificationIntegration: trustificationIntegration,
+		logger:      logger,
+		kube:        kube,
+		integration: i,
 	}
-
-	trustificationIntegration.PersistentFlags(d.cmd)
-	return d
+	i.PersistentFlags(t.cmd)
+	return t
 }

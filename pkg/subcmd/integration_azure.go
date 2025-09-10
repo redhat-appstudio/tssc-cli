@@ -4,8 +4,9 @@ import (
 	"log/slog"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
-	"github.com/redhat-appstudio/tssc-cli/pkg/integrations"
+	"github.com/redhat-appstudio/tssc-cli/pkg/integration"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/spf13/cobra"
 )
@@ -13,19 +14,11 @@ import (
 // IntegrationAzure is the sub-command for the "integration azure",
 // responsible for creating and updating the Azure integration secret.
 type IntegrationAzure struct {
-	cmd    *cobra.Command // cobra command
-	logger *slog.Logger   // application logger
-	cfg    *config.Config // installer configuration
-	kube   *k8s.Kube      // kubernetes client
-
-	azureIntegration *integrations.AzureIntegration // azure integration
-
-	host         string // E.g. 'dev.azure.com'
-	token        string // API token
-	org          string // Organization name
-	clientId     string // Client ID
-	clientSecret string // Client Secret
-	tenantId     string // tenant ID
+	cmd         *cobra.Command           // cobra command
+	logger      *slog.Logger             // application logger
+	cfg         *config.Config           // installer configuration
+	kube        *k8s.Kube                // kubernetes client
+	integration *integration.Integration // integration instance
 }
 
 var _ Interface = &IntegrationAzure{}
@@ -38,29 +31,28 @@ installation namespace.
 `
 
 // Cmd exposes the cobra instance.
-func (d *IntegrationAzure) Cmd() *cobra.Command {
-	return d.cmd
+func (a *IntegrationAzure) Cmd() *cobra.Command {
+	return a.cmd
 }
 
 // Complete is a no-op in this case.
-func (d *IntegrationAzure) Complete(args []string) error {
+func (a *IntegrationAzure) Complete(args []string) error {
 	var err error
-	d.cfg, err = bootstrapConfig(d.cmd.Context(), d.kube)
+	a.cfg, err = bootstrapConfig(a.cmd.Context(), a.kube)
 	return err
 }
 
 // Validate checks if the required configuration is set.
-func (d *IntegrationAzure) Validate() error {
-	return d.azureIntegration.Validate()
+func (a *IntegrationAzure) Validate() error {
+	return a.integration.Validate()
 }
 
 // Run creates or updates the Azure integration secret.
-func (d *IntegrationAzure) Run() error {
-	err := d.azureIntegration.EnsureNamespace(d.cmd.Context(), d.cfg)
-	if err != nil {
-		return err
-	}
-	return d.azureIntegration.Create(d.cmd.Context(), d.cfg)
+func (a *IntegrationAzure) Run() error {
+	return a.integration.Create(a.cmd.Context(), a.cfg, types.NamespacedName{
+		Namespace: a.cfg.Installer.Namespace,
+		Name:      "tssc-azure-integration",
+	})
 }
 
 // NewIntegrationAzure creates the sub-command for the "integration azure"
@@ -68,10 +60,9 @@ func (d *IntegrationAzure) Run() error {
 func NewIntegrationAzure(
 	logger *slog.Logger,
 	kube *k8s.Kube,
+	i *integration.Integration,
 ) *IntegrationAzure {
-	azureIntegration := integrations.NewAzureIntegration(logger, kube)
-
-	d := &IntegrationAzure{
+	a := &IntegrationAzure{
 		cmd: &cobra.Command{
 			Use:          "azure [flags]",
 			Short:        "Integrates a Azure instance into TSSC",
@@ -79,12 +70,10 @@ func NewIntegrationAzure(
 			SilenceUsage: true,
 		},
 
-		logger: logger,
-		kube:   kube,
-
-		azureIntegration: azureIntegration,
+		logger:      logger,
+		kube:        kube,
+		integration: i,
 	}
-
-	azureIntegration.PersistentFlags(d.cmd)
-	return d
+	i.PersistentFlags(a.cmd)
+	return a
 }

@@ -6,9 +6,9 @@ import (
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
-	"github.com/redhat-appstudio/tssc-cli/pkg/githubapp"
-	"github.com/redhat-appstudio/tssc-cli/pkg/integrations"
+	"github.com/redhat-appstudio/tssc-cli/pkg/integration"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/spf13/cobra"
 )
@@ -16,16 +16,14 @@ import (
 // IntegrationGitHubApp is the sub-command for the "integration github-app",
 // responsible for creating and updating the GitHub Apps integration secret.
 type IntegrationGitHubApp struct {
-	cmd    *cobra.Command // cobra command
-	logger *slog.Logger   // application logger
-	cfg    *config.Config // installer configuration
-	kube   *k8s.Kube      // kubernetes client
+	cmd         *cobra.Command           // cobra command
+	logger      *slog.Logger             // application logger
+	cfg         *config.Config           // installer configuration
+	kube        *k8s.Kube                // kubernetes client
+	integration *integration.Integration // integration instance
 
-	gitHubIntegration *integrations.GithubIntegration // github integration
-
-	name   string // github app name
-	create bool   // create a new github app
-	update bool   // update a existing github app
+	create bool // create a new github app
+	update bool // update a existing github app
 }
 
 var _ Interface = &IntegrationGitHubApp{}
@@ -44,54 +42,48 @@ OpenShift GitOps and Openshift Pipelines to interact with the repositores, addin
 `
 
 // Cmd exposes the cobra instance.
-func (d *IntegrationGitHubApp) Cmd() *cobra.Command {
-	return d.cmd
+func (g *IntegrationGitHubApp) Cmd() *cobra.Command {
+	return g.cmd
 }
 
 // Complete captures the application name, and ensures it's ready to run.
-func (d *IntegrationGitHubApp) Complete(args []string) error {
+func (g *IntegrationGitHubApp) Complete(args []string) error {
 	var err error
-	d.cfg, err = bootstrapConfig(d.cmd.Context(), d.kube)
+	g.cfg, err = bootstrapConfig(g.cmd.Context(), g.kube)
 	if err != nil {
 		return err
 	}
 
-	if d.create && d.update {
+	if g.create && g.update {
 		return fmt.Errorf("cannot create and update at the same time")
 	}
-	if !d.create && !d.update {
+	if !g.create && !g.update {
 		return fmt.Errorf("either create or update must be set")
 	}
 
 	if len(args) != 1 {
-		return fmt.Errorf("expected 1, got %d arguments. The GitHub App name is required.", len(args))
+		return fmt.Errorf(
+			"expected 1, got %d arguments. The GitHub App name is required.",
+			len(args),
+		)
 	}
-	d.name = args[0]
-	return nil
+	return g.integration.SetArgument(integration.GitHubAppName, args[0])
 }
 
 // Validate checks if the required configuration is set.
-func (d *IntegrationGitHubApp) Validate() error {
-	// TODO: make the name optional, the user will inform the GitHub App name on
-	// the web-form, which can be later extracted.
-	if d.name == "" {
-		return fmt.Errorf("GitHub App name is required")
-	}
-	// Making sure the GitHub integration is valid, for instance, the required
-	// personal access token is informed.
-	return d.gitHubIntegration.Validate()
+func (g *IntegrationGitHubApp) Validate() error {
+	return g.integration.Validate()
 }
 
 // Manages the GitHub App and integration secret.
-func (d *IntegrationGitHubApp) Run() error {
-	err := d.gitHubIntegration.EnsureNamespace(d.cmd.Context(), d.cfg)
-	if err != nil {
-		return err
+func (g *IntegrationGitHubApp) Run() error {
+	if g.create {
+		return g.integration.Create(g.cmd.Context(), g.cfg, types.NamespacedName{
+			Namespace: g.cfg.Installer.Namespace,
+			Name:      "tssc-github-integration",
+		})
 	}
-	if d.create {
-		return d.gitHubIntegration.Create(d.cmd.Context(), d.cfg, d.name)
-	}
-	if d.update {
+	if g.update {
 		// TODO: implement update.
 		panic(fmt.Sprintf(
 			"TODO: '%s integration github-app --update'", constants.AppName,
@@ -105,11 +97,9 @@ func (d *IntegrationGitHubApp) Run() error {
 func NewIntegrationGitHubApp(
 	logger *slog.Logger,
 	kube *k8s.Kube,
+	i *integration.Integration,
 ) *IntegrationGitHubApp {
-	gitHubApp := githubapp.NewGitHubApp(logger)
-	gitHubIntegration := integrations.NewGithubIntegration(logger, kube, gitHubApp)
-
-	d := &IntegrationGitHubApp{
+	g := &IntegrationGitHubApp{
 		cmd: &cobra.Command{
 			Use:          "github-app <name> [--create|--update] [flags]",
 			Short:        "Prepares a GitHub App for TSSC integration",
@@ -117,19 +107,16 @@ func NewIntegrationGitHubApp(
 			SilenceUsage: true,
 		},
 
-		logger: logger,
-		kube:   kube,
-
-		gitHubIntegration: gitHubIntegration,
+		logger:      logger,
+		kube:        kube,
+		integration: i,
 
 		create: false,
 		update: false,
 	}
-
-	p := d.cmd.PersistentFlags()
-	p.BoolVar(&d.create, "create", d.create, "Create a new GitHub App")
-	p.BoolVar(&d.update, "update", d.update, "Update an existing GitHub App")
-	gitHubIntegration.PersistentFlags(d.cmd)
-	gitHubApp.PersistentFlags(d.cmd)
-	return d
+	p := g.cmd.PersistentFlags()
+	p.BoolVar(&g.create, "create", g.create, "Create a new GitHub App")
+	p.BoolVar(&g.update, "update", g.update, "Update an existing GitHub App")
+	i.PersistentFlags(g.cmd)
+	return g
 }
