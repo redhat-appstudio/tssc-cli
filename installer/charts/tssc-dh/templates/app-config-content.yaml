@@ -23,8 +23,6 @@ app:
   {{- fail (printf "Github Integration required for github auth provider") }}
 {{- else if and (not $gitlabSecretObj) (eq .Values.developerHub.authProvider "gitlab") }}
   {{- fail (printf "Gitlab Integration required for gitlab auth provider") }}
-{{- else if and (not $azureSecretObj) (eq .Values.developerHub.authProvider "microsoft") }}
-  {{- fail (printf "Azure Integration required for microsoft auth provider") }}
 {{- end }}
 
 {{- if $argocdSecretData }}
@@ -52,16 +50,6 @@ auth:
   environment: production
   providers:
   {{- $signInPage := "" }}
-  {{- if eq .Values.developerHub.authProvider "microsoft" }}
-    {{- if and $azureSecretData.clientId $azureSecretData.clientSecret $azureSecretData.tenantId }}
-    {{- $signInPage = "microsoft" }}
-    microsoft:
-      production:
-        clientId: ${AZURE__CLIENT__ID}
-        clientSecret: ${AZURE__CLIENT__SECRET}
-        tenantId: ${AZURE__TENANT__ID}
-    {{- end }}
-  {{- end }}
   {{- if eq .Values.developerHub.authProvider "github" }}
     {{- $signInPage = "github" }}
     github:
