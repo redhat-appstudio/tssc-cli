@@ -4,8 +4,9 @@ import (
 	"log/slog"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
-	"github.com/redhat-appstudio/tssc-cli/pkg/integrations"
+	"github.com/redhat-appstudio/tssc-cli/pkg/integration"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/spf13/cobra"
 )
@@ -13,17 +14,11 @@ import (
 // IntegrationBitBucket is the sub-command for the "integration bitbucket",
 // responsible for creating and updating the BitBucket integration secret.
 type IntegrationBitBucket struct {
-	cmd    *cobra.Command // cobra command
-	logger *slog.Logger   // application logger
-	cfg    *config.Config // installer configuration
-	kube   *k8s.Kube      // kubernetes client
-
-	bitbucketIntegration *integrations.BitBucketIntegration // bitbucket integration
-
-	host         string // E.g. 'bitbucket.org'
-	clientId     string // Application client id
-	clientSecret string // Application client secret
-	token        string // API token
+	cmd         *cobra.Command           // cobra command
+	logger      *slog.Logger             // application logger
+	cfg         *config.Config           // installer configuration
+	kube        *k8s.Kube                // kubernetes client
+	integration *integration.Integration // integration instance
 }
 
 var _ Interface = &IntegrationBitBucket{}
@@ -37,29 +32,28 @@ for RHDH.
 `
 
 // Cmd exposes the cobra instance.
-func (d *IntegrationBitBucket) Cmd() *cobra.Command {
-	return d.cmd
+func (b *IntegrationBitBucket) Cmd() *cobra.Command {
+	return b.cmd
 }
 
 // Complete is a no-op in this case.
-func (d *IntegrationBitBucket) Complete(args []string) error {
+func (b *IntegrationBitBucket) Complete(args []string) error {
 	var err error
-	d.cfg, err = bootstrapConfig(d.cmd.Context(), d.kube)
+	b.cfg, err = bootstrapConfig(b.cmd.Context(), b.kube)
 	return err
 }
 
 // Validate checks if the required configuration is set.
-func (d *IntegrationBitBucket) Validate() error {
-	return d.bitbucketIntegration.Validate()
+func (b *IntegrationBitBucket) Validate() error {
+	return b.integration.Validate()
 }
 
 // Run creates or updates the BitBucket integration secret.
-func (d *IntegrationBitBucket) Run() error {
-	err := d.bitbucketIntegration.EnsureNamespace(d.cmd.Context(), d.cfg)
-	if err != nil {
-		return err
-	}
-	return d.bitbucketIntegration.Create(d.cmd.Context(), d.cfg)
+func (b *IntegrationBitBucket) Run() error {
+	return b.integration.Create(b.cmd.Context(), b.cfg, types.NamespacedName{
+		Namespace: b.cfg.Installer.Namespace,
+		Name:      "tssc-bitbucket-integration",
+	})
 }
 
 // NewIntegrationBitBucket creates the sub-command for the "integration bitbucket"
@@ -67,10 +61,9 @@ func (d *IntegrationBitBucket) Run() error {
 func NewIntegrationBitBucket(
 	logger *slog.Logger,
 	kube *k8s.Kube,
+	i *integration.Integration,
 ) *IntegrationBitBucket {
-	bitbucketIntegration := integrations.NewBitBucketIntegration(logger, kube)
-
-	d := &IntegrationBitBucket{
+	b := &IntegrationBitBucket{
 		cmd: &cobra.Command{
 			Use:          "bitbucket [flags]",
 			Short:        "Integrates a BitBucket instance into TSSC",
@@ -78,12 +71,10 @@ func NewIntegrationBitBucket(
 			SilenceUsage: true,
 		},
 
-		logger: logger,
-		kube:   kube,
-
-		bitbucketIntegration: bitbucketIntegration,
+		logger:      logger,
+		kube:        kube,
+		integration: i,
 	}
-
-	bitbucketIntegration.PersistentFlags(d.cmd)
-	return d
+	i.PersistentFlags(b.cmd)
+	return b
 }

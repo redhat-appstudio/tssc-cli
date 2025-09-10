@@ -4,8 +4,9 @@ import (
 	"log/slog"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
-	"github.com/redhat-appstudio/tssc-cli/pkg/integrations"
+	"github.com/redhat-appstudio/tssc-cli/pkg/integration"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/spf13/cobra"
 )
@@ -13,12 +14,11 @@ import (
 // IntegrationGitLab is the sub-command for the "integration gitlab",
 // responsible for creating and updating the GitLab integration secret.
 type IntegrationGitLab struct {
-	cmd    *cobra.Command // cobra command
-	logger *slog.Logger   // application logger
-	cfg    *config.Config // installer configuration
-	kube   *k8s.Kube      // kubernetes client
-
-	gitlabIntegration *integrations.GitLabIntegration // gitlab integration
+	cmd         *cobra.Command           // cobra command
+	logger      *slog.Logger             // application logger
+	cfg         *config.Config           // installer configuration
+	kube        *k8s.Kube                // kubernetes client
+	integration *integration.Integration // integration instance
 }
 
 var _ Interface = &IntegrationGitLab{}
@@ -32,29 +32,28 @@ for RHDH.
 `
 
 // Cmd exposes the cobra instance.
-func (d *IntegrationGitLab) Cmd() *cobra.Command {
-	return d.cmd
+func (g *IntegrationGitLab) Cmd() *cobra.Command {
+	return g.cmd
 }
 
 // Complete is a no-op in this case.
-func (d *IntegrationGitLab) Complete(args []string) error {
+func (g *IntegrationGitLab) Complete(args []string) error {
 	var err error
-	d.cfg, err = bootstrapConfig(d.cmd.Context(), d.kube)
+	g.cfg, err = bootstrapConfig(g.cmd.Context(), g.kube)
 	return err
 }
 
 // Validate checks if the required configuration is set.
-func (d *IntegrationGitLab) Validate() error {
-	return d.gitlabIntegration.Validate()
+func (g *IntegrationGitLab) Validate() error {
+	return g.integration.Validate()
 }
 
 // Run creates or updates the GitLab integration secret.
-func (d *IntegrationGitLab) Run() error {
-	err := d.gitlabIntegration.EnsureNamespace(d.cmd.Context(), d.cfg)
-	if err != nil {
-		return err
-	}
-	return d.gitlabIntegration.Create(d.cmd.Context(), d.cfg)
+func (g *IntegrationGitLab) Run() error {
+	return g.integration.Create(g.cmd.Context(), g.cfg, types.NamespacedName{
+		Namespace: g.cfg.Installer.Namespace,
+		Name:      "tssc-gitlab-integration",
+	})
 }
 
 // NewIntegrationGitLab creates the sub-command for the "integration gitlab"
@@ -62,10 +61,9 @@ func (d *IntegrationGitLab) Run() error {
 func NewIntegrationGitLab(
 	logger *slog.Logger,
 	kube *k8s.Kube,
+	i *integration.Integration,
 ) *IntegrationGitLab {
-	gitlabIntegration := integrations.NewGitLabIntegration(logger, kube)
-
-	d := &IntegrationGitLab{
+	g := &IntegrationGitLab{
 		cmd: &cobra.Command{
 			Use:          "gitlab [flags]",
 			Short:        "Integrates a GitLab instance into TSSC",
@@ -73,12 +71,10 @@ func NewIntegrationGitLab(
 			SilenceUsage: true,
 		},
 
-		logger: logger,
-		kube:   kube,
-
-		gitlabIntegration: gitlabIntegration,
+		logger:      logger,
+		kube:        kube,
+		integration: i,
 	}
-
-	gitlabIntegration.PersistentFlags(d.cmd)
-	return d
+	i.PersistentFlags(g.cmd)
+	return g
 }
