@@ -66,7 +66,12 @@ spec:
               echo "Downloading rhads-config file:"
               GIT_REPO="$(jq -r '.git.repo // empty' <<< $JOB_SPEC)"
               REPO_ORG=$(jq -r '.git.source_repo_org' <<< $JOB_SPEC)
+              # Determine the branch name for the curl command.
+              # If source_repo_branch starts with "refs/heads/", strip that prefix; otherwise, use as is.
               BRANCH=$(jq -r '.git.source_repo_branch' <<< $JOB_SPEC)
+              if [[ "$BRANCH" == refs/heads/* ]]; then
+                BRANCH="${BRANCH#refs/heads/}"
+              fi
 
               rhads_config_file_location="integration-tests/config/rhads-config"
               curl -o rhads-config https://raw.githubusercontent.com/$REPO_ORG/$GIT_REPO/refs/heads/$BRANCH/$rhads_config_file_location
