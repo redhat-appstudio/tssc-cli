@@ -25,7 +25,8 @@ RUN make GOFLAGS='-buildvcs=false'
 FROM registry.access.redhat.com/ubi9-minimal:9.6-1752587672
 
 LABEL \
-  name="tssc" \
+  name="rhtap-cli/rhtap-cli-rhel9" \
+  cpe="cpe:/a:redhat:trusted_application_pipeline:1.6::el9" \
   com.redhat.component="tssc" \
   description="Red Hat Trusted Software Supply Chain allows organizations to curate their own trusted, \
     repeatable pipelines that stay compliant with industry requirements. Built on proven, trusted open \
