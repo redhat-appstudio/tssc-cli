@@ -216,6 +216,5 @@ spec:
               if $SOME_PIPELINE_SUCCEEDED ; then
                 exit 0
               fi
-              if $SOME_PIPELINE_FAILED ; then
-                exit 1
-              fi
+              # If we reach here, no pipelines succeeded - fail the main pipeline
+              exit 1
