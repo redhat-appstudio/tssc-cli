@@ -80,7 +80,7 @@ get_version() {
 update_charts() {
     # Bump "version" in all charts
     get_version "developerHub"
-    RELEASE_BRANCH="release-$VERSION_XY"
+    export RELEASE_BRANCH="release-$VERSION_XY"
     find installer/charts/ -name Chart.yaml | while read -r CHART; do
         yq -i '.version = strenv(VERSION_XYZ)' "$CHART"
     done
@@ -120,6 +120,7 @@ update_ci() {
         sed -i --regexp-extended "s|  *appstudio\.openshift\.io/component: tssc-cli|\0-${VERSION_XY//./-}|" "$PLR"
     done
     yq -i '.spec.params |= map(select(.name != "image-expires-after"))' ".tekton/tssc-cli-push.yaml"
+    yq -i '(.spec.pipelineSpec.tasks[] | select(.name == "apply-tags") | .params[] | select(.name == "ADDITIONAL_TAGS") | .value[0]) = strenv(RELEASE_BRANCH)' ".tekton/tssc-cli-push.yaml"
 }
 
 commit_release() {
