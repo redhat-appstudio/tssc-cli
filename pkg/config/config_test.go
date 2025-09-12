@@ -45,12 +45,14 @@ func TestNewConfigFromFile(t *testing.T) {
 		g.Expect(err).To(o.Succeed())
 		g.Expect(string(payload)).To(o.ContainSubstring("tssc:"))
 
-		err = cfg.UnmarshalYAML()
+		err = cfg.UnmarshalYAML(payload)
 		g.Expect(err).To(o.Succeed())
 	})
 
 	t.Run("String", func(t *testing.T) {
-		payload := cfg.String()
-		g.Expect(string(payload)).To(o.ContainSubstring("tssc:"))
+		payload, err := cfg.MarshalYAML()
+		g.Expect(err).To(o.Succeed())
+		config := cfg.String(payload)
+		g.Expect(string(config)).To(o.ContainSubstring("tssc:"))
 	})
 }

@@ -179,7 +179,11 @@ func (c *Config) runCreate() error {
 			config.Name,
 			fmt.Sprintf("%s=true", config.Label),
 		)
-		fmt.Print(cfg.String())
+		payload, err := cfg.MarshalYAML()
+		if err != nil {
+			return err
+		}
+		fmt.Print(cfg.String(payload))
 		return nil
 	}
 
@@ -235,7 +239,8 @@ func (c *Config) runGet() error {
 		return err
 	}
 	c.log().Debug("Formatting the configuration as string")
-	fmt.Print(cfg.String())
+	payload, err := cfg.MarshalYAML()
+	fmt.Print(cfg.String(payload))
 	return nil
 }
 
