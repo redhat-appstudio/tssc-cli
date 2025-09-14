@@ -60,7 +60,7 @@ require (
 	github.com/fxamacker/cbor/v2 v2.7.1 // indirect
 	github.com/go-errors/errors v1.5.1 // indirect
 	github.com/go-gorp/gorp/v3 v3.1.0 // indirect
-	github.com/go-logr/logr v1.4.2 // indirect
+	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/jsonpointer v0.21.1 // indirect
 	github.com/go-openapi/jsonreference v0.21.0 // indirect
@@ -120,18 +120,18 @@ require (
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/spf13/cast v1.7.1 // indirect
-	github.com/stretchr/testify v1.10.0 // indirect
+	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
 	github.com/xlzd/gotp v0.1.0 // indirect
-	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
+	go.opentelemetry.io/auto/sdk v1.2.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.53.0 // indirect
-	go.opentelemetry.io/otel v1.35.0 // indirect
-	go.opentelemetry.io/otel/metric v1.35.0 // indirect
-	go.opentelemetry.io/otel/trace v1.35.0 // indirect
+	go.opentelemetry.io/otel v1.38.0 // indirect
+	go.opentelemetry.io/otel/metric v1.38.0 // indirect
+	go.opentelemetry.io/otel/trace v1.38.0 // indirect
 	golang.org/x/crypto v0.37.0 // indirect
 	golang.org/x/net v0.39.0 // indirect
 	golang.org/x/oauth2 v0.24.0 // indirect
