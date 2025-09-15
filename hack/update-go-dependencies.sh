@@ -67,7 +67,11 @@ update_dependency() {
 
     go get -u "$DEPENDENCY"
     go mod verify
-    go mod tidy -v
+    if ! go mod tidy -v; then
+		echo "[ERROR] \`go mod tidy\` failed"
+	    cleanup
+	    return
+	fi
 
     if git diff --exit-code --quiet; then
         echo "No update"
@@ -79,6 +83,7 @@ update_dependency() {
         git add .
         git commit -m "chore: bump go dependency $DEPENDENCY"
     else
+		echo "[ERROR] \`make\` failed"
         cleanup
     fi
 }
