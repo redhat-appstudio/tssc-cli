@@ -106,6 +106,10 @@ type Client struct {
 	// Default request options applied to every request.
 	defaultRequestOptions []RequestOptionFunc
 
+	// interceptors contain the stack of *http.Client round tripper builder func
+	// which are used to decorate the http.Client#Transport value.
+	interceptors []Interceptor
+
 	// User agent used when communicating with the GitLab API.
 	UserAgent string
 
@@ -261,6 +265,32 @@ type Client struct {
 	Wikis                            WikisServiceInterface
 }
 
+// Interceptor is used to build a *http.Client request pipeline,
+//
+// It receives the next RoundTripper in the chain and returns a new one that
+// will be used for the request.
+//
+// This next RoundTripper might or might not be the actual transporter,
+// which actually does the request call,
+// but it is safe to assume that calling the next will result in the expected HTTP call.
+//
+// Example:
+//
+//	// Simple logger interceptor.
+//	logger := func(next http.RoundTripper) http.RoundTripper {
+//	    return roundtripperFunc(func(req *http.Request) (*http.Response, error) {
+//	        fmt.Printf("Request: %s %s\n", req.Method, req.URL)
+//	        resp, err := next.RoundTrip(req)
+//	        if err == nil {
+//	            fmt.Printf("Response status: %d\n", resp.StatusCode)
+//	        }
+//	        return resp, err
+//	    })
+//	}
+//
+// The Interceptor type lets you add such middlewares to a client by chaining them.
+type Interceptor func(next http.RoundTripper) http.RoundTripper
+
 // ListOptions specifies the optional parameters to various List methods that
 // support pagination.
 type ListOptions struct {
@@ -364,6 +394,8 @@ func NewAuthSourceClient(as AuthSource, options ...ClientOptionFunc) (*Client, e
 			return nil, err
 		}
 	}
+
+	decorateHTTPClientTransportWithInterceptors(c)
 
 	// Wire up the cookie jar.
 	// The ClientOptionFunc can't do it directly,
@@ -540,6 +572,20 @@ func NewAuthSourceClient(as AuthSource, options ...ClientOptionFunc) (*Client, e
 	c.Wikis = &WikisService{client: c}
 
 	return c, nil
+}
+
+func decorateHTTPClientTransportWithInterceptors(c *Client) {
+	if len(c.interceptors) == 0 {
+		return
+	}
+	c.client.HTTPClient.Transport = chainInterceptors(c.client.HTTPClient.Transport, c.interceptors...)
+}
+
+func chainInterceptors(rt http.RoundTripper, interceptors ...Interceptor) http.RoundTripper {
+	for i := len(interceptors) - 1; i >= 0; i-- {
+		rt = interceptors[i](rt)
+	}
+	return rt
 }
 
 func (c *Client) HTTPClient() *http.Client {
