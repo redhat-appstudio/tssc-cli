@@ -21,6 +21,8 @@ Optional arguments:
         Environment variables definitions (default: $SCRIPT_DIR/private.env)
     -n, --namespace NAMESPACE
         TSSC installation namespace (default: tssc)
+    --dry-run
+        Print the variables instead of pushing them to the CI
     -d, --debug
         Activate tracing/debug mode.
     -h, --help
@@ -43,6 +45,10 @@ parse_args() {
         -n | --namespace)
             NAMESPACE="$2"
             shift
+            ;;
+        --dry-run)
+            DRY_RUN="1"
+            export DRY_RUN
             ;;
         -d | --debug)
             set -x
@@ -112,6 +118,9 @@ getSCMs() {
 }
 
 setVars() {
+    if [ -n "${GIT_ORG:-}" ]; then
+        echo "Organization/Project: '$GIT_ORG'"
+    fi
     setVar COSIGN_SECRET_PASSWORD "$COSIGN_SECRET_PASSWORD"
     setVar COSIGN_SECRET_KEY "$COSIGN_SECRET_KEY"
     setVar COSIGN_PUBLIC_KEY "$COSIGN_PUBLIC_KEY"
@@ -130,9 +139,13 @@ setVars() {
 setVar() {
     NAME=$1
     VALUE=$2
-    echo -n "Setting $NAME in $GIT_ORG: "
-    "${SCM}SetVar"
-    sleep .5 # rate limiting to prevent issues
+    echo -n "Setting $NAME: "
+    if [ -n "${DRY_RUN:-}" ]; then
+        echo "'$VALUE'"
+    else
+        "${SCM}SetVar"
+        sleep .5 # rate limiting to prevent issues
+    fi
 }
 
 githubGetValues() {
