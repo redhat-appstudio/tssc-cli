@@ -138,12 +138,15 @@ commitlint:
   stage: lint
   needs: []
   rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-  image:
-    name: commitlint/commitlint:19.8.1
-    entrypoint: [""]
+    # lint.js script makes an API call without authentication, so the project or fork must be public
+    - if: '$CI_MERGE_REQUEST_IID && $CI_PROJECT_VISIBILITY == "public"' 
+      when: always
+  image: ${GITLAB_DEPENDENCY_PROXY}node:22-slim
   script:
-    - commitlint --from ${CI_MERGE_REQUEST_DIFF_BASE_SHA} --to ${CI_COMMIT_SHA}
+    - apt-get update && apt-get install -y git
+    - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_COMMIT_SHA
+    - cd scripts/commitlint && npm ci
+    - ./lint.sh
 
 tests:unit:
   extends:

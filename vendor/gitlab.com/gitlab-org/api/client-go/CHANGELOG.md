@@ -1,3 +1,35 @@
+## [0.144.1](https://gitlab.com/gitlab-org/api/client-go/compare/v0.144.0...v0.144.1) (2025-09-13)
+
+# [0.144.0](https://gitlab.com/gitlab-org/api/client-go/compare/v0.143.3...v0.144.0) (2025-09-12)
+
+
+### Features
+
+* **client:** add http.RoundTripper Middleware Configuration Option to Client ([88f9d10](https://gitlab.com/gitlab-org/api/client-go/commit/88f9d1055acbd5e060ab13947b856ccc3a03da6f))
+
+## [0.143.3](https://gitlab.com/gitlab-org/api/client-go/compare/v0.143.2...v0.143.3) (2025-09-10)
+
+## [0.143.2](https://gitlab.com/gitlab-org/api/client-go/compare/v0.143.1...v0.143.2) (2025-09-09)
+
+## [0.143.1](https://gitlab.com/gitlab-org/api/client-go/compare/v0.143.0...v0.143.1) (2025-09-08)
+
+# [0.143.0](https://gitlab.com/gitlab-org/api/client-go/compare/v0.142.6...v0.143.0) (2025-09-08)
+
+
+### Features
+
+* **users:** Add support for PublicEmail to ListUsers ([74a3b6a](https://gitlab.com/gitlab-org/api/client-go/commit/74a3b6a7dd1340faa70ec1246b5b99394c56f90b))
+
+## [0.142.6](https://gitlab.com/gitlab-org/api/client-go/compare/v0.142.5...v0.142.6) (2025-09-02)
+
+## [0.142.5](https://gitlab.com/gitlab-org/api/client-go/compare/v0.142.4...v0.142.5) (2025-08-30)
+
+## [0.142.4](https://gitlab.com/gitlab-org/api/client-go/compare/v0.142.3...v0.142.4) (2025-08-28)
+
+## [0.142.3](https://gitlab.com/gitlab-org/api/client-go/compare/v0.142.2...v0.142.3) (2025-08-28)
+
+## [0.142.2](https://gitlab.com/gitlab-org/api/client-go/compare/v0.142.1...v0.142.2) (2025-08-26)
+
 ## [0.142.1](https://gitlab.com/gitlab-org/api/client-go/compare/v0.142.0...v0.142.1) (2025-08-25)
 
 # [0.142.0](https://gitlab.com/gitlab-org/api/client-go/compare/v0.141.2...v0.142.0) (2025-08-21)
