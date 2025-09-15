@@ -44,8 +44,6 @@ github.com/blang/semver/v4
 # github.com/buger/jsonparser v1.1.1
 ## explicit; go 1.13
 github.com/buger/jsonparser
-# github.com/cenkalti/backoff/v5 v5.0.3
-## explicit; go 1.23
 # github.com/chai2010/gettext-go v1.0.3
 ## explicit; go 1.14
 github.com/chai2010/gettext-go
@@ -203,8 +201,6 @@ github.com/gosuri/uitable/util/wordwrap
 # github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
 ## explicit
 github.com/gregjones/httpcache
-# github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.2
-## explicit; go 1.23.0
 # github.com/hashicorp/errwrap v1.1.0
 ## explicit
 github.com/hashicorp/errwrap
@@ -431,11 +427,11 @@ gitlab.com/gitlab-org/api/client-go
 ## explicit; go 1.23.0
 # go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.63.0
 ## explicit; go 1.23.0
-# go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.37.0
+# go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.38.0
 ## explicit; go 1.23.0
 # go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.37.0
 ## explicit; go 1.23.0
-# go.opentelemetry.io/proto/otlp v1.7.1
+# go.opentelemetry.io/proto/otlp v1.8.0
 ## explicit; go 1.23.0
 # go.yaml.in/yaml/v2 v2.4.2
 ## explicit; go 1.15
@@ -522,7 +518,7 @@ golang.org/x/text/unicode/norm
 golang.org/x/time/rate
 # golang.org/x/tools v0.37.0
 ## explicit; go 1.24.0
-# google.golang.org/genproto/googleapis/api v0.0.0-20250826171959-ef028d996bc1
+# google.golang.org/genproto/googleapis/api v0.0.0-20250908214217-97024824d090
 ## explicit; go 1.24.0
 # google.golang.org/genproto/googleapis/rpc v0.0.0-20250908214217-97024824d090
 ## explicit; go 1.24.0
