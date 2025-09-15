@@ -429,7 +429,7 @@ gitlab.com/gitlab-org/api/client-go
 ## explicit; go 1.23.0
 # go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.38.0
 ## explicit; go 1.23.0
-# go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.37.0
+# go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.38.0
 ## explicit; go 1.23.0
 # go.opentelemetry.io/proto/otlp v1.8.0
 ## explicit; go 1.23.0
