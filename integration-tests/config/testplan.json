@@ -23,6 +23,13 @@
         "registry": "nexus",
         "tpa": "local",
         "acs": "local"
+      },
+      {
+      "git": "github",
+      "ci": "azure",
+      "registry": "quay",
+      "tpa": "remote",
+      "acs": "remote"
       }
     ],
     "tests": [
