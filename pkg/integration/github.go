@@ -16,9 +16,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-// GitHubApp represents the GitHub App integration attributes. It collects,
-// validates and issues the attributes to the GitHub App API.
-type GitHubApp struct {
+// GitHub represents the GitHub App integration attributes. It collects, validates
+// and issues the attributes to the GitHub App API.
+type GitHub struct {
 	logger *slog.Logger         // application logger
 	kube   *k8s.Kube            // kubernetes client
 	client *githubapp.GitHubApp // github API client
@@ -32,13 +32,13 @@ type GitHubApp struct {
 	name string // application name
 }
 
-var _ Interface = &GitHubApp{}
+var _ Interface = &GitHub{}
 
 // GitHubAppName key to identify the GitHubApp name.
 const GitHubAppName = "name"
 
 // PersistentFlags adds the persistent flags to the informed Cobra command.
-func (g *GitHubApp) PersistentFlags(c *cobra.Command) {
+func (g *GitHub) PersistentFlags(c *cobra.Command) {
 	p := c.PersistentFlags()
 
 	p.StringVar(&g.description, "description", g.description,
@@ -61,7 +61,7 @@ func (g *GitHubApp) PersistentFlags(c *cobra.Command) {
 }
 
 // SetArgument sets the GitHub App name.
-func (g *GitHubApp) SetArgument(k, v string) error {
+func (g *GitHub) SetArgument(k, v string) error {
 	if k != GitHubAppName {
 		return fmt.Errorf("invalid argument %q (%q)", k, v)
 	}
@@ -70,7 +70,7 @@ func (g *GitHubApp) SetArgument(k, v string) error {
 }
 
 // LoggerWith decorates the logger with the integration flags.
-func (g *GitHubApp) LoggerWith(logger *slog.Logger) *slog.Logger {
+func (g *GitHub) LoggerWith(logger *slog.Logger) *slog.Logger {
 	return logger.With(
 		"app-name", g.name,
 		"callback-url", g.callbackURL,
@@ -81,24 +81,24 @@ func (g *GitHubApp) LoggerWith(logger *slog.Logger) *slog.Logger {
 }
 
 // log logger with integration attributes.
-func (g *GitHubApp) log() *slog.Logger {
+func (g *GitHub) log() *slog.Logger {
 	return g.LoggerWith(g.logger)
 }
 
 // Validate validates the integration configuration.
-func (g *GitHubApp) Validate() error {
+func (g *GitHub) Validate() error {
 	return g.client.Validate()
 }
 
 // Type returns the type of the integration.
-func (g *GitHubApp) Type() corev1.SecretType {
+func (g *GitHub) Type() corev1.SecretType {
 	return corev1.SecretTypeOpaque
 }
 
 // setClusterURLs sets the cluster URLs for the integration. It uses the TSSC
 // configuration to identify Developer Hub's namespace, and queries the cluster to
 // obtain its ingress domain.
-func (g *GitHubApp) setClusterURLs(
+func (g *GitHub) setClusterURLs(
 	ctx context.Context,
 	cfg *config.Config,
 ) error {
@@ -136,7 +136,7 @@ func (g *GitHubApp) setClusterURLs(
 }
 
 // generateAppManifest creates the application manifest for the GitHub-App.
-func (g *GitHubApp) generateAppManifest() scrape.AppManifest {
+func (g *GitHub) generateAppManifest() scrape.AppManifest {
 	return scrape.AppManifest{
 		Name: github.Ptr(g.name),
 		URL:  github.Ptr(g.homepageURL),
@@ -172,7 +172,7 @@ func (g *GitHubApp) generateAppManifest() scrape.AppManifest {
 
 // getCurrentGitHubUser executes a additional API call, with a new client, to
 // obtain the username for the informed GitHub App hostname.
-func (g *GitHubApp) getCurrentGitHubUser(
+func (g *GitHub) getCurrentGitHubUser(
 	ctx context.Context,
 	hostname string,
 ) (string, error) {
@@ -196,7 +196,7 @@ func (g *GitHubApp) getCurrentGitHubUser(
 
 // Data generates the GitHub App integration data after interacting with the
 // service API to create the application, storing the results of this interaction.
-func (g *GitHubApp) Data(
+func (g *GitHub) Data(
 	ctx context.Context,
 	cfg *config.Config,
 ) (map[string][]byte, error) {
@@ -251,9 +251,9 @@ func (g *GitHubApp) Data(
 	}, nil
 }
 
-// NewGitHubApp instances a new GitHub App integration.
-func NewGitHubApp(logger *slog.Logger, kube *k8s.Kube) *GitHubApp {
-	return &GitHubApp{
+// NewGitHub instances a new GitHub App integration.
+func NewGitHub(logger *slog.Logger, kube *k8s.Kube) *GitHub {
+	return &GitHub{
 		logger: logger,
 		kube:   kube,
 		client: githubapp.NewGitHubApp(logger),

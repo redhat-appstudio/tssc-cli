@@ -19,6 +19,7 @@ import (
 type Integration struct {
 	logger *slog.Logger // application logger
 	kube   *k8s.Kube    // kubernetes client
+	name   string       // kubernetes secret name
 	data   Interface    // provides secret data
 
 	force bool // overwrite the existing secret
@@ -48,97 +49,100 @@ func (i *Integration) Validate() error {
 }
 
 // log returns a logger decorated with secret and data attributes.
-func (i *Integration) log(nsm types.NamespacedName) *slog.Logger {
+func (i *Integration) log() *slog.Logger {
 	return i.data.LoggerWith(i.logger.With(
-		"secret-namespace", nsm.Namespace,
-		"secret-name", nsm.Name,
+		"secret-name", i.name,
 		"secret-type", i.data.Type(),
 	))
+}
+
+// secretName generates the namespaced name for the integration secret.
+func (i *Integration) secretName(cfg *config.Config) types.NamespacedName {
+	return types.NamespacedName{
+		Namespace: cfg.Installer.Namespace,
+		Name:      i.name,
+	}
 }
 
 // Exists checks whether the integration secret exists in the cluster.
 func (i *Integration) Exists(
 	ctx context.Context,
-	nsm types.NamespacedName,
+	cfg *config.Config,
 ) (bool, error) {
-	return k8s.SecretExists(ctx, i.kube, nsm)
+	return k8s.SecretExists(ctx, i.kube, i.secretName(cfg))
 }
 
 // prepare prepares the cluster to receive the integration secret, when the force
 // flag is enabled a existing secret is deleted.
-func (i *Integration) prepare(ctx context.Context, nsm types.NamespacedName) error {
-	i.log(nsm).Debug("Checking whether the integration secret exists")
-	exists, err := i.Exists(ctx, nsm)
+func (i *Integration) prepare(ctx context.Context, cfg *config.Config) error {
+	i.log().Debug("Checking whether the integration secret exists")
+	exists, err := i.Exists(ctx, cfg)
 	if err != nil {
 		return err
 	}
 	if !exists {
-		i.log(nsm).Debug("Integration secret does not exist")
+		i.log().Debug("Integration secret does not exist")
 		return nil
 	}
 	if !i.force {
-		i.log(nsm).Debug("Integration secret already exists")
-		return fmt.Errorf("%w: %s", ErrSecretAlreadyExists, nsm.String())
+		i.log().Debug("Integration secret already exists")
+		return fmt.Errorf("%w: %s",
+			ErrSecretAlreadyExists, i.secretName(cfg).String())
 	}
-	i.log(nsm).Debug("Integration secret already exists, recreating it")
-	return i.Delete(ctx, nsm)
+	i.log().Debug("Integration secret already exists, recreating it")
+	return i.Delete(ctx, cfg)
 }
 
 // Create creates the integration secret in the cluster. It uses the integration
 // data provider to obtain the secret payload.
-func (i *Integration) Create(
-	ctx context.Context,
-	cfg *config.Config,
-	nsm types.NamespacedName,
-) error {
-	err := i.prepare(ctx, nsm)
+func (i *Integration) Create(ctx context.Context, cfg *config.Config) error {
+	err := i.prepare(ctx, cfg)
 	if err != nil {
 		return err
 	}
 
 	// The integration provider prepares and returns the payload to create the
 	// Kubernetes secret.
-	i.log(nsm).Debug("Preparing the integration secret payload")
+	i.log().Debug("Preparing the integration secret payload")
 	payload, err := i.data.Data(ctx, cfg)
 	if err != nil {
 		return err
 	}
+	namespace := i.secretName(cfg).Namespace
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: nsm.Namespace,
-			Name:      nsm.Name,
+			Namespace: namespace,
+			Name:      i.name,
 		},
 		Type: i.data.Type(),
 		Data: payload,
 	}
 
-	i.log(nsm).Debug("Creating the integration secret")
-	coreClient, err := i.kube.CoreV1ClientSet(nsm.Namespace)
+	i.log().Debug("Creating the integration secret")
+	coreClient, err := i.kube.CoreV1ClientSet(namespace)
 	if err != nil {
 		return err
 	}
-	_, err = coreClient.Secrets(nsm.Namespace).
+	_, err = coreClient.Secrets(namespace).
 		Create(ctx, secret, metav1.CreateOptions{})
 	if err == nil {
-		i.log(nsm).Info("Integration secret is created successfully!")
+		i.log().Info("Integration secret is created successfully!")
 	}
 	return err
 }
 
 // Delete deletes the Kubernetes secret.
-func (i *Integration) Delete(
-	ctx context.Context,
-	nsm types.NamespacedName,
-) error {
-	return k8s.DeleteSecret(ctx, i.kube, nsm)
+func (i *Integration) Delete(ctx context.Context, cfg *config.Config) error {
+	return k8s.DeleteSecret(ctx, i.kube, i.secretName(cfg))
 }
 
 // NewSecret instantiates a new secret manager, it uses the integration data
 // provider to generate the Kubernetes Secret payload.
-func NewSecret(logger *slog.Logger, kube *k8s.Kube, data Interface) *Integration {
-	return &Integration{
-		logger: logger,
-		kube:   kube,
-		data:   data,
-	}
+func NewSecret(
+	logger *slog.Logger,
+	kube *k8s.Kube,
+	name string,
+	data Interface,
+) *Integration {
+	return &Integration{logger: logger, kube: kube, name: name, data: data}
 }
