@@ -6,7 +6,6 @@ import (
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integration"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
-	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/spf13/cobra"
 )
@@ -50,10 +49,7 @@ func (g *IntegrationGitLab) Validate() error {
 
 // Run creates or updates the GitLab integration secret.
 func (g *IntegrationGitLab) Run() error {
-	return g.integration.Create(g.cmd.Context(), g.cfg, types.NamespacedName{
-		Namespace: g.cfg.Installer.Namespace,
-		Name:      "tssc-gitlab-integration",
-	})
+	return g.integration.Create(g.cmd.Context(), g.cfg)
 }
 
 // NewIntegrationGitLab creates the sub-command for the "integration gitlab"

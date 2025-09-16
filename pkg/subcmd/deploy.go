@@ -1,14 +1,17 @@
 package subcmd
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"strings"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
+	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
 	"github.com/redhat-appstudio/tssc-cli/pkg/flags"
 	"github.com/redhat-appstudio/tssc-cli/pkg/installer"
+	"github.com/redhat-appstudio/tssc-cli/pkg/integrations"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
 	"github.com/redhat-appstudio/tssc-cli/pkg/printer"
 	"github.com/redhat-appstudio/tssc-cli/pkg/resolver"
@@ -25,9 +28,9 @@ type Deploy struct {
 	cfs    *chartfs.ChartFS // embedded filesystem
 	kube   *k8s.Kube        // kubernetes client
 
-	collection         *resolver.Collection // chart collection
-	chartPath          string               // single chart path
-	valuesTemplatePath string               // values template file path
+	topologyBuilder    *resolver.TopologyBuilder // topology builder
+	chartPath          string                    // single chart path
+	valuesTemplatePath string                    // values template file path
 }
 
 var _ Interface = &Deploy{}
@@ -69,13 +72,10 @@ func (d *Deploy) log() *slog.Logger {
 
 // Complete verifies the object is complete.
 func (d *Deploy) Complete(args []string) error {
-	// Load all charts from the embedded filesystem, or from a local directory.
-	charts, err := d.cfs.GetAllCharts()
+	var err error
+	d.topologyBuilder, err = resolver.NewTopologyManager(
+		d.logger, d.cfs, integrations.NewManager(d.logger, d.kube))
 	if err != nil {
-		return err
-	}
-	// Create a new chart collection from the loaded charts.
-	if d.collection, err = resolver.NewCollection(charts); err != nil {
 		return err
 	}
 	// Load the installer configuration from the cluster.
@@ -90,12 +90,10 @@ func (d *Deploy) Complete(args []string) error {
 
 // Validate asserts the requirements to start the deployment are in place.
 func (d *Deploy) Validate() error {
-	return k8s.EnsureOpenShiftProject(
-		d.cmd.Context(),
-		d.log(),
-		d.kube,
-		d.cfg.Installer.Namespace,
-	)
+	if d.topologyBuilder == nil {
+		panic("topology is nil")
+	}
+	return nil
 }
 
 // Run deploys the enabled dependencies listed on the configuration.
@@ -105,13 +103,23 @@ func (d *Deploy) Run() error {
 	d.log().Debug("Reading values template file")
 	valuesTmpl, err := d.cfs.ReadFile(d.valuesTemplatePath)
 	if err != nil {
-		return fmt.Errorf("failed to read values template file: %w", err)
+		return err
 	}
 
-	d.log().Debug("Resolving dependencies...")
-	topology := resolver.NewTopology()
-	r := resolver.NewResolver(d.cfg, d.collection, topology)
-	if err := r.Resolve(); err != nil {
+	topology, err := d.topologyBuilder.Build(d.cmd.Context(), d.cfg)
+	if err != nil {
+		if errors.Is(err, resolver.ErrMissingIntegrations) {
+			return fmt.Errorf(`%s
+
+Required integrations are missing from the cluster, run the "%s integration"
+subcommand to configure them. For example:
+
+	$ %s integration --help
+	$ %s integration <name> --help
+	`,
+				err, constants.AppName, constants.AppName, constants.AppName)
+
+		}
 		return err
 	}
 
