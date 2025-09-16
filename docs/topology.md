@@ -47,6 +47,28 @@ annotations:
   tssc.redhat-appstudio.github.com/depends-on: "tssc-openshift, tssc-subscriptions"
 ```
 
+### `tssc.redhat-appstudio.github.com/integrations-provided`
+
+- **Purpose**: This **optional** annotation lists the names of integrations that the Helm chart provides.  The chart is responsible for creating the necessary secrets or configurations for these integrations.
+- **Usage**: The value is a comma-separated list of integration names.  These names should be supported by the project.
+- **Example**: The Helm chart provides the `trustification` integration.
+
+```yaml
+annotations:
+  tssc.redhat-appstudio.github.com/integrations-provided: "trustification"
+```
+
+### `tssc.redhat-appstudio.github.com/integrations-required`
+
+- **Purpose**: This **optional** annotation specifies the integrations that the Helm chart requires.  The value is a CEL expression that, when evaluated, determines if the required integrations are available.
+- **Usage**: The CEL expression uses the names of the integrations.  If the expression evaluates to `true`, the integrations are considered available.
+- **Example**:  If the chart requires both `github` and `trustification` integrations:
+
+```yaml
+annotations:
+  tssc.redhat-appstudio.github.com/integrations-required: "github && trustification"
+```
+
 ## Resolution Logic
 
 The Resolver's core logic for determining the Helm chart deployment order is based on a two-phase process to build a comprehensive deployment topology.
