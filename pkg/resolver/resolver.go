@@ -178,17 +178,19 @@ func (r *Resolver) Resolve() error {
 func (r *Resolver) Print(w io.Writer) {
 	table := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
 	row := func(a ...any) {
-		fmt.Fprintf(table, "%s\t%s\t%s\t%s\t%s\n", a...)
+		fmt.Fprintf(table, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n", a...)
 	}
-	row("Index", "Dependency", "Namespace", "Product", "Depends-On")
+	row("Index", "Dependency", "Namespace", "Product", "Depends-On",
+		"Provided-Integrations", "Required-Integrations")
 	for i, d := range r.topology.Dependencies() {
-		dependsOn := d.DependsOn()
 		row(
 			fmt.Sprintf("%2d", i+1),
 			d.Name(),
 			d.Namespace(),
 			d.ProductName(),
-			strings.Join(dependsOn, ", "),
+			strings.Join(d.DependsOn(), ", "),
+			strings.Join(d.IntegrationsProvided(), ", "),
+			d.IntegrationsRequired(),
 		)
 	}
 	table.Flush()
