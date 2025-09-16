@@ -14,7 +14,8 @@
           {"type": "docs", "release": "patch"},
           {"type": "style", "release": false},
           {"type": "test", "release": false},
-          {"scope": "no-release", "release": false}
+          {"scope": "no-release", "release": false},
+          {"scope": "deps", "release": false}
         ]
       }
     ],
