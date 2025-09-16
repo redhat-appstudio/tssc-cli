@@ -6,7 +6,6 @@ import (
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integration"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
-	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/spf13/cobra"
 )
@@ -62,10 +61,7 @@ func (q *IntegrationQuay) Validate() error {
 
 // Run creates or updates the Quay integration secret.
 func (q *IntegrationQuay) Run() error {
-	return q.integration.Create(q.cmd.Context(), q.cfg, types.NamespacedName{
-		Namespace: q.cfg.Installer.Namespace,
-		Name:      "tssc-quay-integration",
-	})
+	return q.integration.Create(q.cmd.Context(), q.cfg)
 }
 
 // NewIntegrationQuay creates the sub-command for the "integration quay"

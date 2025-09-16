@@ -6,7 +6,6 @@ import (
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integration"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
-	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/spf13/cobra"
 )
@@ -50,10 +49,7 @@ func (n *IntegrationNexus) Validate() error {
 
 // Run creates or updates the Nexus integration secret.
 func (n *IntegrationNexus) Run() error {
-	return n.integration.Create(n.cmd.Context(), n.cfg, types.NamespacedName{
-		Namespace: n.cfg.Installer.Namespace,
-		Name:      "tssc-nexus-integration",
-	})
+	return n.integration.Create(n.cmd.Context(), n.cfg)
 }
 
 // NewIntegrationNexus creates the sub-command for the "integration nexus"

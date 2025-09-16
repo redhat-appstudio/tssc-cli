@@ -6,7 +6,6 @@ import (
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integration"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
-	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/spf13/cobra"
 )
@@ -49,10 +48,7 @@ func (a *IntegrationAzure) Validate() error {
 
 // Run creates or updates the Azure integration secret.
 func (a *IntegrationAzure) Run() error {
-	return a.integration.Create(a.cmd.Context(), a.cfg, types.NamespacedName{
-		Namespace: a.cfg.Installer.Namespace,
-		Name:      "tssc-azure-integration",
-	})
+	return a.integration.Create(a.cmd.Context(), a.cfg)
 }
 
 // NewIntegrationAzure creates the sub-command for the "integration azure"

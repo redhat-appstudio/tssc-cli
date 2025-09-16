@@ -17,6 +17,9 @@ type IntegrationTools struct {
 	integrationCmd *cobra.Command // integration subcommand
 }
 
+// IntegrationListTool list integrations tool.
+const IntegrationListTool = "tssc_integration_list"
+
 func (i *IntegrationTools) listHandler(
 	ctx context.Context,
 	ctr mcp.CallToolRequest,
@@ -72,7 +75,7 @@ The detailed description of each '%s integration' command is found below.
 func (i *IntegrationTools) Init(s *server.MCPServer) {
 	s.AddTools([]server.ServerTool{{
 		Tool: mcp.NewTool(
-			"tssc_integration_list",
+			IntegrationListTool,
 			mcp.WithDescription(`
 List the TSSC integrations available for the user. Certain integrations are
 required for certain features, make sure to configure the integrations

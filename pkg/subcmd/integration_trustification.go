@@ -6,7 +6,6 @@ import (
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integration"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
-	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/spf13/cobra"
 )
@@ -50,10 +49,7 @@ func (t *IntegrationTrustification) Validate() error {
 
 // Run creates or updates the Trustification integration secret.
 func (t *IntegrationTrustification) Run() error {
-	return t.integration.Create(t.cmd.Context(), t.cfg, types.NamespacedName{
-		Namespace: t.cfg.Installer.Namespace,
-		Name:      "tssc-trustification-integration",
-	})
+	return t.integration.Create(t.cmd.Context(), t.cfg)
 }
 
 // NewIntegrationTrustification creates the sub-command for the "integration

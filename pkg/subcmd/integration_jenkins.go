@@ -6,7 +6,6 @@ import (
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integration"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
-	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/spf13/cobra"
 )
@@ -50,10 +49,7 @@ func (j *IntegrationJenkins) Validate() error {
 
 // Run creates or updates the Jenkins integration secret.
 func (j *IntegrationJenkins) Run() error {
-	return j.integration.Create(j.cmd.Context(), j.cfg, types.NamespacedName{
-		Namespace: j.cfg.Installer.Namespace,
-		Name:      "tssc-jenkins-integration",
-	})
+	return j.integration.Create(j.cmd.Context(), j.cfg)
 }
 
 // NewIntegrationJenkins creates the sub-command for the "integration jenkins"

@@ -33,8 +33,10 @@ and Helm charts. It will output a table with the following columns:
   - Index: the index of the chart in the dependency graph.
   - Dependency: the name of the Helm chart.
   - Namespace: the OpenShift namespace where the chart is installed.
-  - Product: the name of the product that the chart is associated with.
-  - Depends-On: comma-separated list of charts that this chart depends on.
+  - Product: the name of the product the chart is associated with.
+  - Depends-On: comma-separated list of charts the chart depends on.
+  - Provided-Integrations: comma-separated integrations provided by the chart.
+  - Required-Integrations: CEL expressions with the required integrations.
 `
 
 // Cmd exposes the cobra instance.

@@ -2,11 +2,13 @@ package mcptools
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/installer"
+	"github.com/redhat-appstudio/tssc-cli/pkg/resolver"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -16,9 +18,10 @@ import (
 // installer on a container image, and running in the cluster, using a Kubernetes
 // Job.
 type DeployTools struct {
-	cm    *config.ConfigMapManager // cluster configuration
-	job   *installer.Job           // cluster deployment job
-	image string                   // tssc container image
+	cm              *config.ConfigMapManager  // cluster configuration
+	topologyBuilder *resolver.TopologyBuilder // topology builder
+	job             *installer.Job            // cluster deployment job
+	image           string                    // tssc container image
 }
 
 // statusHandler handles the status of the deployment job. It checks if the
@@ -42,8 +45,59 @@ Inspecting the configuration in the cluster returned the following error:
 		)), nil
 	}
 
-	// Given the cluster is configured, inspect the current state of the
-	// deployment job.
+	// Given the cluster is configured, let's inspect the topology to ensure all
+	// dependencies and integrations are resolved.
+	if _, err = d.topologyBuilder.Build(ctx, cfg); err != nil {
+		switch {
+		case errors.Is(err, resolver.ErrCircularDependency) ||
+			errors.Is(err, resolver.ErrDependencyNotFound) ||
+			errors.Is(err, resolver.ErrInvalidCollection):
+			return mcp.NewToolResultText(fmt.Sprintf(`
+ATTENTION: The installer set of dependencies, Helm charts, are not properly
+resolved. Please check the dependencies given to the installer. Preferably use the
+embedded dependency collection.
+
+	%s`,
+				err.Error(),
+			)), nil
+		case errors.Is(err, resolver.ErrInvalidExpression) ||
+			errors.Is(err, resolver.ErrUnknownIntegration):
+			return mcp.NewToolResultText(fmt.Sprintf(`
+ATTENTION: The installer set of dependencies, Helm charts, are referencing invalid
+required integrations expressions and/or using invalid integration names. Please
+check the dependencies given to the installer. Preferably use the embedded
+dependency collection.
+
+	%s`,
+				err.Error(),
+			)), nil
+		case errors.Is(err, resolver.ErrConfiguredIntegration):
+			// TODO: when the configuration update is ready (RHTAP-5316) the tool
+			// result will instruct the user to rely on the configuration tool to
+			// update the cluster configuration, or remove the integration from
+			// from the cluster.
+			return mcp.NewToolResultText(fmt.Sprintf(`
+The integration is already configured in the cluster, 
+
+	%s`,
+				err.Error(),
+			)), nil
+		case errors.Is(err, resolver.ErrMissingIntegrations):
+			return mcp.NewToolResultText(fmt.Sprintf(`
+ATTENTION: One or more required integrations are missing. Use the tool %q to
+describe the existing integrations, and examples of how to use the CLI to
+configure them. 
+
+	%s`,
+				IntegrationListTool, err.Error(),
+			)), nil
+		default:
+			return mcp.NewToolResultError(err.Error()), nil
+		}
+	}
+
+	// Given integrations are in place, let's inspect the current state of the
+	// cluster deployment job.
 	state, err := d.job.GetState(ctx)
 	if err != nil {
 		return nil, err
@@ -123,7 +177,7 @@ You can follow the logs by running:
 // Init registers the deployment tools on the MCP server.
 func (d *DeployTools) Init(s *server.MCPServer) {
 	s.AddTools([]server.ServerTool{{
-		// TODO: the installer status will be moved to a dedicatd function,
+		// TODO: the installer status will be moved to a dedicated function,
 		// "tssc_status", see RHTAP-4826 for more details. While this MCP function
 		// only shows the deploy job status, the future "tssc_status" will include
 		// the installed Helm charts and more.

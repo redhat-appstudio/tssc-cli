@@ -14,9 +14,9 @@ type Collection struct {
 	dependencies map[string]*Dependency // dependencies by name
 }
 
-// CollectionWalkFn is a function that is called for each dependency in the
+// DependencyWalkFn is a function that is called for each dependency in the
 // collection, the dependency name and instance are passed to it.
-type CollectionWalkFn func(string, Dependency) error
+type DependencyWalkFn func(string, Dependency) error
 
 var (
 	// ErrInvalidCollection the collection is invalid.
@@ -36,7 +36,7 @@ func (c *Collection) Get(name string) (*Dependency, error) {
 
 // Walk iterates over all dependencies in the collection and calls the provided
 // function for each entry.
-func (c *Collection) Walk(fn CollectionWalkFn) error {
+func (c *Collection) Walk(fn DependencyWalkFn) error {
 	names := make([]string, 0, len(c.dependencies))
 	for name := range c.dependencies {
 		names = append(names, name)
@@ -76,13 +76,11 @@ func (c *Collection) GetProductDependency(product string) (*Dependency, error) {
 // NewCollection creates a new Collection from the given charts. It returns an
 // error if there are duplicate charts and product names.
 func NewCollection(charts []chart.Chart) (*Collection, error) {
-	// Creating a new collection without dependencies.
 	c := &Collection{dependencies: map[string]*Dependency{}}
 	// Stores the product names found in the slice of Helm charts.
 	productNames := []string{}
 	// Populating the collection with dependencies.
 	for _, hc := range charts {
-		// Creating a new dependency.
 		d := NewDependency(&hc)
 		// Dependencies in the collection must have unique names.
 		if _, err := c.Get(d.Name()); err == nil {

@@ -5,3 +5,4 @@ type: application
 version: "1.7.0"
 annotations:
   tssc.redhat-appstudio.github.com/depends-on: tssc-acs, tssc-pipelines, tssc-tpa
+  tssc.redhat-appstudio.github.com/integrations-required: "(bitbucket || github || gitlab) && acs && trustification"

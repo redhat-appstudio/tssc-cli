@@ -22,7 +22,13 @@ type ImageRegistry struct {
 
 var _ Interface = &ImageRegistry{}
 
-const dockerConfigEx = `{ "auths": { "registry.tld": { "auth": "username" } } }`
+const (
+	// QuayURL is the default URL for public Quay.
+	QuayURL = "https://quay.io"
+
+	// dockerConfigEx is an example of a docker config JSON.
+	dockerConfigEx = `{ "auths": { "registry.tld": { "auth": "username" } } }`
+)
 
 // PersistentFlags adds the persistent flags to the informed Cobra command.
 func (i *ImageRegistry) PersistentFlags(cmd *cobra.Command) {
