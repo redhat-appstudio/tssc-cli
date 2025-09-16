@@ -125,6 +125,8 @@ spec:
           value: $(params.rhads-config)
         - name: tssc-image
           value: $(params.tssc-image)
+        - name: tssc-test-image
+          value: $(params.tssc-test-image)
     - name: sprayproxy-provision
       runAfter:
         - tssc-install
