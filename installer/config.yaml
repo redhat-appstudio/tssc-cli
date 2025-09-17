@@ -72,7 +72,7 @@ tssc:
         # namespacePrefixes:
         #   - tssc-app
         authProvider: github
-        # Possible values: github, gitlab, microsoft
+        # Possible values: github, gitlab
         # RBAC:
         #   adminUsers:
         #     - myUsername
