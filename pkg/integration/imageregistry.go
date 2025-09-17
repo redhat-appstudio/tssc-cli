@@ -62,6 +62,18 @@ func (i *ImageRegistry) LoggerWith(logger *slog.Logger) *slog.Logger {
 
 // Validate validates the integration configuration.
 func (i *ImageRegistry) Validate() error {
+	err := ValidateJSON("dockerconfigjson", i.dockerConfig)
+	if err != nil {
+		return err
+	}
+
+	if i.dockerConfigRO != "" {
+		err = ValidateJSON("dockerconfigjsonreadonly", i.dockerConfigRO)
+		if err != nil {
+			return err
+		}
+	}
+
 	return ValidateURL(i.url)
 }
 
