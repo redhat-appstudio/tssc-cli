@@ -95,11 +95,21 @@ func (c *Config) DecodeNode() error {
 	if len(c.root.Content) == 0 {
 		return fmt.Errorf("invalid configuration: content is empty")
 	}
-	if len(c.root.Content[0].Content) == 0 {
-		return fmt.Errorf("invalid configuration: missing content")
+	doc := c.root.Content[0]
+	if doc.Kind != yaml.MappingNode || len(doc.Content) < 2 {
+		return fmt.Errorf("invalid configuration: root must be a mapping")
 	}
-	root := c.root.Content[0].Content[1]
-	if err := root.Decode(&c.Installer); err != nil {
+	var tsscNode *yaml.Node
+	for i := 0; i+1 < len(doc.Content); i += 2 {
+		if doc.Content[i].Value == "tssc" {
+			tsscNode = doc.Content[i+1]
+			break
+		}
+	}
+	if tsscNode == nil {
+		return fmt.Errorf("invalid configuration: missing 'tssc' key")
+	}
+	if err := tsscNode.Decode(&c.Installer); err != nil {
 		return err
 	}
 	return nil
@@ -162,8 +172,8 @@ func NewConfigFromFile(cfs *chartfs.ChartFS, configPath string) (*Config, error)
 // NewConfigFromBytes instantiates a new Config from the bytes payload informed.
 func NewConfigFromBytes(payload []byte) (*Config, error) {
 	c := &Config{}
-	if err := yaml.Unmarshal(payload, &c.root); err != nil {
-		return nil, fmt.Errorf("%w: %s", ErrUnmarshalConfig, err)
+	if err := c.UnmarshalYAML(payload); err != nil {
+		return nil, err
 	}
 	return c, nil
 }
