@@ -73,7 +73,7 @@ func (d *Deploy) log() *slog.Logger {
 // Complete verifies the object is complete.
 func (d *Deploy) Complete(args []string) error {
 	var err error
-	d.topologyBuilder, err = resolver.NewTopologyManager(
+	d.topologyBuilder, err = resolver.NewTopologyBuilder(
 		d.logger, d.cfs, integrations.NewManager(d.logger, d.kube))
 	if err != nil {
 		return err

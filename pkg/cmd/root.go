@@ -32,7 +32,7 @@ func (r *RootCmd) Cmd() *cobra.Command {
 		subcmd.NewConfig(logger, r.flags, r.cfs, r.kube),
 		subcmd.NewDeploy(logger, r.flags, r.cfs, r.kube),
 		subcmd.NewInstaller(r.flags),
-		subcmd.NewMCPServer(r.flags, r.kube),
+		subcmd.NewMCPServer(r.flags, r.cfs, r.kube),
 		subcmd.NewTemplate(logger, r.flags, r.cfs, r.kube),
 		subcmd.NewTopology(logger, r.cfs, r.kube),
 	} {

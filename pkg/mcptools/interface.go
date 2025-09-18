@@ -7,5 +7,5 @@ import (
 // Interface represents the MCP tools in the project.
 type Interface interface {
 	// Init decorates the MCP server with the tool declaration.
-	Init(s *server.MCPServer)
+	Init(*server.MCPServer)
 }
