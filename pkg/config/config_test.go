@@ -66,4 +66,11 @@ func TestNewConfigFromFile(t *testing.T) {
 		// Asserting the original configuration looks like the marshaled one.
 		g.Expect(string(original)).To(o.Equal(configString))
 	})
+
+	t.Run("Set", func(t *testing.T) {
+		cfg.Set("tssc.namespace", "testnamespace")
+		configString := cfg.String()
+		g.Expect(err).To((o.Succeed()))
+		g.Expect(string(configString)).To(o.ContainSubstring("testnamespace"))
+	})
 }

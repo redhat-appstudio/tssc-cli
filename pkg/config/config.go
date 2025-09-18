@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 
@@ -143,6 +144,56 @@ func (c *Config) String() string {
 		panic(err)
 	}
 	return string(data)
+}
+
+// UpdateMappingValue updates configuration with new value
+func (c *Config) UpdateMappingValue(node *yaml.Node, key, newValue string) error {
+	for i := 0; i < len(node.Content); i += 2 {
+		if i+1 < len(node.Content) && node.Content[i].Value == key {
+			node.Content[i+1].Value = newValue
+			return nil
+		}
+	}
+	return fmt.Errorf("no key: %s found in configuration", key)
+}
+
+// UpdateNestedValue loops in node contents to get the node that needs update
+func (c *Config) UpdateNestedValue(node *yaml.Node, path []string, newValue string) error {
+	if len(path) == 0 {
+		return fmt.Errorf("config path is missing")
+	}
+	if len(path) == 1 {
+		return c.UpdateMappingValue(node, path[0], newValue)
+	}
+	current := node
+	for i := 0; i < len(current.Content); i += 2 {
+		return c.UpdateNestedValue(current.Content[i+1], path[1:], newValue)
+	}
+	return fmt.Errorf("not able to update configuration, please check the input")
+}
+
+// UpdateNestedValues gets the config content and call UpdateNestedValue to update
+func (c *Config) UpdateNestedValues(path []string, newValue string) error {
+	if len(c.root.Content) == 0 {
+		return fmt.Errorf("invalid configuration format: content is nil or empty")
+	}
+	root := c.root.Content[0]
+	if len(root.Content) == 0 {
+		return fmt.Errorf("invalid configuration format")
+	}
+	return c.UpdateNestedValue(root, path, newValue)
+}
+
+// Set returns new configuration with updates
+func (c *Config) Set(key string, value string) error {
+	keyPath := strings.Split(key, ".")
+	if len(keyPath) < 2 {
+		return fmt.Errorf("invalid key set")
+	}
+	if err := c.UpdateNestedValues(keyPath, value); err != nil {
+		return err
+	}
+	return nil
 }
 
 // NewConfigFromFile returns a new Config instance based on the informed file.
