@@ -89,9 +89,12 @@ func (c *ConfigTools) createHandler(
 	// Duplicating the default config for the user input changes.
 	cfg := *c.defaultCfg
 
+	// TODO: Use the yaml.Node API to set the namespace.
 	// Setting the namespace from user input, if provided.
 	if ns, ok := ctr.GetArguments()[NamespaceArg].(string); ok {
 		cfg.Installer.Namespace = ns
+		// Set namespace to value of ns
+		cfg.Set("tssc.namespace", ns)
 	}
 
 	if settings, ok := ctr.GetArguments()[SettingsArg].(config.Settings); ok {

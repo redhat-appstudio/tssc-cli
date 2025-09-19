@@ -179,6 +179,9 @@ func (c *Config) runCreate() error {
 			config.Name,
 			fmt.Sprintf("%s=true", config.Label),
 		)
+		if err != nil {
+			return err
+		}
 		fmt.Print(cfg.String())
 		return nil
 	}
