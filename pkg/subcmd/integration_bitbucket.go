@@ -6,7 +6,6 @@ import (
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integration"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
-	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/spf13/cobra"
 )
@@ -50,10 +49,7 @@ func (b *IntegrationBitBucket) Validate() error {
 
 // Run creates or updates the BitBucket integration secret.
 func (b *IntegrationBitBucket) Run() error {
-	return b.integration.Create(b.cmd.Context(), b.cfg, types.NamespacedName{
-		Namespace: b.cfg.Installer.Namespace,
-		Name:      "tssc-bitbucket-integration",
-	})
+	return b.integration.Create(b.cmd.Context(), b.cfg)
 }
 
 // NewIntegrationBitBucket creates the sub-command for the "integration bitbucket"

@@ -35,6 +35,17 @@ func (t *Topology) Contains(name string) bool {
 	return false
 }
 
+// Walk traverses the topology and calls the informed function for each
+// dependency.
+func (t *Topology) Walk(fn DependencyWalkFn) error {
+	for i := range t.dependencies {
+		if err := fn(t.dependencies[i].Name(), t.dependencies[i]); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // PrependBefore prepends a list of dependencies before a specific dependency.
 func (t *Topology) PrependBefore(name string, dependencies ...Dependency) {
 	prefix := Dependencies{}

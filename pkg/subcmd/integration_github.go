@@ -8,14 +8,13 @@ import (
 	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integration"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
-	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/spf13/cobra"
 )
 
-// IntegrationGitHubApp is the sub-command for the "integration github-app",
+// IntegrationGitHub is the sub-command for the "integration github-app",
 // responsible for creating and updating the GitHub Apps integration secret.
-type IntegrationGitHubApp struct {
+type IntegrationGitHub struct {
 	cmd         *cobra.Command           // cobra command
 	logger      *slog.Logger             // application logger
 	cfg         *config.Config           // installer configuration
@@ -26,7 +25,7 @@ type IntegrationGitHubApp struct {
 	update bool // update a existing github app
 }
 
-var _ Interface = &IntegrationGitHubApp{}
+var _ Interface = &IntegrationGitHub{}
 
 const integrationLongDesc = `
 Manages the GitHub App integration with TSSC, by creating a new application
@@ -42,12 +41,12 @@ OpenShift GitOps and Openshift Pipelines to interact with the repositores, addin
 `
 
 // Cmd exposes the cobra instance.
-func (g *IntegrationGitHubApp) Cmd() *cobra.Command {
+func (g *IntegrationGitHub) Cmd() *cobra.Command {
 	return g.cmd
 }
 
 // Complete captures the application name, and ensures it's ready to run.
-func (g *IntegrationGitHubApp) Complete(args []string) error {
+func (g *IntegrationGitHub) Complete(args []string) error {
 	var err error
 	g.cfg, err = bootstrapConfig(g.cmd.Context(), g.kube)
 	if err != nil {
@@ -71,37 +70,35 @@ func (g *IntegrationGitHubApp) Complete(args []string) error {
 }
 
 // Validate checks if the required configuration is set.
-func (g *IntegrationGitHubApp) Validate() error {
+func (g *IntegrationGitHub) Validate() error {
 	return g.integration.Validate()
 }
 
 // Manages the GitHub App and integration secret.
-func (g *IntegrationGitHubApp) Run() error {
+func (g *IntegrationGitHub) Run() error {
 	if g.create {
-		return g.integration.Create(g.cmd.Context(), g.cfg, types.NamespacedName{
-			Namespace: g.cfg.Installer.Namespace,
-			Name:      "tssc-github-integration",
-		})
+		return g.integration.Create(g.cmd.Context(), g.cfg)
 	}
 	if g.update {
 		// TODO: implement update.
 		panic(fmt.Sprintf(
-			"TODO: '%s integration github-app --update'", constants.AppName,
+			"TODO: '%s integration github --update'", constants.AppName,
 		))
 	}
 	return nil
 }
 
-// NewIntegrationGitHubApp creates the sub-command for the "integration
-// github-app", which manages the TSSC integration with a GitHub App.
-func NewIntegrationGitHubApp(
+// NewIntegrationGitHub creates the sub-command for the "integration github",
+// which manages the TSSC integration with a GitHub App.
+func NewIntegrationGitHub(
 	logger *slog.Logger,
 	kube *k8s.Kube,
 	i *integration.Integration,
-) *IntegrationGitHubApp {
-	g := &IntegrationGitHubApp{
+) *IntegrationGitHub {
+	g := &IntegrationGitHub{
 		cmd: &cobra.Command{
-			Use:          "github-app <name> [--create|--update] [flags]",
+			Aliases:      []string{"github-app"},
+			Use:          "github <name> [--create|--update] [flags]",
 			Short:        "Prepares a GitHub App for TSSC integration",
 			Long:         integrationLongDesc,
 			SilenceUsage: true,
