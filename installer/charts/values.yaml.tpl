@@ -56,32 +56,35 @@ openshift:
 
 
 subscriptions:
-  openshiftGitOps:
-    enabled: {{ $gitops.Enabled }}
-    managed: {{ and $gitops.Enabled $gitops.Properties.manageSubscription }}
-    config:
-      argoCDClusterNamespace: {{ $gitops.Namespace }}
-  openshiftKeycloak:
-    enabled: {{ $keycloakEnabled }}
-    managed: {{ $keycloakEnabled }}
-    operatorGroup:
-      targetNamespaces:
-        - {{ default "empty" $keycloakNamespace }}
-  openshiftPipelines:
-    enabled: {{ $pipelines.Enabled }}
-    managed: {{ and $pipelines.Enabled $pipelines.Properties.manageSubscription }}
-  openshiftTrustedArtifactSigner:
-    enabled: {{ $tas.Enabled }}
-    managed: {{ and $tas.Enabled $tas.Properties.manageSubscription }}
-  trustedProfileAnalyzer:
-    enabled: {{ $tpa.Enabled }}
-    managed: {{ and $tpa.Enabled $tpa.Properties.manageSubscription }}
-  advancedClusterSecurity:
-    enabled: {{ $acs.Enabled }}
-    managed: {{ and $acs.Enabled $acs.Properties.manageSubscription }}
-  developerHub:
-    enabled: {{ $rhdh.Enabled }}
-    managed: {{ and $rhdh.Enabled $rhdh.Properties.manageSubscription }}
+  operators:
+    openshiftGitOps:
+      enabled: {{ $gitops.Enabled }}
+      managed: {{ and $gitops.Enabled $gitops.Properties.manageSubscription }}
+      config:
+        argoCDClusterNamespace: {{ $gitops.Namespace }}
+    openshiftKeycloak:
+      enabled: {{ $keycloakEnabled }}
+      managed: {{ $keycloakEnabled }}
+      operatorGroup:
+        targetNamespaces:
+          - {{ default "empty" $keycloakNamespace }}
+    openshiftPipelines:
+      enabled: {{ $pipelines.Enabled }}
+      managed: {{ and $pipelines.Enabled $pipelines.Properties.manageSubscription }}
+    openshiftTrustedArtifactSigner:
+      enabled: {{ $tas.Enabled }}
+      managed: {{ and $tas.Enabled $tas.Properties.manageSubscription }}
+    trustedProfileAnalyzer:
+      enabled: {{ $tpa.Enabled }}
+      managed: {{ and $tpa.Enabled $tpa.Properties.manageSubscription }}
+    advancedClusterSecurity:
+      enabled: {{ $acs.Enabled }}
+      managed: {{ and $acs.Enabled $acs.Properties.manageSubscription }}
+    developerHub:
+      enabled: {{ $rhdh.Enabled }}
+      managed: {{ and $rhdh.Enabled $rhdh.Properties.manageSubscription }}
+  settings:
+    lockVersions: {{ .Installer.Settings.lockSubscriptionsVersion }}
 
 #
 # tssc-infrastructure

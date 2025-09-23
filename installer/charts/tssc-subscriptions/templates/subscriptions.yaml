@@ -1,3 +1,4 @@
+{{ $settings := .Values.subscriptions.settings }}
 {{- range $s := include "subscriptions.managed" . | fromYaml }}
   {{- if $s.operatorGroup }}
 ---
@@ -22,12 +23,14 @@ metadata:
 spec:
   name: {{ $s.name }}
   channel: {{ $s.channel }}
+  {{- if $settings.lockVersions }}
+  installPlanApproval: Manual
+  startingCSV: {{ $s.startingCSV }}
+  {{- else }}
   installPlanApproval: Automatic
+  {{- end }}
   source: {{ $s.source }}
   sourceNamespace: {{ $s.sourceNamespace }}
-  {{- with $s.startingCSV }}
-  startingCSV: {{ . }}
-  {{- end }}
   {{- if $s.config }}
   config:
     {{- if $s.config.argoCDClusterNamespace }}

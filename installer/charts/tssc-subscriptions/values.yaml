@@ -1,75 +1,85 @@
 ---
 subscriptions:
-  openshiftGitOps:
-    enabled: false
-    description: OpenShift GitOps Operator
-    apiResource: gitopsservices.pipelines.openshift.io
-    namespace: openshift-operators
-    name: openshift-gitops-operator
-    channel: gitops-1.17
-    source: redhat-operators
-    sourceNamespace: openshift-marketplace
-    config:
-      argoCDClusterNamespace: __OVERWRITE_ME__
-  openshiftKeycloak:
-    enabled: false
-    description: Red Hat Keycloak Operator
-    apiResource: keycloaks.k8s.keycloak.org
-    namespace: rhbk-operator
-    name: rhbk-operator
-    channel: stable-v24
-    source: redhat-operators
-    sourceNamespace: openshift-marketplace
-    operatorGroup:
-      upgradeStrategy: Default
-      targetNamespaces: []
-  openshiftPipelines:
-    enabled: false
-    description: OpenShift Pipelines Operator
-    namespace: openshift-operators
-    name: openshift-pipelines-operator-rh
-    channel: pipelines-1.19
-    source: redhat-operators
-    sourceNamespace: openshift-marketplace
-  openshiftTrustedArtifactSigner:
-    enabled: false
-    description: Red Hat Trusted Artifact Signer Operator
-    apiResource: securesigns.rhtas.redhat.com
-    namespace: openshift-operators
-    name: rhtas-operator
-    channel: stable-v1.2
-    source: redhat-operators
-    sourceNamespace: openshift-marketplace
-  advancedClusterSecurity:
-    enabled: false
-    description: Red Hat Advanced Cluster Security Operator
-    apiResource: centrals.platform.stackrox.io
-    channel: rhacs-4.8
-    namespace: rhacs-operator
-    name: rhacs-operator
-    source: redhat-operators
-    sourceNamespace: openshift-marketplace
-    operatorGroup:
-      upgradeStrategy: Default
-  developerHub:
-    enabled: false
-    description: Red Hat Developer Hub Operator
-    apiResource: backstages.rhdh.redhat.com
-    namespace: openshift-operators
-    name: rhdh
-    channel: fast-1.7
-    source: redhat-operators
-    sourceNamespace: openshift-marketplace
-  trustedProfileAnalyzer:
-    enabled: false
-    description: Red Hat Trusted Profile Analyzer
-    apiResource: trustedprofileanalyzers.rhtpa.io
-    namespace: tssc-tpa
-    name: rhtpa-operator
-    channel: stable
-    source: redhat-operators
-    sourceNamespace: openshift-marketplace
-    operatorGroup:
-      upgradeStrategy: Default
-      targetNamespaces:
-        - tssc-tpa
+  operators:
+    openshiftGitOps:
+      enabled: false
+      description: OpenShift GitOps Operator
+      apiResource: gitopsservices.pipelines.openshift.io
+      namespace: openshift-operators
+      name: openshift-gitops-operator
+      channel: gitops-1.17
+      startingCSV: openshift-gitops-operator.v1.17.1
+      source: redhat-operators
+      sourceNamespace: openshift-marketplace
+      config:
+        argoCDClusterNamespace: __OVERWRITE_ME__
+    openshiftKeycloak:
+      enabled: false
+      description: Red Hat Keycloak Operator
+      apiResource: keycloaks.k8s.keycloak.org
+      namespace: rhbk-operator
+      name: rhbk-operator
+      channel: stable-v24
+      startingCSV: rhbk-operator.v24.0.11-opr.1
+      source: redhat-operators
+      sourceNamespace: openshift-marketplace
+      operatorGroup:
+        upgradeStrategy: Default
+        targetNamespaces: []
+    openshiftPipelines:
+      enabled: false
+      description: OpenShift Pipelines Operator
+      namespace: openshift-operators
+      name: openshift-pipelines-operator-rh
+      channel: pipelines-1.19
+      startingCSV: openshift-pipelines-operator-rh.v1.19.3
+      source: redhat-operators
+      sourceNamespace: openshift-marketplace
+    openshiftTrustedArtifactSigner:
+      enabled: false
+      description: Red Hat Trusted Artifact Signer Operator
+      apiResource: securesigns.rhtas.redhat.com
+      namespace: openshift-operators
+      name: rhtas-operator
+      channel: stable-v1.2
+      startingCSV: rhtas-operator.v1.2.1
+      source: redhat-operators
+      sourceNamespace: openshift-marketplace
+    advancedClusterSecurity:
+      enabled: false
+      description: Red Hat Advanced Cluster Security Operator
+      apiResource: centrals.platform.stackrox.io
+      channel: rhacs-4.8
+      startingCSV: rhacs-operator.v4.8.4
+      namespace: rhacs-operator
+      name: rhacs-operator
+      source: redhat-operators
+      sourceNamespace: openshift-marketplace
+      operatorGroup:
+        upgradeStrategy: Default
+    developerHub:
+      enabled: false
+      description: Red Hat Developer Hub Operator
+      apiResource: backstages.rhdh.redhat.com
+      namespace: openshift-operators
+      name: rhdh
+      channel: fast-1.7
+      startingCSV: rhdh-operator.v1.7.1
+      source: redhat-operators
+      sourceNamespace: openshift-marketplace
+    trustedProfileAnalyzer:
+      enabled: false
+      description: Red Hat Trusted Profile Analyzer
+      apiResource: trustedprofileanalyzers.rhtpa.io
+      namespace: tssc-tpa
+      name: rhtpa-operator
+      channel: stable-v1.0
+      startingCSV: rhtpa-operator.v1.0.0
+      source: redhat-operators
+      sourceNamespace: openshift-marketplace
+      operatorGroup:
+        upgradeStrategy: Default
+        targetNamespaces:
+          - tssc-tpa
+  settings:
+    lockVersions: true

@@ -1,0 +1,50 @@
+{{- $namespaces := dict }}
+{{- if .Values.subscriptions.settings.lockVersions }}
+  {{- range $s := include "subscriptions.managed" . | fromYaml }}
+    {{- if not (hasKey $namespaces $s.namespace) }}
+      {{- $namespaces = set $namespaces $s.namespace (list) }}
+    {{- end }}
+    {{- $namespaces = set $namespaces $s.namespace (append (get $namespaces $s.namespace) $s.startingCSV) }}
+  {{- end }}
+{{- end }}
+{{- if $namespaces }}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+  name: installplan-approval
+spec:
+  serviceAccountName: {{ .Release.Name }}
+  restartPolicy: Never
+  initContainers:
+    #
+    # Copying the scripts that will be used on the subsequent containers, the
+    # scripts are shared via the "/scripts" volume.
+    #
+    {{- include "common.copyScripts" . | nindent 8 }}
+  containers:
+  {{ range $namespace, $csvs := $namespaces }}
+    - name: approve-installplan-{{ $namespace }}
+      image: registry.redhat.io/openshift4/ose-tools-rhel9
+      command:
+        - /scripts/approve-installplan.sh
+      args:
+        - --csvs
+        - {{ join "," $csvs | quote }}
+        - --namespace
+        - {{ $namespace }}
+      volumeMounts:
+        - name: scripts
+          mountPath: /scripts
+      securityContext:
+        allowPrivilegeEscalation: false
+  {{- end }}
+  volumes:
+    - name: scripts
+      emptyDir: {}
+{{- end }}

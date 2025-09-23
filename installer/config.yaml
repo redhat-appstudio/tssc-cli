@@ -10,6 +10,7 @@ tssc:
     ci:
       # Enables installer verbose logging messages for troubleshooting issues.
       debug: false
+    lockSubscriptionsVersion: true
   products:
     # Red Hat Advanced Cluster Security (ACS) for OpenShift is a comprehensive
     # security platform that protects cloud-native applications across the entire

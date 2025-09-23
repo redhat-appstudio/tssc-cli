@@ -3,7 +3,7 @@
 */ -}}
 {{- define "subscriptions.enabled" -}}
   {{- $enabled := dict -}}
-  {{- range $k, $v := .Values.subscriptions -}}
+  {{- range $k, $v := .Values.subscriptions.operators -}}
     {{- if $v.enabled -}}
       {{- $enabled = merge $enabled (dict $k $v) -}}
     {{- end -}}
@@ -15,7 +15,7 @@
 */ -}}
 {{- define "subscriptions.managed" -}}
   {{- $managed := dict -}}
-  {{- range $k, $v := .Values.subscriptions -}}
+  {{- range $k, $v := .Values.subscriptions.operators -}}
     {{- if $v.managed -}}
       {{- $managed = merge $managed (dict $k $v) -}}
     {{- end -}}

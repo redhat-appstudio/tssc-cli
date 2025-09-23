@@ -26,7 +26,7 @@ spec:
             - /bin/bash
             - -c
             - |
-              if [[ "{{ .Values.subscriptions.openshiftPipelines.managed }}" != "true" ]]; then
+              if [[ "{{ .Values.subscriptions.operators.openshiftPipelines.managed }}" != "true" ]]; then
                   echo "Skipping TektonConfig resource as pipeline subscription is not managed"
                   echo "Success"
                   exit 0
