@@ -78,6 +78,14 @@ update_dh_catalog_url() {
   fi
 }
 
+update_dh_auth_config() {
+  # if SCM is set to Gielab, update auth config, otherwise keep it to default - github
+  if [[ " ${scm_config[*]} " =~ " gitlab " ]]; then
+    echo "[INFO] Change Developer Hub auth to gitlab"
+    yq -i '.tssc.products[] |= select(.name == "Developer Hub").properties.authProvider = "gitlab"' "${config_file}"
+    fi
+}
+
 # Workaround: This function has to be called before tssc import "installer/config.yaml" into cluster.
 # Currently, the tssc `config` subcommand lacks the ability to modify property values stored in config.yaml.
 github_integration() {
@@ -240,6 +248,7 @@ nexus_integration() {
 create_cluster_config() {
   echo "[INFO] Creating the installer's cluster configuration"
   update_dh_catalog_url
+  update_dh_auth_config
   disable_acs
   disable_tpa
   
