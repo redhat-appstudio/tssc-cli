@@ -122,11 +122,15 @@ catalog:
         timeout: { minutes: 5 }
   {{- end }}
   {{- if eq .Values.developerHub.authProvider "gitlab" }}
+    {{- $gitlabSecretData := ($gitlabSecretObj.data | default dict) }}
     gitlab:
       default:
         host: ${GITLAB__HOST}
         orgEnabled: true
         group: ${GITLAB__GROUP}
+        {{- if eq ($gitlabSecretData.host | b64dec) "gitlab.com" }}
+        includeUsersWithoutSeat: true
+        {{- end }}
         schedule:
           initialDelay: { seconds: 30 }
           frequency: { minutes: 15 }
@@ -181,9 +185,12 @@ integrations:
           privateKey: ${GITHUB__APP__PRIVATE_KEY}
 {{- end }}
 {{- if $gitlabSecretObj }}
+  {{- $gitlabSecretData := ($gitlabSecretObj.data | default dict) }}
   gitlab:
     - host: ${GITLAB__HOST}
+      {{- if ne ($gitlabSecretData.host | b64dec) "gitlab.com" }}
       apiBaseUrl: https://${GITLAB__HOST}/api/v4
+      {{- end }}
       token: ${GITLAB__TOKEN}
 {{- end }}
 {{- if $jenkinsSecretObj }}
