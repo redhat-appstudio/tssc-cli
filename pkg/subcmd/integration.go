@@ -19,25 +19,25 @@ func NewIntegration(logger *slog.Logger, kube *k8s.Kube) *cobra.Command {
 
 	for _, integration := range []Interface{
 		NewIntegrationACS(
-			logger, kube, manager.Get(integrations.ACS)),
+			logger, kube, manager.Integration(integrations.ACS)),
 		NewIntegrationArtifactory(
-			logger, kube, manager.Get(integrations.Artifactory)),
+			logger, kube, manager.Integration(integrations.Artifactory)),
 		NewIntegrationAzure(
-			logger, kube, manager.Get(integrations.Azure)),
+			logger, kube, manager.Integration(integrations.Azure)),
 		NewIntegrationBitBucket(
-			logger, kube, manager.Get(integrations.BitBucket)),
-		NewIntegrationGitHubApp(
-			logger, kube, manager.Get(integrations.GitHubApp)),
+			logger, kube, manager.Integration(integrations.BitBucket)),
+		NewIntegrationGitHub(
+			logger, kube, manager.Integration(integrations.GitHub)),
 		NewIntegrationGitLab(
-			logger, kube, manager.Get(integrations.GitLab)),
+			logger, kube, manager.Integration(integrations.GitLab)),
 		NewIntegrationJenkins(
-			logger, kube, manager.Get(integrations.Jenkins)),
+			logger, kube, manager.Integration(integrations.Jenkins)),
 		NewIntegrationNexus(
-			logger, kube, manager.Get(integrations.Nexus)),
+			logger, kube, manager.Integration(integrations.Nexus)),
 		NewIntegrationQuay(
-			logger, kube, manager.Get(integrations.Quay)),
+			logger, kube, manager.Integration(integrations.Quay)),
 		NewIntegrationTrustification(
-			logger, kube, manager.Get(integrations.Trustification)),
+			logger, kube, manager.Integration(integrations.Trustification)),
 	} {
 		cmd.AddCommand(NewRunner(integration).Cmd())
 	}

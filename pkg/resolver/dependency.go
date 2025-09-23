@@ -2,7 +2,6 @@ package resolver
 
 import (
 	"log/slog"
-	"strings"
 
 	"helm.sh/helm/v3/pkg/chart"
 )
@@ -46,42 +45,43 @@ func (d *Dependency) SetNamespace(namespace string) {
 	d.namespace = namespace
 }
 
+// getAnnotation retrieves a chart annotation value, returns empty for unknown
+// annotation names.
+func (d *Dependency) getAnnotation(annotation string) string {
+	if v, exists := d.chart.Metadata.Annotations[annotation]; exists {
+		return v
+	}
+	return ""
+}
+
 // DependsOn returns a slice of dependencies names from the chart's annotation.
 func (d *Dependency) DependsOn() []string {
-	dependsOn, exists := d.chart.Metadata.Annotations[DependsOnAnnotation]
-	if !exists {
-		return nil
-	}
-	dependsOn = strings.TrimSpace(dependsOn)
+	dependsOn := d.getAnnotation(DependsOnAnnotation)
 	if dependsOn == "" {
 		return nil
 	}
-	parts := strings.Split(dependsOn, ",")
-	out := make([]string, 0, len(parts))
-	for _, p := range parts {
-		if name := strings.TrimSpace(p); name != "" {
-			out = append(out, name)
-		}
-	}
-	return out
+	return commaSeparatedToSlice(dependsOn)
 }
 
 // ProductName returns the product name from the chart annotations.
 func (d *Dependency) ProductName() string {
-	name, exists := d.chart.Metadata.Annotations[ProductNameAnnotation]
-	if exists {
-		return name
-	}
-	return ""
+	return d.getAnnotation(ProductNameAnnotation)
 }
 
 // UseProductNamespace returns the product namespace from the chart annotations.
 func (d *Dependency) UseProductNamespace() string {
-	ns, exists := d.chart.Metadata.Annotations[UseProductNamespaceAnnotation]
-	if exists {
-		return ns
-	}
-	return ""
+	return d.getAnnotation(UseProductNamespaceAnnotation)
+}
+
+// IntegrationsProvided returns the integrations provided
+func (d *Dependency) IntegrationsProvided() []string {
+	provided := d.getAnnotation(IntegrationsProvidedAnnotation)
+	return commaSeparatedToSlice(provided)
+}
+
+// IntegrationsRequired returns the integrations required.
+func (d *Dependency) IntegrationsRequired() string {
+	return d.getAnnotation(IntegrationsRequiredAnnotation)
 }
 
 // NewDependency creates a new Dependency for the Helm chart and initially using

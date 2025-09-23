@@ -9,10 +9,8 @@ import (
 
 // Disclaimer prints the support disclaimer message.
 func Disclaimer() {
-	fmt.Print(`
-!!! DISCLAIMER: ONLY FOR EXPERIMENTAL DEPLOYMENTS - PRODUCTION IS UNSUPPORTED !!!
-`,
-	)
+	fmt.Printf("\n!!! DISCLAIMER: ONLY FOR EXPERIMENTAL DEPLOYMENTS" +
+		" - PRODUCTION IS UNSUPPORTED !!!\n\n")
 }
 
 // HelmReleasePrinter prints the release information.

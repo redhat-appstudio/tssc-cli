@@ -6,7 +6,6 @@ import (
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integration"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
-	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/spf13/cobra"
 )
@@ -50,10 +49,7 @@ func (a *IntegrationACS) Validate() error {
 
 // Run creates or updates the ACS integration secret.
 func (a *IntegrationACS) Run() error {
-	return a.integration.Create(a.cmd.Context(), a.cfg, types.NamespacedName{
-		Namespace: a.cfg.Installer.Namespace,
-		Name:      "tssc-acs-integration",
-	})
+	return a.integration.Create(a.cmd.Context(), a.cfg)
 }
 
 // NewIntegrationACS creates the sub-command for the "integration acs"

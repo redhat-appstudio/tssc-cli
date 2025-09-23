@@ -6,7 +6,6 @@ import (
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integration"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
-	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/spf13/cobra"
 )
@@ -53,10 +52,7 @@ func (a *IntegrationArtifactory) Validate() error {
 
 // Run creates or updates the Artifactory integration secret.
 func (a *IntegrationArtifactory) Run() error {
-	return a.integration.Create(a.cmd.Context(), a.cfg, types.NamespacedName{
-		Namespace: a.cfg.Installer.Namespace,
-		Name:      "tssc-artifactory-integration",
-	})
+	return a.integration.Create(a.cmd.Context(), a.cfg)
 }
 
 // NewIntegrationArtifactory creates the sub-command for the "integration artifactory"
