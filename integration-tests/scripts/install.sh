@@ -248,7 +248,8 @@ nexus_integration() {
 create_cluster_config() {
   echo "[INFO] Creating the installer's cluster configuration"
   update_dh_catalog_url
-  update_dh_auth_config
+  # TODO: Uncomment this when settig auth provider is implemented in rhads-config
+  # update_dh_auth_config
   disable_acs
   disable_tpa
   
