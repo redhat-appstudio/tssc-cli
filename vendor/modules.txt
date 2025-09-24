@@ -455,8 +455,8 @@ github.com/yosida95/uritemplate/v3
 # gitlab.com/gitlab-org/api/client-go v0.144.1
 ## explicit; go 1.23.0
 gitlab.com/gitlab-org/api/client-go
-# go.opentelemetry.io/auto/sdk v1.2.0
-## explicit; go 1.23.0
+# go.opentelemetry.io/auto/sdk v1.2.1
+## explicit; go 1.24.0
 # go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.63.0
 ## explicit; go 1.23.0
 # go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.38.0
