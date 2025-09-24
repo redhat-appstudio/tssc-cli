@@ -47,8 +47,8 @@ func (t *TopologyBuilder) Build(
 	return topology, nil
 }
 
-// NewTopologyManager creates a new TopologyBuilder instance.
-func NewTopologyManager(
+// NewTopologyBuilder creates a new TopologyBuilder instance.
+func NewTopologyBuilder(
 	logger *slog.Logger,
 	cfs *chartfs.ChartFS,
 	integrationsManager *integrations.Manager,
