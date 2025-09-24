@@ -388,14 +388,10 @@ github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
 ## explicit
 github.com/pmezard/go-difflib/difflib
-# github.com/prometheus/client_model v0.6.2
-## explicit; go 1.22.0
-# github.com/prometheus/common v0.66.1
-## explicit; go 1.23.0
 # github.com/prometheus/procfs v0.17.0
 ## explicit; go 1.23.0
-# github.com/quay/claircore v1.5.39
-## explicit; go 1.23.0
+# github.com/quay/claircore v1.5.42
+## explicit; go 1.24.0
 github.com/quay/claircore/pkg/tarfs
 # github.com/rivo/uniseg v0.4.7
 ## explicit; go 1.18
@@ -485,7 +481,7 @@ golang.org/x/crypto/openpgp/packet
 golang.org/x/crypto/openpgp/s2k
 golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/scrypt
-# golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0
+# golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b
 ## explicit; go 1.23.0
 golang.org/x/exp/slices
 # golang.org/x/net v0.44.0
