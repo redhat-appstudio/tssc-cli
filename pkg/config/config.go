@@ -1,6 +1,7 @@
 package config
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 
@@ -29,10 +30,9 @@ type Spec struct {
 
 // Config root configuration structure.
 type Config struct {
-	cfs     *chartfs.ChartFS // embedded filesystem
-	payload []byte           // original configuration payload
-
-	Installer Spec `yaml:"tssc"` // root configuration for the installer
+	cfs       *chartfs.ChartFS // embedded filesystem
+	Installer Spec             `yaml:"tssc"` // root configuration for the installer
+	root      yaml.Node        // yaml data representation
 }
 
 var (
@@ -90,18 +90,57 @@ func (c *Config) Validate() error {
 	return nil
 }
 
+// DecodeNode returns a struct converted from *yaml.Node
+func (c *Config) DecodeNode() error {
+	if len(c.root.Content) == 0 {
+		return fmt.Errorf("invalid configuration: content is empty")
+	}
+	doc := c.root.Content[0]
+	if doc.Kind != yaml.MappingNode || len(doc.Content) < 2 {
+		return fmt.Errorf("invalid configuration: root must be a mapping")
+	}
+	var tsscNode *yaml.Node
+	for i := 0; i+1 < len(doc.Content); i += 2 {
+		if doc.Content[i].Value == "tssc" {
+			tsscNode = doc.Content[i+1]
+			break
+		}
+	}
+	if tsscNode == nil {
+		return fmt.Errorf("invalid configuration: missing 'tssc' key")
+	}
+	if err := tsscNode.Decode(&c.Installer); err != nil {
+		return err
+	}
+	return nil
+}
+
 // MarshalYAML marshals the Config into a YAML byte array.
 func (c *Config) MarshalYAML() ([]byte, error) {
-	return yaml.Marshal(c)
+	var buf bytes.Buffer
+	if len(c.root.Content) == 0 {
+		return nil, fmt.Errorf("invalid configuration format: content is nil or empty")
+	}
+	buf.WriteString("---\n")
+	encoder := yaml.NewEncoder(&buf)
+	encoder.SetIndent(2)
+	defer encoder.Close()
+	if err := encoder.Encode(c.root.Content[0]); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
 
 // UnmarshalYAML Un-marshals the YAML payload into the Config struct, checking the
 // validity of the configuration.
-func (c *Config) UnmarshalYAML() error {
-	if len(c.payload) == 0 {
+func (c *Config) UnmarshalYAML(payload []byte) error {
+	if len(payload) == 0 {
 		return ErrEmptyConfig
 	}
-	if err := yaml.Unmarshal(c.payload, c); err != nil {
+	if err := yaml.Unmarshal(payload, &c.root); err != nil {
+		return fmt.Errorf("%w: %w", ErrUnmarshalConfig, err)
+	}
+	if err := c.DecodeNode(); err != nil {
 		return fmt.Errorf("%w: %w", ErrUnmarshalConfig, err)
 	}
 	return c.Validate()
@@ -109,18 +148,22 @@ func (c *Config) UnmarshalYAML() error {
 
 // String returns this configuration as string, indented with two spaces.
 func (c *Config) String() string {
-	return string(c.payload)
+	data, err := c.MarshalYAML()
+	if err != nil {
+		panic(err)
+	}
+	return string(data)
 }
 
 // NewConfigFromFile returns a new Config instance based on the informed file.
 func NewConfigFromFile(cfs *chartfs.ChartFS, configPath string) (*Config, error) {
 	c := &Config{cfs: cfs}
 	var err error
-	c.payload, err = c.cfs.ReadFile(configPath)
+	payload, err := c.cfs.ReadFile(configPath)
 	if err != nil {
 		return nil, err
 	}
-	if err = c.UnmarshalYAML(); err != nil {
+	if err = c.UnmarshalYAML(payload); err != nil {
 		return nil, err
 	}
 	return c, nil
@@ -128,9 +171,9 @@ func NewConfigFromFile(cfs *chartfs.ChartFS, configPath string) (*Config, error)
 
 // NewConfigFromBytes instantiates a new Config from the bytes payload informed.
 func NewConfigFromBytes(payload []byte) (*Config, error) {
-	c := &Config{payload: payload}
-	if err := yaml.Unmarshal(payload, c); err != nil {
-		return nil, fmt.Errorf("%w: %s", ErrUnmarshalConfig, err)
+	c := &Config{}
+	if err := c.UnmarshalYAML(payload); err != nil {
+		return nil, err
 	}
 	return c, nil
 }
