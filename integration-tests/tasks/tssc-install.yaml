@@ -17,6 +17,10 @@ spec:
     - name: tssc-image
       type: string
       description: "The tssc image containing the tssc binary."
+    - name: pre-release-install
+      type: string
+      description: "Pre-release install parameter. If contains 'rhdh', will change values for RHDH. Default is empty string."
+      default: ""
   volumes:
     - name: tssc-cli-volume
       secret:
@@ -94,6 +98,7 @@ spec:
         echo "export scm_config=\"$SCM_CONFIG\"" >> ${env_file}
         echo "export pipeline_config=\"$PIPELINE_CONFIG\"" >> ${env_file}
         echo "export auth_config=\"github\"" >> ${env_file}
+        echo "export PRE_RELEASE_INSTALL=\"$(params.pre-release-install)\"" >> ${env_file}
 
         # Check if GIT_REPO is tssc-sample-templates and update Developer Hub catalog url based on PR changes
         if [[ "${GIT_REPO}" = "tssc-sample-templates" ]]; then

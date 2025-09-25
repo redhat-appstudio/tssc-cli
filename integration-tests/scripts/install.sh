@@ -64,6 +64,11 @@ echo "[INFO] pipeline_config=(${pipeline_config[*]})"
 tpl_file="installer/charts/values.yaml.tpl"
 config_file="installer/config.yaml"
 tmp_file="installer/charts/tmp_private_key.txt"
+subscription_values_file="installer/charts/tssc-subscriptions/values.yaml"
+
+git restore $tpl_file
+git restore $config_file
+git restore $subscription_values_file
 
 ci_enabled() {
   echo "[INFO] Turn ci to true, this is required when you perform rhtap-e2e automation test against TSSC"
@@ -148,7 +153,7 @@ gitlab_integration() {
     GITLAB__APP_SECRET="${GITLAB__APP_SECRET:-$(cat /usr/local/rhtap-cli-install/gitlab-app-secret)}"
     GITLAB__GROUP="${GITLAB__GROUP:-$(cat /usr/local/rhtap-cli-install/gitlab-group)}"
 
-    "${TSSC_BINARY}" integration --kube-config "$KUBECONFIG" gitlab --token="${GITLAB__TOKEN}" --app-id="${GITLAB__APP__ID}" --app-secret="${GITLAB__APP_SECRET}" --group="${GITLAB__GROUP}"
+    "${TSSC_BINARY}" integration --kube-config "$KUBECONFIG" gitlab --token="${GITLAB__TOKEN}" --app-id="${GITLAB__APP__ID}" --app-secret="${GITLAB__APP_SECRET}" --group="${GITLAB__GROUP}" --force
   fi
 }
 
@@ -159,7 +164,7 @@ quay_integration() {
     QUAY__DOCKERCONFIGJSON="${QUAY__DOCKERCONFIGJSON:-$(cat /usr/local/rhtap-cli-install/quay-dockerconfig-json)}"
     QUAY__API_TOKEN="${QUAY__API_TOKEN:-$(cat /usr/local/rhtap-cli-install/quay-api-token)}"
 
-    "${TSSC_BINARY}" integration --kube-config "$KUBECONFIG" quay --url="https://quay.io" --dockerconfigjson="${QUAY__DOCKERCONFIGJSON}" --token="${QUAY__API_TOKEN}"
+    "${TSSC_BINARY}" integration --kube-config "$KUBECONFIG" quay --url="https://quay.io" --dockerconfigjson="${QUAY__DOCKERCONFIGJSON}" --token="${QUAY__API_TOKEN}" --force
   fi
 }
 
@@ -183,7 +188,7 @@ acs_integration() {
     ACS__CENTRAL_ENDPOINT="${ACS__CENTRAL_ENDPOINT:-$(cat /usr/local/rhtap-cli-install/acs-central-endpoint)}"
     ACS__API_TOKEN="${ACS__API_TOKEN:-$(cat /usr/local/rhtap-cli-install/acs-api-token)}"
 
-    "${TSSC_BINARY}" integration --kube-config "$KUBECONFIG" acs --endpoint="${ACS__CENTRAL_ENDPOINT}" --token="${ACS__API_TOKEN}"
+    "${TSSC_BINARY}" integration --kube-config "$KUBECONFIG" acs --endpoint="${ACS__CENTRAL_ENDPOINT}" --token="${ACS__API_TOKEN}" --force
   fi
 }
 
@@ -231,7 +236,7 @@ artifactory_integration() {
     ARTIFACTORY_URL="${ARTIFACTORY_URL:-$(cat /usr/local/rhtap-cli-install/artifactory-url)}"
     ARTIFACTORY_TOKEN="${ARTIFACTORY_TOKEN:-$(cat /usr/local/rhtap-cli-install/artifactory-token)}"
     ARTIFACTORY_DOCKERCONFIGJSON="${ARTIFACTORY_DOCKERCONFIGJSON:-$(cat /usr/local/rhtap-cli-install/artifactory-dockerconfig-json)}"
-    "${TSSC_BINARY}" integration --kube-config "$KUBECONFIG" artifactory --url="${ARTIFACTORY_URL}" --token="${ARTIFACTORY_TOKEN}" --dockerconfigjson="${ARTIFACTORY_DOCKERCONFIGJSON}"
+    "${TSSC_BINARY}" integration --kube-config "$KUBECONFIG" artifactory --url="${ARTIFACTORY_URL}" --token="${ARTIFACTORY_TOKEN}" --dockerconfigjson="${ARTIFACTORY_DOCKERCONFIGJSON}" --force
   fi
 }
 
@@ -245,6 +250,45 @@ nexus_integration() {
   fi
 }
 
+configure_rhdh_for_prerelease() {
+  echo "[INFO] Configuring RHDH for pre-release testing"
+  
+  # Workaround for https://access.redhat.com/solutions/7003837
+  oc patch configs.imageregistry.operator.openshift.io/cluster --type merge -p '{"spec":{"managementState":"Managed"}}'
+
+  # Download and execute RHDH install script
+  RHDH_INSTALL_SCRIPT="https://raw.githubusercontent.com/redhat-developer/rhdh-operator/main/.rhdh/scripts/install-rhdh-catalog-source.sh"
+  curl -sSLO $RHDH_INSTALL_SCRIPT
+  chmod +x install-rhdh-catalog-source.sh
+
+  SHARED_DIR=$(pwd)
+  export SHARED_DIR
+
+  ./install-rhdh-catalog-source.sh --latest --install-operator rhdh
+  
+  # Set RHDH-specific variables
+  export PRODUCT="rhdh"
+  export NEW_OPERATOR_CHANNEL="fast-1.7"
+  export NEW_SOURCE="rhdh-fast"
+  
+  # Function to update the values
+  update_values() {
+    local section=$1
+    local channel=$2
+    local source=$3
+
+    sed -i "/$section:/,/sourceNamespace:/ {
+      /^ *channel:/ s/: .*/: $channel/
+      /^ *source:/ s/: .*/: $source/
+    }" $subscription_values_file
+  }
+  
+  update_values "redHatDeveloperHub" "$NEW_OPERATOR_CHANNEL" "$NEW_SOURCE"
+  
+  echo "[INFO] RHDH subscription values updated:"
+  cat $subscription_values_file
+}
+
 create_cluster_config() {
   echo "[INFO] Creating the installer's cluster configuration"
   update_dh_catalog_url
@@ -252,6 +296,14 @@ create_cluster_config() {
   # update_dh_auth_config
   disable_acs
   disable_tpa
+  
+  # Check if pre-release install parameter contains "rhdh"
+  if [[ -n "$PRE_RELEASE_INSTALL" && "$PRE_RELEASE_INSTALL" == *"rhdh"* ]]; then
+    echo "[INFO] Pre-release install parameter contains 'rhdh', configuring RHDH for pre-release testing"
+    configure_rhdh_for_prerelease
+  else
+    echo "[INFO] No RHDH pre-release configuration needed"
+  fi
   
   set -x
   cat "$config_file"
@@ -264,7 +316,6 @@ create_cluster_config() {
   
   echo "[INFO] Cluster configuration created successfully"
 }
-
 
 install_tssc() {
   echo "[INFO] Start installing TSSC"

@@ -50,6 +50,10 @@ spec:
       type: string
       description: "Image from where the `tssc-test` binary will be extracted (from path /usr/local/bin)."
       default: "quay.io/redhat-user-workloads/rhtap-shared-team-tenant/tssc-test:latest"
+    - name: pre-release-install
+      type: string
+      description: "Pre-release install parameter. If contains 'rhdh', will change values for RHDH. Default is empty string."
+      default: ""
   tasks:
     - name: rosa-hcp-metadata
       taskRef:
@@ -111,11 +115,13 @@ spec:
         resolver: git
         params:
           - name: url
-            value: https://github.com/redhat-appstudio/tssc-cli.git
+            value: https://github.com/jkopriva/tssc-cli.git
           - name: revision
-            value: main
+            value: RHTAP-4516
           - name: pathInRepo
             value: integration-tests/tasks/tssc-install.yaml
+          - name: pre-release-install
+            value: "$(params.pre-release-install)"
       params:
         - name: ocp-login-command
           value: "$(tasks.provision-rosa.results.ocp-login-command)"
