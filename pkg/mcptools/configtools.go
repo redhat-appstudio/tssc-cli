@@ -37,6 +37,8 @@ const (
 	NamespaceArg = "namespace"
 	// SettingsArg settings argument.
 	SettingsArg = "setting"
+	// ProductsArg products argument.
+	ProductsArg = "product"
 )
 
 // getHandler similar to "tssc config --get" subcommand it returns a existing TSSC
@@ -98,10 +100,22 @@ func (c *ConfigTools) createHandler(
 	// Setting the namespace from user input, if provided.
 	if ns, ok := ctr.GetArguments()[NamespaceArg].(string); ok {
 		cfg.Installer.Namespace = ns
+		// Set namespace to value of ns
+		if err := cfg.Set("tssc.namespace", ns); err != nil {
+			return nil, err
+		}
 	}
 
-	if settings, ok := ctr.GetArguments()[SettingsArg].(config.Settings); ok {
-		cfg.Installer.Settings = settings
+	if settings, ok := ctr.GetArguments()[SettingsArg].(map[string]interface{}); ok {
+		if err := cfg.Set("tssc.settings", settings); err != nil {
+			return nil, err
+		}
+	}
+
+	if products, ok := ctr.GetArguments()[ProductsArg].(map[string]interface{}); ok {
+		if err := cfg.Set("tssc.products", products); err != nil {
+			return nil, err
+		}
 	}
 
 	// Ensure the configuration is valid.
@@ -173,6 +187,13 @@ and other fundamental services will be deployed.`,
 				mcp.Description(`
 The global settings object for TSSC ('.tssc.settings{}'). When empty the default
 settings will be used.
+				`),
+			),
+			mcp.WithObject(
+				ProductsArg,
+				mcp.Description(`
+The settings object for TSSC ('.tssc.products{}'). When empty the default config
+will be used.
 				`),
 			),
 		),
