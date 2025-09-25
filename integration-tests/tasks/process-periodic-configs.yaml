@@ -34,7 +34,7 @@ spec:
 
         echo "Using periodic configurations generated from PICT"
         # Download periodic.pict file
-        curl -o periodic.pict https://raw.githubusercontent.com/jkopriva/tssc-cli/refs/heads/RHTAP-5290/integration-tests/config/periodic/periodic.pict
+        curl -o periodic.pict https://raw.githubusercontent.com/redhat-appstudio/tssc-cli/refs/heads/main/integration-tests/config/periodic/periodic.pict
 
         cat periodic.pict
         # Store the content as a result for the next step
@@ -76,7 +76,7 @@ spec:
         echo "--- End of pict_output.txt ---"
         # Download testplan template
         echo "Downloading testplan template..."
-        curl -o testplan_template.json https://raw.githubusercontent.com/jkopriva/tssc-cli/refs/heads/RHTAP-5290/integration-tests/config/periodic/testplan_template.json
+        curl -o testplan_template.json https://raw.githubusercontent.com/redhat-appstudio/tssc-cli/refs/heads/main/integration-tests/config/periodic/testplan_template.json
 
         if [[ ! -f testplan_template.json ]]; then
           echo "ERROR: Failed to download testplan_template.json"
