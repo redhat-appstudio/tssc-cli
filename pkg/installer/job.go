@@ -3,7 +3,7 @@ package installer
 import (
 	"context"
 	"fmt"
-	"strings"
+	"slices"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
@@ -83,8 +83,18 @@ func (j *Job) GetState(ctx context.Context) (JobState, error) {
 	if err != nil {
 		return -1, err
 	}
+
 	if job == nil {
 		return NotFound, nil
+	}
+	// Checking whether the existing job is a dry-run container, in this case the
+	// overall installer state is considered "not found".
+	podSpec := job.Spec.Template.Spec
+	if len(podSpec.Containers) == 1 {
+		container := podSpec.Containers[0]
+		if slices.Contains(container.Args, "--dry-run") {
+			return NotFound, nil
+		}
 	}
 
 	if job.Status.Active > 0 {
@@ -126,8 +136,8 @@ func (j *Job) applyServiceAccount(ctx context.Context, namespace string) error {
 
 // applyClusterRoleBinding applies a ClusterRoleBinding to the ServiceAccount.
 func (j *Job) applyClusterRoleBinding(
-	ctx context.Context, // global context
-	namespace string, // target namespace
+	ctx context.Context,
+	namespace string,
 ) error {
 	rc, err := j.kube.RBACV1ClientSet("")
 	if err != nil {
@@ -169,10 +179,24 @@ func (j *Job) applyClusterRoleBinding(
 
 // createJob creates a Kubernetes Job to deploy TSSC, preparing the installer to
 // run on a container image and connect to the Kubernetes API in-cluster.
-func (j *Job) createJob(ctx context.Context, namespace, image string) error {
+func (j *Job) createJob(
+	ctx context.Context,
+	debug, dryRun bool,
+	namespace, image string,
+) error {
 	bc, err := j.kube.BatchV1ClientSet("")
 	if err != nil {
 		return err
+	}
+
+	// Setting up the list of arguments for the deployment job.
+	args := []string{"deploy"}
+	if debug {
+		args = append(args, "--debug")
+		args = append(args, "--log-level=debug")
+	}
+	if dryRun {
+		args = append(args, "--dry-run")
 	}
 
 	podSpec := corev1.PodSpec{
@@ -186,13 +210,7 @@ func (j *Job) createJob(ctx context.Context, namespace, image string) error {
 				Name:  "KUBECONFIG",
 				Value: "",
 			}},
-			// TODO: the arguments should be configurable, like dry-run.
-			Args: []string{
-				"deploy",
-				"--log-level=debug",
-				"--debug",
-				"--dry-run",
-			},
+			Args: args,
 		}},
 		RestartPolicy: corev1.RestartPolicyNever,
 	}
@@ -216,6 +234,21 @@ func (j *Job) createJob(ctx context.Context, namespace, image string) error {
 	return err
 }
 
+// deleteJob deletes the installer job.
+func (j *Job) deleteJob(ctx context.Context) error {
+	bc, err := j.kube.BatchV1ClientSet("")
+	if err != nil {
+		return err
+	}
+
+	job, err := j.getJob(ctx)
+	if err != nil {
+		return err
+	}
+	return bc.Jobs(job.GetNamespace()).
+		Delete(ctx, job.GetName(), metav1.DeleteOptions{})
+}
+
 // GetJobLogFollowCmd returns the command that follows the deployment job logs.
 func (j *Job) GetJobLogFollowCmd(namespace string) string {
 	return fmt.Sprintf(
@@ -225,20 +258,28 @@ func (j *Job) GetJobLogFollowCmd(namespace string) string {
 	)
 }
 
-// Create issues a new instalation job. It applies the service account and cluster
-// role binding first, then creates the job.
-func (j *Job) Create(ctx context.Context, namespace, image string) error {
+// Run issues a new installation job, creating the installation job when
+// applicable. It applies the service account and cluster role binding first, then
+// creates the job.
+func (j *Job) Run(
+	ctx context.Context,
+	debug, dryRun, force bool,
+	namespace, image string,
+) error {
 	state, err := j.GetState(ctx)
 	if err != nil {
 		return err
 	}
 	// The deployment job can only be created once, per cluster.
 	if state != NotFound {
-		errMsg := strings.Builder{}
-		errMsg.WriteString("Only a single deployment job is allowed per cluster,")
-		errMsg.WriteString(" to inspect the existing job use: ")
-		errMsg.WriteString(j.GetJobLogFollowCmd(namespace))
-		return fmt.Errorf("%s", errMsg.String())
+		// Upon force flag, the job is deleted before recreation.
+		if force {
+			if err = j.deleteJob(ctx); err != nil {
+				return err
+			}
+		} else {
+			return fmt.Errorf("only a single deployment job is allowed")
+		}
 	}
 
 	// Issuing the service account and cluster role binding first, the job needs
@@ -250,7 +291,7 @@ func (j *Job) Create(ctx context.Context, namespace, image string) error {
 		return fmt.Errorf("unable to apply the cluster role binding: %s", err)
 	}
 	// Creating the job itself.
-	return j.createJob(ctx, namespace, image)
+	return j.createJob(ctx, debug, dryRun, namespace, image)
 }
 
 // NewJob instantiates a new Job object.
