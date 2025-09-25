@@ -36,6 +36,8 @@ func NewIntegration(logger *slog.Logger, kube *k8s.Kube) *cobra.Command {
 			logger, kube, manager.Integration(integrations.Nexus)),
 		NewIntegrationQuay(
 			logger, kube, manager.Integration(integrations.Quay)),
+		NewIntegrationTrustedArtifactSigner(
+			logger, kube, manager.Integration(integrations.TrustedArtifactSigner)),
 		NewIntegrationTrustification(
 			logger, kube, manager.Integration(integrations.Trustification)),
 	} {

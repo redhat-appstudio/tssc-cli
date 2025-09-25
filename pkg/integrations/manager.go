@@ -22,16 +22,17 @@ type Manager struct {
 }
 
 const (
-	ACS            IntegrationName = "acs"
-	Artifactory    IntegrationName = "artifactory"
-	Azure          IntegrationName = "azure"
-	BitBucket      IntegrationName = "bitbucket"
-	GitHub         IntegrationName = "github"
-	GitLab         IntegrationName = "gitlab"
-	Jenkins        IntegrationName = "jenkins"
-	Nexus          IntegrationName = "nexus"
-	Quay           IntegrationName = "quay"
-	Trustification IntegrationName = "trustification"
+	ACS                   IntegrationName = "acs"
+	Artifactory           IntegrationName = "artifactory"
+	Azure                 IntegrationName = "azure"
+	BitBucket             IntegrationName = "bitbucket"
+	GitHub                IntegrationName = "github"
+	GitLab                IntegrationName = "gitlab"
+	Jenkins               IntegrationName = "jenkins"
+	Nexus                 IntegrationName = "nexus"
+	Quay                  IntegrationName = "quay"
+	TrustedArtifactSigner IntegrationName = "tas"
+	Trustification        IntegrationName = "trustification"
 )
 
 // Integration returns the integration instance by name.
@@ -76,16 +77,17 @@ func NewManager(logger *slog.Logger, kube *k8s.Kube) *Manager {
 	// Instantiating all integrations making sure the set of integrations is
 	// complete and unique. The application must panic on duplicated integrations.
 	for name, data := range map[IntegrationName]integration.Interface{
-		ACS:            integration.NewACS(),
-		Artifactory:    integration.NewContainerRegistry(""),
-		Azure:          integration.NewAzure(),
-		BitBucket:      integration.NewBitBucket(),
-		GitHub:         integration.NewGitHub(logger, kube),
-		GitLab:         integration.NewGitLab(logger),
-		Jenkins:        integration.NewJenkins(),
-		Nexus:          integration.NewContainerRegistry(""),
-		Quay:           integration.NewContainerRegistry(integration.QuayURL),
-		Trustification: integration.NewTrustification(),
+		ACS:                   integration.NewACS(),
+		Artifactory:           integration.NewContainerRegistry(""),
+		Azure:                 integration.NewAzure(),
+		BitBucket:             integration.NewBitBucket(),
+		GitHub:                integration.NewGitHub(logger, kube),
+		GitLab:                integration.NewGitLab(logger),
+		Jenkins:               integration.NewJenkins(),
+		Nexus:                 integration.NewContainerRegistry(""),
+		Quay:                  integration.NewContainerRegistry(integration.QuayURL),
+		TrustedArtifactSigner: integration.NewTrustedArtifactSigner(),
+		Trustification:        integration.NewTrustification(),
 	} {
 		// Ensure unique integration names.
 		if _, exists := m.integrations[name]; exists {
