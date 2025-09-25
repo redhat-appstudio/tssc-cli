@@ -66,4 +66,45 @@ func TestNewConfigFromFile(t *testing.T) {
 		// Asserting the original configuration looks like the marshaled one.
 		g.Expect(string(original)).To(o.Equal(configString))
 	})
+
+	t.Run("SetNamespace", func(t *testing.T) {
+		err := cfg.Set("tssc.namespace", "testnamespace")
+		g.Expect(err).To(o.Succeed())
+		configString := cfg.String()
+		g.Expect(string(configString)).To(o.ContainSubstring("testnamespace"))
+	})
+
+	t.Run("SetSettings", func(t *testing.T) {
+		data := map[string]interface{}{
+			"crc": true,
+			"ci": map[string]interface{}{
+				"debug": true,
+			},
+		}
+		err := cfg.Set("tssc.settings", data)
+		g.Expect(err).To(o.Succeed())
+		configString := cfg.String()
+		g.Expect(string(configString)).To(o.ContainSubstring("crc: true"))
+		g.Expect(string(configString)).To(o.ContainSubstring("debug: true"))
+	})
+
+	t.Run("ExtractKeyPathsAndValues", func(t *testing.T) {
+		data := map[string]interface{}{
+			"key1": "value1",
+			"key2": map[string]interface{}{
+				"key3": "value2",
+			},
+		}
+		expectedPaths := []string{"prefix.key1", "prefix.key2.key3"}
+		expectedValues := []interface{}{"value1", "value2"}
+		paths, values := ExtractKeyPathsAndValues(data, "prefix")
+		g.Expect(paths).To(o.HaveLen(len(expectedPaths)))
+		for _, path := range expectedPaths {
+			g.Expect(paths).To(o.ContainElement(path))
+		}
+		g.Expect(values).To(o.HaveLen(len(expectedValues)))
+		for _, value := range expectedValues {
+			g.Expect(values).To(o.ContainElement(value))
+		}
+	})
 }

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 
@@ -153,6 +154,102 @@ func (c *Config) String() string {
 		panic(err)
 	}
 	return string(data)
+}
+
+// UpdateMappingValue updates configuration with new value
+func (c *Config) UpdateMappingValue(node *yaml.Node, key string, newValue any) error {
+	for i := 0; i < len(node.Content); i += 2 {
+		if i+1 < len(node.Content) && node.Content[i].Value == key {
+			strVal := fmt.Sprintf("%v", newValue)
+			node.Content[i+1].Value = strVal
+			return nil
+		}
+	}
+	return fmt.Errorf("no key: %s found in configuration", key)
+}
+
+// UpdateNestedValue loops in node contents to get the node that needs update
+func (c *Config) UpdateNestedValue(node *yaml.Node, path []string, newValue any) error {
+	if len(path) == 0 {
+		return fmt.Errorf("config path is missing")
+	}
+	if path[0] == "tssc" {
+		path = path[1:]
+	}
+	if len(path) == 1 {
+		return c.UpdateMappingValue(node, path[0], newValue)
+	}
+	current := node
+	key := path[0]
+	for i := 0; i < len(current.Content); i += 2 {
+		if i+1 < len(current.Content) && current.Content[i].Value == key {
+			return c.UpdateNestedValue(current.Content[i+1], path[1:], newValue)
+		}
+	}
+	return fmt.Errorf("not able to update configuration, please check the input")
+}
+
+// UpdateNestedValues gets the config content and call UpdateNestedValue to update
+func (c *Config) UpdateNestedValues(path []string, newValue any) error {
+	if len(c.root.Content) == 0 {
+		return fmt.Errorf("invalid configuration format: content is nil or empty")
+	}
+	doc := c.root.Content[0]
+	if len(doc.Content) == 0 {
+		return fmt.Errorf("invalid configuration format")
+	}
+	if doc.Kind != yaml.MappingNode {
+		return fmt.Errorf("invalid configuration format: root must be a mapping")
+	}
+	var tsscNode *yaml.Node
+	for i := 0; i+1 < len(doc.Content); i += 2 {
+		if doc.Content[i].Value == "tssc" {
+			tsscNode = doc.Content[i+1]
+			break
+		}
+	}
+	if tsscNode == nil {
+		return fmt.Errorf("invalid configuration: missing 'tssc' key")
+	}
+	switch vt := newValue.(type) {
+	case string:
+		return c.UpdateNestedValue(tsscNode, path, vt)
+	case []any:
+		if len(path) != len(vt) {
+			return fmt.Errorf("key value do not match")
+		}
+		for i := 0; i < len(path); i += 1 {
+			keyPath := strings.Split(path[i], ".")
+			if err := c.UpdateNestedValue(tsscNode, keyPath, vt[i]); err != nil {
+				return err
+			}
+		}
+		return nil
+	default:
+		return fmt.Errorf("not able to update configuration, please check the input")
+	}
+}
+
+// Set returns new configuration with updates
+func (c *Config) Set(key string, configData any) error {
+	var err error
+	switch cd := configData.(type) {
+	case string:
+		keyPath := strings.Split(key, ".")
+		if len(keyPath) < 2 {
+			return fmt.Errorf("invalid key set")
+		}
+		err = c.UpdateNestedValues(keyPath, cd)
+	case map[string]any:
+		keyPaths, values := ExtractKeyPathsAndValues(cd, key)
+		err = c.UpdateNestedValues(keyPaths, values)
+	default:
+		return fmt.Errorf("unsupported config data type %T", configData)
+	}
+	if err != nil {
+		return err
+	}
+	return c.DecodeNode()
 }
 
 // NewConfigFromFile returns a new Config instance based on the informed file.
