@@ -50,6 +50,10 @@ spec:
       type: string
       description: "Image from where the `tssc-test` binary will be extracted (from path /usr/local/bin)."
       default: "quay.io/redhat-user-workloads/rhtap-shared-team-tenant/tssc-test:latest"
+    - name: testplan
+      type: string
+      description: 'Optional testplan.json content encoded in base64 format. If not provided, testplan will be downloaded from the repository.'
+      default: ""
   tasks:
     - name: rosa-hcp-metadata
       taskRef:
@@ -183,6 +187,8 @@ spec:
           value: $(tasks.create-oci-container.results.oci-container)
         - name: tssc-test-image
           value: $(params.tssc-test-image)
+        - name: testplan
+          value: $(params.testplan)
   finally:
     - name: deprovision-rosa-collect-artifacts
       taskRef:

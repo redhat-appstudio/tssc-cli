@@ -2,12 +2,15 @@
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
-  name: e2e-main-pipeline
+  name: e2e-periodic-pipeline
   namespace: rhtap-shared-team-tenant
   labels:
     appstudio.openshift.io/component: tssc-cli
     appstudio.openshift.io/application: tssc-cli
 spec:
+  description: |-
+    Pipeline for periodic testing with multiple configurations generated from PICT file.
+    This pipeline processes PICT combinations and creates multiple test configurations.
   params:
     - name: SNAPSHOT
       description: "The JSON string representing the snapshot of the application under test."
@@ -27,6 +30,7 @@ spec:
       description: 'The number of replicas for the cluster nodes.'
       default: "3"
       type: string
+
   tasks:
     - name: test-metadata
       taskRef:
@@ -43,7 +47,7 @@ spec:
           value: $(params.SNAPSHOT)
         - name: test-name
           value: $(context.pipelineRun.name)
-    - name: process-rhads-config
+    - name: process-periodic-configs
       taskRef:
         resolver: git
         params:
@@ -52,14 +56,16 @@ spec:
           - name: revision
             value: RHTAP-5290
           - name: pathInRepo
-            value: integration-tests/tasks/get-rhads-config.yaml
+            value: integration-tests/tasks/process-periodic-configs.yaml
       params:
         - name: job-spec
           value: $(tasks.test-metadata.results.job-spec)
-    - name: start-nested-pipelines
       runAfter:
         - test-metadata
-        - process-rhads-config
+    - name: start-periodic-pipelines
+      runAfter:
+        - test-metadata
+        - process-periodic-configs
       taskRef:
         resolver: git
         params:
@@ -75,9 +81,9 @@ spec:
         - name: job-spec
           value: $(tasks.test-metadata.results.job-spec)
         - name: rhads-config
-          value: $(tasks.process-rhads-config.results.rhads-config)
+          value: $(tasks.process-periodic-configs.results.rhads-config)
         - name: mode
-          value: "single"
+          value: "periodic"
         - name: konflux-test-infra-secret
           value: $(params.konflux-test-infra-secret)
         - name: cloud-credential-key
