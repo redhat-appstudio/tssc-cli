@@ -30,6 +30,9 @@ spec:
       description: 'The number of replicas for the cluster nodes.'
       default: "3"
       type: string
+  workspaces:
+    - name: rhads-config
+      description: "Workspace for sharing RHADS configuration data between tasks"
 
   tasks:
     - name: test-metadata
@@ -60,6 +63,9 @@ spec:
       params:
         - name: job-spec
           value: $(tasks.test-metadata.results.job-spec)
+      workspaces:
+        - name: rhads-config
+          workspace: rhads-config
       runAfter:
         - test-metadata
     - name: start-periodic-pipelines
@@ -80,8 +86,6 @@ spec:
           value: $(params.SNAPSHOT)
         - name: job-spec
           value: $(tasks.test-metadata.results.job-spec)
-        - name: rhads-config
-          value: $(tasks.process-periodic-configs.results.rhads-config)
         - name: mode
           value: "periodic"
         - name: konflux-test-infra-secret
@@ -94,3 +98,6 @@ spec:
           value: $(params.ocp-replicas)
         - name: context-pipeline-run-name
           value: $(context.pipelineRun.name)
+      workspaces:
+        - name: rhads-config
+          workspace: rhads-config
