@@ -127,9 +127,9 @@ spec:
         resolver: git
         params:
           - name: url
-            value: https://github.com/redhat-appstudio/tssc-test.git
+            value: https://github.com/jsmid1/tssc-test.git
           - name: revision
-            value: main
+            value: RHTAP-5631
           - name: pathInRepo
             value: integration-tests/tasks/tssc-e2e.yaml
       params:
@@ -140,7 +140,7 @@ spec:
         - name: oci-container
           value: "quay.io/konflux-test-storage/rhtap-team/rhtap-cli:$(context.pipelineRun.name)"
         - name: tssc-test-image
-          value: $(params.tssc-test-image)
+          value: quay.io/jsmid/tssc-test-base-image:latest
     - name: rhtap-ui-tests
       runAfter:
         - tssc-e2e-tests
@@ -149,9 +149,9 @@ spec:
         resolver: git
         params:
           - name: url
-            value: https://github.com/redhat-appstudio/tssc-test.git
+            value: https://github.com/jsmid1/tssc-test.git
           - name: revision
-            value: main
+            value: RHTAP-5631
           - name: pathInRepo
             value: integration-tests/tasks/tssc-ui.yaml
       params:
@@ -162,7 +162,7 @@ spec:
         - name: oci-container
           value: "quay.io/konflux-test-storage/rhtap-team/rhtap-cli:$(context.pipelineRun.name)"
         - name: tssc-test-image
-          value: $(params.tssc-test-image)
+          value: quay.io/jsmid/tssc-test-base-image:latest
         - name: testplan
           value: $(params.testplan)
   finally:
