@@ -14,12 +14,13 @@ spec:
     - name: job-spec
       description: "Job specification metadata"
       type: string
-  results:
+  workspaces:
     - name: rhads-config
-      description: "The RHADS configuration content (base64 encoded)"
+      description: "Workspace for storing RHADS configuration data"
   steps:
     - name: get-rhads-config
       image: quay.io/konflux-ci/appstudio-utils:ab6b0b8e40e440158e7288c73aff1cf83a2cc8a9@sha256:24179f0efd06c65d16868c2d7eb82573cce8e43533de6cea14fec3b7446e0b14
+      workingDir: $(workspaces.rhads-config.path)
       env:
         - name: JOB_SPEC
           value: $(params.job-spec)
@@ -44,5 +45,5 @@ spec:
 
         echo "Original rhads-config content:"
         cat rhads-config
-        echo "Encoding rhads-config to base64:"
-        cat rhads-config | base64 -w 0 | tee $(results.rhads-config.path)
+        echo "Writing rhads-config to workspace:"
+        # The file is already in the workspace directory, no need to copy
