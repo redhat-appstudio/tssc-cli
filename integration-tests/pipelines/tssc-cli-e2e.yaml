@@ -26,14 +26,6 @@ spec:
     - name: machine-type
       description: 'The type of machine to use for the cluster nodes.'
       type: string
-    - name: oci-container-repo
-      default: 'quay.io/konflux-test-storage/rhtap-team/rhtap-cli'
-      description: The ORAS container used to store all test artifacts.
-      type: string
-    - name: oci-container-expiration
-      type: string
-      default: 30d
-      description: Change default expiration of image from 1y to 30 days - https://github.com/konflux-ci/tekton-integration-catalog/blob/main/common/tasks/create-oci-artifact/0.1/create-oci-artifact.yaml#L23
     - name: job-spec
       type: string
     - name: konflux-test-infra-secret
@@ -60,41 +52,23 @@ spec:
         resolver: git
         params:
           - name: url
-            value: https://github.com/konflux-ci/konflux-qe-definitions.git
+            value: https://github.com/konflux-ci/tekton-integration-catalog.git
           - name: revision
             value: main
           - name: pathInRepo
-            value: common/tasks/rosa/hosted-cp/rosa-hcp-metadata/rosa-hcp-metadata.yaml
-    - name: create-oci-container
-      taskRef:
-        resolver: git
-        params:
-          - name: url
-            value: https://github.com/konflux-ci/konflux-qe-definitions.git
-          - name: revision
-            value: main
-          - name: pathInRepo
-            value: common/tasks/create-oci-artifact/0.1/create-oci-artifact.yaml
-      params:
-        - name: oci-container-repo
-          value: $(params.oci-container-repo)
-        - name: oci-container-expiration
-          value: $(params.oci-container-expiration)
-        - name: oci-container-tag
-          value: $(context.pipelineRun.name)
+            value: tasks/rosa/hosted-cp/rosa-hcp-metadata/0.1/rosa-hcp-metadata.yaml
     - name: provision-rosa
       runAfter:
         - rosa-hcp-metadata
-        - create-oci-container
       taskRef:
         resolver: git
         params:
           - name: url
-            value: https://github.com/konflux-ci/konflux-qe-definitions.git
+            value: https://github.com/konflux-ci/tekton-integration-catalog.git
           - name: revision
             value: main
           - name: pathInRepo
-            value: common/tasks/rosa/hosted-cp/rosa-hcp-provision/rosa-hcp-provision.yaml
+            value: tasks/rosa/hosted-cp/rosa-hcp-provision/0.2/rosa-hcp-provision.yaml
       params:
         - name: cluster-name
           value: "$(tasks.rosa-hcp-metadata.results.cluster-name)"
@@ -108,6 +82,8 @@ spec:
           value: "$(params.konflux-test-infra-secret)"
         - name: cloud-credential-key
           value: "$(params.cloud-credential-key)"
+        - name: oci-container
+          value: "quay.io/konflux-test-storage/rhtap-team/rhtap-cli:$(context.pipelineRun.name)"
     - name: tssc-install
       runAfter:
         - provision-rosa
@@ -136,11 +112,11 @@ spec:
         resolver: git
         params:
           - name: url
-            value: https://github.com/konflux-ci/konflux-qe-definitions.git
+            value: https://github.com/konflux-ci/tekton-integration-catalog.git
           - name: revision
             value: main
           - name: pathInRepo
-            value: common/tasks/sprayproxy/sprayproxy-provision/sprayproxy-register-server.yaml
+            value: tasks/sprayproxy/sprayproxy-provision/0.1/sprayproxy-provision.yaml
       params:
         - name: ocp-login-command
           value: "$(tasks.provision-rosa.results.ocp-login-command)"
@@ -162,7 +138,7 @@ spec:
         - name: ocp-login-command
           value: "$(tasks.provision-rosa.results.ocp-login-command)"
         - name: oci-container
-          value: $(tasks.create-oci-container.results.oci-container)
+          value: "quay.io/konflux-test-storage/rhtap-team/rhtap-cli:$(context.pipelineRun.name)"
         - name: tssc-test-image
           value: $(params.tssc-test-image)
     - name: rhtap-ui-tests
@@ -184,7 +160,7 @@ spec:
         - name: ocp-login-command
           value: "$(tasks.provision-rosa.results.ocp-login-command)"
         - name: oci-container
-          value: $(tasks.create-oci-container.results.oci-container)
+          value: "quay.io/konflux-test-storage/rhtap-team/rhtap-cli:$(context.pipelineRun.name)"
         - name: tssc-test-image
           value: $(params.tssc-test-image)
         - name: testplan
@@ -199,14 +175,14 @@ spec:
           - name: revision
             value: main
           - name: pathInRepo
-            value: common/tasks/rosa/hosted-cp/rosa-hcp-deprovision/rosa-hcp-deprovision.yaml
+            value: tasks/rosa/hosted-cp/rosa-hcp-deprovision/0.2/rosa-hcp-deprovision.yaml
       params:
         - name: test-name
           value: $(context.pipelineRun.name)
         - name: ocp-login-command
           value: "$(tasks.provision-rosa.results.ocp-login-command)"
         - name: oci-container
-          value: "$(tasks.create-oci-container.results.oci-container)"
+          value: "quay.io/konflux-test-storage/rhtap-team/rhtap-cli:$(context.pipelineRun.name)"
         - name: cluster-name
           value: "$(tasks.rosa-hcp-metadata.results.cluster-name)"
         - name: konflux-test-infra-secret
@@ -229,7 +205,7 @@ spec:
           - name: revision
             value: main
           - name: pathInRepo
-            value: common/tasks/sprayproxy/sprayproxy-deprovision/sprayproxy-unregister-server.yaml
+            value: tasks/sprayproxy/sprayproxy-deprovision/0.1/sprayproxy-deprovision.yaml
       params:
         - name: ocp-login-command
           value: "$(tasks.provision-rosa.results.ocp-login-command)"
@@ -242,12 +218,12 @@ spec:
           - name: revision
             value: main
           - name: pathInRepo
-            value: common/tasks/pull-request-comment/0.2/pull-request-comment.yaml
+            value: tasks/pull-request-comment/0.2/pull-request-comment.yaml
       params:
         - name: test-name
           value: "$(context.pipelineRun.name)"
         - name: oci-container
-          value: "$(tasks.create-oci-container.results.oci-container)"
+          value: "quay.io/konflux-test-storage/rhtap-team/rhtap-cli:$(context.pipelineRun.name)"
         - name: pipeline-aggregate-status
           value: "$(tasks.status)"
         - name: job-spec
