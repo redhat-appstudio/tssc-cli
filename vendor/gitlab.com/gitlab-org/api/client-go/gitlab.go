@@ -28,6 +28,7 @@ import (
 	"math"
 	"math/rand"
 	"mime/multipart"
+	"net"
 	"net/http"
 	"net/url"
 	"sort"
@@ -593,17 +594,100 @@ func (c *Client) HTTPClient() *http.Client {
 }
 
 // retryHTTPCheck provides a callback for Client.CheckRetry which
-// will retry both rate limit (429) and server (>= 500) errors.
+// respects default retries and retries what is safe to retry.
 func (c *Client) retryHTTPCheck(ctx context.Context, resp *http.Response, err error) (bool, error) {
+	// do not retry if retries are disabled completely
+	if c.disableRetries {
+		return false, nil
+	}
+
+	// do not retry on context.Canceled or context.DeadlineExceeded
 	if ctx.Err() != nil {
 		return false, ctx.Err()
 	}
+
 	if err != nil {
-		return false, err
+		// We should be able to retry requests with assumed idempotent HTTP methods.
+		// In a future iteration we might want to annotate requests that are idempotent
+		// to further improve this logic here.
+		if resp != nil && resp.Request != nil {
+			switch resp.Request.Method {
+			case http.MethodConnect, http.MethodOptions, http.MethodTrace, http.MethodHead, http.MethodGet:
+				return true, nil
+			}
+		}
+
+		// Only retry errors that we know happened before writing to the wire
+		var urlErr *url.Error
+		var netOpErr *net.OpError
+		var dnsErr *net.DNSError
+		// see Go src/net/http/transport.go
+		var potentialTLSHandshakeErr interface {
+			Timeout() bool
+			Temporary() bool
+		}
+
+		switch {
+		// DNS errors are safe - they happen before any connection
+		case errors.As(err, &dnsErr):
+			// NXDOMAIN should not be retried
+			if dnsErr.IsNotFound {
+				return false, err
+			}
+			// Other DNS errors are safe to retry
+			return true, nil
+
+		// Direct net.OpError for dial operations
+		case errors.As(err, &netOpErr):
+			// from the comments in the implementation of net.OpError.Temporary
+			// it seems that it's safe to retry temporary OpErrors.
+			if netOpErr.Temporary() {
+				return true, nil
+			}
+
+			if strings.EqualFold(netOpErr.Op, "dial") {
+				return true, nil
+			}
+
+		// Connection refused errors are safe - they happen at TCP establishment
+		case errors.As(err, &urlErr):
+			if strings.Contains(urlErr.Error(), "connection refused") {
+				return true, nil
+			}
+
+		// TLS handshake errors are safe if we can identify them
+		case errors.As(err, &potentialTLSHandshakeErr):
+			// Check if this is a TLS handshake timeout specifically
+			if strings.Contains(err.Error(), "net/http: TLS handshake timeout") {
+				return true, nil
+			}
+		}
+
+		// we are conservative here and do not want to retry any "unknown" errors, because
+		// they could have happened when the connection was already established and the request
+		// partially fulfilled. We don't have the insights here if the request
+		// was idempotent or not, so we reject a retry.
+		return false, nil
 	}
-	if !c.disableRetries && (resp.StatusCode == 429 || resp.StatusCode >= 500) {
+
+	// 429 Too Many Requests is recoverable. Sometimes the server puts
+	// a Retry-After response header to indicate when the server is
+	// available to start processing request from client.
+	if resp.StatusCode == http.StatusTooManyRequests {
 		return true, nil
 	}
+
+	// Check the response code. We retry on 500-range responses to allow
+	// the server time to recover, as 500's are typically not permanent
+	// errors and may relate to outages on the server side. This will catch
+	// invalid response codes as well, like 0 and 999.
+	// Status code 0 is especially important for AWS ALB:
+	// https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-troubleshooting.html#response-code-000
+	if resp.StatusCode == 0 || (resp.StatusCode >= 500 && resp.StatusCode != http.StatusNotImplemented) {
+		// return true, fmt.Errorf("unexpected HTTP status %s", resp.Status)
+		return true, nil
+	}
+
 	return false, nil
 }
 
