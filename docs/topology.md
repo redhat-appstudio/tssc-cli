@@ -47,6 +47,17 @@ annotations:
   tssc.redhat-appstudio.github.com/depends-on: "tssc-openshift, tssc-subscriptions"
 ```
 
+### `tssc.redhat-appstudio.github.com/weight`
+
+- **Purpose**: This **optional** annotation defines the weight of a chart in the topology. It allows for fine-tuning the order of chart deployments, especially when charts have indirect dependencies or no direct dependencies. The annotation `depends-on`, described before, takes precedence over the weight. 
+- **Usage**: The value is an integer that defines the weight of the chart. Charts with lower weights are deployed earlier.
+- **Example**: If the OpenShift GitOps Helm chart has a weight of 10:
+
+```yaml
+annotations:
+  tssc.redhat-appstudio.github.com/weight: "10"
+```
+
 ### `tssc.redhat-appstudio.github.com/integrations-provided`
 
 - **Purpose**: This **optional** annotation lists the names of integrations that the Helm chart provides.  The chart is responsible for creating the necessary secrets or configurations for these integrations.

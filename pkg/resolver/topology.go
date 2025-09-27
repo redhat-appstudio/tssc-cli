@@ -46,69 +46,106 @@ func (t *Topology) Walk(fn DependencyWalkFn) error {
 	return nil
 }
 
-// PrependBefore prepends a list of dependencies before a specific dependency.
-func (t *Topology) PrependBefore(name string, dependencies ...Dependency) {
-	prefix := Dependencies{}
-	for _, dependency := range dependencies {
-		if !t.Contains(dependency.Name()) {
-			prefix = append(prefix, dependency)
+// dependencyIndex given the dependency name, find the its index in the topology,
+// or returns -1 if not found.
+func (t *Topology) dependencyIndex(name string) int {
+	for i, d := range t.dependencies {
+		if d.Name() == name {
+			return i
 		}
 	}
-	if len(prefix) == 0 {
+	return -1
+}
+
+// except returns a list of dependencies that are not in the topology.
+func (t *Topology) except(dependencies ...Dependency) Dependencies {
+	except := Dependencies{}
+	for _, dependency := range dependencies {
+		if !t.Contains(dependency.Name()) {
+			except = append(except, dependency)
+		}
+	}
+	return except
+}
+
+// PrependBefore prepends a list of dependencies before a specific dependency,
+// taking the weight into account.
+func (t *Topology) PrependBefore(name string, dependencies ...Dependency) {
+	except := t.except(dependencies...)
+	if len(except) == 0 {
 		return
 	}
 
 	// Find the index where the dependency name exists.
-	insertIndex := -1
-	for i, d := range t.dependencies {
-		if d.Name() == name {
-			insertIndex = i
-			break
-		}
+	dependencyIndex := t.dependencyIndex(name)
+
+	// The dependency is not found, prepend to the very beginning of the slice.
+	if dependencyIndex == -1 {
+		t.dependencies = append(except, t.dependencies...)
+		return
 	}
 
-	// Insert the prefix slice before the found dependency name index. If the
-	// dependency is not found, prepend to the very beginning of the slice.
-	if insertIndex != -1 {
+	insertIndex := dependencyIndex
+
+	// Calculate the insert index based on weights.
+	for _, dep := range except {
+		pos := insertIndex
+		currentWeight, _ := dep.Weight()
+
+		for pos > 0 {
+			prevWeight, _ := t.dependencies[pos-1].Weight()
+			if currentWeight >= prevWeight {
+				break
+			}
+			pos--
+		}
+
 		t.dependencies = append(
-			t.dependencies[:insertIndex],
-			append(prefix, t.dependencies[insertIndex:]...)...,
+			t.dependencies[:pos],
+			append([]Dependency{dep}, t.dependencies[pos:]...)...,
 		)
-	} else {
-		t.dependencies = append(prefix, t.dependencies...)
+
+		dependencyIndex++
+		insertIndex = dependencyIndex
 	}
 }
 
 // AppendAfter inserts dependencies after a given dependency name. If the
 // dependency does not exist, it appends to the end the slice.
 func (t *Topology) AppendAfter(name string, dependencies ...Dependency) {
-	suffix := Dependencies{}
-	for _, d := range dependencies {
-		if !t.Contains(d.Name()) {
-			suffix = append(suffix, d)
-		}
-	}
-	if len(suffix) == 0 {
+	except := t.except(dependencies...)
+	if len(except) == 0 {
 		return
 	}
 
 	// Find the index where the dependency name exists.
-	insertIndex := -1
-	for i, d := range t.dependencies {
-		if d.Name() == name {
-			insertIndex = i
-			break
-		}
+	dependencyIndex := t.dependencyIndex(name)
+
+	if dependencyIndex == -1 {
+		t.dependencies = append(t.dependencies, except...)
+		return
 	}
-	// Insert the suffix slice after the found dependency name index. If the
-	// dependency is not found, append it.
-	if insertIndex != -1 {
+
+	// The insert index starts right next to the dependency name.
+	insertIndex := dependencyIndex + 1
+
+	// Calculate the insert index based on weights.
+	for _, dep := range except {
+		pos := insertIndex
+		currentWeight, _ := dep.Weight()
+
+		for pos < len(t.dependencies) {
+			nextWeight, _ := t.dependencies[pos].Weight()
+			if currentWeight <= nextWeight {
+				break
+			}
+			pos++
+		}
+
 		t.dependencies = append(
-			t.dependencies[:insertIndex+1],
-			append(suffix, t.dependencies[insertIndex+1:]...)...,
+			t.dependencies[:pos],
+			append([]Dependency{dep}, t.dependencies[pos:]...)...,
 		)
-	} else {
-		t.dependencies = append(t.dependencies, suffix...)
 	}
 }
 

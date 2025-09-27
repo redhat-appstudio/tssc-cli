@@ -1,7 +1,9 @@
 package resolver
 
 import (
+	"fmt"
 	"log/slog"
+	"strconv"
 
 	"helm.sh/helm/v3/pkg/chart"
 )
@@ -61,6 +63,20 @@ func (d *Dependency) DependsOn() []string {
 		return nil
 	}
 	return commaSeparatedToSlice(dependsOn)
+}
+
+// Weight returns the weight of this dependency. If no weight is specified, zero
+// is returned. The weight must be specified as an integer value.
+func (d *Dependency) Weight() (int, error) {
+	if v, exists := d.chart.Metadata.Annotations[WeightAnnotation]; exists {
+		w, err := strconv.Atoi(v)
+		if err != nil {
+			return -1, fmt.Errorf(
+				"invalid value %q for annotation %q", v, WeightAnnotation)
+		}
+		return w, nil
+	}
+	return 0, nil
 }
 
 // ProductName returns the product name from the chart annotations.

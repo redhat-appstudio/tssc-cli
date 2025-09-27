@@ -69,7 +69,6 @@ func TestNewResolver(t *testing.T) {
 			"tssc-openshift",
 			"tssc-subscriptions",
 			"tssc-acs",
-			"tssc-acs-test",
 			"tssc-gitops",
 			"tssc-infrastructure",
 			"tssc-iam",
@@ -80,6 +79,7 @@ func TestNewResolver(t *testing.T) {
 			"tssc-app-namespaces",
 			"tssc-dh",
 			"tssc-integrations",
+			"tssc-acs-test",
 		}))
 	})
 }
