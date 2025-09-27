@@ -18,17 +18,17 @@ include:
   # groups. However, there is no easy way to conditionally set tags or even variables without
   # jeopardizing existing (complex) workflow:rules or job:rules. Thus, we resort to
   # this nasty conditionally include hack.
-  - local: '.gitlab/ci/gitlab-go-runner-tags.gitlab-ci.yml'
+  - local: ".gitlab/ci/gitlab-go-runner-tags.gitlab-ci.yml"
     rules:
       - if: $CI_PROJECT_ROOT_NAMESPACE == 'gitlab-org' || $CI_PROJECT_ROOT_NAMESPACE == 'gitlab-community'
-  - local: '.gitlab/ci/community-go-runner-tags.gitlab-ci.yml'
+  - local: ".gitlab/ci/community-go-runner-tags.gitlab-ci.yml"
     rules:
       - if: $CI_PROJECT_ROOT_NAMESPACE != 'gitlab-org' && $CI_PROJECT_ROOT_NAMESPACE != 'gitlab-community'
   # Analyze commits to determine whether to cut a release
   # see https://gitlab.com/gitlab-com/gl-infra/common-ci-tasks/-/blob/main/semantic-release.md
-  - project: 'gitlab-com/gl-infra/common-ci-tasks'
-    ref: v2.85.0  # renovate:managed
-    file: 'semantic-release.yml'
+  - project: "gitlab-com/gl-infra/common-ci-tasks"
+    ref: v2.85.0 # renovate:managed
+    file: "semantic-release.yml"
     inputs:
       stage: deploy
       validate_stage: lint
@@ -43,8 +43,8 @@ stages:
   parallel:
     matrix:
       - GOLANG_IMAGE_VERSION:
-        - '1.23'
-        - '1.24'
+          - "1.23"
+          - "1.24"
 
 .go:base:
   extends:
@@ -71,17 +71,17 @@ stages:
         - $GOLANGCI_LINT_CACHE/
     - key:
         prefix: mise-
-        files: ['.tool-versions']
+        files: [".tool-versions"]
       paths:
         - $MISE_DATA_DIR
 
   # We only need to run Go-related jobs when actual Go files changed
   # or when running either on the default branch or for a tag.
   rules:
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
     - if: $CI_COMMIT_TAG
     - changes:
-        - '**/*.go'
+        - "**/*.go"
         - testdata/**
         - go.mod
         - go.sum
@@ -97,8 +97,8 @@ golangci-lint:
   stage: lint
   needs: []
   variables:
-    REPORT_FILENAME: 'gl-code-quality-report.json'
-  image: golangci/golangci-lint:v2.4.0
+    REPORT_FILENAME: "gl-code-quality-report.json"
+  image: golangci/golangci-lint:v2.5.0
   script:
     - golangci-lint run
   artifacts:
@@ -139,9 +139,9 @@ commitlint:
   needs: []
   rules:
     # lint.js script makes an API call without authentication, so the project or fork must be public
-    - if: '$CI_MERGE_REQUEST_IID && $CI_PROJECT_VISIBILITY == "public"' 
+    - if: '$CI_MERGE_REQUEST_IID && $CI_PROJECT_VISIBILITY == "public"'
       when: always
-  image: ${GITLAB_DEPENDENCY_PROXY}node:22-slim
+  image: node:24-slim
   script:
     - apt-get update && apt-get install -y git
     - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_COMMIT_SHA
@@ -157,8 +157,8 @@ tests:unit:
   image: golang:$GOLANG_IMAGE_VERSION
   variables:
     # configure tooling versions
-    GOTESTSUM_VERSION: 'v1.12.0'
-    GOCOVER_COBERTURA_VERSION: 'v1.2.1-0.20240107185409-0818f3538137'
+    GOTESTSUM_VERSION: "v1.12.0"
+    GOCOVER_COBERTURA_VERSION: "v1.2.1-0.20240107185409-0818f3538137"
 
     # configure artifact files
     JUNIT_FILENAME: tests.xml
