@@ -14,6 +14,11 @@ var (
 	// to be installed before it can be installed.
 	DependsOnAnnotation = fmt.Sprintf("%s/depends-on", constants.RepoURI)
 
+	// WeightAnnotation defines the weight a chart has in the topology, which
+	// allows moving a dependency down or up in the topology. The annotation
+	// "depends-on" takes preference over the weight annotation.
+	WeightAnnotation = fmt.Sprintf("%s/weight", constants.RepoURI)
+
 	// UseProductNamespaceAnnotation defines the Helm chart should use the same
 	// namespace than the referred product name.
 	UseProductNamespaceAnnotation = fmt.Sprintf(
