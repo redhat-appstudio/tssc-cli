@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
 	"github.com/spf13/pflag"
 )
 
@@ -20,12 +21,14 @@ type Flags struct {
 	KubeConfigPath string        // path to the kubeconfig file
 	LogLevel       *slog.Level   // log verbosity level
 	Timeout        time.Duration // helm client timeout
+	Version        bool          // show version
 }
 
 // PersistentFlags sets up the global flags.
 func (f *Flags) PersistentFlags(p *pflag.FlagSet) {
 	p.BoolVar(&f.Debug, "debug", f.Debug, "enable debug mode")
 	p.BoolVar(&f.DryRun, "dry-run", f.DryRun, "enable dry-run mode")
+	p.BoolVar(&f.Version, "version", f.Version, "show the application version")
 	p.StringVar(
 		&f.KubeConfigPath,
 		"kube-config",
@@ -61,6 +64,12 @@ func (f *Flags) LoggerWith(l *slog.Logger) *slog.Logger {
 	return l.With("debug", f.Debug, "dry-run", f.DryRun, "timeout", f.Timeout)
 }
 
+// ShowVersion shows the application version and exits
+func (f *Flags) ShowVersion() {
+	fmt.Printf("tssc %s\n", constants.Version)
+	os.Exit(0)
+}
+
 // NewFlags instantiates the global flags with default values.
 func NewFlags() *Flags {
 	// Getting the current user configuration, later on the home directory is used
@@ -81,5 +90,6 @@ func NewFlags() *Flags {
 		KubeConfigPath: kubeConfigPath,
 		LogLevel:       &defaultLogLevel,
 		Timeout:        15 * time.Minute,
+		Version:        false,
 	}
 }
