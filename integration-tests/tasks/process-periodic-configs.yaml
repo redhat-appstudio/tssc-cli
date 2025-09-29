@@ -93,8 +93,8 @@ spec:
           echo "DEBUG: Number of fields: ${#fields[@]}"
           if [[ "${fields[0]}" != "OCP" && -n "${fields[0]:-}" ]]; then  # Skip header line and empty lines
             # Validate that we have enough fields
-            if [[ ${#fields[@]} -lt 6 ]]; then
-              echo "ERROR: Expected at least 6 fields, got ${#fields[@]} fields: ${fields[*]}"
+            if [[ ${#fields[@]} -lt 7 ]]; then
+              echo "ERROR: Expected at least 7 fields, got ${#fields[@]} fields: ${fields[*]}"
               exit 1
             fi
             # Check if we've reached the maximum number of configurations
@@ -107,19 +107,12 @@ spec:
             fi
             # Build RHADS config format for this PICT line
             echo "OCP=\"${fields[0]:-4.18}\"" >> "$OUTPUT_FILE"
-            # Derive AUTH from SCM (github/gitlab/bitbucket -> github/gitlab)
-            SCM_VALUE="${fields[4]:-github}"
-            if [[ "$SCM_VALUE" == "bitbucket" ]]; then
-              AUTH_VALUE="github"  # bitbucket uses github auth
-            else
-              AUTH_VALUE="$SCM_VALUE"
-            fi
-            echo "AUTH=\"$AUTH_VALUE\"" >> "$OUTPUT_FILE"
             echo "ACS=\"${fields[1]:-local}\"" >> "$OUTPUT_FILE"
             echo "REGISTRY=\"${fields[2]:-quay}\"" >> "$OUTPUT_FILE"
             echo "TPA=\"${fields[3]:-local}\"" >> "$OUTPUT_FILE"
             echo "SCM=\"${fields[4]:-github}\"" >> "$OUTPUT_FILE"
             echo "PIPELINE=\"${fields[5]:-tekton}\"" >> "$OUTPUT_FILE"
+            echo "AUTH_CONFIG=\"${fields[6]:-github}\"" >> "$OUTPUT_FILE"
             # Generate corresponding testplan
             echo "---TESTPLAN_START---" >> "$OUTPUT_FILE"
             # Extract values for testplan
