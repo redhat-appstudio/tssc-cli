@@ -84,7 +84,6 @@ spec:
         # If AUTH_CONFIG is not set, use github as default
         if [[ -z "$AUTH_CONFIG" ]]; then
             AUTH_CONFIG="github"  # Default to github for all other cases
-          fi
         fi
 
         echo "Extracted configuration values:"
