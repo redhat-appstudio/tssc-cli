@@ -9,5 +9,4 @@ Keycloak "chicken" Realm Credentials:
     Username:     chicken-admin 
     Admin Secret: {{ $realm.adminSecretName }}
     OIDC Secret:  {{ $realm.oidcClientsSecretName }}
-
-{{ end -}}
+{{- end }}

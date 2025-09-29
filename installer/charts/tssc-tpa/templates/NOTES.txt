@@ -7,5 +7,4 @@ Trusted Profile Analyzer (TPA):
     Bombastic API:  {{ printf "sbom%s" $trustification.appDomain }}
     Documentation:  {{ printf "docs%s" $trustification.appDomain }}
     SPOG API:       {{ printf "api%s" $trustification.appDomain }}
-
-{{ end -}}
+{{- end }}

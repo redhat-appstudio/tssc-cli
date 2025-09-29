@@ -10,5 +10,4 @@ Keycloak:
     Console URL: {{ printf "http://%s" $k.route.host }}
   {{- end }}
     Admin Secret: {{ printf "%s-initial-admin" $keycloakName }}
-
-{{ end -}}
+{{- end }}
