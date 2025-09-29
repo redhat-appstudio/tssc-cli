@@ -52,14 +52,21 @@ else
     pipeline_config=(tekton)
 fi
 
+if [[ -n "${auth_config:-}" ]]; then
+    IFS=',' read -ra auth_config <<< "${auth_config}"
+else
+    auth_config=(github)
+fi
+
 # Export after setting
-export acs_config tpa_config registry_config scm_config pipeline_config
+export acs_config tpa_config registry_config scm_config pipeline_config auth_config
 
 echo "[INFO] acs_config=(${acs_config[*]})"
 echo "[INFO] tpa_config=(${tpa_config[*]})"
 echo "[INFO] registry_config=(${registry_config[*]})"
 echo "[INFO] scm_config=(${scm_config[*]})"
 echo "[INFO] pipeline_config=(${pipeline_config[*]})"
+echo "[INFO] auth_config=(${auth_config[*]})"
 
 tpl_file="installer/charts/values.yaml.tpl"
 config_file="installer/config.yaml"
@@ -79,11 +86,13 @@ update_dh_catalog_url() {
 }
 
 update_dh_auth_config() {
-  # if SCM is set to Gielab, update auth config, otherwise keep it to default - github
-  if [[ " ${scm_config[*]} " =~ " gitlab " ]]; then
+  # Use auth_config to determine the auth provider for Developer Hub
+  if [[ " ${auth_config[*]} " =~ " gitlab " ]]; then
     echo "[INFO] Change Developer Hub auth to gitlab"
     yq -i '.tssc.products[] |= select(.name == "Developer Hub").properties.authProvider = "gitlab"' "${config_file}"
-    fi
+  else
+    echo "[INFO] Keep Developer Hub auth as github (default)"
+  fi
 }
 
 # Workaround: This function has to be called before tssc import "installer/config.yaml" into cluster.
@@ -248,8 +257,7 @@ nexus_integration() {
 create_cluster_config() {
   echo "[INFO] Creating the installer's cluster configuration"
   update_dh_catalog_url
-  # TODO: Uncomment this when settig auth provider is implemented in rhads-config
-  # update_dh_auth_config
+  update_dh_auth_config
   disable_acs
   disable_tpa
   

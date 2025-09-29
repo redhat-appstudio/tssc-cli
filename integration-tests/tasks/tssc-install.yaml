@@ -79,6 +79,12 @@ spec:
         REGISTRY_CONFIG=$(echo "$RHADS_CONFIG_CONTENT" | tr ' ' '\n' | grep "^REGISTRY=" | cut -d'=' -f2- | tr -d '"')
         SCM_CONFIG=$(echo "$RHADS_CONFIG_CONTENT" | tr ' ' '\n' | grep "^SCM=" | cut -d'=' -f2- | tr -d '"')
         PIPELINE_CONFIG=$(echo "$RHADS_CONFIG_CONTENT" | tr ' ' '\n' | grep "^PIPELINE=" | cut -d'=' -f2- | tr -d '"')
+        AUTH_CONFIG=$(echo "$RHADS_CONFIG_CONTENT" | tr ' ' '\n' | grep "^AUTH_CONFIG=" | cut -d'=' -f2- | tr -d '"')
+
+        # If AUTH_CONFIG is not set, use github as default
+        if [[ -z "$AUTH_CONFIG" ]]; then
+            AUTH_CONFIG="github"  # Default to github for all other cases
+        fi
 
         echo "Extracted configuration values:"
         echo "  ACS: $ACS_CONFIG"
@@ -86,6 +92,7 @@ spec:
         echo "  Registry: $REGISTRY_CONFIG"
         echo "  SCM: $SCM_CONFIG"
         echo "  Pipeline: $PIPELINE_CONFIG"
+        echo "  Auth Config: $AUTH_CONFIG"
 
         # Export configuration values to .env file
         echo "export acs_config=\"$ACS_CONFIG\"" >> ${env_file}
@@ -93,7 +100,7 @@ spec:
         echo "export registry_config=\"$REGISTRY_CONFIG\"" >> ${env_file}
         echo "export scm_config=\"$SCM_CONFIG\"" >> ${env_file}
         echo "export pipeline_config=\"$PIPELINE_CONFIG\"" >> ${env_file}
-        echo "export auth_config=\"github\"" >> ${env_file}
+        echo "export auth_config=\"$AUTH_CONFIG\"" >> ${env_file}
 
         # Check if GIT_REPO is tssc-sample-templates and update Developer Hub catalog url based on PR changes
         if [[ "${GIT_REPO}" = "tssc-sample-templates" ]]; then

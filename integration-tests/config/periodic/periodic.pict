@@ -8,6 +8,7 @@ Registry: quay, artifactory, nexus
 TPA: local, remote
 SCM: github, gitlab, bitbucket
 Pipeline: tekton, gitlabci, githubactions, jenkins
+AUTH_CONFIG: github, gitlab
 
 # Constraints (copied from default.pict)
 ## Parameter value validation. This doesn't work with the current pict docker image, we can uncomment it when we figure out it in future
@@ -21,3 +22,8 @@ Pipeline: tekton, gitlabci, githubactions, jenkins
 IF [SCM] = "github" THEN [Pipeline] IN {"tekton", "jenkins", "githubactions"};
 IF [SCM] = "gitlab" THEN [Pipeline] IN {"tekton", "jenkins", "gitlabci"};
 IF [SCM] = "bitbucket" THEN [Pipeline] IN {"tekton", "jenkins"};
+
+## AUTH_CONFIG restrictions based on SCM
+IF [SCM] = "gitlab" THEN [AUTH_CONFIG] = "gitlab";
+IF [SCM] = "github" THEN [AUTH_CONFIG] = "github";
+IF [SCM] = "bitbucket" THEN [AUTH_CONFIG] = "github";
