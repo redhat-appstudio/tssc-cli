@@ -82,6 +82,10 @@ func NewCollection(charts []chart.Chart) (*Collection, error) {
 	// Populating the collection with dependencies.
 	for _, hc := range charts {
 		d := NewDependency(&hc)
+		// Asserting the weight annotation is a valid integer.
+		if _, err := d.Weight(); err != nil {
+			return nil, fmt.Errorf("%w:  %s", ErrInvalidCollection, err)
+		}
 		// Dependencies in the collection must have unique names.
 		if _, err := c.Get(d.Name()); err == nil {
 			return nil, fmt.Errorf("%w: duplicate chart: %s",
