@@ -50,6 +50,9 @@ INSTALLER_TARBALL_DATA ?= $(shell find -L $(INSTALLER_DIR) -type f \
 	! -name embed.go \
 )
 
+# Version will be set at build time via git describe
+VERSION ?= $(shell git describe --tags --abbrev=0)
+
 .EXPORT_ALL_VARIABLES:
 
 .default: build
@@ -63,7 +66,7 @@ INSTALLER_TARBALL_DATA ?= $(shell find -L $(INSTALLER_DIR) -type f \
 $(BIN): installer-tarball
 	@echo "# Building '$(BIN)'"
 	@[ -d $(BIN_DIR) ] || mkdir -p $(BIN_DIR)
-	go build -o $(BIN) $(CMD) $(ARGS)
+	go build -ldflags "-X github.com/redhat-appstudio/tssc-cli/pkg/constants.Version=$(VERSION)" -o $(BIN) $(CMD)
 
 .PHONY: build
 build: $(BIN)
