@@ -1,3 +1,47 @@
+## [0.148.1](https://gitlab.com/gitlab-org/api/client-go/compare/v0.148.0...v0.148.1) (2025-09-26)
+
+
+### Bug Fixes
+
+* label unmarshaling for `BasicMergeRequest` list operations ([e80c453](https://gitlab.com/gitlab-org/api/client-go/commit/e80c453aa6a5a265ec8748ae3f3f761a70f4470e))
+
+# [0.148.0](https://gitlab.com/gitlab-org/api/client-go/compare/v0.147.1...v0.148.0) (2025-09-23)
+
+
+### Features
+
+* **ResourceGroup:** add `newest_ready_first` to resource group `process_mode` ([fc8f743](https://gitlab.com/gitlab-org/api/client-go/commit/fc8f7431da4ca8594723105473687e8f1378df2b))
+
+## [0.147.1](https://gitlab.com/gitlab-org/api/client-go/compare/v0.147.0...v0.147.1) (2025-09-22)
+
+
+### Bug Fixes
+
+* **client:** use default retry policy from retryablehttp ([2a72511](https://gitlab.com/gitlab-org/api/client-go/commit/2a725113118608712f668b159ca2dab11f4e588e))
+
+# [0.147.0](https://gitlab.com/gitlab-org/api/client-go/compare/v0.146.0...v0.147.0) (2025-09-22)
+
+
+### Features
+
+* **Project:** add resource_group_default_process_mode ([7804faf](https://gitlab.com/gitlab-org/api/client-go/commit/7804fafa18cc15fec8a0886a081bf3311d72eb1f))
+
+# [0.146.0](https://gitlab.com/gitlab-org/api/client-go/compare/v0.145.0...v0.146.0) (2025-09-18)
+
+
+### Features
+
+* **pipelines:** Add compile-time type-safe pipeline inputs support ([4b30e60](https://gitlab.com/gitlab-org/api/client-go/commit/4b30e60260e4f06e7684352693aac49abd748579)), closes [gitlab-org/api/client-go#2154](https://gitlab.com/gitlab-org/api/client-go/issues/2154)
+* **PipelinesService:** Add support for pipeline inputs with type validation ([ab3056f](https://gitlab.com/gitlab-org/api/client-go/commit/ab3056f403ec0268e14b312de3f5b51b115ad97a)), closes [gitlab-org/api/client-go#2154](https://gitlab.com/gitlab-org/api/client-go/issues/2154)
+* **PipelineTriggersService:** Add support for pipeline inputs to trigger API ([9ad770e](https://gitlab.com/gitlab-org/api/client-go/commit/9ad770e49e59b2a41c665dfc4781f3b56650e813)), closes [gitlab-org/api/client-go#2154](https://gitlab.com/gitlab-org/api/client-go/issues/2154)
+
+# [0.145.0](https://gitlab.com/gitlab-org/api/client-go/compare/v0.144.1...v0.145.0) (2025-09-15)
+
+
+### Features
+
+* Add missing created_by field to ProjectMembers and GroupMembers ([5348e01](https://gitlab.com/gitlab-org/api/client-go/commit/5348e01913c358c53bdd3da46b069713273d6802))
+
 ## [0.144.1](https://gitlab.com/gitlab-org/api/client-go/compare/v0.144.0...v0.144.1) (2025-09-13)
 
 # [0.144.0](https://gitlab.com/gitlab-org/api/client-go/compare/v0.143.3...v0.144.0) (2025-09-12)
