@@ -106,6 +106,16 @@ spec:
           REPO_ORG="redhat-appstudio"
           BRANCH="main"
         fi
+        
+        if [[ "$MODE" == "periodic" ]]; then
+          # use always main from redhat-appstudio for periodic jobs
+          REPO_ORG="redhat-appstudio"
+          BRANCH="main"
+          echo "REPO_ORG:"
+          echo "$REPO_ORG"
+          echo "BRANCH:"
+          echo "$BRANCH"
+        fi
 
         PIPELINERUNS_ARRAY=()
 
@@ -163,9 +173,6 @@ spec:
             echo "ERROR: No RHADS configuration data found"
             exit 1
           fi
-          # use always main from redhat-appstudio for periodic jobs
-          REPO_ORG="redhat-appstudio"
-          BRANCH="main"
           # Count configurations
           if echo "$DECODED_RHADS_CONFIG" | grep -q "---CONFIG_SEPARATOR---"; then
             SEPARATOR_COUNT=$(echo "$DECODED_RHADS_CONFIG" | grep -o -e "---CONFIG_SEPARATOR---" | wc -l)
