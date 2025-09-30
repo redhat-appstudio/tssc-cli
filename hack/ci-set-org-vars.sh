@@ -90,9 +90,9 @@ parse_args() {
 
 getValues() {
     COSIGN_SECRET_JSON=$(oc get secrets -n openshift-pipelines signing-secrets -o json)
-    COSIGN_SECRET_KEY="$(echo "$COSIGN_SECRET_JSON" | jq -r '.data.["cosign.key"]')"
-    COSIGN_SECRET_PASSWORD="$(echo "$COSIGN_SECRET_JSON" | jq -r '.data.["cosign.password"]')"
-    COSIGN_PUBLIC_KEY="$(echo "$COSIGN_SECRET_JSON" | jq -r '.data.["cosign.pub"]')"
+    COSIGN_SECRET_KEY="$(echo "$COSIGN_SECRET_JSON" | jq -r '.data."cosign.key"')"
+    COSIGN_SECRET_PASSWORD="$(echo "$COSIGN_SECRET_JSON" | jq -r '.data."cosign.password"')"
+    COSIGN_PUBLIC_KEY="$(echo "$COSIGN_SECRET_JSON" | jq -r '.data."cosign.pub"')"
 
     for REGISTRY in "artifactory" "nexus" "quay"; do
         REGISTRY_SECRET="tssc-$REGISTRY-integration" # notsecret

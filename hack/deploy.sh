@@ -265,7 +265,12 @@ deploy() {
 }
 
 configure_ci() {
-    "$SCRIPT_DIR/ci-set-org-vars.sh" --env-file "$ENVFILE"
+    if [[ -n "${GITHUB:-}" ]]; then
+        "$SCRIPT_DIR/ci-set-org-vars.sh" --backend github
+    fi
+    if [[ -n "${GITLAB:-}" ]]; then
+        "$SCRIPT_DIR/ci-set-org-vars.sh" --backend gitlab
+    fi
 }
 
 action() {
