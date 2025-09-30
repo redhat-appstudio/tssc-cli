@@ -9,7 +9,7 @@ require (
 	github.com/google/cel-go v0.26.1
 	github.com/google/go-github/scrape v0.0.0-20250818135035-f137c94931a7
 	github.com/google/go-github/v74 v74.0.0
-	github.com/mark3labs/mcp-go v0.39.1
+	github.com/mark3labs/mcp-go v0.41.1
 	github.com/onsi/gomega v1.38.2
 	github.com/openshift/api v0.0.0-20250926020921-1517fca97fe3
 	github.com/openshift/client-go v0.0.0-20250915125341-81c9dc83a675
