@@ -14,7 +14,7 @@ require (
 	github.com/openshift/api v0.0.0-20250926020921-1517fca97fe3
 	github.com/openshift/client-go v0.0.0-20250915125341-81c9dc83a675
 	github.com/pkg/errors v0.9.1
-	github.com/quay/claircore v1.5.42
+	github.com/quay/claircore v1.5.43
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/pflag v1.0.10
 	gitlab.com/gitlab-org/api/client-go v0.144.1
