@@ -26,4 +26,3 @@ IF [SCM] = "bitbucket" THEN [Pipeline] IN {"tekton", "jenkins"};
 ## AUTH_CONFIG restrictions based on SCM
 IF [SCM] = "gitlab" THEN [AUTH_CONFIG] = "gitlab";
 IF [SCM] = "github" THEN [AUTH_CONFIG] = "github";
-IF [SCM] = "bitbucket" THEN [AUTH_CONFIG] = "github";
