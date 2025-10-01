@@ -111,11 +111,11 @@ spec:
           # use always main from redhat-appstudio for periodic jobs
           REPO_ORG="redhat-appstudio"
           BRANCH="main"
-          echo "REPO_ORG:"
-          echo "$REPO_ORG"
-          echo "BRANCH:"
-          echo "$BRANCH"
         fi
+        echo "REPO_ORG:"
+        echo "$REPO_ORG"
+        echo "BRANCH:"
+        echo "$BRANCH"
 
         PIPELINERUNS_ARRAY=()
 
