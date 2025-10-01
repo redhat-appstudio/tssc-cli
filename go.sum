@@ -313,8 +313,8 @@ github.com/prometheus/common v0.66.1 h1:h5E0h5/Y8niHc5DlaLlWLArTQI7tMrsfQjHV+d9Z
 github.com/prometheus/common v0.66.1/go.mod h1:gcaUsgf3KfRSwHY4dIMXLPV0K/Wg1oZ8+SbZk/HH/dA=
 github.com/prometheus/procfs v0.17.0 h1:FuLQ+05u4ZI+SS/w9+BWEM2TXiHKsUQ9TADiRH7DuK0=
 github.com/prometheus/procfs v0.17.0/go.mod h1:oPQLaDAMRbA+u8H5Pbfq+dl3VDAvHxMUOVhe0wYB2zw=
-github.com/quay/claircore v1.5.42 h1:EC+JtIXkMhXB84I0k+n14Cmxxcry/8XbgeEIQ2iekzs=
-github.com/quay/claircore v1.5.42/go.mod h1:NtQyQECDSpU7WqyjKknD35cchdfbtpQ9qp7Paekdma0=
+github.com/quay/claircore v1.5.43 h1:Vm9+TSBKdoa8svpfidFzw/RVf/NCvS8VOjw3U/SMGvQ=
+github.com/quay/claircore v1.5.43/go.mod h1:26IP48NS+QR/WiGMDYx3qrtWk+iOiOsV6LZ1cvbgq3w=
 github.com/redis/go-redis/extra/rediscmd/v9 v9.0.5 h1:EaDatTxkdHG+U3Bk4EUr+DZ7fOGwTfezUiUJMaIcaho=
 github.com/redis/go-redis/extra/rediscmd/v9 v9.0.5/go.mod h1:fyalQWdtzDBECAQFBJuQe5bzQ02jGd5Qcbgb97Flm7U=
 github.com/redis/go-redis/extra/redisotel/v9 v9.0.5 h1:EfpWLLCyXw8PSM2/XNJLjI3Pb27yVE+gIAfeqp8LUCc=
