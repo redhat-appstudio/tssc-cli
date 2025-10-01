@@ -7,7 +7,7 @@ ACS: local, remote
 Registry: quay, artifactory, nexus
 TPA: local, remote
 SCM: github, gitlab, bitbucket
-Pipeline: tekton, gitlabci, actions, jenkins
+Pipeline: tekton, gitlabci, githubactions, jenkins
 AUTH_CONFIG: github, gitlab
 
 # Constraints (copied from default.pict)
@@ -16,14 +16,13 @@ AUTH_CONFIG: github, gitlab
 [Registry] IN {"quay", "artifactory", "nexus"};
 [TPA] IN {"local", "remote"};
 [SCM] IN {"github", "gitlab", "bitbucket"};
-[Pipeline] IN {"tekton", "jenkins", "gitlabci", "actions"};
+[Pipeline] IN {"tekton", "jenkins", "gitlabci", "githubactions"};
 
 ## Pipeline restrictions based on SCM
-IF [SCM] = "github" THEN [Pipeline] IN {"tekton", "jenkins", "actions"};
+IF [SCM] = "github" THEN [Pipeline] IN {"tekton", "jenkins", "githubactions"};
 IF [SCM] = "gitlab" THEN [Pipeline] IN {"tekton", "jenkins", "gitlabci"};
 IF [SCM] = "bitbucket" THEN [Pipeline] IN {"tekton", "jenkins"};
 
 ## AUTH_CONFIG restrictions based on SCM
 IF [SCM] = "gitlab" THEN [AUTH_CONFIG] = "gitlab";
 IF [SCM] = "github" THEN [AUTH_CONFIG] = "github";
-IF [SCM] = "bitbucket" THEN [AUTH_CONFIG] = "github";
