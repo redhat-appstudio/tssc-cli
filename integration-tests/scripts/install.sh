@@ -99,7 +99,8 @@ update_dh_auth_config() {
 # Currently, the tssc `config` subcommand lacks the ability to modify property values stored in config.yaml.
 github_integration() {
   # Check if "github" is in scm_config array
-  if [[ " ${scm_config[*]} " =~ " github " ]]; then
+  # Check if GitHub is as auth_config
+  if [[ " ${scm_config[*]} " =~ " github " ]] || [[ " ${auth_config[*]} " =~ " github " ]]; then
     echo "[INFO] Config Github integration with TSSC"
 
     GITHUB__APP__ID="${GITHUB__APP__ID:-$(cat /usr/local/rhtap-cli-install/rhdh-github-app-id)}"
@@ -148,7 +149,7 @@ azure_integration() {
 }
 
 gitlab_integration() {
-  if [[ " ${scm_config[*]} " =~ " gitlab " ]]; then
+  if [[ " ${scm_config[*]} " =~ " gitlab " ]] || [[ " ${auth_config[*]} " =~ " gitlab " ]]; then
     echo "[INFO] Configure Gitlab integration into TSSC"
 
     GITLAB__TOKEN="${GITLAB__TOKEN:-$(cat /usr/local/rhtap-cli-install/gitlab_token)}"
