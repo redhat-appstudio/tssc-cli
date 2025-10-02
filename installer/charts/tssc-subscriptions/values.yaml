@@ -28,7 +28,7 @@ subscriptions:
     description: OpenShift Pipelines Operator
     namespace: openshift-operators
     name: openshift-pipelines-operator-rh
-    channel: pipelines-1.19
+    channel: pipelines-1.20
     source: redhat-operators
     sourceNamespace: openshift-marketplace
   openshiftTrustedArtifactSigner:
