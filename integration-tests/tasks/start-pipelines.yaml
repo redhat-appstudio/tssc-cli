@@ -106,6 +106,15 @@ spec:
           REPO_ORG="redhat-appstudio"
           BRANCH="main"
         fi
+        if [[ "$MODE" == "periodic" ]]; then
+          # use always main from redhat-appstudio for periodic jobs
+          REPO_ORG="jkopriva"
+          BRANCH="fix-periodic-branch"
+        fi
+        echo "REPO_ORG:"
+        echo "$REPO_ORG"
+        echo "BRANCH:"
+        echo "$BRANCH"
 
         PIPELINERUNS_ARRAY=()
 

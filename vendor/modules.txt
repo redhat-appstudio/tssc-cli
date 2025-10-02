@@ -224,12 +224,12 @@ github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/google/go-github/scrape v0.0.0-20250818135035-f137c94931a7
-## explicit; go 1.23.0
+# github.com/google/go-github/scrape v0.0.0-20250930143715-46f1bf23e6f9
+## explicit; go 1.24.0
 github.com/google/go-github/scrape
-# github.com/google/go-github/v74 v74.0.0
-## explicit; go 1.23.0
-github.com/google/go-github/v74/github
+# github.com/google/go-github/v75 v75.0.0
+## explicit; go 1.24.0
+github.com/google/go-github/v75/github
 # github.com/google/go-querystring v1.1.0
 ## explicit; go 1.10
 github.com/google/go-querystring/query
@@ -369,7 +369,7 @@ github.com/opencontainers/go-digest
 ## explicit; go 1.18
 github.com/opencontainers/image-spec/specs-go
 github.com/opencontainers/image-spec/specs-go/v1
-# github.com/openshift/api v0.0.0-20250926020921-1517fca97fe3
+# github.com/openshift/api v0.0.0-20251001120622-fa7b3724847a
 ## explicit; go 1.24.0
 github.com/openshift/api/config/v1
 github.com/openshift/api/config/v1alpha1
@@ -377,7 +377,7 @@ github.com/openshift/api/config/v1alpha2
 github.com/openshift/api/operator/v1
 github.com/openshift/api/operator/v1alpha1
 github.com/openshift/api/project/v1
-# github.com/openshift/client-go v0.0.0-20250915125341-81c9dc83a675
+# github.com/openshift/client-go v0.0.0-20250922201106-dd37bfd2e597
 ## explicit; go 1.24.0
 github.com/openshift/client-go/config/applyconfigurations/config/v1
 github.com/openshift/client-go/config/applyconfigurations/internal
@@ -402,7 +402,7 @@ github.com/pkg/errors
 github.com/pmezard/go-difflib/difflib
 # github.com/prometheus/procfs v0.17.0
 ## explicit; go 1.23.0
-# github.com/quay/claircore v1.5.42
+# github.com/quay/claircore v1.5.43
 ## explicit; go 1.24.0
 github.com/quay/claircore/pkg/tarfs
 # github.com/rogpeppe/go-internal v1.14.1
@@ -557,10 +557,10 @@ golang.org/x/text/unicode/norm
 # golang.org/x/time v0.13.0
 ## explicit; go 1.24.0
 golang.org/x/time/rate
-# google.golang.org/genproto/googleapis/api v0.0.0-20250922171735-9219d122eba9
+# google.golang.org/genproto/googleapis/api v0.0.0-20250929231259-57b25ae835d4
 ## explicit; go 1.24.0
 google.golang.org/genproto/googleapis/api/expr/v1alpha1
-# google.golang.org/genproto/googleapis/rpc v0.0.0-20250908214217-97024824d090
+# google.golang.org/genproto/googleapis/rpc v0.0.0-20250929231259-57b25ae835d4
 ## explicit; go 1.24.0
 google.golang.org/genproto/googleapis/rpc/status
 # google.golang.org/grpc v1.75.1
