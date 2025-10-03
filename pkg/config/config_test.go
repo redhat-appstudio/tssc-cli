@@ -66,4 +66,68 @@ func TestNewConfigFromFile(t *testing.T) {
 		// Asserting the original configuration looks like the marshaled one.
 		g.Expect(string(original)).To(o.Equal(configString))
 	})
+
+	t.Run("SetNamespace", func(t *testing.T) {
+		err := cfg.Set("tssc.namespace", "testnamespace")
+		g.Expect(err).To(o.Succeed())
+		configString := cfg.String()
+		g.Expect(string(configString)).To(o.ContainSubstring("testnamespace"))
+	})
+
+	t.Run("SetSettings", func(t *testing.T) {
+		data := map[string]interface{}{
+			"crc": true,
+			"ci": map[string]interface{}{
+				"debug": true,
+			},
+		}
+		err := cfg.Set("tssc.settings", data)
+		g.Expect(err).To(o.Succeed())
+		configString := cfg.String()
+		g.Expect(string(configString)).To(o.ContainSubstring("crc: true"))
+		g.Expect(string(configString)).To(o.ContainSubstring("debug: true"))
+	})
+
+	t.Run("SetProducts", func(t *testing.T) {
+		data := map[string]any{
+			"ACS": map[string]any{
+				"namespace": "acstest",
+			},
+			"TPA": map[string]any{
+				"enabled": false,
+			},
+			"DH": map[string]any{
+				"properties": map[string]any{
+					"catalogURL":   "https://someIP.io",
+					"authProvider": "gitlab",
+				},
+			},
+		}
+		err := cfg.Set("tssc.products", data)
+		g.Expect(err).To(o.Succeed())
+		configString := cfg.String()
+		g.Expect(string(configString)).To(o.ContainSubstring("namespace: acstest"))
+		g.Expect(string(configString)).To(o.ContainSubstring("enabled: false"))
+		g.Expect(string(configString)).To(o.ContainSubstring("catalogURL: https://someIP.io"))
+		g.Expect(string(configString)).To(o.ContainSubstring("authProvider: gitlab"))
+	})
+
+	t.Run("FlattenMap", func(t *testing.T) {
+		data := map[string]interface{}{
+			"key1": "value1",
+			"key2": map[string]interface{}{
+				"key3": "value2",
+			},
+		}
+		expectedKeyValues := map[string]interface{}{
+			"prefix.key1":      "value1",
+			"prefix.key2.key3": "value2",
+		}
+		keyPaths, err := FlattenMap(data, "prefix")
+		g.Expect(err).To(o.Succeed())
+		g.Expect(keyPaths).To(o.HaveLen(len(expectedKeyValues)))
+		for key, value := range keyPaths {
+			g.Expect(value).To(o.Equal(expectedKeyValues[key]))
+		}
+	})
 }
