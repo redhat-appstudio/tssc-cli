@@ -141,6 +141,8 @@ spec:
           value: "quay.io/konflux-test-storage/rhtap-team/rhtap-cli:$(context.pipelineRun.name)"
         - name: tssc-test-image
           value: $(params.tssc-test-image)
+        - name: testplan
+          value: $(params.testplan)
     - name: rhtap-ui-tests
       runAfter:
         - tssc-e2e-tests
