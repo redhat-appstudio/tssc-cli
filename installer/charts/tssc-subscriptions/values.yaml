@@ -6,7 +6,7 @@ subscriptions:
     apiResource: gitopsservices.pipelines.openshift.io
     namespace: openshift-operators
     name: openshift-gitops-operator
-    channel: gitops-1.17
+    channel: gitops-1.18
     source: redhat-operators
     sourceNamespace: openshift-marketplace
     config:
@@ -28,7 +28,7 @@ subscriptions:
     description: OpenShift Pipelines Operator
     namespace: openshift-operators
     name: openshift-pipelines-operator-rh
-    channel: pipelines-1.19
+    channel: pipelines-1.20
     source: redhat-operators
     sourceNamespace: openshift-marketplace
   openshiftTrustedArtifactSigner:

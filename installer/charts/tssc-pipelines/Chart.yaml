@@ -4,7 +4,7 @@ name: tssc-pipelines
 description: TSSC OpenShift Pipelines
 type: application
 version: "1.7.0"
-appVersion: "1.19"
+appVersion: "1.20"
 annotations:
   tssc.redhat-appstudio.github.com/product-name: OpenShift Pipelines
   tssc.redhat-appstudio.github.com/depends-on: tssc-openshift, tssc-subscriptions

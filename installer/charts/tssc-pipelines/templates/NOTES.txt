@@ -5,13 +5,6 @@ Tekton Pipelines as Code:
 {{- else }}
   - URL: unset
 {{- end }}
-{{- $secretObj := (lookup "v1" "Secret" "openshift-pipelines" "pipelines-as-code-secret") | default dict -}}
-{{- $secretData := (get $secretObj "data") | default dict -}}
-{{- if $secretData }}
-  - Webhook secret: {{ get $secretData "webhook.secret" | b64dec }}
-{{- else }}
-  - Webhook secret: unset
-{{- end }}
 
 Tekton Chains:
 {{- $secretObj := (lookup "v1" "Secret" "openshift-pipelines" "signing-secrets") | default dict -}}
