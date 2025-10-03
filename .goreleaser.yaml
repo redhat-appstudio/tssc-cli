@@ -17,3 +17,5 @@ builds:
     goarch:
       - arm64
       - amd64
+    ldflags:
+      - -X github.com/redhat-appstudio/tssc-cli/pkg/constants.Version={{ .Env.VERSION }}
