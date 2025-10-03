@@ -7,6 +7,7 @@ workflow:
 
 include:
   - template: Jobs/SAST.gitlab-ci.yml
+  - component: ${CI_SERVER_FQDN}/components/dependency-scanning/main@0.8.0
   - component: ${CI_SERVER_FQDN}/gitlab-org/components/danger-review/danger-review@2.0.0
     inputs:
       job_stage: lint
@@ -24,10 +25,19 @@ include:
   - local: ".gitlab/ci/community-go-runner-tags.gitlab-ci.yml"
     rules:
       - if: $CI_PROJECT_ROOT_NAMESPACE != 'gitlab-org' && $CI_PROJECT_ROOT_NAMESPACE != 'gitlab-community'
+
+  # Add Work Type Classification labels to merge requests,
+  # see https://gitlab.com/gitlab-com/gl-infra/common-ci-tasks/-/blob/main/autolabels.md
+  - project: "gitlab-com/gl-infra/common-ci-tasks"
+    ref: v2.93.0
+    file: "autolabels.yml"
+    inputs:
+      stage: lint
+
   # Analyze commits to determine whether to cut a release
   # see https://gitlab.com/gitlab-com/gl-infra/common-ci-tasks/-/blob/main/semantic-release.md
   - project: "gitlab-com/gl-infra/common-ci-tasks"
-    ref: v2.85.0 # renovate:managed
+    ref: v2.93.0
     file: "semantic-release.yml"
     inputs:
       stage: deploy
@@ -189,13 +199,3 @@ semgrep-sast:
   needs: []
   rules:
     - when: always
-
-# Patch common-ci semantic release jobs
-semantic_release_check:
-  before_script:
-    - npm install -g semantic-release @semantic-release/gitlab @semantic-release/git @semantic-release/changelog
-
-semantic_release:
-  script:
-    - npm install -g semantic-release @semantic-release/gitlab @semantic-release/git @semantic-release/changelog
-    - semantic-release
