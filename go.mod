@@ -7,7 +7,7 @@ toolchain go1.24.5
 require (
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/google/cel-go v0.26.1
-	github.com/google/go-github/scrape v0.0.0-20251003120947-233fe03e1797
+	github.com/google/go-github/scrape v0.0.0-20251006120954-3f8720bffbdb
 	github.com/google/go-github/v75 v75.0.0
 	github.com/mark3labs/mcp-go v0.41.1
 	github.com/onsi/gomega v1.38.2
