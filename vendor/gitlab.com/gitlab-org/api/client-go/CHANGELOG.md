@@ -1,3 +1,22 @@
+## 0.151.0
+
+### 🚀 Features
+
+- feat(api): add api support for delete enterprise user ([!2492](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2492)) by [ajey muthiah](https://gitlab.com/ajeymuthiah)
+
+### 🔄 Other Changes
+
+- docs(no-release): Make it easier to find the docs on issues ([!2497](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2497)) by [Heidi Berry](https://gitlab.com/heidi.berry)
+
+
+
+# [0.151.0](https://gitlab.com/gitlab-org/api/client-go/compare/v0.150.0...v0.151.0) (2025-10-04)
+
+
+### Features
+
+* **api:** add api support for delete enterprise user ([36ca8ab](https://gitlab.com/gitlab-org/api/client-go/commit/36ca8ab7672c352a073d59dacae3d763d4089abb))
+
 ## 0.150.0
 
 ### 🚀 Features
