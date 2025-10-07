@@ -205,6 +205,7 @@ type Client struct {
 	MergeTrains                      MergeTrainsServiceInterface
 	Metadata                         MetadataServiceInterface
 	Milestones                       MilestonesServiceInterface
+	ModelRegistry                    ModelRegistryServiceInterface
 	Namespaces                       NamespacesServiceInterface
 	Notes                            NotesServiceInterface
 	NotificationSettings             NotificationSettingsServiceInterface
@@ -513,6 +514,7 @@ func NewAuthSourceClient(as AuthSource, options ...ClientOptionFunc) (*Client, e
 	c.MergeTrains = &MergeTrainsService{client: c}
 	c.Metadata = &MetadataService{client: c}
 	c.Milestones = &MilestonesService{client: c}
+	c.ModelRegistry = &ModelRegistryService{client: c}
 	c.Namespaces = &NamespacesService{client: c}
 	c.Notes = &NotesService{client: c}
 	c.NotificationSettings = &NotificationSettingsService{client: c}
