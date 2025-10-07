@@ -217,6 +217,7 @@ type Client struct {
 	Pipelines                        PipelinesServiceInterface
 	PlanLimits                       PlanLimitsServiceInterface
 	ProjectAccessTokens              ProjectAccessTokensServiceInterface
+	ProjectAliases                   ProjectAliasesServiceInterface
 	ProjectBadges                    ProjectBadgesServiceInterface
 	ProjectCluster                   ProjectClustersServiceInterface
 	ProjectFeatureFlags              ProjectFeatureFlagServiceInterface
@@ -524,6 +525,7 @@ func NewAuthSourceClient(as AuthSource, options ...ClientOptionFunc) (*Client, e
 	c.Pipelines = &PipelinesService{client: c}
 	c.PlanLimits = &PlanLimitsService{client: c}
 	c.ProjectAccessTokens = &ProjectAccessTokensService{client: c}
+	c.ProjectAliases = &ProjectAliasesService{client: c}
 	c.ProjectBadges = &ProjectBadgesService{client: c}
 	c.ProjectCluster = &ProjectClustersService{client: c}
 	c.ProjectFeatureFlags = &ProjectFeatureFlagService{client: c}

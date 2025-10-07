@@ -1,3 +1,65 @@
+## 0.151.0
+
+### 🚀 Features
+
+- feat(api): add api support for delete enterprise user ([!2492](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2492)) by [ajey muthiah](https://gitlab.com/ajeymuthiah)
+
+### 🔄 Other Changes
+
+- docs(no-release): Make it easier to find the docs on issues ([!2497](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2497)) by [Heidi Berry](https://gitlab.com/heidi.berry)
+
+
+
+# [0.151.0](https://gitlab.com/gitlab-org/api/client-go/compare/v0.150.0...v0.151.0) (2025-10-04)
+
+
+### Features
+
+* **api:** add api support for delete enterprise user ([36ca8ab](https://gitlab.com/gitlab-org/api/client-go/commit/36ca8ab7672c352a073d59dacae3d763d4089abb))
+
+## 0.150.0
+
+### 🚀 Features
+
+- feat: add Project Aliases API support ([!2493](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2493)) by [Yashesvinee V](https://gitlab.com/yashes7516)
+
+### 🔄 Other Changes
+
+- chore(deps): update module buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go to v1.36.10-20250912141014-52f32327d4b0.1 ([!2495](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2495)) by [GitLab Dependency Bot](https://gitlab.com/gitlab-dependency-update-bot)
+- chore(deps): update module github.com/danieljoos/wincred to v1.2.3 ([!2494](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2494)) by [GitLab Dependency Bot](https://gitlab.com/gitlab-dependency-update-bot)
+
+
+
+# [0.150.0](https://gitlab.com/gitlab-org/api/client-go/compare/v0.149.0...v0.150.0) (2025-10-03)
+
+
+### Features
+
+* add Project Aliases API support ([4ece88e](https://gitlab.com/gitlab-org/api/client-go/commit/4ece88e6a8cfa0f53e68184b2905d4c2fb6e857a))
+
+## 0.149.0
+
+### 🚀 Features
+
+- feat(no-release): Add dependency scanning ([!2480](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2480)) by [Patrick Rice](https://gitlab.com/PatrickRice)
+
+### 🔄 Other Changes
+
+- ci(semantic-release): migrate to `@gitlab/semantic-release-merge-request-analyzer` ([!2490](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2490)) by [Florian Forster](https://gitlab.com/fforster)
+- ci: add the `autolabels` job ([!2489](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2489)) by [Florian Forster](https://gitlab.com/fforster)
+- chore(deps): update module google.golang.org/protobuf to v1.36.10 ([!2488](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2488)) by [GitLab Dependency Bot](https://gitlab.com/gitlab-dependency-update-bot)
+- refactor(no-release): added tests for delete project hook method ([!2482](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2482)) by [Jose Gabriel Companioni Benitez](https://gitlab.com/elC0mpa)
+- docs(no-release): Add guide for adding new APIs and issue templates ([!2478](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2478)) by [Heidi Berry](https://gitlab.com/heidi.berry)
+
+
+
+# [0.149.0](https://gitlab.com/gitlab-org/api/client-go/compare/v0.148.1...v0.149.0) (2025-10-02)
+
+
+### Features
+
+* **no-release:** Add dependency scanning ([8b0ee10](https://gitlab.com/gitlab-org/api/client-go/commit/8b0ee10acb8adceb5d34be2165b7d587b1e42e49))
+
 ## [0.148.1](https://gitlab.com/gitlab-org/api/client-go/compare/v0.148.0...v0.148.1) (2025-09-26)
 
 

@@ -18,6 +18,7 @@
         - name: scripts
           mountPath: /scripts
       securityContext:
+        runAsNonRoot: false
         allowPrivilegeEscalation: false
 {{- range $sub := include "subscriptions.enabled" . | fromYaml }}
     #
