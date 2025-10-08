@@ -71,7 +71,7 @@ spec:
               #!/usr/bin/bash
               oc login $(cat /usr/local/hive-creds/kube_api_url) -u cluster-admin -p $(cat /usr/local/hive-creds/password)
               oc whoami
-              oc get clusterpool -n hive
+              oc get rhopp-test-clusterpool -n hive
               oc create -f - <<EOF
               apiVersion: hive.openshift.io/v1
               kind: ClusterClaim
@@ -79,7 +79,7 @@ spec:
                 name: $(context.pipelineRun.name)
                 namespace: hive
               spec:
-                clusterPoolName: clusterpool
+                clusterPoolName: rhopp-test-clusterpool
               EOF
               ## wait for cluster for up to 60 minutes
               if ! kubectl wait --for=condition=ClusterRunning clusterclaims.hive.openshift.io/$(context.pipelineRun.name) -n hive --timeout 60m; then
