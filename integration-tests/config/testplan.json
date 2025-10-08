@@ -25,8 +25,5 @@
         "acs": "local"
       }
     ],
-    "tests": [
-      "test1",
-      "test2"
-    ]
+    "tests": ["full_workflow.test.ts"]
   }

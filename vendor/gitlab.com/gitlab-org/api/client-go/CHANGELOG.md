@@ -1,3 +1,27 @@
+## 0.152.0
+
+### 🚀 Features
+
+- feat(api): add api support for listing users who starred a project ([!2486](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2486)) by [ajey muthiah](https://gitlab.com/ajeymuthiah)
+
+### 🔄 Other Changes
+
+- chore(no-release): Update Duo Review Instructions ([!2502](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2502)) by [Patrick Rice](https://gitlab.com/PatrickRice)
+- feat(model_registry_api): Added api integration ([!2501](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2501)) by [Jose Gabriel Companioni Benitez](https://gitlab.com/elC0mpa)
+- feat(no-release): Add AGENTS.md file ([!2479](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2479)) by [Patrick Rice](https://gitlab.com/PatrickRice)
+- chore(no-release): Disable dependency scanning on personal forks ([!2500](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2500)) by [Patrick Rice](https://gitlab.com/PatrickRice)
+
+
+
+# [0.152.0](https://gitlab.com/gitlab-org/api/client-go/compare/v0.151.0...v0.152.0) (2025-10-06)
+
+
+### Features
+
+* **api:** add api support for listing users who starred a project ([0cdb4ce](https://gitlab.com/gitlab-org/api/client-go/commit/0cdb4ce5399b43e47bf120a90b16d00c022e194c))
+* **model_registry_api:** Added api integration ([065dd63](https://gitlab.com/gitlab-org/api/client-go/commit/065dd639bc8bd0f44cab4d92dbe3ea7f134b913f))
+* **no-release:** Add AGENTS.md file ([b9febab](https://gitlab.com/gitlab-org/api/client-go/commit/b9febab3181c3f87edd1fd99b5e596f76bc8b7cc))
+
 ## 0.151.0
 
 ### 🚀 Features

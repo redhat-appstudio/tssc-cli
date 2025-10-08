@@ -199,3 +199,12 @@ semgrep-sast:
   needs: []
   rules:
     - when: always
+
+# Update rules on dependency scanning so that it only runs when on the 
+# canonical project or the community fork. This ensures that when people
+# use personal forks, it doesn't fail stating the forks are unlicensed.
+dependency-scanning:
+  rules:
+    - if: $CI_PROJECT_ID == "65271576" # Canonical repository
+    - if: $CI_PROJECT_ID == "65275361" # Community Fork
+    - when: never
