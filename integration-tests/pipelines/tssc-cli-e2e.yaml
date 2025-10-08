@@ -117,7 +117,7 @@ spec:
                   echo "There are pending CSRs. That probably means cluster was hibernated for more than 24 hours. Need to approve them (until OCPBUGS-55339 is resolved)"
                   if oc get csr -oname | xargs oc adm certificate approve; then
                     echo "Successfully submitted approval for CSRs on attempt $i."
-                    sleep 2 # Small delay for changes to propagate
+                    sleep 60 # Small delay for changes to propagate
                     if ! oc get csr 2>/dev/null | grep -i Pending; then
                       echo "Confirmed no pending CSRs after approval."
                       approved_csrs=true
