@@ -81,9 +81,9 @@ spec:
               spec:
                 clusterPoolName: clusterpool
               EOF
-              ## wait for cluster for up to 30 minutes
-              if ! kubectl wait --for=condition=ClusterRunning clusterclaims.hive.openshift.io/$(context.pipelineRun.name) -n hive --timeout 30m; then
-                echo "Cluster failed to start in 30 minutes. Deleting clusterClaim"
+              ## wait for cluster for up to 60 minutes
+              if ! kubectl wait --for=condition=ClusterRunning clusterclaims.hive.openshift.io/$(context.pipelineRun.name) -n hive --timeout 60m; then
+                echo "Cluster failed to start in 60 minutes. Deleting clusterClaim"
                 oc delete clusterclaims.hive.openshift.io/$(context.pipelineRun.name) -n hive
                 exit 1
               fi
