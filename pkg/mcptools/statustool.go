@@ -77,7 +77,7 @@ first step to deploy TSSC components.
 Inspecting the configuration in the cluster returned the following error:
 
 > %s`,
-			ConfigCreateTool, err.Error(),
+			ConfigInitTool, err.Error(),
 		), nil
 	}
 
