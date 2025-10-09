@@ -1,3 +1,41 @@
+## 0.154.0
+
+### 🚀 Features
+
+- feat(protected_packages): Add api integration ([!2520](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2520)) by [Jose Gabriel Companioni Benitez](https://gitlab.com/elC0mpa)
+
+
+
+# [0.154.0](https://gitlab.com/gitlab-org/api/client-go/compare/v0.153.0...v0.154.0) (2025-10-08)
+
+
+### Features
+
+* **protected_packages:** Add api integration ([2de15c7](https://gitlab.com/gitlab-org/api/client-go/commit/2de15c7875e232b0b0b1e5e5bb8e184cd11d0774))
+
+## 0.153.0
+
+### 🚀 Features
+
+- feat(project_Statistics): Added api integration ([!2512](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2512)) by [Jose Gabriel Companioni Benitez](https://gitlab.com/elC0mpa)
+
+### 🔄 Other Changes
+
+- refactor: moved comments to interface ([!2509](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2509)) by [ajey muthiah](https://gitlab.com/ajeymuthiah)
+- chore(no-release): Helper Functions for Code Refactoring ([!2503](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2503)) by [Yashesvinee V](https://gitlab.com/yashes7516)
+- Add t.Parallel() to all tests and enable linters ([!2513](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2513)) by [Timo Furrer](https://gitlab.com/timofurrer)
+- ci: Remove the `commitlint` job. ([!2511](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2511)) by [Florian Forster](https://gitlab.com/fforster)
+- refactor: moved comments to interface ([!2507](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2507)) by [ajey muthiah](https://gitlab.com/ajeymuthiah)
+
+
+
+# [0.153.0](https://gitlab.com/gitlab-org/api/client-go/compare/v0.152.0...v0.153.0) (2025-10-08)
+
+
+### Features
+
+* **project_Statistics:** Added api integration ([75b5a03](https://gitlab.com/gitlab-org/api/client-go/commit/75b5a03010a39d5353c975a558fda0b6f00cb697))
+
 ## 0.152.0
 
 ### 🚀 Features

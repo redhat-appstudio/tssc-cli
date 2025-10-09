@@ -31,6 +31,8 @@ linters:
     - unconvert
     - usestdlibvars
     - whitespace
+    - tparallel
+    - paralleltest
   disable:
     - errcheck
   settings:
