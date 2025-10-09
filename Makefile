@@ -52,7 +52,7 @@ INSTALLER_TARBALL_DATA ?= $(shell find -L $(INSTALLER_DIR) -type f \
 
 # Version will be set at build time via git describe
 VERSION ?= $(shell \
-	if [ -n "$(GITHUB_REF_NAME)" ]; then echo "$${GITHUB_REF_NAME}"; \
+	if [ -n "$(GITHUB_REF_NAME)" ]; then echo "${GITHUB_REF_NAME}"; \
 	else git describe --tags --always || echo "v0.0.0-SNAPSHOT"; \
 	fi)
 
