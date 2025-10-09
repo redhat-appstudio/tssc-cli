@@ -554,7 +554,7 @@ golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
-# golang.org/x/time v0.13.0
+# golang.org/x/time v0.14.0
 ## explicit; go 1.24.0
 golang.org/x/time/rate
 # google.golang.org/genproto/googleapis/api v0.0.0-20251007200510-49b9836ed3ff
