@@ -30,8 +30,16 @@ type ConfigTools struct {
 const (
 	// ConfigGetTool MCP config get tool name.
 	ConfigGetTool = constants.AppName + "_config_get"
-	// ConfigCreateTool MCP config create tool name.
-	ConfigCreateTool = constants.AppName + "_config_create"
+	// ConfigInitTool initializes the cluster configuration.
+	ConfigInitTool = constants.AppName + "_config_init"
+	// ConfigSetSettings manipulates global settings.
+	ConfigSetSettings = constants.AppName + "_set_settings"
+	// ConfigSetProductEnabled manipulates the status of a product.
+	ConfigSetProductEnabled = constants.AppName + "_set_product_enabled"
+	// ConfigSetProductNamespace manipulates the namespace of a product.
+	ConfigSetProductNamespace = constants.AppName + "_set_product_namespace"
+	// ConfigSetProductProperties manipulates the properties of a product.
+	ConfigSetProductProperties = constants.AppName + "_set_product_properties"
 
 	// NamespaceArg namespace argument.
 	NamespaceArg = "namespace"
@@ -75,11 +83,11 @@ func (c *ConfigTools) getHandler(
 		return nil, err
 	}
 
+	// TODO: include the name of the other config functions as a reference here.
 	return mcp.NewToolResultText(
 		fmt.Sprintf(`
-There's no TSSC configuration in the cluster yet. Carefully consider the default
-YAML configuration below as the cluster administrator you need to decide which
-products ('.tssc.products[].enabled' attributes) are relevant for the cluster:
+There's no TSSC configuration in the cluster yet. As the platform engineer,
+carefully consider the default YAML configuration below.
 
 ---
 %s`,
@@ -88,32 +96,25 @@ products ('.tssc.products[].enabled' attributes) are relevant for the cluster:
 	), nil
 }
 
-// createHandler handles requests to create a new TSSC configuration, It starts
-// from the default config modifying it based on user input.
-func (c *ConfigTools) createHandler(
+// initHandler initializes the cluster configuration using defaults.
+func (c *ConfigTools) initHandler(
 	ctx context.Context,
 	ctr mcp.CallToolRequest,
 ) (*mcp.CallToolResult, error) {
-	// Duplicating the default config for the user input changes.
-	cfg := *c.defaultCfg
+	// Deep-copy the default config to avoid mutating c.defaultCfg.
+	payload, err := c.defaultCfg.MarshalYAML()
+	if err != nil {
+		return nil, err
+	}
+	cfgPtr, err := config.NewConfigFromBytes(payload)
+	if err != nil {
+		return nil, err
+	}
+	cfg := cfgPtr
 
 	// Setting the namespace from user input, if provided.
 	if ns, ok := ctr.GetArguments()[NamespaceArg].(string); ok {
-		cfg.Installer.Namespace = ns
-		// Set namespace to value of ns
 		if err := cfg.Set("tssc.namespace", ns); err != nil {
-			return nil, err
-		}
-	}
-
-	if settings, ok := ctr.GetArguments()[SettingsArg].(map[string]interface{}); ok {
-		if err := cfg.Set("tssc.settings", settings); err != nil {
-			return nil, err
-		}
-	}
-
-	if products, ok := ctr.GetArguments()[ProductsArg].(map[string]interface{}); ok {
-		if err := cfg.Set("tssc.products", products); err != nil {
 			return nil, err
 		}
 	}
@@ -135,24 +136,14 @@ func (c *ConfigTools) createHandler(
 	}
 
 	// Storing the configuration in the cluster.
-	if err := c.cm.Create(ctx, &cfg); err != nil {
+	if err := c.cm.Create(ctx, cfg); err != nil {
 		return nil, err
 	}
 
-	payload, err := cfg.MarshalYAML()
-	if err != nil {
-		return nil, err
-	}
-	return mcp.NewToolResultText(
-		fmt.Sprintf(`
-TSSC has been successfully configured in namespace %s with settings:
-
----
-%s`,
-			cfg.Installer.Namespace,
-			payload,
-		),
-	), nil
+	return mcp.NewToolResultText(fmt.Sprintf(
+		`TSSC default configuration is successfully applied in %q namespace`,
+		cfg.Installer.Namespace,
+	)), nil
 }
 
 // Init registers the ConfigTools on the provided MCP server instance.
@@ -169,10 +160,10 @@ configuration for the cluster.`,
 		Handler: c.getHandler,
 	}, {
 		Tool: mcp.NewTool(
-			ConfigCreateTool,
+			ConfigInitTool,
 			mcp.WithDescription(`
-Create a new TSSC configuration in the cluster, in case none exists yet. Use the
-defaults as the reference to create a new TSSC cluster configuration.`,
+Initializes the TSSC default configuration in the informed namespace, in case none
+exists yet.`,
 			),
 			mcp.WithString(
 				NamespaceArg,
@@ -182,22 +173,8 @@ and other fundamental services will be deployed.`,
 				),
 				mcp.DefaultString(c.defaultCfg.Installer.Namespace),
 			),
-			mcp.WithObject(
-				SettingsArg,
-				mcp.Description(`
-The global settings object for TSSC ('.tssc.settings{}'). When empty the default
-settings will be used.
-				`),
-			),
-			mcp.WithObject(
-				ProductsArg,
-				mcp.Description(`
-The settings object for TSSC ('.tssc.products{}'). When empty the default config
-will be used.
-				`),
-			),
 		),
-		Handler: c.createHandler,
+		Handler: c.initHandler,
 	}}...)
 }
 

@@ -89,22 +89,22 @@ func TestNewConfigFromFile(t *testing.T) {
 	})
 
 	t.Run("SetProducts", func(t *testing.T) {
-		data := map[string]any{
-			"ACS": map[string]any{
-				"namespace": "acstest",
-			},
-			"TPA": map[string]any{
-				"enabled": false,
-			},
-			"DH": map[string]any{
-				"properties": map[string]any{
-					"catalogURL":   "https://someIP.io",
-					"authProvider": "gitlab",
-				},
-			},
-		}
-		err := cfg.Set("tssc.products", data)
+		// ACS is product 0
+		err := cfg.Set("tssc.products.0.namespace", "acstest")
 		g.Expect(err).To(o.Succeed())
+
+		// TPA is product 4
+		err = cfg.Set("tssc.products.4.enabled", false)
+		g.Expect(err).To(o.Succeed())
+
+		// DH is product 5
+		dhData := map[string]any{
+			"catalogURL":   "https://someIP.io",
+			"authProvider": "gitlab",
+		}
+		err = cfg.Set("tssc.products.5.properties", dhData)
+		g.Expect(err).To(o.Succeed())
+
 		configString := cfg.String()
 		g.Expect(string(configString)).To(o.ContainSubstring("namespace: acstest"))
 		g.Expect(string(configString)).To(o.ContainSubstring("enabled: false"))
@@ -129,5 +129,35 @@ func TestNewConfigFromFile(t *testing.T) {
 		for key, value := range keyPaths {
 			g.Expect(value).To(o.Equal(expectedKeyValues[key]))
 		}
+	})
+
+	t.Run("SetProduct", func(t *testing.T) {
+		// Get an existing product
+		product, err := cfg.GetProduct("Developer Hub")
+		g.Expect(err).To(o.Succeed())
+		g.Expect(product).NotTo(o.BeNil())
+
+		// Modify it
+		product.Enabled = false
+		newNamespace := "new-dh-namespace"
+		product.Namespace = &newNamespace
+		product.Properties["catalogURL"] = "http://new.url/catalog.yaml"
+
+		// Call SetProduct
+		err = cfg.SetProduct("Developer Hub", *product)
+		g.Expect(err).To(o.Succeed())
+
+		// Assert changes
+		configString := cfg.String()
+		g.Expect(configString).To(o.ContainSubstring("enabled: false"))
+		g.Expect(configString).To(o.ContainSubstring("namespace: new-dh-namespace"))
+		g.Expect(configString).To(o.ContainSubstring(
+			"catalogURL: http://new.url/catalog.yaml"))
+
+		// Test non-existent product
+		err = cfg.SetProduct("NonExistentProduct", Product{})
+		g.Expect(err).NotTo(o.Succeed())
+		g.Expect(err.Error()).To(o.ContainSubstring(
+			"product \"NonExistentProduct\" not found"))
 	})
 }
