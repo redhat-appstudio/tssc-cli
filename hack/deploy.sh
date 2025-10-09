@@ -42,6 +42,7 @@ parse_args() {
         cd "$(dirname "$SCRIPT_DIR")" >/dev/null
         pwd
     )"
+    CI_VAR_DIR="$PROJECT_DIR/scripts"
     ENVFILE="$SCRIPT_DIR/private.env"
     KUBECONFIG="${KUBECONFIG:-$HOME/.kube/config}"
     CLI_BIN="run_bin"
@@ -266,10 +267,10 @@ deploy() {
 
 configure_ci() {
     if [[ -n "${GITHUB:-}" ]]; then
-        "$SCRIPT_DIR/ci-set-org-vars.sh" --backend github
+        "$CI_VAR_DIR/ci-set-org-vars.sh" --backend github
     fi
     if [[ -n "${GITLAB:-}" ]]; then
-        "$SCRIPT_DIR/ci-set-org-vars.sh" --backend gitlab
+        "$CI_VAR_DIR/ci-set-org-vars.sh" --backend gitlab
     fi
 }
 
