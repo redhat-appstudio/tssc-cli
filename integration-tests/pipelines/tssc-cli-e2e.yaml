@@ -256,9 +256,9 @@ spec:
         resolver: git
         params:
           - name: url
-            value: https://github.com/redhat-appstudio/tssc-test.git
+            value: https://github.com/rhopp/tssc-test.git
           - name: revision
-            value: main
+            value: disable_tls
           - name: pathInRepo
             value: integration-tests/tasks/tssc-e2e.yaml
       params:
