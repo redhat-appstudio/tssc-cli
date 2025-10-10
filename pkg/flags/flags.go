@@ -67,7 +67,6 @@ func (f *Flags) LoggerWith(l *slog.Logger) *slog.Logger {
 // ShowVersion shows the application version and exits
 func (f *Flags) ShowVersion() {
 	fmt.Printf("%s %s\n", constants.AppName, constants.Version)
-	os.Exit(0)
 }
 
 // NewFlags instantiates the global flags with default values.
