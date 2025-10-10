@@ -24,6 +24,15 @@ type RootCmd struct {
 // Cmd exposes the root command, while instantiating the subcommand and their
 // requirements.
 func (r *RootCmd) Cmd() *cobra.Command {
+	// Handle version flag
+	r.cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		if r.flags.Version {
+			r.flags.ShowVersion()
+			return nil
+		}
+		return cmd.Help()
+	}
+
 	logger := r.flags.GetLogger(os.Stdout)
 
 	r.cmd.AddCommand(subcmd.NewIntegration(logger, r.kube))
