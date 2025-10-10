@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 
@@ -153,6 +154,178 @@ func (c *Config) String() string {
 		panic(err)
 	}
 	return string(data)
+}
+
+// UpdateMappingValue updates configuration with new value
+func (c *Config) UpdateMappingValue(node *yaml.Node, key string, newValue any) error {
+	switch node.Kind {
+	case yaml.DocumentNode:
+		if len(node.Content) > 0 {
+			return c.UpdateMappingValue(node.Content[0], key, newValue)
+		}
+		// Create root mapping
+		mappingNode := &yaml.Node{Kind: yaml.MappingNode, Content: []*yaml.Node{}}
+		node.Content = []*yaml.Node{mappingNode}
+		return c.UpdateMappingValue(mappingNode, key, newValue)
+
+	case yaml.MappingNode:
+		// Find existing key
+		for i := 0; i < len(node.Content); i += 2 {
+			if node.Content[i].Value == key {
+				// Rebuild value node to preserve types.
+				var doc yaml.Node
+				bs, err := yaml.Marshal(newValue)
+				if err != nil {
+					return err
+				}
+				if err := yaml.Unmarshal(bs, &doc); err != nil {
+					return err
+				}
+				if len(doc.Content) == 0 {
+					return fmt.Errorf("invalid new value for key %q", key)
+				}
+				node.Content[i+1] = doc.Content[0]
+				return nil
+			}
+		}
+		return nil
+	default:
+		return fmt.Errorf("cannot set value on node kind: %v", node.Kind)
+	}
+}
+
+// UpdateNestedValue loops in node contents to get the node that needs update
+func (c *Config) UpdateNestedValue(node *yaml.Node, path []string, newValue any) error {
+	if len(path) == 0 {
+		return fmt.Errorf("config path is missing")
+	}
+	if len(path) == 1 {
+		return c.UpdateMappingValue(node, path[0], newValue)
+	}
+	key := path[0]
+	remainingKeys := path[1:]
+
+	switch node.Kind {
+	case yaml.DocumentNode:
+		if len(node.Content) > 0 {
+			return c.UpdateNestedValue(node.Content[0], path, newValue)
+		}
+		return fmt.Errorf("invalid config content")
+
+	case yaml.MappingNode:
+		for i := 0; i < len(node.Content); i += 2 {
+			if strings.EqualFold(node.Content[i].Value, key) {
+				return c.UpdateNestedValue(node.Content[i+1], remainingKeys, newValue)
+			}
+		}
+		return fmt.Errorf("key not found: %s", key)
+
+	default:
+		return fmt.Errorf("cannot navigate through node kind: %v", node.Kind)
+	}
+}
+
+// UpdateNestedValues gets the config content and call UpdateNestedValue to update
+func (c *Config) UpdateNestedValues(path string, newValue any) error {
+	keys := strings.Split(path, ".")
+	return c.UpdateNestedValue(&c.root, keys, newValue)
+}
+
+func (c *Config) FindNode(node *yaml.Node, key string) (*yaml.Node, error) {
+	if key != "products" {
+		return nil, fmt.Errorf("key must be 'products'")
+	}
+	current := node
+
+	switch current.Kind {
+	case yaml.DocumentNode:
+		if len(current.Content) == 0 {
+			return nil, fmt.Errorf("empty document")
+		}
+		current = current.Content[0]
+		return c.FindNode(current, key)
+	case yaml.MappingNode:
+		for i := 0; i < len(current.Content); i += 2 {
+			keyNode := current.Content[i]
+			valueNode := current.Content[i+1]
+			if keyNode.Value == key {
+				return valueNode, nil
+			}
+		}
+		for i := 1; i < len(current.Content); i += 2 {
+			result, err := c.FindNode(current.Content[i], key)
+			if err == nil && result != nil {
+				return result, nil
+			}
+		}
+		return nil, fmt.Errorf("key %q not found", key)
+	default:
+		return nil, fmt.Errorf("cannot find config: %v", key)
+	}
+}
+
+// Update product by name (example of custom update logic)
+func (c *Config) UpdateProductByName(productName any, keyPath string, value interface{}) error {
+	if strings.TrimSpace(keyPath) == "" {
+		return fmt.Errorf("config path is missing")
+	}
+	keys := strings.Split(keyPath, ".")
+	pn, ok := productName.(string)
+	if !ok {
+		return fmt.Errorf("product name must be a string, got %T", productName)
+	}
+	productsNode, err := c.FindNode(&c.root, "products")
+	if err != nil {
+		return err
+	}
+	if productsNode.Kind != yaml.SequenceNode {
+		return fmt.Errorf("config of products is not an array")
+	}
+	for _, productNode := range productsNode.Content {
+		if productNode.Kind == yaml.MappingNode {
+			for i := 0; i < len(productNode.Content); i += 2 {
+				if productNode.Content[i].Value == "name" && strings.EqualFold(productNode.Content[i+1].Value, pn) {
+					return c.UpdateNestedValue(productNode, keys, value)
+				}
+			}
+		}
+	}
+	return fmt.Errorf("product not found: %q", pn)
+}
+
+// Set returns new configuration with updates
+func (c *Config) Set(key string, configData any) error {
+	var keyPaths map[string]any
+	var err error
+	if strings.Contains(key, "products") {
+		prodKeyPaths, err := ExtractProductSettings(configData)
+		if err != nil {
+			return err
+		}
+		for _, prodKeyPath := range prodKeyPaths {
+			if name, exists := prodKeyPath["name"]; exists {
+				delete(prodKeyPath, "name")
+				for keyPath, value := range prodKeyPath {
+					if err = c.UpdateProductByName(name, keyPath, value); err != nil {
+						return err
+					}
+				}
+			} else {
+				return fmt.Errorf("product config without name is not supported")
+			}
+		}
+	} else {
+		keyPaths, err = FlattenMap(configData, key)
+		if err != nil {
+			return err
+		}
+		for keyPath, value := range keyPaths {
+			if err = c.UpdateNestedValues(keyPath, value); err != nil {
+				return err
+			}
+		}
+	}
+	return c.DecodeNode()
 }
 
 // NewConfigFromFile returns a new Config instance based on the informed file.
