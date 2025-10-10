@@ -1,3 +1,41 @@
+## 0.156.0
+
+### 🚀 Features
+
+- feat(api): add support for test report summary api ([!2487](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2487)) by [Daniela Filipe Bento](https://gitlab.com/danifbento)
+
+
+
+# [0.156.0](https://gitlab.com/gitlab-org/api/client-go/compare/v0.155.0...v0.156.0) (2025-10-10)
+
+
+### Features
+
+* **api:** add support for test report summary api ([8a0c6dd](https://gitlab.com/gitlab-org/api/client-go/commit/8a0c6dde10a4c9c034274a439eaa060dc6e40995))
+
+## 0.155.0
+
+### 🚀 Features
+
+- feat(group_relations_export): Added Group Relations API integration ([!2508](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2508)) by [Jose Gabriel Companioni Benitez](https://gitlab.com/elC0mpa)
+
+### 🔄 Other Changes
+
+- chore: use local protoc plugin with buf ([!2536](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2536)) by [Timo Furrer](https://gitlab.com/timofurrer)
+- chore(no-release): Change generated file comment ([!2532](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2532)) by [Oleksandr Redko](https://gitlab.com/alexandear)
+- docs(no-release): Fix the comment for EnvVarGitLabContext ([!2533](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2533)) by [Oleksandr Redko](https://gitlab.com/alexandear)
+- feat(client_options): Added unit tests ([!2510](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2510)) by [Jose Gabriel Companioni Benitez](https://gitlab.com/elC0mpa)
+
+
+
+# [0.155.0](https://gitlab.com/gitlab-org/api/client-go/compare/v0.154.0...v0.155.0) (2025-10-09)
+
+
+### Features
+
+* **client_options:** Added unit tests ([c148031](https://gitlab.com/gitlab-org/api/client-go/commit/c14803189aa47a0cc9e64e9b455b93e6d4c4e4b9))
+* **group_relations_export:** Added Group Relations API integration ([956e039](https://gitlab.com/gitlab-org/api/client-go/commit/956e03950d6bc03c56fa1ea4c5d6e06bfd0b264f))
+
 ## 0.154.0
 
 ### 🚀 Features
