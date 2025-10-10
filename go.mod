@@ -17,7 +17,7 @@ require (
 	github.com/quay/claircore v1.5.44
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/pflag v1.0.10
-	gitlab.com/gitlab-org/api/client-go v0.154.0
+	gitlab.com/gitlab-org/api/client-go v0.156.0
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.18.6
 	k8s.io/api v0.33.4
