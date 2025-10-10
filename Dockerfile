@@ -61,9 +61,17 @@ COPY --from=builder /workdir/tssc/scripts/ ./scripts/
 
 RUN groupadd --gid 999 -r tssc && \
     useradd -r -d /tssc -g tssc -s /sbin/nologin --uid 999 tssc && \
-    chown -R tssc:tssc .
+    chown -R tssc:tssc . \
+    && curl -s https://packages.microsoft.com/config/rhel/9/prod.repo -o /etc/yum.repos.d/azure-cli.repo \
+    && curl -s https://cli.github.com/packages/rpm/gh-cli.repo -o /etc/yum.repos.d/gh-cli.repo \
+    && microdnf install -y azure-cli \
+    && microdnf install -y gh \
+    && microdnf clean all
 
 USER tssc
+
+# Install the azure-devops plugin
+RUN az extension add --name azure-devops
 
 RUN echo "# jq" && jq --version && \
     echo "# kubectl" && kubectl version --client && \
