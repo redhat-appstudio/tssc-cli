@@ -45,9 +45,9 @@ In this phase, you will help configure the necessary integrations by scaffolding
 
 If integrations are missing, inspect the result to identify which integration names are missing.
 
-1. Use `tssc_status` to view the overall installer status.
-2. Use `tssc_integration_list` to see all available integration types.
-3. Use `tssc_integration_scaffold` to generate the command for configuring a specific integration. You will need to run this command manually in your terminal for security reasons.
+1. Use `tssc_status` to view the overall installer status. If integrations are missing, the result will contain CEL (Common Expression Language) expressions. Inspect the expression result to determine which integrations are missing. For example, an expression like `(github || gitlab) && acs && trustification` means the integrations acs and `trustification` are mandatory, while the user can choose between `github` or `gitlab`. Use `tssc_integration_list` to inspect the valid integration names and LLM should list the mandantory integrations, as well as the ones users should choose from.
+2. Use `tssc_integration_list` to see all available integration types. If itegrations are missing, informations about what integrations are missing should be provided, e.g. what integrations are mandatory, at lease one of what integrations should be chosen. LLM client should ask users to input the integration name that they want to configure, and use `tssc_integration_scaffold` to generate the example command.
+3. Use `tssc_integration_scaffold` to generate the command for configuring a specific integration. Before call this tool,  and the integration name will be the input parameter for tool `tssc_integration_scaffold`. And LLM client is not allowed to run the command, so you will need to copy-and-paste this command and run it manually in your terminal for security reasons.
 4. Use `tssc_integration_status` to check if an integration has been configured correctly.
 
 Completing this step is a prerequisite for deployment.
@@ -57,7 +57,7 @@ Completing this step is a prerequisite for deployment.
 Once configuration and integrations are complete, you can deploy RHADS.
 
 1. Use `tssc_status` to view the overall installer status.
-2. Use `tssc_deploy` to start the deployment. This will create a Kubernetes Job to run the installation.
+2. Use `tssc_deploy` to start the deployment. This will create a Kubernetes Job to run the installation. Before deployment starts, integration status will be checked. If integrations are missing, the result will contain CEL (Common Expression Language) expressions. Inspect the expression result to determine which integrations are missing. For example, an expression like `(github || gitlab) && acs && trustification` means the integrations `acs` and `trustification` are mandatory, while the user can choose between `github` or `gitlab`. Use `tssc_integration_list` to inspect the valid integration names.
 3. Use `tssc_status` to monitor the progress of the deployment.
 
 I will guide you with suggestions for the next logical action in my responses. Let's get started!
