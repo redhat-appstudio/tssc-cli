@@ -17,8 +17,15 @@ type IntegrationTools struct {
 	integrationCmd *cobra.Command // integration subcommand
 }
 
-// IntegrationListTool list integrations tool.
-const IntegrationListTool = "tssc_integration_list"
+const (
+	// IntegrationListTool list integrations tool.
+	IntegrationListTool = constants.AppName + "_integration_list"
+	// IntegrationScaffoldTool generates the `tssc integration` command
+	// required to configure the integration type
+	IntegrationScaffoldTool = constants.AppName + "_integration_scaffold"
+	// MissingIntegrations
+	MissingIntegrations = "integration"
+)
 
 func (i *IntegrationTools) listHandler(
 	ctx context.Context,
@@ -72,6 +79,66 @@ The detailed description of each '%s integration' command is found below.
 	return mcp.NewToolResultText(output.String()), nil
 }
 
+func (i *IntegrationTools) scaffoldHandler(
+	ctx context.Context,
+	ctr mcp.CallToolRequest,
+) (*mcp.CallToolResult, error) {
+	var output strings.Builder
+	// Validate integrations
+	if integrations, ok := ctr.GetArguments()[MissingIntegrations].([]any); ok {
+		// Create a map of subcommand names for lookup
+		subCmdMap := make(map[string]*cobra.Command, len(i.integrationCmd.Commands()))
+		for _, subCmd := range i.integrationCmd.Commands() {
+			subCmdMap[subCmd.Name()] = subCmd
+		}
+
+		for _, integration := range integrations {
+			integrationName, ok := integration.(string)
+			if !ok {
+				continue
+			}
+
+			subCmd, exists := subCmdMap[integrationName]
+			if !exists {
+				continue
+			}
+
+			var exampleCmd strings.Builder
+			exampleCmd.WriteString(fmt.Sprintf("\n $ tssc integration %s \\\n", subCmd.Name()))
+
+			var flags []string
+			subCmd.PersistentFlags().VisitAll(func(f *pflag.Flag) {
+				if annotations, ok := f.Annotations[cobra.BashCompOneRequiredFlag]; ok &&
+					len(annotations) > 0 &&
+					annotations[0] == "true" {
+					flags = append(flags, f.Name)
+				}
+			})
+
+			for i, flagName := range flags {
+				if i == len(flags)-1 {
+					exampleCmd.WriteString(fmt.Sprintf("    --%s=\"REDACTED\"\n", flagName))
+				} else {
+					exampleCmd.WriteString(fmt.Sprintf("    --%s=\"REDACTED\" \\\n", flagName))
+				}
+			}
+
+			output.WriteString(fmt.Sprintf(`
+## Integration %s is missing, please copy and past following command in the terminal, update the data and run the command to configure the integration.
+
+### Command:
+
+%s
+`,
+				subCmd.Name(),
+				&exampleCmd,
+			))
+		}
+	}
+
+	return mcp.NewToolResultText(output.String()), nil
+}
+
 func (i *IntegrationTools) Init(s *server.MCPServer) {
 	s.AddTools([]server.ServerTool{{
 		Tool: mcp.NewTool(
@@ -82,7 +149,26 @@ required for certain features, make sure to configure the integrations
 accordingly.`),
 		),
 		Handler: i.listHandler,
-	}}...)
+	},
+		{
+			Tool: mcp.NewTool(
+				IntegrationScaffoldTool,
+				mcp.WithDescription(`
+Scaffold the configuration required for a specific TSSC integration. The
+scaffolded configuration can be used as a reference to create the integration
+using the 'tssc integration <name> ...' command.`),
+				mcp.WithArray(
+					MissingIntegrations,
+					mcp.Description(`
+The missing integrations for deployment.`,
+					),
+					mcp.Items(map[string]any{
+						"type": "string",
+					}),
+				),
+			),
+			Handler: i.scaffoldHandler,
+		}}...)
 }
 
 func NewIntegrationTools(integrationCmd *cobra.Command) *IntegrationTools {
