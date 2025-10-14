@@ -180,13 +180,41 @@ func (c *Config) SetProduct(name string, spec Product) error {
 			}
 		}
 
-		// Found it. Replace the node.
+		// Found it. Update the node fields in place using Set logic.
 		if productName == name {
-			var newNode yaml.Node
-			if err := newNode.Encode(&spec); err != nil {
-				return fmt.Errorf("failed to encode product spec: %w", err)
+			// Convert the Product struct spec into a map[stringany for
+			// flattening.
+			var specMap map[string]any
+			data, err := yaml.Marshal(spec)
+			if err != nil {
+				return fmt.Errorf("failed to marshal product spec: %w", err)
 			}
-			productsNode.Content[i] = &newNode
+			if err := yaml.Unmarshal(data, &specMap); err != nil {
+				return fmt.Errorf("failed to unmarshal product spec: %w", err)
+			}
+
+			// Construct the path prefix for this product entry:
+			// "tssc.products.[index]".
+			pathPrefix := fmt.Sprintf("tssc.products.%d", i)
+
+			keyPaths, err := FlattenMap(specMap, pathPrefix)
+			if err != nil {
+				return err
+			}
+
+			for keyPath, value := range keyPaths {
+				keys := strings.Split(keyPath, ".")
+				// Skip updating 'name' if it's present in the spec, as it's the
+				// lookup key.
+				if keys[len(keys)-1] == "name" {
+					continue
+				}
+
+				if err = UpdateNestedValue(&c.root, keys, value); err != nil {
+					return err
+				}
+			}
+
 			return c.DecodeNode()
 		}
 	}
