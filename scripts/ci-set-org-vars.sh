@@ -221,6 +221,7 @@ githubGetValues() {
     SECRET_JSON=$(oc get secrets -n "$NAMESPACE" "$SECRET" -o json)
     GIT_ORG="$(echo "$SECRET_JSON" | jq -r '.data.ownerLogin | @base64d')"
     GIT_TOKEN="$(echo "$SECRET_JSON" | jq -r '.data.token | @base64d')"
+    export GH_TOKEN=$GIT_TOKEN
 }
 
 githubSetVar() {
@@ -233,16 +234,33 @@ azureGetValues() {
     AZURE_ORG=$(echo "$SECRET_JSON" | jq -r '.data.organization | @base64d')
     AZURE_HOST=$(echo "$SECRET_JSON" | jq -r '.data.host | @base64d')
     AZURE_TOKEN=$(echo "$SECRET_JSON" | jq -r '.data.token | @base64d')
-    AZURE_ORG_URL="https://$AZURE_HOST/$AZURE_ORG/"
+    AZURE_ORG_URL="https://$AZURE_HOST/$AZURE_ORG"
     AZURE_PROJECT=$CI_PROJECT
     AZURE_VAR_GROUP=$CI_GROUP
+    AZURE_API_VERSION="7.1-preview.1"
 
-    printf %s "$AZURE_TOKEN" | az devops login --organization "$AZURE_ORG_URL"
-    VAR_GROUP_JSON=$(az pipelines variable-group list --group-name "$AZURE_VAR_GROUP" --project "$AZURE_PROJECT")
-    VAR_GROUP_ID=$(echo "$VAR_GROUP_JSON" | jq -r '.[0].id')
+    VAR_GROUP_JSON=$(curl -fsS -u ":$AZURE_TOKEN" \
+      "$AZURE_ORG_URL/$AZURE_PROJECT/_apis/distributedtask/variablegroups?groupName=$AZURE_VAR_GROUP&api-version=$AZURE_API_VERSION")
+    VAR_GROUP_ID=$(echo "$VAR_GROUP_JSON" | jq -r '.value[0].id')
 
     if [[ "$VAR_GROUP_ID" == "null" ]]; then
-        VAR_GROUP_JSON=$(az pipelines variable-group create --name "$AZURE_VAR_GROUP" --project "$AZURE_PROJECT" --variables "NAME=$AZURE_VAR_GROUP")
+        VAR_GROUP_JSON=$(curl -fsS -X POST -u ":$AZURE_TOKEN" \
+          "$AZURE_ORG_URL/$AZURE_PROJECT/_apis/distributedtask/variablegroups?api-version=$AZURE_API_VERSION" \
+          -H "Content-Type: application/json" \
+          -d @- \
+<<EOF
+        {
+          "name": "$AZURE_VAR_GROUP",
+          "variables": {
+            "NAME": {
+              "value": "$AZURE_VAR_GROUP"
+            }
+          },
+          "type": "Vsts"
+        }
+EOF
+        )
+
         VAR_GROUP_ID=$(echo "$VAR_GROUP_JSON" | jq -r '.id')
     else
         echo "Var Group $AZURE_VAR_GROUP already exists in project $AZURE_PROJECT"
@@ -252,13 +270,42 @@ azureGetValues() {
  
 }
 
+azureUpdateVars() {
+    if [[ -z "${CURRENT_VARS:-}" ]]; then
+        CURRENT_VARS="$(
+          jq -n \
+            --arg group "$AZURE_VAR_GROUP" \
+            --arg name "$NAME" \
+            --arg value "$VALUE" \
+            --arg isSecret "$IS_SECRET" \
+            '{ name: $group, variables: { ($name): { value: $value, isSecret: $isSecret } } }'
+        )"
+    else
+        CURRENT_VARS=$(echo "$CURRENT_VARS" | jq \
+        --arg name "$NAME" \
+        --arg value "$VALUE" \
+        --arg isSecret "$IS_SECRET" \
+        '.variables[$name] = { value: $value, isSecret: $isSecret }')
+    fi
+}
+
 azureSetVar() {
     IS_SECRET=false
     if is_in_list "$NAME" "${SECRET_VARS[@]}"; then
         IS_SECRET=true
+        echo "*********"
+    else
+        echo "$VALUE"
     fi
-    az pipelines variable-group variable create --id "$VAR_GROUP_ID" --secret $IS_SECRET --project "$AZURE_PROJECT" --name "$NAME" --value "$VALUE"
 
+
+    azureUpdateVars
+
+    echo "$CURRENT_VARS" | curl -fsS -X PUT "$AZURE_ORG_URL/$AZURE_PROJECT/_apis/distributedtask/variablegroups/$VAR_GROUP_ID?api-version=$AZURE_API_VERSION" \
+    -H "Content-Type: application/json" \
+    -u ":$AZURE_TOKEN" \
+    -d @- \
+    > /dev/null
 }
 
 gitlabGetValues() {

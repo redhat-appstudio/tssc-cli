@@ -14,10 +14,12 @@ COPY cmd/ ./cmd/
 COPY pkg/ ./pkg/
 COPY scripts/ ./scripts/
 COPY test/ ./test/
+COPY image/ ./image/
 COPY vendor/ ./vendor/
 
 COPY go.mod go.sum Makefile ./
 
+RUN tar -xvf ./image/gh_2.81.0_linux_amd64.tar.gz -C ./image
 RUN make test
 RUN make GOFLAGS='-buildvcs=false'
 
@@ -57,6 +59,7 @@ COPY --from=ose-tools /usr/libexec/vi /usr/libexec/
 COPY --from=builder /workdir/tssc/installer/charts ./charts
 COPY --from=builder /workdir/tssc/installer/config.yaml ./
 COPY --from=builder /workdir/tssc/bin/tssc /usr/local/bin/tssc
+COPY --from=builder /workdir/tssc/image/gh_2.81.0_linux_amd64/bin/gh /usr/local/bin/gh
 COPY --from=builder /workdir/tssc/scripts/ ./scripts/
 
 RUN groupadd --gid 999 -r tssc && \
