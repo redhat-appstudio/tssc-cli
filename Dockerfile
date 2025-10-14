@@ -12,6 +12,7 @@ COPY installer/ ./installer/
 
 COPY cmd/ ./cmd/
 COPY pkg/ ./pkg/
+COPY scripts/ ./scripts/
 COPY test/ ./test/
 COPY vendor/ ./vendor/
 
@@ -56,6 +57,7 @@ COPY --from=ose-tools /usr/libexec/vi /usr/libexec/
 COPY --from=builder /workdir/tssc/installer/charts ./charts
 COPY --from=builder /workdir/tssc/installer/config.yaml ./
 COPY --from=builder /workdir/tssc/bin/tssc /usr/local/bin/tssc
+COPY --from=builder /workdir/tssc/scripts/ ./scripts/
 
 RUN groupadd --gid 999 -r tssc && \
     useradd -r -d /tssc -g tssc -s /sbin/nologin --uid 999 tssc && \

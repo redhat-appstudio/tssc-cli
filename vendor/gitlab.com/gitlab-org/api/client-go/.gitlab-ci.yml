@@ -144,20 +144,6 @@ verify-generated-code:
         exit 1;
       }
 
-commitlint:
-  stage: lint
-  needs: []
-  rules:
-    # lint.js script makes an API call without authentication, so the project or fork must be public
-    - if: '$CI_MERGE_REQUEST_IID && $CI_PROJECT_VISIBILITY == "public"'
-      when: always
-  image: node:24-slim
-  script:
-    - apt-get update && apt-get install -y git
-    - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_COMMIT_SHA
-    - cd scripts/commitlint && npm ci
-    - ./lint.sh
-
 tests:unit:
   extends:
     - .go:base
