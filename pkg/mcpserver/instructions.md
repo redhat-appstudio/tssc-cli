@@ -28,6 +28,17 @@ This is the starting point. You must define the installation configuration.
 
 Once the configuration is successfully applied, we will proceed to the next phase.
 
+#### Configuration Tools
+
+The following tools are available to manage the installer configuration. You must **always** run `tssc_config_get` first to understand the current state before making any changes.
+
+- `tssc_config_get`: Retrieves the current TSSC configuration from the cluster. If no configuration exists, it returns the default configuration, which you can use as a template.
+- `tssc_config_init`: Initializes the cluster with the default TSSC configuration. You can provide a namespace where the installer and its components will be deployed.
+- `tssc_config_settings`: Updates a global setting by specifying a `key` and `value` under the `.tssc.settings` path.
+- `tssc_config_product_enabled`: Enables or disables a specific product (e.g., "Trusted Artifact Signer" or "TAS").
+- `tssc_config_product_namespace`: Assigns a dedicated namespace to a product.
+- `tssc_config_product_properties`: Updates a product's specific properties under its `.properties` key.
+
 ### Phase 2: Integrations (`AWAITING_INTEGRATIONS`)
 
 In this phase, you will help configure the necessary integrations by scaffolding the integration commands. All `tssc integration` subcommands handle sensitive information and must be executed in a secure environment, such as a dedicated shell session outside of the MCP/LLM context.
