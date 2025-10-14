@@ -76,6 +76,10 @@ func UpdateMappingValue(node *yaml.Node, key string, newValue any) error {
 			if node.Content[i].Value != key {
 				continue
 			}
+
+			// Preserve anchor on the old value.
+			oldValue := node.Content[i+1]
+
 			// Rebuild value node to preserve types.
 			var doc yaml.Node
 			bs, err := yaml.Marshal(newValue)
@@ -88,7 +92,12 @@ func UpdateMappingValue(node *yaml.Node, key string, newValue any) error {
 			if len(doc.Content) == 0 {
 				return fmt.Errorf("invalid new value for key %q", key)
 			}
-			node.Content[i+1] = doc.Content[0]
+
+			// Replace node and preserve anchor.
+			newValueNode := doc.Content[0]
+			newValueNode.Anchor = oldValue.Anchor
+			node.Content[i+1] = newValueNode
+
 			return nil
 		}
 		return nil
