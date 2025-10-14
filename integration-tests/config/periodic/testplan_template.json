@@ -11,8 +11,5 @@
             "acs": "ACS_PROVIDER"
         }
     ],
-    "tests": [
-        "test1",
-        "test2"
-    ]
+    "tests": ["full_workflow.test.ts"]
 }
