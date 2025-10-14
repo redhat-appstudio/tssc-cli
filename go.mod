@@ -5,6 +5,7 @@ go 1.24.0
 toolchain go1.24.5
 
 require (
+	dario.cat/mergo v1.0.2
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/google/cel-go v0.26.1
 	github.com/google/go-github/scrape v0.0.0-20251008171934-06b8b3a37d13
@@ -29,7 +30,6 @@ require (
 
 require (
 	cel.dev/expr v0.24.0 // indirect
-	dario.cat/mergo v1.0.2 // indirect
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20240806141605-e8a1dd7889d6 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
 	github.com/BurntSushi/toml v1.5.0 // indirect
@@ -170,4 +170,7 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
-replace github.com/Microsoft/hcsshim => github.com/Microsoft/hcsshim v0.13.0
+replace (
+	github.com/Microsoft/hcsshim => github.com/Microsoft/hcsshim v0.13.0
+	github.com/imdario/mergo => github.com/imdario/mergo v0.3.16
+)
