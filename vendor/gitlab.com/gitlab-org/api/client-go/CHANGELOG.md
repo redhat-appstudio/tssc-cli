@@ -1,3 +1,19 @@
+## 0.157.0
+
+### 🚀 Features
+
+- Add merge requests commit api ([!2539](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2539)) by [Ilya Savitsky](https://gitlab.com/ipsavitsky234)
+
+### 🔄 Other Changes
+
+- test: adds missing UTs for notifications ([!2528](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2528)) by [Zubeen](https://gitlab.com/syedzubeen)
+- chore: Update review instructions ([!2537](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2537)) by [Patrick Rice](https://gitlab.com/PatrickRice)
+- chore(no-release): Fix godoc comments; enable godoclint ([!2535](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2535)) by [Oleksandr Redko](https://gitlab.com/alexandear)
+
+
+
+# [0.157.0](https://gitlab.com/gitlab-org/api/client-go/compare/v0.156.0...v0.157.0) (2025-10-13)
+
 ## 0.156.0
 
 ### 🚀 Features
