@@ -161,8 +161,9 @@ additional platform deployment information.`,
 // NewDeployTools creates a new DeployTools instance.
 func NewDeployTools(
 	cm *config.ConfigMapManager,
+	topologyBuilder *resolver.TopologyBuilder,
 	job *installer.Job,
 	image string,
 ) *DeployTools {
-	return &DeployTools{cm: cm, job: job, image: image}
+	return &DeployTools{cm: cm, topologyBuilder: topologyBuilder, job: job, image: image}
 }
