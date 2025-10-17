@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 
@@ -30,9 +31,10 @@ type Spec struct {
 
 // Config root configuration structure.
 type Config struct {
-	cfs       *chartfs.ChartFS // embedded filesystem
-	Installer Spec             `yaml:"tssc"` // root configuration for the installer
-	root      yaml.Node        // yaml data representation
+	cfs  *chartfs.ChartFS // embedded filesystem
+	root yaml.Node        // yaml data representation
+
+	Installer Spec `yaml:"tssc"` // root configuration for the installer
 }
 
 var (
@@ -113,6 +115,111 @@ func (c *Config) DecodeNode() error {
 		return err
 	}
 	return nil
+}
+
+// Set returns new configuration with updates
+func (c *Config) Set(key string, configData any) error {
+	keyPaths, err := FlattenMap(configData, key)
+	if err != nil {
+		return err
+	}
+
+	for keyPath, value := range keyPaths {
+		keys := strings.Split(keyPath, ".")
+		if err = UpdateNestedValue(&c.root, keys, value); err != nil {
+			return err
+		}
+	}
+
+	return c.DecodeNode()
+}
+
+// SetProduct updates an existing product specification in the configuration. It
+// searches for a product by its name and, if found, replaces its specification
+// with the provided `spec`. The configuration is then re-decoded to reflect the
+// changes.
+func (c *Config) SetProduct(name string, spec Product) error {
+	if len(c.root.Content) == 0 {
+		return fmt.Errorf("invalid configuration: content is empty")
+	}
+	doc := c.root.Content[0]
+
+	var tsscNode *yaml.Node
+	for i := 0; i+1 < len(doc.Content); i += 2 {
+		if doc.Content[i].Value == "tssc" {
+			tsscNode = doc.Content[i+1]
+			break
+		}
+	}
+	if tsscNode == nil {
+		return fmt.Errorf("invalid configuration: missing 'tssc' key")
+	}
+
+	var productsNode *yaml.Node
+	for i := 0; i+1 < len(tsscNode.Content); i += 2 {
+		if tsscNode.Content[i].Value == "products" {
+			productsNode = tsscNode.Content[i+1]
+			break
+		}
+	}
+	if productsNode == nil {
+		return fmt.Errorf("invalid configuration: missing 'products' key")
+	}
+
+	if productsNode.Kind != yaml.SequenceNode {
+		return fmt.Errorf("'products' is not a sequence")
+	}
+
+	for i, productNode := range productsNode.Content {
+		// Each productNode is a MappingNode
+		var productName string
+		for j := 0; j+1 < len(productNode.Content); j += 2 {
+			if productNode.Content[j].Value == "name" {
+				productName = productNode.Content[j+1].Value
+				break
+			}
+		}
+
+		// Found it. Update the node fields in place using Set logic.
+		if productName == name {
+			// Convert the Product struct spec into a map[stringany for
+			// flattening.
+			var specMap map[string]any
+			data, err := yaml.Marshal(spec)
+			if err != nil {
+				return fmt.Errorf("failed to marshal product spec: %w", err)
+			}
+			if err := yaml.Unmarshal(data, &specMap); err != nil {
+				return fmt.Errorf("failed to unmarshal product spec: %w", err)
+			}
+
+			// Construct the path prefix for this product entry:
+			// "tssc.products.[index]".
+			pathPrefix := fmt.Sprintf("tssc.products.%d", i)
+
+			keyPaths, err := FlattenMap(specMap, pathPrefix)
+			if err != nil {
+				return err
+			}
+
+			for keyPath, value := range keyPaths {
+				keys := strings.Split(keyPath, ".")
+				// Skip updating 'name' if it's present in the spec, as it's the
+				// lookup key.
+				if keys[len(keys)-1] == "name" {
+					continue
+				}
+
+				if err = UpdateNestedValue(&c.root, keys, value); err != nil {
+					return err
+				}
+			}
+
+			return c.DecodeNode()
+		}
+	}
+
+	return fmt.Errorf("product %q not found", name)
 }
 
 // MarshalYAML marshals the Config into a YAML byte array.
