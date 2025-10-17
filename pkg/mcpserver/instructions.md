@@ -36,7 +36,7 @@ If integrations are missing, inspect the result to identify which integration na
 
 1. Use `tssc_status` to view the overall installer status.
 2. Use `tssc_integration_list` to see all available integration types.
-3. Use `tssc_integration_scaffold` to generate the command for configuring a specific integration. You will need to run this command manually in your terminal for security reasons.
+3. Use `tssc_integration_scaffold` to generate the command for configuring a specific integration. LLM client is not allowed to run the command, so you will need to copy-and-paste this command and run it manually in your terminal for security reasons.
 4. Use `tssc_integration_status` to check if an integration has been configured correctly.
 
 Completing this step is a prerequisite for deployment.
