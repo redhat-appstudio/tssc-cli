@@ -7,22 +7,8 @@
         "git": "github",
         "ci": "tekton",
         "registry": "quay",
-        "tpa": "local",
-        "acs": "local"
-      },
-      {
-        "git": "github",
-        "ci": "githubactions",
-        "registry": "artifactory",
-        "tpa": "local",
-        "acs": "local"
-      },
-      {
-        "git": "gitlab",
-        "ci": "gitlabci",
-        "registry": "nexus",
-        "tpa": "local",
-        "acs": "local"
+        "tpa": "remote",
+        "acs": "remote"
       }
     ],
     "tests": ["full_workflow.test.ts"]
