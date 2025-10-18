@@ -50,15 +50,10 @@ func (i *Integrations) Inspect(t *Topology) error {
 				return fmt.Errorf("%w: %q in %q dependency (%q product)",
 					ErrUnknownIntegration, provided, chartName, d.ProductName())
 			}
-			// Asserting the integration is not configured yet.
 			if configured {
-				return fmt.Errorf(
-					"%w: %q can't be overwritten by the %q (%q product)",
-					ErrConfiguredIntegration,
-					provided,
-					chartName,
-					d.ProductName(),
-				)
+				// If the integration is already configured (either by user or
+				// previous run) we skip marking it again to ensure idempotency.
+				continue
 			}
 			// Marking the integration as configured, this dependency is
 			// responsible for creating the integration secret accordingly.
