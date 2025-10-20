@@ -70,7 +70,6 @@ echo "[INFO] auth_config=(${auth_config[*]})"
 
 tpl_file="installer/charts/values.yaml.tpl"
 config_file="installer/config.yaml"
-tmp_file="installer/charts/tmp_private_key.txt"
 
 ci_enabled() {
   echo "[INFO] Turn ci to true, this is required when you perform rhtap-e2e automation test against TSSC"
@@ -96,7 +95,7 @@ update_dh_auth_config() {
 }
 
 # Workaround: This function has to be called before tssc import "installer/config.yaml" into cluster.
-# Currently, the tssc `config` subcommand lacks the ability to modify property values stored in config.yaml.
+# Currently, the `tssc integration github` subcommand lacks the ability to create a secret for an existing application.
 github_integration() {
   # Check if "github" is in scm_config array
   # Check if GitHub is as auth_config
@@ -110,17 +109,23 @@ github_integration() {
     GITOPS__GIT_TOKEN="${GITOPS__GIT_TOKEN:-$(cat /usr/local/rhtap-cli-install/github_token)}"
     GITHUB__APP__WEBHOOK__SECRET="${GITHUB__APP__WEBHOOK__SECRET:-$(cat /usr/local/rhtap-cli-install/rhdh-github-webhook-secret)}"
 
-    sed -i "/integrations:/ a \  github:\n\
-    id: \"${GITHUB__APP__ID}\"\n\
-    clientId: \"${GITHUB__APP__CLIENT__ID}\"\n\
-    clientSecret: \"${GITHUB__APP__CLIENT__SECRET}\"\n\
-    host: \"github.com\"\n\
-    publicKey: |-\n\
-    token: \"${GITOPS__GIT_TOKEN}\"\n\
-    webhookSecret: \"${GITHUB__APP__WEBHOOK__SECRET}\"" "$tpl_file"
-    printf "%s\n" "${GITHUB__APP__PRIVATE_KEY}" | sed 's/^/      /' >> "$tmp_file"
-    sed -i "/    publicKey: |-/ r ${tmp_file}" "$tpl_file"
-    rm -rf "$tmp_file"
+    cat << EOF | kubectl apply -f -
+kind: Secret
+type: Opaque
+apiVersion: v1
+metadata:
+    name: tssc-github-integration
+    namespace: tssc
+stringData:
+    id: $GITHUB__APP__ID
+    clientId: $GITHUB__APP__CLIENT__ID
+    clientSecret: $GITHUB__APP__CLIENT__SECRET
+    host: github.com
+    pem: |
+$(printf "%s\n" "${GITHUB__APP__PRIVATE_KEY}" | sed 's/^/        /')
+    token: $GITOPS__GIT_TOKEN
+    webhookSecret: $GITHUB__APP__WEBHOOK__SECRET
+EOF
   fi
 }
 
