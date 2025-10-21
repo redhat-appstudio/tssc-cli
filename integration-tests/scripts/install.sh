@@ -117,14 +117,14 @@ metadata:
     name: tssc-github-integration
     namespace: tssc
 stringData:
-    id: $GITHUB__APP__ID
-    clientId: $GITHUB__APP__CLIENT__ID
-    clientSecret: $GITHUB__APP__CLIENT__SECRET
+    id: "$GITHUB__APP__ID"
+    clientId: "$GITHUB__APP__CLIENT__ID"
+    clientSecret: "$GITHUB__APP__CLIENT__SECRET"
     host: github.com
     pem: |
 $(printf "%s\n" "${GITHUB__APP__PRIVATE_KEY}" | sed 's/^/        /')
-    token: $GITOPS__GIT_TOKEN
-    webhookSecret: $GITHUB__APP__WEBHOOK__SECRET
+    token: "$GITOPS__GIT_TOKEN"
+    webhookSecret: "$GITHUB__APP__WEBHOOK__SECRET"
 EOF
   fi
 }
