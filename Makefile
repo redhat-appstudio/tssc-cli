@@ -50,12 +50,6 @@ INSTALLER_TARBALL_DATA ?= $(shell find -L $(INSTALLER_DIR) -type f \
 	! -name embed.go \
 )
 
-# Version will be set at build time via git describe
-VERSION ?= $(shell \
-	if [ -n "$(GITHUB_REF_NAME)" ]; then echo "${GITHUB_REF_NAME}"; \
-	else git describe --tags --always || echo "v0.0.0-SNAPSHOT"; \
-	fi)
-
 .EXPORT_ALL_VARIABLES:
 
 .default: build
@@ -67,9 +61,10 @@ VERSION ?= $(shell \
 # Builds the application executable with installer resources embedded.
 .PHONY: $(BIN)
 $(BIN): installer-tarball
+$(BIN): tool-goreleaser
 	@echo "# Building '$(BIN)'"
 	@[ -d $(BIN_DIR) ] || mkdir -p $(BIN_DIR)
-	go build -ldflags "-X github.com/redhat-appstudio/tssc-cli/pkg/constants.Version=$(VERSION)" -o $(BIN) $(CMD)
+	goreleaser build --clean --snapshot --single-target --output=$(BIN)
 
 .PHONY: build
 build: $(BIN)
@@ -155,8 +150,8 @@ tool-gh:
 # Installs GoReleaser.
 tool-goreleaser: GOFLAGS =
 tool-goreleaser:
-	@which goreleaser >/dev/null 2>&1 || \
-		go install github.com/goreleaser/goreleaser@latest >/dev/null 2>&1
+	@which goreleaser  || \
+		go install github.com/goreleaser/goreleaser@latest
 
 #
 # Test and Lint
