@@ -31,6 +31,8 @@ spec:
     value: 5d
   - name: dockerfile
     value: Dockerfile
+  - name: prefetch-input
+    value: '{"type": "generic", "path": "."}'
   - name: path-context
     value: .
   pipelineSpec:
@@ -84,10 +86,9 @@ spec:
       description: Execute the build with network isolation
       name: hermetic
       type: string
-    - default: ""
-      description: Build dependencies to be prefetched by Cachi2
+    - description: Build dependencies to be prefetched by Cachi2
       name: prefetch-input
-      type: string
+      default: ""
     - default: ""
       description: Image tag expiration time, time values could be something like 1h, 2d, 3w for hours, days, and weeks, respectively.
       name: image-expires-after
