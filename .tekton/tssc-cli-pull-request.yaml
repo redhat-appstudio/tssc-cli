@@ -31,6 +31,10 @@ spec:
     value: 5d
   - name: dockerfile
     value: Dockerfile
+  - name: version
+    value: "" 
+  - name: prefetch-input
+    value: ""
   - name: path-context
     value: .
   pipelineSpec:
@@ -84,10 +88,10 @@ spec:
       description: Execute the build with network isolation
       name: hermetic
       type: string
-    - default: ""
-      description: Build dependencies to be prefetched by Cachi2
+    - description: Build dependencies to be prefetched by Cachi2
       name: prefetch-input
       type: string
+      default: ""
     - default: ""
       description: Image tag expiration time, time values could be something like 1h, 2d, 3w for hours, days, and weeks, respectively.
       name: image-expires-after
@@ -176,6 +180,65 @@ spec:
       workspaces:
       - name: basic-auth
         workspace: git-auth
+    - name: get-version
+      params:
+      - name: url
+        value: $(params.git-url)
+      - name: revision
+        value: $(params.revision)
+      runAfter:
+      - clone-repository
+      taskSpec:
+        description: Extract version from git repository by cloning it
+        params:
+        - name: url
+          description: Git repository URL
+          type: string
+        - name: revision
+          description: Git revision to checkout
+          type: string
+        results:
+        - name: version
+          description: Git version/tag
+        workspaces:
+        - name: basic-auth
+          description: Workspace for git authentication credentials
+          optional: true
+        steps:
+        - name: clone-and-get-version
+          image: quay.io/konflux-ci/appstudio-utils:ab6b0b8e40e440158e7288c73aff1cf83a2cc8a9@sha256:24179f0efd06c65d16868c2d7eb82573cce8e43533de6cea14fec3b7446e0b14
+          env:
+          - name: GIT_URL
+            value: $(params.url)
+          - name: GIT_REVISION
+            value: $(params.revision)
+          script: |
+            #!/usr/bin/env bash
+            set -eo pipefail
+            
+            # Create temporary directory
+            WORKDIR=$(mktemp -d)
+            cd "$WORKDIR"
+            
+            # Clone repository with tags
+            echo "Cloning repository..."
+            # Use unshallow clone to get full history and tags for git describe
+            git clone --no-single-branch "$GIT_URL" .
+            
+            # Get version using git describe (same logic as Makefile)
+            # Try to get the closest tag, or use commit SHA as fallback
+            VERSION=$(git describe --tags --always 2>/dev/null || echo "v0.0.0-SNAPSHOT")
+            
+            echo "Computed version: $VERSION"
+            printf "%s" "$VERSION" > $(results.version.path)
+      when:
+      - input: $(tasks.init.results.build)
+        operator: in
+        values:
+        - "true"
+      workspaces:
+      - name: basic-auth
+        workspace: git-auth
     - name: prefetch-dependencies
       params:
       - name: input
@@ -206,6 +269,10 @@ spec:
       params:
       - name: IMAGE
         value: $(params.output-image)
+      - name: revision
+        value: $(params.revision)
+      - name: version
+        value: $(tasks.get-version.results.version)
       - name: DOCKERFILE
         value: $(params.dockerfile)
       - name: CONTEXT
@@ -220,6 +287,8 @@ spec:
         value: $(tasks.clone-repository.results.commit)
       - name: BUILD_ARGS
         value:
+        - revision=$(params.revision)
+        - version=$(tasks.get-version.results.version)
         - $(params.build-args[*])
       - name: BUILD_ARGS_FILE
         value: $(params.build-args-file)
@@ -233,6 +302,7 @@ spec:
         value: $(params.buildah-format)
       runAfter:
       - prefetch-dependencies
+      - get-version
       taskRef:
         params:
         - name: name

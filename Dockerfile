@@ -5,6 +5,9 @@
 FROM registry.redhat.io/openshift4/ose-tools-rhel9@sha256:c1baccf320b0acaed693a07fd8df76758db0a38767ace30ccc79aed9ba8c4987 AS ose-tools
 FROM registry.access.redhat.com/ubi9/go-toolset:9.7-1763038106 AS builder
 
+ARG revision
+ARG version
+
 USER root
 WORKDIR /workdir/tssc
 
@@ -17,11 +20,12 @@ COPY test/ ./test/
 COPY image/ ./image/
 COPY vendor/ ./vendor/
 
-COPY go.mod go.sum Makefile ./
+COPY go.mod go.sum Makefile .goreleaser.yaml ./
 
 RUN tar -xvf ./image/gh_2.81.0_linux_amd64.tar.gz -C ./image
+
 RUN make test
-RUN make GOFLAGS='-buildvcs=false'
+RUN make GOFLAGS='-buildvcs=false' COMMIT=${revision} VERSION=${version}
 
 #
 # Run

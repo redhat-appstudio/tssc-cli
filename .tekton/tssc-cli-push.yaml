@@ -28,6 +28,8 @@ spec:
     value: quay.io/redhat-user-workloads/rhtap-shared-team-tenant/tssc-cli:{{revision}}
   - name: dockerfile
     value: Dockerfile
+  - name: prefetch-input
+    value: '{"type": "generic", "path": "."}'
   - name: path-context
     value: .
   pipelineSpec:

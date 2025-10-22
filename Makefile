@@ -56,6 +56,9 @@ VERSION ?= $(shell \
 	else git describe --tags --always || echo "v0.0.0-SNAPSHOT"; \
 	fi)
 
+# Commit will be set at build time via git commit hash
+COMMIT ?= $(shell git rev-parse --short HEAD)
+
 .EXPORT_ALL_VARIABLES:
 
 .default: build
@@ -67,9 +70,10 @@ VERSION ?= $(shell \
 # Builds the application executable with installer resources embedded.
 .PHONY: $(BIN)
 $(BIN): installer-tarball
+$(BIN):  
 	@echo "# Building '$(BIN)'"
 	@[ -d $(BIN_DIR) ] || mkdir -p $(BIN_DIR)
-	go build -ldflags "-X github.com/redhat-appstudio/tssc-cli/pkg/constants.Version=$(VERSION)" -o $(BIN) $(CMD)
+	go build -ldflags "-X github.com/redhat-appstudio/tssc-cli/pkg/constants.Version=$(VERSION) -X github.com/redhat-appstudio/tssc-cli/pkg/constants.Commit=$(COMMIT)" -o $(BIN) $(CMD)
 
 .PHONY: build
 build: $(BIN)
@@ -160,8 +164,8 @@ tool-gh:
 # Installs GoReleaser.
 tool-goreleaser: GOFLAGS =
 tool-goreleaser:
-	@which goreleaser >/dev/null 2>&1 || \
-		go install github.com/goreleaser/goreleaser@latest >/dev/null 2>&1
+	@which goreleaser  || \
+		go install github.com/goreleaser/goreleaser@latest
 
 #
 # Test and Lint
