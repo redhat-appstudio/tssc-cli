@@ -97,122 +97,126 @@ spec:
 
               oc get secret -n $cp_namespace $kubeconfig_secret -o jsonpath={.data.kubeconfig} |base64 -d > /tmp/ephemereal.config
               export KUBECONFIG=/tmp/ephemereal.config
-              csr_max_retries=5
-              csr_sleep_duration=10
-              approved_csrs=false
 
-              console_max_retries=30
-              console_sleep_duration=10
-              console_connect_timeout=10
-              console_accessible=false
+              # --- Cluster Provisioning Retry Loop ---
+              provisioning_max_retries=3
+              provisioning_successful=false
 
-              echo "--- Starting CSR Approval Process ---"
-              for ((i=1; i<=csr_max_retries; i++)); do
-                echo "CSR Attempt $i of $csr_max_retries: Checking for pending CSRs..."
-                if ! oc get csr 2>/dev/null | grep -i Pending; then
-                  echo "No pending CSRs found. Continuing"
-                  approved_csrs=true
-                  break
-                else
-                  echo "There are pending CSRs. That probably means cluster was hibernated for more than 24 hours. Need to approve them (until OCPBUGS-55339 is resolved)"
-                  if oc get csr -oname | xargs oc adm certificate approve; then
-                    echo "Successfully submitted approval for CSRs on attempt $i."
-                    sleep 60 # Small delay for changes to propagate
-                    if ! oc get csr 2>/dev/null | grep -i Pending; then
-                      echo "Confirmed no pending CSRs after approval."
-                      approved_csrs=true
-                      break
-                    else
-                      echo "Pending CSRs still exist after approval attempt $i."
-                    fi
-                  else
-                    echo "Failed to run approval command for CSRs on attempt $i."
-                  fi
-                fi
+              for ((provisioning_attempt=1; provisioning_attempt<=provisioning_max_retries; provisioning_attempt++)); do
+                echo "=== Cluster Provisioning Attempt $provisioning_attempt of $provisioning_max_retries ==="
 
-                if [[ "$i" -lt "$csr_max_retries" ]]; then
-                  echo "Sleeping for $csr_sleep_duration seconds before next CSR retry..."
-                  sleep "$csr_sleep_duration"
-                fi
-              done
+                # Reset flags for this attempt
+                csr_max_retries=5
+                csr_sleep_duration=10
+                approved_csrs=false
 
-              if [[ "$approved_csrs" == "true" ]]; then
-                echo "CSR check and approval process completed successfully."
-              else
-                echo "Failed to ensure all pending CSRs were approved after $csr_max_retries attempts."
-                exit 1
-              fi
-              echo "--- CSR Approval Process Finished ---"
+                console_max_retries=30
+                console_sleep_duration=10
+                console_connect_timeout=10
+                console_accessible=false
 
-              # --- Console URL Accessibility Check ---
-              echo "--- Starting Console Accessibility Check ---"
-
-
-              oc whoami
-              console_url=$(oc whoami --show-console)
-              echo "Console URL: $console_url"
-              # # Check if routes are available (OpenShift-specific resource)
-              # echo "Checking if routes are available..."
-              # if ! oc api-resources | grep -q "routes"; then
-              #   echo "Warning: Routes are not available. This might not be an OpenShift cluster or it's not fully ready."
-              #   echo "Waiting for OpenShift components to be ready..."
-              #   sleep 30
-              #   if ! oc api-resources | grep -q "routes"; then
-              #     echo "Error: Routes still not available. This doesn't appear to be an OpenShift cluster."
-              #     exit 1
-              #   fi
-              # fi
-
-              # # Check if openshift-console namespace exists
-              # echo "Checking if openshift-console namespace exists..."
-              # if ! oc get namespace openshift-console &>/dev/null; then
-              #   echo "Error: openshift-console namespace not found."
-              #   exit 1
-              # fi
-
-              # # Wait for console route to be available
-              # echo "Waiting for console route to be available..."
-              # for ((k=1; k<=10; k++)); do
-              #   if oc get route console -n openshift-console &>/dev/null; then
-              #     echo "Console route found."
-              #     break
-              #   fi
-              #   echo "Console route not found, attempt $k/10. Waiting 30 seconds..."
-              #   sleep 30
-              # done
-
-              # console_url="https://$(oc get route console -n openshift-console -o jsonpath='{.spec.host}' 2>/dev/null)"
-
-              if [[ -z "$console_url" ]]; then
-                echo "Error: Could not retrieve OpenShift console URL."
-                exit 1
-              else
-                echo "Console URL found: $console_url"
-                for ((j=1; j<=console_max_retries; j++)); do
-                  echo "Console Check Attempt $j of $console_max_retries: Checking console URL accessibility..."
-                  if curl -k --silent --output /dev/null --head --fail --connect-timeout "$console_connect_timeout" "$console_url"; then
-                    echo "Console URL $console_url is accessible (HTTP 2xx)."
-                    console_accessible=true
+                echo "--- Starting CSR Approval Process ---"
+                for ((i=1; i<=csr_max_retries; i++)); do
+                  echo "CSR Attempt $i of $csr_max_retries: Checking for pending CSRs..."
+                  if ! oc get csr 2>/dev/null | grep -i Pending; then
+                    echo "No pending CSRs found. Continuing"
+                    approved_csrs=true
                     break
                   else
-                    curl_exit_code=$?
-                    echo "Console URL $console_url not accessible on attempt $j (curl exit code: $curl_exit_code)."
+                    echo "There are pending CSRs. That probably means cluster was hibernated for more than 24 hours. Need to approve them (until OCPBUGS-55339 is resolved)"
+                    if oc get csr -oname | xargs oc adm certificate approve; then
+                      echo "Successfully submitted approval for CSRs on attempt $i."
+                      sleep 60 # Small delay for changes to propagate
+                      if ! oc get csr 2>/dev/null | grep -i Pending; then
+                        echo "Confirmed no pending CSRs after approval."
+                        approved_csrs=true
+                        break
+                      else
+                        echo "Pending CSRs still exist after approval attempt $i."
+                      fi
+                    else
+                      echo "Failed to run approval command for CSRs on attempt $i."
+                    fi
                   fi
 
-                  if [[ "$j" -lt "$console_max_retries" ]]; then
-                    echo "Sleeping for $console_sleep_duration seconds before next console check retry..."
-                    sleep "$console_sleep_duration"
+                  if [[ "$i" -lt "$csr_max_retries" ]]; then
+                    echo "Sleeping for $csr_sleep_duration seconds before next CSR retry..."
+                    sleep "$csr_sleep_duration"
                   fi
                 done
 
-                if [[ "$console_accessible" == "true" ]]; then
-                  echo "Console is ready. Continuing."
-                else
-                  echo "Failed to access console URL $console_url after $console_max_retries attempts."
-                  exit 1
+                if [[ "$approved_csrs" == "false" ]]; then
+                  echo "Failed to ensure all pending CSRs were approved after $csr_max_retries attempts."
+                  if [[ "$provisioning_attempt" -lt "$provisioning_max_retries" ]]; then
+                    echo "Will retry entire provisioning process..."
+                    continue
+                  else
+                    echo "All provisioning attempts exhausted. Exiting."
+                    exit 1
+                  fi
                 fi
+                echo "CSR check and approval process completed successfully."
+                echo "--- CSR Approval Process Finished ---"
+
+                # --- Console URL Accessibility Check ---
+                echo "--- Starting Console Accessibility Check ---"
+
+                oc whoami
+                console_url=$(oc whoami --show-console)
+                echo "Console URL: $console_url"
+
+                if [[ -z "$console_url" ]]; then
+                  echo "Error: Could not retrieve OpenShift console URL."
+                  if [[ "$provisioning_attempt" -lt "$provisioning_max_retries" ]]; then
+                    echo "Will retry entire provisioning process..."
+                    continue
+                  else
+                    echo "All provisioning attempts exhausted. Exiting."
+                    exit 1
+                  fi
+                else
+                  echo "Console URL found: $console_url"
+                  for ((j=1; j<=console_max_retries; j++)); do
+                    echo "Console Check Attempt $j of $console_max_retries: Checking console URL accessibility..."
+                    if curl -k --silent --output /dev/null --head --fail --connect-timeout "$console_connect_timeout" "$console_url"; then
+                      echo "Console URL $console_url is accessible (HTTP 2xx)."
+                      console_accessible=true
+                      break
+                    else
+                      curl_exit_code=$?
+                      echo "Console URL $console_url not accessible on attempt $j (curl exit code: $curl_exit_code)."
+                    fi
+
+                    if [[ "$j" -lt "$console_max_retries" ]]; then
+                      echo "Sleeping for $console_sleep_duration seconds before next console check retry..."
+                      sleep "$console_sleep_duration"
+                    fi
+                  done
+
+                  if [[ "$console_accessible" == "false" ]]; then
+                    echo "Failed to access console URL $console_url after $console_max_retries attempts."
+                    if [[ "$provisioning_attempt" -lt "$provisioning_max_retries" ]]; then
+                      echo "Will retry entire provisioning process..."
+                      continue
+                    else
+                      echo "All provisioning attempts exhausted. Exiting."
+                      exit 1
+                    fi
+                  fi
+                fi
+                echo "Console is ready. Continuing."
+                echo "--- Console Accessibility Check Finished ---"
+
+                # If we reach here, both CSR approval and console accessibility succeeded
+                provisioning_successful=true
+                echo "=== Cluster Provisioning Completed Successfully on Attempt $provisioning_attempt ==="
+                break
+              done
+
+              if [[ "$provisioning_successful" == "false" ]]; then
+                echo "Cluster provisioning failed after $provisioning_max_retries attempts."
+                exit 1
               fi
-              echo "--- Console Accessibility Check Finished ---"
     - name: tssc-install
       runAfter:
         - provision-cluster
