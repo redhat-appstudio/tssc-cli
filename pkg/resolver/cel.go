@@ -75,7 +75,7 @@ func (c *CEL) Evaluate(configured map[string]bool, expression string) error {
 			missing = append(missing, ref)
 		}
 	}
-	return fmt.Errorf("%w: %q",
+	return fmt.Errorf("%w: %s",
 		ErrMissingIntegrations, strings.Join(missing, ", "))
 }
 
