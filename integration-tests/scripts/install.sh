@@ -94,6 +94,32 @@ update_dh_auth_config() {
   fi
 }
 
+update_dh_namespace_prefixes() {
+  # Update Developer Hub namespace prefixes from TSSC_APP_DEPLOYMENT_NAMESPACES
+  if [[ -n "${TSSC_APP_DEPLOYMENT_NAMESPACES:-}" ]]; then
+    echo "[INFO] Update Developer Hub namespace prefixes with: $TSSC_APP_DEPLOYMENT_NAMESPACES"
+
+    # Convert comma-separated values to space-separated, then read into array
+    IFS=',' read -ra namespace_prefixes <<< "${TSSC_APP_DEPLOYMENT_NAMESPACES}"
+
+    # Clear existing namespacePrefixes array first
+    yq -i '.tssc.products[] |= select(.name == "Developer Hub").properties.namespacePrefixes = []' "${config_file}"
+
+    # Add each namespace prefix to the array
+    for namespace in "${namespace_prefixes[@]}"; do
+      namespace=$(echo "$namespace" | xargs)
+      # Skip empty strings
+      if [[ -z "$namespace" ]]; then
+        continue
+      fi
+      echo "[INFO] Adding namespace prefix: $namespace"
+      yq -i '.tssc.products[] |= select(.name == "Developer Hub").properties.namespacePrefixes += ["'"$namespace"'"]' "${config_file}"
+    done
+  else
+    echo "[INFO] TSSC_APP_DEPLOYMENT_NAMESPACES not set, keeping default namespace prefixes"
+  fi
+}
+
 # Workaround: This function has to be called before tssc import "installer/config.yaml" into cluster.
 # Currently, the `tssc integration github` subcommand lacks the ability to create a secret for an existing application.
 github_integration() {
@@ -264,6 +290,7 @@ create_cluster_config() {
   echo "[INFO] Creating the installer's cluster configuration"
   update_dh_catalog_url
   update_dh_auth_config
+  update_dh_namespace_prefixes
   disable_acs
   disable_tpa
   
