@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "tssc": {
+      "command": "${workspaceFolder}/bin/tssc",
+      "args": ["mcp-server", "--image=ghcr.io/redhat-appstudio/tssc:latest"]
+    }
+  }
+}

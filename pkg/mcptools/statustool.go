@@ -77,7 +77,7 @@ first step to deploy TSSC components.
 Inspecting the configuration in the cluster returned the following error:
 
 > %s`,
-			ConfigCreateTool, err.Error(),
+			ConfigInitTool, err.Error(),
 		), nil
 	}
 
@@ -94,7 +94,7 @@ ATTENTION: The installer set of dependencies, Helm charts, are not properly
 resolved. Please check the dependencies given to the installer. Preferably use the
 embedded dependency collection.
 
-> %s`,
+%s`,
 				err.Error(),
 			), nil
 		case errors.Is(err, resolver.ErrInvalidExpression) ||
@@ -105,28 +105,26 @@ required integrations expressions and/or using invalid integration names. Please
 check the dependencies given to the installer. Preferably use the embedded
 dependency collection.
 
-> %s`,
+%s`,
 				err.Error(),
 			), nil
-		case errors.Is(err, resolver.ErrConfiguredIntegration):
-			// TODO: when the configuration update is ready (RHTAP-5316) the tool
-			// result will instruct the user to rely on the configuration tool to
-			// update the cluster configuration, or remove the integration from
-			// from the cluster.
+		case errors.Is(err, resolver.ErrMissingIntegrations) ||
+			errors.Is(err, resolver.ErrPrerequisiteIntegration):
 			return s.resultWithPhaseF(`
-The integration is already configured in the cluster, 
+ATTENTION: One or more required integrations are missing. You must interpret the
+CEL expression to help the user decide which integrations to configure. Ask the
+user for input about optional integrations.
+
+Use the tool %q to list and describe integrations, and %q to help the user
+configure them.
+
+You can use %q to verify whether the integrations are configured.
 
 > %s`,
+				IntegrationListTool,
+				IntegrationScaffoldTool,
+				IntegrationStatusTool,
 				err.Error(),
-			), nil
-		case errors.Is(err, resolver.ErrMissingIntegrations):
-			return s.resultWithPhaseF(`
-ATTENTION: One or more required integrations are missing. Use the tool %q to
-describe the existing integrations, and examples of how to use the CLI to
-configure them. 
-
-> %s`,
-				IntegrationListTool, err.Error(),
 			), nil
 		default:
 			return mcp.NewToolResultError(err.Error()), nil

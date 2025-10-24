@@ -55,6 +55,7 @@ argocd_login() {
     argocd login "${ARGOCD_HOSTNAME}" \
         --grpc-web \
         --insecure \
+        --skip-test-tls \
         --http-retry-max="5" \
         --username="${ARGOCD_USER}" \
         --password="${ARGOCD_PASSWORD}"

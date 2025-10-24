@@ -70,7 +70,6 @@ echo "[INFO] auth_config=(${auth_config[*]})"
 
 tpl_file="installer/charts/values.yaml.tpl"
 config_file="installer/config.yaml"
-tmp_file="installer/charts/tmp_private_key.txt"
 
 ci_enabled() {
   echo "[INFO] Turn ci to true, this is required when you perform rhtap-e2e automation test against TSSC"
@@ -95,8 +94,34 @@ update_dh_auth_config() {
   fi
 }
 
+update_dh_namespace_prefixes() {
+  # Update Developer Hub namespace prefixes from TSSC_APP_DEPLOYMENT_NAMESPACES
+  if [[ -n "${TSSC_APP_DEPLOYMENT_NAMESPACES:-}" ]]; then
+    echo "[INFO] Update Developer Hub namespace prefixes with: $TSSC_APP_DEPLOYMENT_NAMESPACES"
+
+    # Convert comma-separated values to space-separated, then read into array
+    IFS=',' read -ra namespace_prefixes <<< "${TSSC_APP_DEPLOYMENT_NAMESPACES}"
+
+    # Clear existing namespacePrefixes array first
+    yq -i '.tssc.products[] |= select(.name == "Developer Hub").properties.namespacePrefixes = []' "${config_file}"
+
+    # Add each namespace prefix to the array
+    for namespace in "${namespace_prefixes[@]}"; do
+      namespace=$(echo "$namespace" | xargs)
+      # Skip empty strings
+      if [[ -z "$namespace" ]]; then
+        continue
+      fi
+      echo "[INFO] Adding namespace prefix: $namespace"
+      yq -i '.tssc.products[] |= select(.name == "Developer Hub").properties.namespacePrefixes += ["'"$namespace"'"]' "${config_file}"
+    done
+  else
+    echo "[INFO] TSSC_APP_DEPLOYMENT_NAMESPACES not set, keeping default namespace prefixes"
+  fi
+}
+
 # Workaround: This function has to be called before tssc import "installer/config.yaml" into cluster.
-# Currently, the tssc `config` subcommand lacks the ability to modify property values stored in config.yaml.
+# Currently, the `tssc integration github` subcommand lacks the ability to create a secret for an existing application.
 github_integration() {
   # Check if "github" is in scm_config array
   # Check if GitHub is as auth_config
@@ -110,17 +135,23 @@ github_integration() {
     GITOPS__GIT_TOKEN="${GITOPS__GIT_TOKEN:-$(cat /usr/local/rhtap-cli-install/github_token)}"
     GITHUB__APP__WEBHOOK__SECRET="${GITHUB__APP__WEBHOOK__SECRET:-$(cat /usr/local/rhtap-cli-install/rhdh-github-webhook-secret)}"
 
-    sed -i "/integrations:/ a \  github:\n\
-    id: \"${GITHUB__APP__ID}\"\n\
-    clientId: \"${GITHUB__APP__CLIENT__ID}\"\n\
-    clientSecret: \"${GITHUB__APP__CLIENT__SECRET}\"\n\
-    host: \"github.com\"\n\
-    publicKey: |-\n\
-    token: \"${GITOPS__GIT_TOKEN}\"\n\
-    webhookSecret: \"${GITHUB__APP__WEBHOOK__SECRET}\"" "$tpl_file"
-    printf "%s\n" "${GITHUB__APP__PRIVATE_KEY}" | sed 's/^/      /' >> "$tmp_file"
-    sed -i "/    publicKey: |-/ r ${tmp_file}" "$tpl_file"
-    rm -rf "$tmp_file"
+    cat << EOF | kubectl apply -f -
+kind: Secret
+type: Opaque
+apiVersion: v1
+metadata:
+    name: tssc-github-integration
+    namespace: tssc
+stringData:
+    id: "$GITHUB__APP__ID"
+    clientId: "$GITHUB__APP__CLIENT__ID"
+    clientSecret: "$GITHUB__APP__CLIENT__SECRET"
+    host: github.com
+    pem: |
+$(printf "%s\n" "${GITHUB__APP__PRIVATE_KEY}" | sed 's/^/        /')
+    token: "$GITOPS__GIT_TOKEN"
+    webhookSecret: "$GITHUB__APP__WEBHOOK__SECRET"
+EOF
   fi
 }
 
@@ -259,6 +290,7 @@ create_cluster_config() {
   echo "[INFO] Creating the installer's cluster configuration"
   update_dh_catalog_url
   update_dh_auth_config
+  update_dh_namespace_prefixes
   disable_acs
   disable_tpa
   

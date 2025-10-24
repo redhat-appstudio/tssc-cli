@@ -2,7 +2,7 @@
 {{- include "common.test" . }}
   containers:
 {{- if .Values.argoCD.enabled }}
-  {{- $argoCD := .Values.argoCD }}
+{{- $argoCD := .Values.argoCD }}
     #
     # Test the ArgoCD rollout status.
     #
@@ -25,5 +25,27 @@
     #
     # Tests the ArgoCD instance login.
     #
-  {{- include "argoCD.testArgoCDLogin" . | nindent 4 }}
+    - name: {{ printf "argocd-login-%s" $argoCD.name }}
+      image: registry.redhat.io/openshift-gitops-1/argocd-rhel8:{{ .Chart.AppVersion }}
+      env:
+        - name: ARGOCD_HOSTNAME
+          value: {{ include "argoCD.serverHostname" . }}
+        - name: ARGOCD_USER
+          value: admin
+        - name: ARGOCD_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "argoCD.secretClusterName" . }}
+              key: admin.password
+      workingDir: /home/argocd
+      command:
+        - /scripts/argocd-helper.sh
+      args:
+        - login
+      volumeMounts:
+        - name: scripts
+          mountPath: /scripts
+      securityContext:
+        runAsNonRoot: false
+        allowPrivilegeEscalation: false
 {{- end }}

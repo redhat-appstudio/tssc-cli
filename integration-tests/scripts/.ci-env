@@ -2,6 +2,11 @@
 # For testing your changes, replace with your fork and branch of tssc-sample-templates
 export DEVELOPER_HUB__CATALOG__URL=https://github.com/redhat-appstudio/tssc-sample-templates/blob/main/all.yaml
 
+#### Customize App Deployment Namespaces
+# For setting different tssc app deployment namespaces
+# For example "argo-app,deploy-app"
+export TSSC_APP_DEPLOYMENT_NAMESPACES=""
+
 #### Github
 # https://docs.redhat.com/en/documentation/red_hat_trusted_application_pipeline/1.2/html-single/installing_red_hat_trusted_application_pipeline/index#creating_a_github_personal_access_token
 export GITHUB__APP__ID=
