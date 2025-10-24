@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integrations"
@@ -19,9 +20,9 @@ type Integrations struct {
 var (
 	// ErrUnknownIntegration the integration name is not supported, unknown.
 	ErrUnknownIntegration = errors.New("unknown integration")
-	// ErrConfiguredIntegration the integration is already configured in the
-	// cluster, either by the user or another dependency.
-	ErrConfiguredIntegration = errors.New("integration is already configured")
+	// ErrPrerequisiteIntegration dependency prerequisite integration(s) missing.
+	ErrPrerequisiteIntegration = errors.New(
+		"dependency prerequisite integration(s) missing")
 )
 
 // Inspect loops the Topology and evaluates the integrations required by each
@@ -36,8 +37,61 @@ func (i *Integrations) Inspect(t *Topology) error {
 		// dependency (chart) in the Topology.
 		if required := d.IntegrationsRequired(); required != "" {
 			if err := i.cel.Evaluate(i.configured, required); err != nil {
-				return fmt.Errorf("%w: in %q dependency using expression %q",
-					err, chartName, required)
+				switch {
+				case errors.Is(err, ErrMissingIntegrations):
+					return fmt.Errorf(
+						`%w:
+
+The dependency %q requires specific set of cluster integrations,
+defined by the following CEL expression:
+
+	%q
+
+This expression was evaluated against the cluster's configured integrations, and
+the evaluation failed. The following integration names are present in the
+expression but not configured in the cluster:
+
+	%q`,
+						ErrPrerequisiteIntegration,
+						chartName,
+						required,
+						strings.TrimPrefix(
+							err.Error(),
+							fmt.Sprintf("%s: ", ErrMissingIntegrations),
+						),
+					)
+				case errors.Is(err, ErrInvalidExpression):
+					return fmt.Errorf(
+						`%w:
+
+The dependency %q defines an invalid CEL expression for required
+cluster integrations:
+
+	%q
+
+The CEL evaluation failed with the following error:
+
+	%q`,
+						ErrInvalidExpression, chartName, required, err.Error(),
+					)
+				default:
+					return fmt.Errorf(
+						`%w:
+
+The dependency %q requires specific set of cluster integrations,
+defined by the following CEL expression:
+
+	%q
+
+An unexpected error occurred during CEL evaluation:
+
+	%q`,
+						ErrPrerequisiteIntegration,
+						chartName,
+						required,
+						err.Error(),
+					)
+				}
 			}
 		}
 		// Inspecting the integrations provided by the Helm chart (dependency). It
