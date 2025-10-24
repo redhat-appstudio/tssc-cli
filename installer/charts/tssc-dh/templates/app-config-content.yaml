@@ -175,7 +175,8 @@ integrations:
   gitlab:
     - host: ${GITLAB__HOST}
       {{- if ne ($gitlabSecretData.host | b64dec) "gitlab.com" }}
-      apiBaseUrl: https://${GITLAB__HOST}/api/v4
+      baseUrl: ${GITLAB__URL}
+      apiBaseUrl: ${GITLAB__URL}/api/v4
       {{- end }}
       token: ${GITLAB__TOKEN}
 {{- end }}
