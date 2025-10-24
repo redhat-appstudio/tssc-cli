@@ -12,8 +12,8 @@ require (
 	github.com/google/go-github/v75 v75.0.0
 	github.com/mark3labs/mcp-go v0.41.1
 	github.com/onsi/gomega v1.38.2
-	github.com/openshift/api v0.0.0-20251009160459-595e66a09a84
-	github.com/openshift/client-go v0.0.0-20251010083004-63fa63caf7d0
+	github.com/openshift/api v0.0.0-20251015095338-264e80a2b6e7
+	github.com/openshift/client-go v0.0.0-20251015124057-db0dee36e235
 	github.com/pkg/errors v0.9.1
 	github.com/quay/claircore v1.5.44
 	github.com/spf13/cobra v1.10.1
@@ -21,10 +21,10 @@ require (
 	gitlab.com/gitlab-org/api/client-go v0.157.0
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.18.6
-	k8s.io/api v0.33.4
-	k8s.io/apimachinery v0.33.4
+	k8s.io/api v0.34.1
+	k8s.io/apimachinery v0.34.1
 	k8s.io/cli-runtime v0.33.4
-	k8s.io/client-go v0.33.4
+	k8s.io/client-go v0.34.1
 	k8s.io/kubectl v0.33.4
 )
 
@@ -110,7 +110,7 @@ require (
 	github.com/moby/spdystream v0.5.0 // indirect
 	github.com/moby/term v0.5.2 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/modern-go/reflect2 v1.0.2 // indirect
+	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
 	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
@@ -159,14 +159,14 @@ require (
 	k8s.io/apiserver v0.33.4 // indirect
 	k8s.io/component-base v0.33.4 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
-	k8s.io/kube-openapi v0.0.0-20250701173324-9bd5c66d9911 // indirect
+	k8s.io/kube-openapi v0.0.0-20250710124328-f3f2b991d03b // indirect
 	k8s.io/utils v0.0.0-20251002143259-bc988d571ff4 // indirect
 	oras.land/oras-go/v2 v2.6.0 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/kustomize/api v0.20.1 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.20.1 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
-	sigs.k8s.io/structured-merge-diff/v4 v4.7.0 // indirect
+	sigs.k8s.io/structured-merge-diff/v6 v6.3.0 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
