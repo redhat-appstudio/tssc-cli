@@ -99,6 +99,9 @@ func (g *GitLab) Validate() error {
 // informed access token.
 func (g *GitLab) getCurrentGitLabUser() (string, error) {
 	gitLabURL := fmt.Sprintf("https://%s", g.host)
+	if g.port != 443 {
+		gitLabURL += fmt.Sprintf(":%d", g.port)
+	}
 
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{
