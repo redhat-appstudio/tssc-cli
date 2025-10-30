@@ -34,6 +34,7 @@ parse_args() {
             set -x
             DEBUG="--debug"
             export DEBUG
+            echo "Running script as: $(id)"
             ;;
         -h | --help)
             usage
@@ -44,10 +45,6 @@ parse_args() {
     done
 }
 
-#
-# Functions
-#
-
 fail() {
     echo "# [ERROR] ${*}" >&2
     exit 1
@@ -56,6 +53,10 @@ fail() {
 info() {
     echo "# [INFO] ${*}"
 }
+
+#
+# Functions
+#
 
 status() {
     items=$(
@@ -78,10 +79,12 @@ test_signing_secrets() {
         info "[${i}/${RETRIES}] Waiting for ${wait} seconds before retrying..."
         sleep ${wait}
 
-        status &&
+        if status; then
+            info "signing-secrets ready"
             return 0
+        fi
     done
-    return 1
+    fail "signing-secrets not ready!"
 }
 
 #
@@ -89,14 +92,11 @@ test_signing_secrets() {
 #
 main() {
     parse_args "$@"
-    if test_signing_secrets; then
-        info "# signing-secrets ready"
-    else
-        fail "signing-secrets not ready!"
-    fi
+    test_signing_secrets
 }
 
 if [ "${BASH_SOURCE[0]}" == "$0" ]; then
     main "$@"
+    echo
     echo "Success"
 fi
