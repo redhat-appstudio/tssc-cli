@@ -2,17 +2,67 @@
 #
 # Tests if the given KeycloakRealmImports are imported without errors.
 # 
-
 shopt -s inherit_errexit
-set -Eeu -o pipefail
+set -o errexit
+set -o errtrace
+set -o nounset
+set -o pipefail
 
-declare -r NAMESPACE="${NAMESPACE:-}"
+usage() {
+    echo "
+Usage:
+    ${0##*/}
 
-declare -r -a KEYCLOAKREALMIMPORT_NAMES=("${@}")
+Optional arguments:
+    -d, --debug
+        Activate tracing/debug mode.
+    -h, --help
+        Display this message.
+
+Example:
+    ${0##*/}
+" >&2
+}
+
+parse_args() {
+    KEYCLOAKREALMIMPORT_NAMES=()
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+        -d | --debug)
+            set -x
+            DEBUG="--debug"
+            export DEBUG
+            info "Running script as: $(id)"
+            ;;
+        -h | --help)
+            usage
+            exit 0
+            ;;
+        *)
+            # List of KeycloakRealmImports to test.
+            KEYCLOAKREALMIMPORT_NAMES+=("$1")
+            ;;
+        esac
+        shift
+    done
+}
+
+fail() {
+    echo "# [ERROR] ${*}" >&2
+    exit 1
+}
+
+info() {
+    echo "# [INFO] ${*}"
+}
+
+#
+# Functions
+#
 
 keycloakrealmimport_available() {
     for r in "${KEYCLOAKREALMIMPORT_NAMES[@]}"; do
-        echo "# Checking if KeycloakRealmImport '${r}' has errors..."
+        info "Checking if KeycloakRealmImport '${r}' has errors..."
         if ! oc get keycloakrealmimports "${r}" \
                 --namespace="${NAMESPACE}" &>/dev/null; then
             echo "# [ERROR] KeycloakRealmImport '${r}' not found!"
@@ -24,7 +74,7 @@ keycloakrealmimport_available() {
                 --namespace="${NAMESPACE}" \
                 --output=jsonpath='{.status.conditions[?(@.type=="HasErrors")].status}'
         )"
-        echo "# KeycloakRealmImport '${r}' condition='HasErrors=${has_errors}'"
+        info "KeycloakRealmImport '${r}' condition='HasErrors=${has_errors}'"
 
         if [[ "${has_errors}" == "True" ]]; then
             return 1
@@ -35,30 +85,36 @@ keycloakrealmimport_available() {
 
 test_keycloakrealmimport() {
     if [[ -z "${NAMESPACE}" ]]; then
-        echo "Usage: $$ NAMESPACE=namespace $0 <STATEFULSETS>"
-        exit 1
+        fail "Usage: NAMESPACE=namespace $0 <STATEFULSETS>"
     fi
 
     if [[ ${#KEYCLOAKREALMIMPORT_NAMES[@]} -eq 0 ]]; then
-        echo "Usage: $0 <KEYCLOAKREALMIMPORT_NAMES>"
-        exit 1
+        fail "Usage: $0 <KEYCLOAKREALMIMPORT_NAMES>"
     fi
 
     for i in {1..10}; do
-        keycloakrealmimport_available &&
+        if keycloakrealmimport_available; then
+            info "KeycloakRealmImports are available: '${KEYCLOAKREALMIMPORT_NAMES[*]}'"
             return 0
-
+        fi
         wait=$((i * 1))
         echo -e "### [${i}/10] Waiting for ${wait} seconds before retrying...\n"
         sleep ${wait}
     done
-    return 1
+    fail "KeycloakRealmImports not available!"
 }
 
-if test_keycloakrealmimport; then
-    echo "# KeycloakRealmImports are available: '${KEYCLOAKREALMIMPORT_NAMES[*]}'"
-    exit 0
-else
-    echo "# [ERROR] KeycloakRealmImports not available!"
-    exit 1
+main() {
+    parse_args "$@"
+
+    # Namespace to check for KeycloakRealmImports.
+    declare -r NAMESPACE="${NAMESPACE:-}"
+
+    test_keycloakrealmimport
+}
+
+if [ "${BASH_SOURCE[0]}" == "$0" ]; then
+    main "$@"
+    echo
+    echo "Success"
 fi
