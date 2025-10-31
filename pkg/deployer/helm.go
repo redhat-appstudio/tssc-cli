@@ -147,6 +147,8 @@ func (h *Helm) Verify() error {
 	return nil
 }
 
+// VerifyWithRetry attempts to verify the Helm deployment multiple times with a
+// delay between retries.
 func (h *Helm) VerifyWithRetry() error {
 	var err error
 	var retries = 3
@@ -176,6 +178,19 @@ func (h *Helm) VisitReleaseResources(
 		}
 		return m.Collect(ctx, r)
 	})
+}
+
+// GetNotes retrieves the latest release (version 0) of the Helm chart, printing
+// out the notes from the info section.
+func (h *Helm) GetNotes() (string, error) {
+	c := action.NewGet(h.actionCfg)
+	c.Version = 0
+
+	res, err := c.Run(h.chart.Name())
+	if err != nil {
+		return "", err
+	}
+	return res.Info.Notes, nil
 }
 
 // NewHelm creates a new Helm instance, setting up the Helm action configuration
