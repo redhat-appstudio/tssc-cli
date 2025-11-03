@@ -4,13 +4,56 @@
 #
 
 shopt -s inherit_errexit
-set -Eeu -o pipefail
+set -o errexit
+set -o errtrace
+set -o nounset
+set -o pipefail
 
-# Target URL to test.
-declare -r URL="${URL:-}"
+usage() {
+    echo "
+Usage:
+    ${0##*/}
 
-# Expected HTTP status code. Default to 200.
-declare -r STATUS_CODE="${STATUS_CODE:-200}"
+Optional arguments:
+    -d, --debug
+        Activate tracing/debug mode.
+    -h, --help
+        Display this message.
+
+Example:
+    ${0##*/}
+" >&2
+}
+
+parse_args() {
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+        -d | --debug)
+            set -x
+            DEBUG="--debug"
+            export DEBUG
+            echo "Running script as: $(id)"
+            ;;
+        -h | --help)
+            usage
+            exit 0
+            ;;
+        *)
+            fail "Unsupported argument: '$1'."
+            ;;
+        esac
+        shift
+    done
+}
+
+fail() {
+    echo "# [ERROR] ${*}" >&2
+    exit 1
+}
+
+info() {
+    echo "# [INFO] ${*}"
+}
 
 #
 # Functions
@@ -21,7 +64,7 @@ probe_url() {
     local response_code
     local curl_exit
 
-    echo "# INFO: Probing URL '${URL}' for the status code '${STATUS_CODE}'... "
+    info "# Probing URL '${URL}' for the status code '${STATUS_CODE}'... "
 
     # Fetch the HTTP status code from the URL.
     response_code=$(
@@ -52,10 +95,6 @@ probe_url() {
     fi
 }
 
-#
-# Main
-#
-
 test_url() {
     if [[ -z "${URL}" ]]; then
         echo "# ERROR: URL environment variable is not set." >&2
@@ -70,21 +109,33 @@ test_url() {
     # Probe the URL until it returns the expected HTTP status code, or exceeds the
     # retry limit. Each retry waits for a multiple of the previous retry interval.
     for i in {1..15}; do
-        probe_url &&
+        if probe_url; then
+            info "# SUCCESS: URL '${URL}' returned expected status code '${STATUS_CODE}'."
             return 0
-
+        fi
         wait=$((i * 3))
         echo -e "# WARN: [${i}/15] Waiting for ${wait}s before retrying...\n"
         sleep ${wait}
     done
-    return 1
+    fail "URL '${URL}' is not accessible or returned an unexpected status code."
 }
 
-if test_url; then
-    echo "# SUCCESS: URL '${URL}' returned expected status code '${STATUS_CODE}'."
-    exit 0
-else
-    echo "# ERROR: URL '${URL}' is not accessible or returned an" \
-        "unexpected status code." >&2
-    exit 1
+#
+# Main
+#
+main() {
+    parse_args "$@"
+
+    # Target URL to test.
+    declare -r URL="${URL:-}"
+    # Expected HTTP status code. Default to 200.
+    declare -r STATUS_CODE="${STATUS_CODE:-200}"
+
+    test_url
+}
+
+if [ "${BASH_SOURCE[0]}" == "$0" ]; then
+    main "$@"
+    echo
+    echo "Success"
 fi

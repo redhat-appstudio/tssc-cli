@@ -2,7 +2,6 @@
 #
 # Link a Secret to a ServiceAccount
 #
-
 shopt -s inherit_errexit
 set -o errexit
 set -o errtrace
@@ -33,7 +32,7 @@ Example:
 
 parse_args() {
     while [[ $# -gt 0 ]]; do
-        case $1 in
+        case "$1" in
 		--secret)
 			SECRET_NAME="$2"
             shift
@@ -46,10 +45,14 @@ parse_args() {
             set -x
             DEBUG="--debug"
             export DEBUG
+            info "Running script as: $(id)"
             ;;
         -h | --help)
             usage
             exit 0
+            ;;
+        *)
+            fail "Unsupported argument: '$1'."
             ;;
         esac
         shift
@@ -63,10 +66,6 @@ parse_args() {
     fi
 }
 
-#
-# Functions
-#
-
 fail() {
     echo "# [ERROR] ${*}" >&2
     exit 1
@@ -75,6 +74,10 @@ fail() {
 info() {
     echo "# [INFO] ${*}"
 }
+
+#
+# Functions
+#
 
 init() {
     TEMP_DIR="$(mktemp -d)"
@@ -168,10 +171,10 @@ main() {
 	get_secret
 	get_serviceaccount
     patch_serviceaccount
-    echo
-	echo "Success"
 }
 
 if [ "${BASH_SOURCE[0]}" == "$0" ]; then
     main "$@"
+    echo
+	echo "Success"
 fi

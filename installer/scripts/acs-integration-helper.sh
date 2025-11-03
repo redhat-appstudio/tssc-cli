@@ -45,6 +45,7 @@ parse_args() {
             set -x
             DEBUG="--debug"
             export DEBUG
+            info "Running script as: $(id)"
             ;;
         -h | --help)
             usage
@@ -65,22 +66,18 @@ parse_args() {
     fi
 }
 
-#
-# Functions
-#
-
 fail() {
     echo "# [ERROR] ${*}" >&2
     exit 1
 }
 
-warn() {
-    echo "# [WARN] ${*}" >&2
-}
-
 info() {
     echo "# [INFO] ${*}"
 }
+
+#
+# Functions
+#
 
 get_variables() {
     ACS_SECRET="tssc-acs-integration"
@@ -179,7 +176,7 @@ EOF
         --request "$HTTP_METHOD" \
         "$URL"
     STATUS="$?" 
-    echo ""
+    echo
 
     return "$STATUS"
 }
@@ -193,11 +190,13 @@ retry_helper() {
             info "[${i}/$RETRY] Waiting for ${wait} seconds before retrying..."
             sleep ${wait}
         fi
-        integration &&
+        if integration; then
+            info "ACS helper succeeded."
             return 0
-        echo ""
+        fi
+        echo
     done
-    return 1
+    fail "ACS helper failed!"
 }
 
 #
@@ -206,14 +205,11 @@ retry_helper() {
 main() {
     parse_args "$@"
     get_variables
-    if retry_helper; then
-        info "ACS helper succeeded."
-    else
-        fail "ACS helper failed!"
-    fi
+    retry_helper
 }
 
 if [ "${BASH_SOURCE[0]}" == "$0" ]; then
     main "$@"
+    echo
     echo "Success"
 fi

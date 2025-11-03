@@ -6,32 +6,92 @@
 # generate an account token. The information is then stored in a kubernetes
 # secret.
 #
-
 shopt -s inherit_errexit
-set -Eeu -o pipefail
+set -o errexit
+set -o errtrace
+set -o nounset
+set -o pipefail
 
-declare -r SUBCOMMAND="${1:-}"
+usage() {
+    echo "
+Usage:
+    ${0##*/} [options] COMMAND
 
-# ArgoCD hostname (FQDN) to test.
-declare -r ARGOCD_HOSTNAME="${ARGOCD_HOSTNAME:-}"
-# ArgoCD username to use for login.
-declare -r ARGOCD_USER="${ARGOCD_USER:-admin}"
-# ArgoCD password to use for login.
-declare -r ARGOCD_PASSWORD="${ARGOCD_PASSWORD:-}"
-# Environment file to store the ArgoCD credentials.
-declare -r ARGOCD_ENV_FILE="${ARGOCD_ENV_FILE:-/tssc/argocd/env}"
-# Target secret name, to be created with ArgoCD credentials.
-declare -r SECRET_NAME="${SECRET_NAME:-tssc-argocd-integration}"
-# Secret's namespace.
-declare -r NAMESPACE="${NAMESPACE:-}"
+Commands:
+    generate
+        Generate the API token
+    login
+		Test login to the ArgoCD instance.
+    store
+        Store the API token and relevant information
+        in the integration secret.
+Optional arguments:
+    -d, --debug
+        Activate tracing/debug mode.
+    -h, --help
+        Display this message.
+
+Example:
+    ${0##*/} login
+" >&2
+}
+
+parse_args() {
+    NAMESPACE="${NAMESPACE:-tssc}"
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+        generate|login|store)
+            SUBCOMMAND="$1"
+            ;;
+        -d | --debug)
+            set -x
+            DEBUG="--debug"
+            export DEBUG
+            info "Running script as: $(id)"
+            ;;
+        -h | --help)
+            usage
+            exit 0
+            ;;
+        *)
+            fail "Unsupported argument: '$1'."
+            ;;
+        esac
+        shift
+    done
+    if [[ -z "${SUBCOMMAND:-}" ]]; then
+        fail "Missing subcommand."
+    fi
+}
 
 fail() {
     echo "# [ERROR] ${*}" >&2
     exit 1
 }
 
+info() {
+    echo "# [INFO] ${*}"
+}
+
+#
+# Functions
+#
+
 # Asserts the required environment variables.
 assert_variables() {
+    # ArgoCD hostname (FQDN) to test.
+    declare -r ARGOCD_HOSTNAME="${ARGOCD_HOSTNAME:-}"
+    # ArgoCD username to use for login.
+    declare -r ARGOCD_USER="${ARGOCD_USER:-admin}"
+    # ArgoCD password to use for login.
+    declare -r ARGOCD_PASSWORD="${ARGOCD_PASSWORD:-}"
+    # Environment file to store the ArgoCD credentials.
+    declare -r ARGOCD_ENV_FILE="${ARGOCD_ENV_FILE:-/tssc/argocd/env}"
+    # Target secret name, to be created with ArgoCD credentials.
+    declare -r SECRET_NAME="${SECRET_NAME:-tssc-argocd-integration}"
+    # Secret's namespace.
+    declare -r NAMESPACE="${NAMESPACE:-}"
+
     case "${SUBCOMMAND}" in
         login | generate)
             [[ -z "${ARGOCD_HOSTNAME}" ]] &&
@@ -47,7 +107,11 @@ assert_variables() {
             [[ -z "${SECRET_NAME}" ]] &&
                 fail "SECRET_NAME is not set!"
             ;;
+        *)
+            fail "Invalid subcommand provided: '${SUBCOMMAND}'."
+            ;;
     esac
+    info "# All environment variables are set"
 }
 
 # Executes the ArgoCD login command.
@@ -63,22 +127,24 @@ argocd_login() {
 
 # Retries a few times until the ArgoCD instance is available.
 test_argocd_login() {
-    echo "# Logging into ArgoCD on '${ARGOCD_HOSTNAME}'..."
+    info "# Logging into ArgoCD on '${ARGOCD_HOSTNAME}'..."
     for i in {1..30}; do
         wait=$((i * 5))
         echo "### [${i}/30] Waiting for ${wait} seconds before retrying..."
         sleep ${wait}
 
         echo "# [${i}/30] Testing ArgoCD login on '${ARGOCD_HOSTNAME}'..."
-        argocd_login &&
+        if argocd_login; then
+            info "# ArgoCD is available: '${ARGOCD_HOSTNAME}'"
             return 0
+        fi
     done
-    return 1
+    fail "Could not log into ArgoCD."
 }
 
 # Generates the ArgoCD API token.
 argocd_generate_token() {
-    echo "# Generating ArgoCD API token on '${ARGOCD_HOSTNAME}'..."
+    info "# Generating ArgoCD API token on '${ARGOCD_HOSTNAME}'..."
     ARGOCD_API_TOKEN="$(
         argocd account generate-token \
             --grpc-web \
@@ -90,7 +156,7 @@ argocd_generate_token() {
         fail "ArgoCD API token could not be generated!"
     fi
 
-    echo "# Storing ArgoCD API credentials in '${ARGOCD_ENV_FILE}'..."
+    info "# Storing ArgoCD API credentials in '${ARGOCD_ENV_FILE}'..."
     cat <<EOF >"${ARGOCD_ENV_FILE}" || fail "Fail to write '${ARGOCD_ENV_FILE}'!"
 ARGOCD_HOSTNAME=${ARGOCD_HOSTNAME}
 ARGOCD_USER=${ARGOCD_USER}
@@ -98,28 +164,30 @@ ARGOCD_PASSWORD=${ARGOCD_PASSWORD}
 ARGOCD_API_TOKEN=${ARGOCD_API_TOKEN}
 EOF
 
-    return 0
+    info "# ArgoCD API token generated successfully!"
 }
 
 # Waits for the environment file to be available.
 wait_for_env_file() {
-    echo "# Waiting for '${ARGOCD_ENV_FILE}' to be available..."
+    info "# Waiting for '${ARGOCD_ENV_FILE}' to be available..."
     for i in {1..30}; do
         wait=$((i * 5))
         echo "### [${i}/30] Waiting for '${ARGOCD_ENV_FILE}' to be available..."
         sleep ${wait}
 
-        [[ -r "${ARGOCD_ENV_FILE}" ]] &&
+        if [[ -r "${ARGOCD_ENV_FILE}" ]]; then
+            info "# '${ARGOCD_ENV_FILE}' found and readable."
             return 0
+        fi
     done
-    return 1
+    fail "ARGOCD_ENV_FILE='${ARGOCD_ENV_FILE}' not found or not readable!"
 }
 
 # Stores the ArgoCD credentials in a Kubernetes secret.
 argocd_store_credentials() {
     # Using the dry-run flag to generate the secret payload, and later on "kubectl
     # apply" to create, or update, the secret payload in the cluster.
-    echo "# Creating secret '${SECRET_NAME}' in namespace '${NAMESPACE}' from '${ARGOCD_ENV_FILE}'..."
+    info "# Creating secret '${SECRET_NAME}' in namespace '${NAMESPACE}' from '${ARGOCD_ENV_FILE}'..."
     if ! (
         kubectl create secret generic "${SECRET_NAME}" \
             --namespace="${NAMESPACE}" \
@@ -128,51 +196,40 @@ argocd_store_credentials() {
             --output="yaml" |
             kubectl apply -f -
     ); then
-        fail "Secret '${SECRET_NAME}' could not be created!"
+        fail "Secret '${SECRET_NAME}' could not be created."
     fi
-    return 0
+    info "# ArgoCD API credentials stored successfully."
 }
 
 #
 # Main
 #
+main() {
+    parse_args "$@"
 
-assert_variables &&
-    echo "# All environment variables are set"
+    assert_variables
 
-case "${SUBCOMMAND}" in
-login)
-    if test_argocd_login; then
-        echo "# ArgoCD is available: '${ARGOCD_HOSTNAME}'"
-        exit 0
-    else
-        fail "ArgoCD not available!"
-    fi
-    ;;
-generate)
-    test_argocd_login ||
-        fail "ArgoCD not available!"
+    case "${SUBCOMMAND}" in
+    login)
+        test_argocd_login
+        ;;
+    generate)
+        test_argocd_login
+        argocd_generate_token
+        ;;
+    store)
+        wait_for_env_file
+        argocd_store_credentials
+        ;;
+    *)
+        fail "Invalid subcommand provided: '${SUBCOMMAND}'. " \
+            "Use 'login', 'generate' or 'store'!"
+        ;;
+    esac
+}
 
-    if argocd_generate_token; then
-        echo "# ArgoCD API token generated successfully!"
-        exit 0
-    else
-        fail "ArgoCD API token could not be generated!"
-    fi
-    ;;
-store)
-    wait_for_env_file ||
-        fail "ARGOCD_ENV_FILE='${ARGOCD_ENV_FILE}' not found or not readable!"
-
-    if argocd_store_credentials; then
-        echo "# ArgoCD API credentials stored successfully!"
-        exit 0
-    else
-        fail "ArgoCD API credentials could not be stored!"
-    fi
-    ;;
-*)
-    fail "Invalid subcommand provided: '${SUBCOMMAND}'. " \
-        "Use 'login', 'generate' or 'store'!"
-    ;;
-esac
+if [ "${BASH_SOURCE[0]}" == "$0" ]; then
+    main "$@"
+    echo
+    echo "Success"
+fi
