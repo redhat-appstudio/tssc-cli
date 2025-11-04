@@ -224,8 +224,8 @@ spec:
                     whoami_exit_code=$?
                     if [[ "$whoami_exit_code" -eq 0 ]] && [[ -n "$whoami_output" ]]; then
                       echo "Confirmed login - current user: $whoami_output"
-                      # Additional verification: try a simple cluster command
-                      if oc version --short 2>/dev/null; then
+                      # Additional verification: try a simple cluster command that requires authentication
+                      if oc get namespaces >/dev/null 2>&1; then
                         echo "Login verification successful - can execute cluster commands."
                         login_successful=true
                         break
