@@ -72,8 +72,8 @@ build: $(BIN)
 # Uses goreleaser to create a snapshot build.
 .PHONY: goreleaser-snapshot
 goreleaser-snapshot: installer-tarball
-goreleaser-snapshot: 
-	goreleaser build --clean --snapshot $(ARGS)
+goreleaser-snapshot: tool-goreleaser
+	goreleaser release --clean --snapshot $(ARGS)
 
 snapshot: goreleaser-snapshot
 
