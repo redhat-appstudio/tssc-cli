@@ -217,12 +217,23 @@ spec:
                   echo "OC Login Attempt $k of $login_max_retries: Attempting to login with kubeadmin..."
                   if oc login --insecure-skip-tls-verify=true "$api_url" -u kubeadmin -p "$kubeadminpass" 2>&1; then
                     echo "Successfully logged in as kubeadmin on attempt $k."
-                    if oc whoami 2>&1; then
-                      echo "Confirmed login - current user: $(oc whoami)"
-                      login_successful=true
-                      break
+                    # Wait a moment for the authentication to fully propagate
+                    sleep 2
+                    # Verify login with whoami and capture the output
+                    whoami_output=$(oc whoami 2>&1)
+                    whoami_exit_code=$?
+                    if [[ "$whoami_exit_code" -eq 0 ]] && [[ -n "$whoami_output" ]]; then
+                      echo "Confirmed login - current user: $whoami_output"
+                      # Additional verification: try a simple cluster command
+                      if oc version --short 2>/dev/null; then
+                        echo "Login verification successful - can execute cluster commands."
+                        login_successful=true
+                        break
+                      else
+                        echo "Login succeeded but cannot execute cluster commands on attempt $k."
+                      fi
                     else
-                      echo "Login succeeded but 'oc whoami' failed on attempt $k."
+                      echo "Login succeeded but 'oc whoami' failed on attempt $k (exit code: $whoami_exit_code, output: '$whoami_output')."
                     fi
                   else
                     oc_login_exit_code=$?
