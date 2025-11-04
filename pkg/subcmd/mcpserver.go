@@ -39,7 +39,13 @@ Starts the MCP server for the TSSC installer, using STDIO communication.
 // PersistentFlags adds flags to the command.
 func (m *MCPServer) PersistentFlags(cmd *cobra.Command) {
 	p := cmd.PersistentFlags()
-	p.StringVar(&m.image, "image", fmt.Sprintf("quay.io/redhat-user-workloads/rhtap-shared-team-tenant/tssc-cli:%s", constants.Commit), "container image for the installer\n")
+	var defaultImage string
+	if constants.Commit == "unknown" {
+		defaultImage = "quay.io/redhat-user-workloads/rhtap-shared-team-tenant/tssc-cli:latest"
+	} else {
+		defaultImage = fmt.Sprintf("quay.io/redhat-user-workloads/rhtap-shared-team-tenant/tssc-cli:%s", constants.Commit)
+	}
+	p.StringVar(&m.image, "image", defaultImage, "container image for the installer\n")
 }
 
 // Cmd exposes the cobra instance.
