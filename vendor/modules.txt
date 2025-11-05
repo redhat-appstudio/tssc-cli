@@ -457,7 +457,7 @@ github.com/xlzd/gotp
 # github.com/yosida95/uritemplate/v3 v3.0.2
 ## explicit; go 1.14
 github.com/yosida95/uritemplate/v3
-# gitlab.com/gitlab-org/api/client-go v0.156.0
+# gitlab.com/gitlab-org/api/client-go v0.157.0
 ## explicit; go 1.23.0
 gitlab.com/gitlab-org/api/client-go
 # go.opentelemetry.io/auto/sdk v1.2.1
@@ -1214,3 +1214,4 @@ sigs.k8s.io/yaml
 sigs.k8s.io/yaml/goyaml.v2
 sigs.k8s.io/yaml/goyaml.v3
 # github.com/Microsoft/hcsshim => github.com/Microsoft/hcsshim v0.13.0
+# github.com/imdario/mergo => github.com/imdario/mergo v0.3.16
