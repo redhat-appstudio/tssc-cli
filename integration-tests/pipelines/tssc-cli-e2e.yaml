@@ -230,7 +230,7 @@ spec:
           value: "$(tasks.status)"
         - name: job-spec
           value: "$(params.job-spec)"
-      - name: store-pipeline-status
+    - name: store-pipeline-status
         taskRef:
           resolver: git
           params:
