@@ -231,21 +231,21 @@ spec:
         - name: job-spec
           value: "$(params.job-spec)"
     - name: store-pipeline-status
-        taskRef:
-          resolver: git
-          params:
-            - name: url
-              value: https://github.com/konflux-ci/tekton-integration-catalog.git
-            - name: revision
-              value: main
-            - name: pathInRepo
-              value: tasks/store-pipeline-status/0.1/store-pipeline-status.yaml
+      taskRef:
+        resolver: git
         params:
-          - name: oci-ref
-            value: "quay.io/konflux-test-storage/rhtap-team/rhtap-cli:$(context.pipelineRun.name)"
-          - name: credentials-volume-name
-            value: konflux-test-infra-volume
-          - name: pipeline-aggregate-status
-            value: $(tasks.status)
-          - name: pipelinerun-name
-            value: $(context.pipelineRun.name)
+          - name: url
+            value: https://github.com/konflux-ci/tekton-integration-catalog.git
+          - name: revision
+            value: main
+          - name: pathInRepo
+            value: tasks/store-pipeline-status/0.1/store-pipeline-status.yaml
+      params:
+        - name: oci-ref
+          value: "quay.io/konflux-test-storage/rhtap-team/rhtap-cli:$(context.pipelineRun.name)"
+        - name: credentials-volume-name
+          value: konflux-test-infra-volume
+        - name: pipeline-aggregate-status
+          value: $(tasks.status)
+        - name: pipelinerun-name
+          value: $(context.pipelineRun.name)
