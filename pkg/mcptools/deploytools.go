@@ -46,13 +46,7 @@ func (d *DeployTools) deployHandler(
 	// error to inform the user about MCP configuration tools.
 	cfg, err := d.cm.GetConfig(ctx)
 	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf(`
-The cluster is not configured yet, use the tool %q to identify the cluster
-installation status, and the next actions after that.
-
-> %s`,
-			StatusToolName, err.Error(),
-		)), nil
+		return mcp.NewToolResultError(missingClusterConfigErrorFromErr(err)), nil
 	}
 
 	// Validating the topology as a whole, dependencies and integrations to ensure
@@ -161,8 +155,9 @@ additional platform deployment information.`,
 // NewDeployTools creates a new DeployTools instance.
 func NewDeployTools(
 	cm *config.ConfigMapManager,
+	topologyBuilder *resolver.TopologyBuilder,
 	job *installer.Job,
 	image string,
 ) *DeployTools {
-	return &DeployTools{cm: cm, job: job, image: image}
+	return &DeployTools{cm: cm, topologyBuilder: topologyBuilder, job: job, image: image}
 }

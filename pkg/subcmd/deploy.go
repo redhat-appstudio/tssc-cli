@@ -108,7 +108,8 @@ func (d *Deploy) Run() error {
 
 	topology, err := d.topologyBuilder.Build(d.cmd.Context(), d.cfg)
 	if err != nil {
-		if errors.Is(err, resolver.ErrMissingIntegrations) {
+		if errors.Is(err, resolver.ErrMissingIntegrations) ||
+			errors.Is(err, resolver.ErrPrerequisiteIntegration) {
 			return fmt.Errorf(`%s
 
 Required integrations are missing from the cluster, run the "%s integration"

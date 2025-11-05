@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 
@@ -20,6 +21,7 @@ type GitLab struct {
 
 	insecure  bool   // skip tls verification
 	host      string // gitlab host
+	port      int    // gitlab port
 	group     string // gitlab group name
 	appID     string // gitlab application client id
 	appSecret string // gitlab application client secret
@@ -34,6 +36,8 @@ func (g *GitLab) PersistentFlags(c *cobra.Command) {
 
 	p.StringVar(&g.host, "host", g.host,
 		"GitLab hostname")
+	p.IntVar(&g.port, "port", g.port,
+		"GitLab port")
 	p.BoolVar(&g.insecure, "insecure", g.insecure,
 		"Skips TLS verification on API calls")
 	p.StringVar(&g.group, "group", g.group,
@@ -61,6 +65,7 @@ func (g *GitLab) SetArgument(string, string) error {
 func (g *GitLab) LoggerWith(logger *slog.Logger) *slog.Logger {
 	return logger.With(
 		"host", g.host,
+		"port", g.port,
 		"insecure", g.insecure,
 		"group", g.group,
 		"app-id", g.appID,
@@ -94,6 +99,9 @@ func (g *GitLab) Validate() error {
 // informed access token.
 func (g *GitLab) getCurrentGitLabUser() (string, error) {
 	gitLabURL := fmt.Sprintf("https://%s", g.host)
+	if g.port != 443 {
+		gitLabURL += fmt.Sprintf(":%d", g.port)
+	}
 
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{
@@ -133,6 +141,7 @@ func (g *GitLab) Data(
 
 	return map[string][]byte{
 		"host":         []byte(g.host),
+		"port":         []byte(strconv.Itoa(g.port)),
 		"group":        []byte(g.group),
 		"clientId":     []byte(g.appID),
 		"clientSecret": []byte(g.appSecret),
@@ -147,5 +156,6 @@ func NewGitLab(logger *slog.Logger) *GitLab {
 	return &GitLab{
 		logger: logger,
 		host:   "gitlab.com",
+		port:   443,
 	}
 }

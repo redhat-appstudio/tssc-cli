@@ -32,7 +32,7 @@ func TestCEL_Evaluate(t *testing.T) {
 		name:           "missing element",
 		configured:     map[string]bool{"a": true, "b": false},
 		expression:     `a && b`,
-		wantErrContain: fmt.Sprintf("%s: \"b\"", ErrMissingIntegrations),
+		wantErrContain: fmt.Sprintf("%s: b", ErrMissingIntegrations),
 	}, {
 		name:           "unknown element",
 		configured:     map[string]bool{},

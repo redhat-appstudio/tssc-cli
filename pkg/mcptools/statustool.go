@@ -17,11 +17,9 @@ import (
 // StatusTool represents the MCP tool that's responsible to report the current
 // installer status in the cluster.
 type StatusTool struct {
-	cm              *config.ConfigMapManager  // cluster configuration
-	topologyBuilder *resolver.TopologyBuilder // topology builder
-	job             *installer.Job            // cluster deployment job
-
-	phase string // current deployment phase
+	cm  *config.ConfigMapManager  // cluster configuration
+	tb  *resolver.TopologyBuilder // topology builder
+	job *installer.Job            // cluster deployment job
 }
 
 var _ Interface = &StatusTool{}
@@ -44,20 +42,10 @@ const (
 	// CompletedPhase final step, the installation process is complete, and the
 	// cluster is ready.
 	CompletedPhase = "COMPLETED"
+	// InstallerErrorPhase indicates an error occurred while trying to determine
+	// the installer's operational status (e.g., failed to get job state).
+	InstallerErrorPhase = "INSTALLER_ERROR"
 )
-
-// resultWithPhaseF uses the global phase, the informed message format and
-// arguments to compose the tool result. The installer status name is place before
-// the informed message.
-func (s *StatusTool) resultWithPhaseF(
-	format string,
-	a ...any,
-) *mcp.CallToolResult {
-	return mcp.NewToolResultText(
-		fmt.Sprintf("# Current Status: %q\n", s.phase) +
-			fmt.Sprintf(format, a...),
-	)
-}
 
 // statusHandler shows the installer overall status by inspecting the cluster to
 // determine the current state of the installation.
@@ -65,123 +53,125 @@ func (s *StatusTool) statusHandler(
 	ctx context.Context,
 	_ mcp.CallToolRequest,
 ) (*mcp.CallToolResult, error) {
-	// Ensure the cluster is configured, if the ConfigMap is not found, creates a
-	// message to inform the user about MCP configuration tools.
-	s.phase = AwaitingConfigurationPhase
-	cfg, err := s.cm.GetConfig(ctx)
-	if err != nil {
-		return s.resultWithPhaseF(`
-The cluster is not configured yet, use the tool %q to configure it. That's the
-first step to deploy TSSC components.
+	phase, err := getInstallerPhase(ctx, s.cm, s.tb, s.job)
 
-Inspecting the configuration in the cluster returned the following error:
-
-> %s`,
-			ConfigCreateTool, err.Error(),
-		), nil
+	// Shell command to get the logs of the deployment job.
+	var logsCmdEx string
+	if cfg, cfgErr := s.cm.GetConfig(ctx); cfgErr == nil {
+		logsCmdEx = s.job.GetJobLogFollowCmd(cfg.Installer.Namespace)
 	}
 
-	// Given the cluster is configured, let's inspect the topology to ensure all
-	// dependencies and integrations are resolved.
-	s.phase = AwaitingIntegrationsPhase
-	if _, err = s.topologyBuilder.Build(ctx, cfg); err != nil {
+	switch phase {
+	case AwaitingConfigurationPhase:
+		return mcp.NewToolResultText(fmt.Sprintf(
+			"# Current Status: %q\n\n%s",
+			phase, missingClusterConfigErrorFromErr(err),
+		)), nil
+	case AwaitingIntegrationsPhase:
 		switch {
 		case errors.Is(err, resolver.ErrCircularDependency) ||
 			errors.Is(err, resolver.ErrDependencyNotFound) ||
 			errors.Is(err, resolver.ErrInvalidCollection):
-			return s.resultWithPhaseF(`
+			return mcp.NewToolResultText(fmt.Sprintf(`
+# Current Status: %q
+
 ATTENTION: The installer set of dependencies, Helm charts, are not properly
 resolved. Please check the dependencies given to the installer. Preferably use the
 embedded dependency collection.
 
-> %s`,
-				err.Error(),
-			), nil
+%s`,
+				phase, err.Error(),
+			)), nil
 		case errors.Is(err, resolver.ErrInvalidExpression) ||
 			errors.Is(err, resolver.ErrUnknownIntegration):
-			return s.resultWithPhaseF(`
+			return mcp.NewToolResultText(fmt.Sprintf(`
+# Current Status: %q
+
 ATTENTION: The installer set of dependencies, Helm charts, are referencing invalid
 required integrations expressions and/or using invalid integration names. Please
 check the dependencies given to the installer. Preferably use the embedded
 dependency collection.
 
-> %s`,
-				err.Error(),
-			), nil
-		case errors.Is(err, resolver.ErrConfiguredIntegration):
-			// TODO: when the configuration update is ready (RHTAP-5316) the tool
-			// result will instruct the user to rely on the configuration tool to
-			// update the cluster configuration, or remove the integration from
-			// from the cluster.
-			return s.resultWithPhaseF(`
-The integration is already configured in the cluster, 
+%s`,
+				phase, err.Error(),
+			)), nil
+		case errors.Is(err, resolver.ErrMissingIntegrations) ||
+			errors.Is(err, resolver.ErrPrerequisiteIntegration):
+			return mcp.NewToolResultText(fmt.Sprintf(`
+# Current Status: %q
+
+ATTENTION: One or more required integrations are missing. You must interpret the
+CEL expression to help the user decide which integrations to configure. Ask the
+user for input about optional integrations.
+
+Use the tool %q to list and describe integrations, and %q to help the user
+configure them.
+
+You can use %q to verify whether the integrations are configured.
 
 > %s`,
+				phase,
+				IntegrationListTool,
+				IntegrationScaffoldTool,
+				IntegrationStatusTool,
 				err.Error(),
-			), nil
-		case errors.Is(err, resolver.ErrMissingIntegrations):
-			return s.resultWithPhaseF(`
-ATTENTION: One or more required integrations are missing. Use the tool %q to
-describe the existing integrations, and examples of how to use the CLI to
-configure them. 
-
-> %s`,
-				IntegrationListTool, err.Error(),
-			), nil
+			)), nil
 		default:
 			return mcp.NewToolResultError(err.Error()), nil
 		}
-	}
+	case ReadyToDeployPhase:
+		return mcp.NewToolResultText(fmt.Sprintf(`
+# Current Status: %q
 
-	// Given integrations are in place, let's inspect the current state of the
-	// cluster deployment job.
-	jobState, err := s.job.GetState(ctx)
-	if err != nil {
-		return nil, err
-	}
-	// Shell command to get the logs of the deployment job.
-	logsCmdEx := s.job.GetJobLogFollowCmd(cfg.Installer.Namespace)
-
-	// Handle different states of the deployment job.
-	switch jobState {
-	case installer.NotFound:
-		s.phase = ReadyToDeployPhase
-		return s.resultWithPhaseF(`
 The cluster is ready to deploy the TSSC components. Use the tool %q to deploy the
 TSSC components.`,
-			DeployToolName,
-		), nil
-	case installer.Deploying:
-		s.phase = DeployingPhase
-		return s.resultWithPhaseF(`
-The cluster is deploying the TSSC components. Please wait for the deployment to
-complete. You can use the following command to follow the deployment job logs:
+			phase, DeployToolName,
+		)), nil
+	case DeployingPhase:
+		jobState, err := s.job.GetState(ctx)
+		if err != nil {
+			return nil, err
+		}
 
-> %s`,
-			logsCmdEx,
-		), nil
-	case installer.Failed:
-		s.phase = DeployingPhase
-		return s.resultWithPhaseF(`
+		if jobState == installer.Failed {
+			return mcp.NewToolResultText(fmt.Sprintf(`
+# Current Status: %q
+
 The deployment job has failed. You can use the following command to view the
 related POD logs:
 
 > %s`,
-			logsCmdEx,
-		), nil
-	case installer.Done:
-		s.phase = CompletedPhase
-		return s.resultWithPhaseF(`
+				phase, logsCmdEx,
+			)), nil
+		}
+
+		// Assume Deploying if not Failed.
+		return mcp.NewToolResultText(fmt.Sprintf(`
+# Current Status: %q
+
+The cluster is deploying the TSSC components. Please wait for the deployment to
+complete. You can use the following command to follow the deployment job logs:
+
+> %s`,
+			phase, logsCmdEx,
+		)), nil
+	case CompletedPhase:
+		return mcp.NewToolResultText(fmt.Sprintf(`
+# Current Status: %q
+
 The TSSC components have been deployed successfully. You can use the following
 command to inspect the installation logs and get initial information for each
 product deployed:
 
 > %s`,
-			logsCmdEx,
-		), nil
+			phase, logsCmdEx,
+		)), nil
+	case InstallerErrorPhase:
+		// Indicates an operational error during job state determination.
+		return mcp.NewToolResultError(err.Error()), nil
+	default:
+		return mcp.NewToolResultError("unknown installer state"), nil
 	}
-
-	return mcp.NewToolResultError("unknown installer state"), nil
 }
 
 // Init registers the status tool.
@@ -205,8 +195,8 @@ func NewStatusTool(
 	job *installer.Job,
 ) *StatusTool {
 	return &StatusTool{
-		cm:              cm,
-		topologyBuilder: tb,
-		job:             job,
+		cm:  cm,
+		tb:  tb,
+		job: job,
 	}
 }

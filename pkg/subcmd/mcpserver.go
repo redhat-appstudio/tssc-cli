@@ -67,8 +67,9 @@ func (m *MCPServer) Run() error {
 		return err
 	}
 
-	tb, err := resolver.NewTopologyBuilder(
-		m.logger, m.cfs, integrations.NewManager(m.logger, m.kube))
+	im := integrations.NewManager(m.logger, m.kube)
+
+	tb, err := resolver.NewTopologyBuilder(m.logger, m.cfs, im)
 	if err != nil {
 		return err
 	}
@@ -76,12 +77,14 @@ func (m *MCPServer) Run() error {
 	statusTool := mcptools.NewStatusTool(cm, tb, jm)
 
 	integrationCmd := NewIntegration(m.logger, m.kube)
-	integrationTools := mcptools.NewIntegrationTools(integrationCmd)
+	integrationTools := mcptools.NewIntegrationTools(integrationCmd, cm, im)
 
-	deployTools := mcptools.NewDeployTools(cm, jm, m.image)
+	deployTools := mcptools.NewDeployTools(cm, tb, jm, m.image)
+
+	notesTool := mcptools.NewNotesTool(m.logger, m.flags, m.kube, cm, tb)
 
 	s := mcpserver.NewMCPServer()
-	s.AddTools(configTools, statusTool, integrationTools, deployTools)
+	s.AddTools(configTools, statusTool, integrationTools, deployTools, notesTool)
 	return s.Start()
 }
 
