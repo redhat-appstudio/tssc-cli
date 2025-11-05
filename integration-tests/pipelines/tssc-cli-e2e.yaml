@@ -243,7 +243,7 @@ spec:
       params:
         - name: oci-ref
           value: "quay.io/konflux-test-storage/rhtap-team/rhtap-cli:$(context.pipelineRun.name)"
-        - name: credentials-volume-name
+        - name: credentials-secret-name
           value: konflux-test-infra-volume
         - name: pipeline-aggregate-status
           value: $(tasks.status)
