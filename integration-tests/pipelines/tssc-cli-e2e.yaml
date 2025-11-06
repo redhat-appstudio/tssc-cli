@@ -325,7 +325,7 @@ spec:
         - name: oci-container
           value: "quay.io/konflux-test-storage/rhtap-team/rhtap-cli:$(context.pipelineRun.name)"
         - name: tssc-test-image
-          value: "quay.io/rhopp/tssc-tests:self_signed"
+          value: "quay.io/rhopp/tssc-tests:self_signed1"
         - name: testplan
           value: $(params.testplan)
     - name: rhtap-ui-tests
