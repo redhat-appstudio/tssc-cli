@@ -60,7 +60,7 @@ github.com/chai2010/gettext-go/po
 ## explicit; go 1.18
 github.com/clipperhouse/uax29/v2/graphemes
 github.com/clipperhouse/uax29/v2/internal/iterators
-# github.com/containerd/containerd v1.7.28
+# github.com/containerd/containerd v1.7.29
 ## explicit; go 1.23.0
 github.com/containerd/containerd/archive/compression
 github.com/containerd/containerd/content
