@@ -402,7 +402,7 @@ github.com/pkg/errors
 github.com/pmezard/go-difflib/difflib
 # github.com/prometheus/procfs v0.19.2
 ## explicit; go 1.24.0
-# github.com/quay/claircore v1.5.44
+# github.com/quay/claircore v1.5.45
 ## explicit; go 1.24.0
 github.com/quay/claircore/pkg/tarfs
 # github.com/rogpeppe/go-internal v1.14.1
