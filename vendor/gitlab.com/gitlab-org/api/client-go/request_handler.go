@@ -1,64 +1,130 @@
 package gitlab
 
-// Generic utility functions to handle common request/response patterns
+import (
+	"fmt"
+	"net/http"
+	"reflect"
+)
 
-// DoRequestReturnObject handles requests that return a single object
-// This is a generic utility function for GitLab API endpoints that return a single resource.
-//
-// GitLab API docs: https://docs.gitlab.com/ee/api/
-func DoRequestReturnObject[T any](
-	client *Client,
-	method, url string,
-	body any,
-	options []RequestOptionFunc,
-) (*T, *Response, error) {
-	result := new(T)
-	req, err := client.NewRequest(method, url, body, options)
-	if err != nil {
-		return nil, nil, err
-	}
-	resp, err := client.Do(req, result)
-	if err != nil {
-		return nil, resp, err
-	}
-	return result, resp, nil
+type doConfig struct {
+	method      string
+	path        string
+	apiOpts     any
+	requestOpts []RequestOptionFunc
 }
 
-// DoRequestReturnSlice handles requests that return a slice of objects
-// This is a generic utility function for GitLab API endpoints that return a slice of objects
-//
-// GitLab API docs: https://docs.gitlab.com/ee/api/
-func DoRequestReturnSlice[T any](
-	client *Client,
-	method, url string,
-	body any,
-	options []RequestOptionFunc,
-) ([]T, *Response, error) {
-	var result []T
-	req, err := client.NewRequest(method, url, body, options)
-	if err != nil {
-		return nil, nil, err
+type doOption func(c *doConfig)
+
+func withMethod(method string) doOption {
+	return func(c *doConfig) {
+		c.method = method
 	}
-	resp, err := client.Do(req, &result)
-	if err != nil {
-		return nil, resp, err
-	}
-	return result, resp, nil
 }
 
-// DoRequestReturnVoid handles requests that don't return data
-// This is a generic utility function for GitLab API endpoints that perform actions without returning response data.
-//
-// GitLab API docs: https://docs.gitlab.com/ee/api/
-func DoRequestReturnVoid(
-	client *Client,
-	method, url string,
-	body any,
-	options []RequestOptionFunc,
-) (*Response, error) {
-	req, err := client.NewRequest(method, url, body, options)
-	if err != nil {
-		return nil, err
+func withPath(path string, args ...any) doOption {
+	return func(c *doConfig) {
+		as := make([]any, len(args))
+		for i, a := range args {
+			switch v := a.(type) {
+			case string:
+				as[i] = PathEscape(v)
+			default:
+				as[i] = v
+			}
+		}
+		c.path = fmt.Sprintf(path, as...)
 	}
-	return client.Do(req, nil)
+}
+
+func withAPIOpts(o any) doOption {
+	return func(c *doConfig) {
+		c.apiOpts = o
+	}
+}
+
+func withRequestOpts(o ...RequestOptionFunc) doOption {
+	return func(c *doConfig) {
+		c.requestOpts = o
+	}
+}
+
+// none is a sentinel type to signal that a request performed with do does not return a value.
+type none struct{}
+
+// do constructs an API requests, performs it and processes the response.
+//
+// Use the opts to configure the request.
+// If the response body shouldn't be handled, use the none sentinel type
+// and ignore the first return argument.
+//
+// Example:
+//
+// // Get Request to return single *Agent:
+// return do[*Agent](s.client,
+//
+//	withPath("projects/%s/cluster_agents/%d", project, id),
+//	withRequestOpts(options...),
+//
+// )
+//
+// // Get Request to return multiple []*Agents
+// return do[[]*Agent](s.client,
+//
+//	withPath("projects/%s/cluster_agents", project),
+//	withRequestOpts(options...),
+//
+// )
+//
+// // Post Request to create Agent and return *Agents
+// return do[*Agent](s.client,
+//
+//	withMethod(http.MethodPost),
+//	withPath("projects/%s/cluster_agents", project),
+//	withAPIOpts(opt),
+//	withRequestOpts(options...),
+//
+// )
+//
+// // Delete Request that returns nothing:
+// _, resp, err := do[none](s.client,
+//
+//	withMethod(http.MethodDelete),
+//	withPath("projects/%s/cluster_agents/%d", project, id),
+//	withRequestOpts(options...),
+//
+// )
+func do[T any](client *Client, opts ...doOption) (T, *Response, error) {
+	// default config
+	config := &doConfig{
+		method:  http.MethodGet,
+		apiOpts: nil,
+	}
+
+	// apply options to config
+	for _, f := range opts {
+		f(config)
+	}
+
+	req, err := client.NewRequest(config.method, config.path, config.apiOpts, config.requestOpts)
+	if err != nil {
+		var z T
+		return z, nil, err
+	}
+
+	var (
+		as   T
+		resp *Response
+	)
+	if reflect.TypeOf(as) == reflect.TypeOf(none{}) {
+		resp, err = client.Do(req, nil)
+	} else {
+		resp, err = client.Do(req, &as)
+	}
+
+	if err != nil {
+		var z T
+		return z, resp, err
+	}
+
+	return as, resp, nil
 }
