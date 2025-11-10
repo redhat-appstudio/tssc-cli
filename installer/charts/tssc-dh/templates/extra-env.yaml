@@ -77,7 +77,11 @@ data:
     GITLAB__GROUP: "{{ $glSecretData.group }}"
     GITLAB__HOST: {{ $glSecretData.host }}
     GITLAB__TOKEN: "{{ $glSecretData.token }}"
+    {{- if eq ($glSecretData.port | b64dec) "443" }}
     GITLAB__URL: {{ print "https://" ($glSecretData.host | b64dec) | b64enc }}
+    {{- else }}
+    GITLAB__URL: {{ print "https://" ($glSecretData.host | b64dec) ":" ($glSecretData.port | b64dec) | b64enc }}
+    {{- end }}
     GITLAB__USERNAME: {{ $glSecretData.username }}
     {{- if and $glSecretData.clientId $glSecretData.clientSecret }}
     GITLAB__APP__CLIENT__ID: {{ $glSecretData.clientId }}

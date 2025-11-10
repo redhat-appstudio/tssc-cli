@@ -2,12 +2,62 @@
 #
 # Tests if the requested CRDs are available on the cluster.
 #
-
 shopt -s inherit_errexit
-set -Eeu -o pipefail
+set -o errexit
+set -o errtrace
+set -o nounset
+set -o pipefail
 
-# List of CRDs to test.
-declare -r -a CRDS=("${@}")
+usage() {
+    echo "
+Usage:
+    ${0##*/}
+
+Optional arguments:
+    -d, --debug
+        Activate tracing/debug mode.
+    -h, --help
+        Display this message.
+
+Example:
+    ${0##*/}
+" >&2
+}
+
+parse_args() {
+    CRDS=()
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+        -d | --debug)
+            set -x
+            DEBUG="--debug"
+            export DEBUG
+            info "Running script as: $(id)"
+            ;;
+        -h | --help)
+            usage
+            exit 0
+            ;;
+        *)
+            CRDS+=("$1")
+            ;;
+        esac
+        shift
+    done
+}
+
+fail() {
+    echo "# [ERROR] ${*}" >&2
+    exit 1
+}
+
+info() {
+    echo "# [INFO] ${*}"
+}
+
+#
+# Functions
+#
 
 # Tests if the CRDs are available on the cluster, returns true when all CRDs are
 # found, otherwise false.
@@ -34,24 +84,27 @@ test_subscriptions() {
     echo "# Waiting for CRDs to be available: '${CRDS[*]}'"
     for i in {1..20}; do
         echo "# Check ${i}/20"
-        api_resources_available &&
+        if api_resources_available; then
+            info "# CRDs are available: '${CRDS[*]}'"
             return 0
-
+        fi
         wait=$((i * 3))
         echo "# Waiting for ${wait} seconds before retrying..."
         sleep ${wait}
     done
-    return 1
+    fail "CRDs not available!"
 }
 
 #
 # Main
 #
+main() {
+    parse_args "$@"
+    test_subscriptions
+}
 
-if test_subscriptions; then
-    echo "# CRDs are available: '${CRDS[*]}'"
-    exit 0
-else
-    echo "# ERROR: CRDs not available!"
-    exit 1
+if [ "${BASH_SOURCE[0]}" == "$0" ]; then
+    main "$@"
+    echo
+    echo "Success"
 fi
