@@ -1,5 +1,8 @@
 {
-    "templates": [
+  "testPlans": [
+    {
+      "name": "backend-tests",
+      "templates": [
         "go"
     ],
     "tssc": [
@@ -12,4 +15,6 @@
         }
     ],
     "tests": ["full_workflow.test.ts"]
+    }
+  ]
 }

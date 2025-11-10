@@ -81,8 +81,10 @@ func (m *MCPServer) Run() error {
 
 	deployTools := mcptools.NewDeployTools(cm, tb, jm, m.image)
 
+	notesTool := mcptools.NewNotesTool(m.logger, m.flags, m.kube, cm, tb)
+
 	s := mcpserver.NewMCPServer()
-	s.AddTools(configTools, statusTool, integrationTools, deployTools)
+	s.AddTools(configTools, statusTool, integrationTools, deployTools, notesTool)
 	return s.Start()
 }
 

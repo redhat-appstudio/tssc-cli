@@ -10,6 +10,25 @@ import (
 	"github.com/spf13/pflag"
 )
 
+// missingClusterConfigErrorFromErr constructs a user-friendly error message
+// indicating that the cluster configuration is missing. It advises the user
+// on the next steps, including using `ConfigInitTool` to configure the cluster
+// and `StatusToolName` to check the installation status.
+func missingClusterConfigErrorFromErr(err error) string {
+	return fmt.Sprintf(`
+The cluster is not configured yet, use the tool %q to configure it. That's the
+first step to deploy TSSC components. Next, you can use %q to check the overall
+installation status.
+
+Inspecting the configuration in the cluster returned the following error:
+
+> %s`,
+		ConfigInitTool,
+		StatusToolName,
+		err.Error(),
+	)
+}
+
 // generateIntegrationSubCmdUsage generates a formatted usage string for an
 // integration subcommand. It includes the command name, its long description, and
 // an example usage showing required flags with placeholder values.

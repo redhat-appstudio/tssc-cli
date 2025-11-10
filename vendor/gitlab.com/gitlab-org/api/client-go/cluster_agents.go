@@ -140,20 +140,12 @@ func (s *ClusterAgentsService) ListAgents(pid any, opt *ListAgentsOptions, optio
 	if err != nil {
 		return nil, nil, err
 	}
-	uri := fmt.Sprintf("projects/%s/cluster_agents", PathEscape(project))
 
-	req, err := s.client.NewRequest(http.MethodGet, uri, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var as []*Agent
-	resp, err := s.client.Do(req, &as)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return as, resp, nil
+	return do[[]*Agent](s.client,
+		withPath("projects/%s/cluster_agents", project),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 func (s *ClusterAgentsService) GetAgent(pid any, id int, options ...RequestOptionFunc) (*Agent, *Response, error) {
@@ -161,20 +153,11 @@ func (s *ClusterAgentsService) GetAgent(pid any, id int, options ...RequestOptio
 	if err != nil {
 		return nil, nil, err
 	}
-	uri := fmt.Sprintf("projects/%s/cluster_agents/%d", PathEscape(project), id)
 
-	req, err := s.client.NewRequest(http.MethodGet, uri, nil, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	a := new(Agent)
-	resp, err := s.client.Do(req, a)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return a, resp, nil
+	return do[*Agent](s.client,
+		withPath("projects/%s/cluster_agents/%d", project, id),
+		withRequestOpts(options...),
+	)
 }
 
 // RegisterAgentOptions represents the available RegisterAgent()
@@ -191,20 +174,13 @@ func (s *ClusterAgentsService) RegisterAgent(pid any, opt *RegisterAgentOptions,
 	if err != nil {
 		return nil, nil, err
 	}
-	uri := fmt.Sprintf("projects/%s/cluster_agents", PathEscape(project))
 
-	req, err := s.client.NewRequest(http.MethodPost, uri, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	a := new(Agent)
-	resp, err := s.client.Do(req, a)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return a, resp, nil
+	return do[*Agent](s.client,
+		withMethod(http.MethodPost),
+		withPath("projects/%s/cluster_agents", project),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 func (s *ClusterAgentsService) DeleteAgent(pid any, id int, options ...RequestOptionFunc) (*Response, error) {
@@ -212,14 +188,13 @@ func (s *ClusterAgentsService) DeleteAgent(pid any, id int, options ...RequestOp
 	if err != nil {
 		return nil, err
 	}
-	uri := fmt.Sprintf("projects/%s/cluster_agents/%d", PathEscape(project), id)
 
-	req, err := s.client.NewRequest(http.MethodDelete, uri, nil, options)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.client.Do(req, nil)
+	_, resp, err := do[none](s.client,
+		withMethod(http.MethodDelete),
+		withPath("projects/%s/cluster_agents/%d", project, id),
+		withRequestOpts(options...),
+	)
+	return resp, err
 }
 
 // ListAgentTokensOptions represents the available ListAgentTokens() options.

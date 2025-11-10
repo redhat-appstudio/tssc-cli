@@ -119,13 +119,18 @@ plugins:
   #
   # Git
   #
-  # The all the git plugins are always enabled as they are referenced by the default templates
+{{- if (lookup "v1" "Secret" $integrationNamespace "tssc-bitbucket-integration") }}
   - disabled: false
     package: ./dynamic-plugins/dist/backstage-plugin-scaffolder-backend-module-bitbucket-cloud-dynamic
+{{- end }}
+{{- if (lookup "v1" "Secret" $integrationNamespace "tssc-github-integration") }}
   - disabled: false
     package: ./dynamic-plugins/dist/backstage-plugin-scaffolder-backend-module-github-dynamic
+{{- end }}
+{{- if (lookup "v1" "Secret" $integrationNamespace "tssc-gitlab-integration") }}
   - disabled: false
     package: ./dynamic-plugins/dist/backstage-plugin-scaffolder-backend-module-gitlab-dynamic
+{{- end }}
   #
   # Image Registry
   #
