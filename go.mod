@@ -8,7 +8,7 @@ require (
 	dario.cat/mergo v1.0.2
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/google/cel-go v0.26.1
-	github.com/google/go-github/scrape v0.0.0-20251008171934-06b8b3a37d13
+	github.com/google/go-github/scrape v0.0.0-20251110195853-1b4b8cc2accb
 	github.com/google/go-github/v75 v75.0.0
 	github.com/mark3labs/mcp-go v0.43.0
 	github.com/onsi/gomega v1.38.2
@@ -82,6 +82,7 @@ require (
 	github.com/google/btree v1.1.3 // indirect
 	github.com/google/gnostic-models v0.7.0 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
+	github.com/google/go-github/v78 v78.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect
