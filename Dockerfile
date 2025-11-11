@@ -25,7 +25,7 @@ RUN tar -xvf ./image/goreleaser_Linux_x86_64.tar.gz -C /usr/local/bin/
 RUN rm ./image/goreleaser_Linux_x86_64.tar.gz
 
 RUN make test
-RUN make GOFLAGS='-buildvcs=false'
+RUN make GOFLAGS='-buildvcs=false' commit=${COMMIT_SHA} version=${VERSION}
 
 #
 # Run

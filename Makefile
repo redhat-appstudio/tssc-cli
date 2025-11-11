@@ -50,6 +50,15 @@ INSTALLER_TARBALL_DATA ?= $(shell find -L $(INSTALLER_DIR) -type f \
 	! -name embed.go \
 )
 
+# Version will be set at build time via git describe
+VERSION ?= $(shell \
+	if [ -n "$(GITHUB_REF_NAME)" ]; then echo "${GITHUB_REF_NAME}"; \
+	else git describe --tags --always || echo "v0.0.0-SNAPSHOT"; \
+	fi)
+
+# Commit will be set at build time via git commit hash
+COMMIT ?= $(shell git rev-parse --short HEAD)
+
 .EXPORT_ALL_VARIABLES:
 
 .default: build
@@ -64,7 +73,7 @@ $(BIN): installer-tarball
 $(BIN): tool-goreleaser
 	@echo "# Building '$(BIN)'"
 	@[ -d $(BIN_DIR) ] || mkdir -p $(BIN_DIR)
-	goreleaser build --clean --snapshot --single-target --output=$(BIN)
+	go build -ldflags "-X github.com/redhat-appstudio/tssc-cli/pkg/constants.Version=$(VERSION) -X github.com/redhat-appstudio/tssc-cli/pkg/constants.Commit=$(COMMIT)" -o $(BIN) $(CMD)
 
 .PHONY: build
 build: $(BIN)
