@@ -12,7 +12,7 @@ require (
 	github.com/google/go-github/v75 v75.0.0
 	github.com/mark3labs/mcp-go v0.43.0
 	github.com/onsi/gomega v1.38.2
-	github.com/openshift/api v0.0.0-20251009160459-595e66a09a84
+	github.com/openshift/api 50e2ece149d7
 	github.com/openshift/client-go v0.0.0-20251010083004-63fa63caf7d0
 	github.com/pkg/errors v0.9.1
 	github.com/quay/claircore v1.5.45
