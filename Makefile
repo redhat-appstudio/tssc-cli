@@ -167,6 +167,7 @@ test: test-unit
 # Runs the unit tests.
 .PHONY: test-unit
 test-unit: installer-tarball
+	go mod verify
 	go test $(GOFLAGS_TEST) $(CMD) $(PKG) $(ARGS)
 
 # Uses golangci-lint to inspect the code base.
