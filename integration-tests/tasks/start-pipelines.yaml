@@ -156,6 +156,7 @@ spec:
             "--labels" "custom.appstudio.openshift.io/main-pipeline-run=${CONTEXT_PIPELINE_RUN_NAME}"
             "--prefix-name" "e2e-$ocp_version$config_suffix"
             "-o" "name"
+            "--serviceaccount" "konflux-integration-runner"
           )
           echo "Starting pipeline with testplan (${#testplan_b64} chars): ${testplan_b64:0:50}..."
           pipeline_run=$(tkn pipeline start -f https://raw.githubusercontent.com/$REPO_ORG/tssc-cli/refs/heads/$BRANCH/integration-tests/pipelines/tssc-cli-e2e.yaml "${tkn_params[@]}")
