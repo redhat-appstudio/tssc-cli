@@ -64,9 +64,9 @@ spec:
         resolver: git
         params:
           - name: url
-            value: https://github.com/redhat-appstudio/tssc-cli.git
+            value: https://github.com/rhopp/tssc-cli.git
           - name: revision
-            value: main
+            value: RHTAP-5695
           - name: pathInRepo
             value: integration-tests/tasks/start-pipelines.yaml
       params:
