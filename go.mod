@@ -20,7 +20,7 @@ require (
 	github.com/spf13/pflag v1.0.10
 	gitlab.com/gitlab-org/api/client-go v0.159.0
 	gopkg.in/yaml.v3 v3.0.1
-	helm.sh/helm/v3 v3.18.6
+	helm.sh/helm/v4 v4.0.0
 	k8s.io/api v0.33.4
 	k8s.io/apimachinery v0.33.4
 	k8s.io/cli-runtime v0.33.4
