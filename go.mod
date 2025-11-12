@@ -11,7 +11,7 @@ require (
 	github.com/mark3labs/mcp-go v0.38.0
 	github.com/onsi/gomega v1.38.1
 	github.com/openshift/api v0.0.0-20250821192933-3d5bf11af6e6
-	github.com/openshift/client-go v0.0.0-20250811163556-6193816ae379
+	github.com/openshift/client-go db0dee36e235
 	github.com/pkg/errors v0.9.1
 	github.com/quay/claircore v1.5.39
 	github.com/spf13/cobra v1.9.1
