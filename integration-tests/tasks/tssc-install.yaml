@@ -65,8 +65,8 @@ spec:
             git clone "${GIT_URL}" .
             git checkout "${GIT_REVISION}"
         else
-            echo -e "INFO: Cloning repository 'redhat-appstudio/tssc-cli' with revision 'main'"
-            git clone https://github.com/redhat-appstudio/tssc-cli.git .
+            echo -e "INFO: Cloning repository 'redhat-appstudio/tssc-cli' from branch 'release-1.7'"
+            git clone -b release-1.7 https://github.com/redhat-appstudio/tssc-cli.git .
         fi
 
         # Generate the .env file for tssc installation based on the configuration given in the rhads-config
