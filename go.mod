@@ -172,5 +172,5 @@ require (
 
 replace (
 	github.com/Microsoft/hcsshim => github.com/Microsoft/hcsshim v0.13.0
-	github.com/imdario/mergo => github.com/imdario/mergo v1.0.2
+	imdario/mergo => imdario/mergo v1.0.2
 )
