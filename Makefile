@@ -74,6 +74,11 @@ $(BIN): installer-tarball
 .PHONY: build
 build: $(BIN)
 
+# Builds the application executable with debugging enabled.
+.PHONY: debug
+debug: GOFLAGS = "-gcflags=all=-N -l"
+debug: $(BIN)
+
 # Uses goreleaser to create a snapshot build.
 .PHONY: goreleaser-snapshot
 goreleaser-snapshot: installer-tarball
