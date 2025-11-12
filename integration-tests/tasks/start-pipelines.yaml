@@ -81,10 +81,6 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.labels['appstudio.openshift.io/component']
-        - name: BUILD_CONSOLE_URL
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.annotations['pac.test.appstudio.openshift.io/log-url']
       script: |
         #!/usr/bin/env bash
         set -euo pipefail
