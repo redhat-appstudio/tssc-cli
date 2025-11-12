@@ -102,7 +102,7 @@ spec:
             script: |
               #!/usr/bin/env bash
               set -euo pipefail
-              set -x
+
               # Load the RHADS configuration
               RHADS_CONFIG_CONTENT=$(echo $RHADS_CONFIG)
               echo "$RHADS_CONFIG_CONTENT"
@@ -168,8 +168,9 @@ spec:
                   --labels "pipelines.appstudio.openshift.io/type=$(context.pipelineRun.name)" \
                   --labels "test.appstudio.openshift.io/scenario=pr-e2e-tests" \
                   --labels "custom.appstudio.openshift.io/main-pipeline-run=$(context.pipelineRun.name)" \
-                  --prefix-name "e2e-$OCP_VERSION"\
-                  -o name)
+                  --prefix-name "e2e-$OCP_VERSION" \
+                  -o name \
+                  --serviceaccount "konflux-integration-runner")
                 echo "Started new pipelinerun: ${KONFLUX_URL}/ns/${KONFLUX_NAMESPACE}/applications/${KONFLUX_APPLICATION_NAME}/pipelineruns/${PIPELINE_RUN}"
                 PIPELINERUNS_ARRAY+=($PIPELINE_RUN)
               done
