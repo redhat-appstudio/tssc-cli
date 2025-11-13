@@ -12,3 +12,9 @@ developerHub:
     adminUsers: __OVERWRITE_ME__
     enabled: __OVERWRITE_ME__
     orgs: __OVERWRITE_ME__
+  oidc:
+    clientID: __OVERWRITE_ME__
+    metadataURL: __OVERWRITE_ME__
+    baseURL: __OVERWRITE_ME__
+    loginRealm: __OVERWRITE_ME__
+    realm: __OVERWRITE_ME__
