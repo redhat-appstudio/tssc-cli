@@ -111,19 +111,14 @@ spec:
           REPO_ORG="redhat-appstudio"
           BRANCH="main"
         fi
-        echo "REPO_ORG:"
-        echo "$REPO_ORG"
-        echo "BRANCH:"
-        echo "$BRANCH"
+        echo "REPO_ORG: $REPO_ORG"
+        echo "BRANCH: $BRANCH"
         URL_ORG=$(jq -r '.git.org' <<< $JOB_SPEC)
-        echo "URL_ORG:"
-        echo "$URL_ORG"
+        echo "URL_ORG: $URL_ORG"
         URL_REPOSITORY=$(jq -r '.git.repo' <<< $JOB_SPEC)
-        echo "URL_REPOSITORY:"
-        echo "$URL_REPOSITORY"
+        echo "URL_REPOSITORY: $URL_REPOSITORY"
         GIT_REVISION=$(jq -r '.git.commit_sha // empty' <<< $JOB_SPEC)
-        echo "GIT_REVISION:"
-        echo "$GIT_REVISION"
+        echo "GIT_REVISION: $GIT_REVISION"
 
         PIPELINERUNS_ARRAY=()
 
