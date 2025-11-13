@@ -97,7 +97,7 @@ plugins:
     package: ./dynamic-plugins/dist/backstage-community-plugin-jenkins-backend-dynamic
 {{- end }}
   - disabled: false
-    package: oci://quay.io/redhat-tssc/backstage-plugins:1.7.0!tssc-plugins-backstage-community-plugin-multi-source-security-viewer-dynamic
+    package: oci://quay.io/redhat-tssc/backstage-plugins:1.8.0!tssc-plugins-backstage-community-plugin-multi-source-security-viewer-dynamic
     pluginConfig:
       dynamicPlugins:
         frontend:
