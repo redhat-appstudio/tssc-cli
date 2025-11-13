@@ -2,7 +2,7 @@ module github.com/redhat-appstudio/tssc-cli
 
 go 1.24.0
 
-toolchain go1.24.5
+toolchain go1.25.4
 
 require (
 	github.com/Masterminds/sprig/v3 v3.3.0
