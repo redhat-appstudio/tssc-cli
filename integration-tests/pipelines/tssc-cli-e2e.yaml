@@ -517,3 +517,44 @@ spec:
           value: $(tasks.status)
         - name: pipelinerun-name
           value: $(context.pipelineRun.name)
+    - name: collect-cluster-artifacts
+      taskSpec:
+        volumes:
+          - name: konflux-test-infra-volume
+            secret:
+              secretName: "$(params.konflux-test-infra-secret)"
+        steps:
+          - name: collect-artifacts
+            workingDir: /workspace/cluster-artifacts
+            onError: continue
+            image: quay.io/konflux-qe-incubator/konflux-qe-tools:latest
+            script: |
+              #!/bin/sh
+              $(tasks.provision-cluster.results.ocp-login-command)
+
+              curl -sSL https://raw.githubusercontent.com/konflux-ci/konflux-qe-definitions/main/scripts/gather-extra.sh | bash
+            when:
+              - input: $(tasks.status)
+                operator: notin
+                values: ["Succeeded"]
+          - name: secure-push-oci
+            ref:
+              resolver: git
+              params:
+                - name: url
+                  value: https://github.com/konflux-ci/tekton-integration-catalog.git
+                - name: revision
+                  value: main
+                - name: pathInRepo
+                  value: stepactions/secure-push-oci/0.1/secure-push-oci.yaml
+            params:
+              - name: workdir-path
+                value: /workspace
+              - name: oci-ref
+                value: "quay.io/konflux-test-storage/rhtap-team/rhtap-cli:$(context.pipelineRun.name)"
+              - name: credentials-volume-name
+                value: konflux-test-infra-volume
+            when:
+              - input: $(tasks.status)
+                operator: notin
+                values: ["Succeeded"]
