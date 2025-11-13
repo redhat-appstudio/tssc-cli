@@ -10,4 +10,28 @@ Keycloak:
     Console URL: {{ printf "http://%s" $k.route.host }}
   {{- end }}
     Admin Secret: {{ printf "%s-initial-admin" $keycloakName }}
+  {{- $tpa := $k.keycloakCR.trustedProfileAnalyzerRealm -}}
+  {{- $tas := $k.keycloakCR.trustedArtifactSignerRealm -}}
+  {{- $rhdh := $k.keycloakCR.rhdhRealm -}}
+{{- if or $rhdh.enabled $tas.enabled $tpa.enabled}}
+Keycloak Realm Import:
+  - Namespace:    {{ .Release.Namespace }}
+    Username:     {{ $k.keycloakCR.adminUsername }}
+    Secret:       {{ $k.keycloakCR.adminSecretName }}
+
+{{- if $tas.enabled }}
+Keycloak "trusted-artifact-signer" Realm Credentials:
+  - TAS OIDC Client Secret: {{ $tas.oidcClientsSecretName }}
+{{- end }}
+
+{{- if $tpa.enabled }}
+Keycloak "trusted-profile-analyzer" Realm Credentials:
+  - TPA OIDC Client Secret: {{ $tpa.oidcClientsSecretName }}
+{{- end }}
+
+{{- if $rhdh.enabled }}
+Keycloak "developer hub" Realm Credentials:
+  - RHDH OIDC Client Secret: {{ $rhdh.oidcClientsSecretName }}
+{{- end }}
+{{- end }}
 {{- end }}

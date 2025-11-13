@@ -125,7 +125,7 @@ getValues() {
 
     TPA_URL="https://$(oc get routes -n tssc-tpa -l "app.kubernetes.io/name=server" -o jsonpath="{.items[0].spec.host}")"
     TPA_OIDC_CLIENT_ID="cli"
-    TPA_OIDC_CLIENT_SECRET="$(oc get secret -n tssc-tpa tpa-realm-chicken-clients -o json | jq -r '.data.cli | @base64d')"
+    TPA_OIDC_CLIENT_SECRET="$(oc get secret -n tssc tpa-realm-clients -o json | jq -r '.data.cli | @base64d')"
     TPA_OIDC_ISSUER_URL="https://$(oc get routes -n tssc-keycloak -l "app=keycloak" -o jsonpath="{.items[0].spec.host}")/realms/chicken"
     TPA_SUPPORTED_CYCLONEDX_VERSION="1.5"
     TUF_MIRROR="https://$(oc get routes -n tssc-tas -l "app.kubernetes.io/name=tuf" -o jsonpath="{.items[0].spec.host}")"

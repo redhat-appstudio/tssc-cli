@@ -9,7 +9,8 @@
 {{- $ingressDomain := required "OpenShift ingress domain" .OpenShift.Ingress.Domain -}}
 {{- $ingressRouterCA := required "OpenShift RouterCA" .OpenShift.Ingress.RouterCA -}}
 {{- $openshiftMinorVersion := required "OpenShift Version" .OpenShift.MinorVersion -}}
-{{- $keycloakEnabled := or $tpa.Enabled $tas.Enabled }}
+{{- $authProvider := required "Auth Provider is required" $rhdh.Properties.authProvider }}
+{{- $keycloakEnabled := or $tpa.Enabled $tas.Enabled (and $rhdh.Enabled (eq $authProvider "oidc"))}}
 {{- $keycloakNamespace := "tssc-keycloak" -}}
 ---
 debug:
@@ -108,6 +109,13 @@ infrastructure:
 
 {{- $keycloakRouteTLSSecretName := "keycloak-tls" }}
 {{- $keycloakRouteHost := printf "sso.%s" $ingressDomain }}
+{{- $realmsName := "tssc-iam" }}
+{{- $tpaTestingUsersEnabled := false }}
+{{- $protocol := "https" -}}
+{{- if $crc }}
+  {{- $protocol = "http" }}
+{{- end }}
+{{- $tpaOIDCIssuerURL := printf "%s://%s/realms/%s" $protocol $keycloakRouteHost $realmsName }}
 
 iam:
   enabled: {{ $keycloakEnabled }}
@@ -130,6 +138,49 @@ iam:
   service:
     annotations:
       service.beta.openshift.io/serving-cert-secret-name: {{ $keycloakRouteTLSSecretName }}
+  keycloakCR:
+    namespace: {{ $keycloakNamespace }}
+    ingressDomain: {{ $ingressDomain }}
+    rhdhRealm:
+      enabled: {{ and $rhdh.Enabled (eq $authProvider "oidc") }}
+      rhdhRedirectUris:
+        - {{
+          printf "%s://backstage-developer-hub-tssc-dh.%s/api/auth/oidc/handler/frame"
+          $protocol
+          $ingressDomain
+        }}
+      rhdhOriginUris:
+        - {{
+          printf "%s://backstage-developer-hub-tssc-dh.%s"
+          $protocol
+          $ingressDomain
+        }}
+    trustedArtifactSignerRealm:
+      enabled: {{ $tas.Enabled }}
+    trustedProfileAnalyzerRealm:
+      enabled: {{ $tpa.Enabled }}
+      oidcIssuerURL: {{ $tpaOIDCIssuerURL }}
+      clients:
+        cli:
+          enabled: true
+        testingManager:
+          enabled: {{ $tpaTestingUsersEnabled }}
+        testingUser:
+          enabled: {{ $tpaTestingUsersEnabled }}
+      frontendRedirectUris:
+        - "http://localhost:8080"
+    {{- range list "server" "sbom" }}
+        - "{{ printf "%s://%s-%s.%s" $protocol . $tpa.Namespace $ingressDomain }}"
+        - "{{ printf "%s://%s-%s.%s/*" $protocol . $tpa.Namespace $ingressDomain }}"
+    {{- end }}
+      integrationSecret:
+        bombasticAPI: {{
+          printf "%s://server-%s.%s"
+            $protocol
+            $tpa.Namespace
+            $ingressDomain
+        }}
+        namespace: {{ .Installer.Namespace }}
 
 #
 # tssc-acs
@@ -219,9 +270,6 @@ integrations:
 {{- $catalogURL := required "Red Hat Developer Hub Catalog URL is required"
     $rhdh.Properties.catalogURL }}
 
-{{- $authProvider := required "Auth Provider is required"
-    $rhdh.Properties.authProvider }}
-
 
 developerHub:
   namespace: {{ $rhdh.Namespace }}
@@ -241,57 +289,20 @@ developerHub:
     adminUsers:
 {{ dig "Properties" "RBAC" "adminUsers" (list "${GITLAB__USERNAME}") $rhdh | toYaml | indent 6 }}
 {{- end }}
-
-#
-# tssc-tpa-realm
-#
-
-{{- $tpaAppDomain := printf "-%s.%s" $tpa.Namespace $ingressDomain }}
-{{- $tpaOIDCClientsSecretName := "tpa-realm-chicken-clients" }}
-{{- $tpaTestingUsersEnabled := false }}
-{{- $protocol := "https" -}}
-{{- if $crc }}
-  {{- $protocol = "http" }}
-{{- end }}
-{{- $tpaRealmPath := "realms/chicken" }}
-{{- $tpaOIDCIssuerURL := printf "%s://%s/%s" $protocol $keycloakRouteHost $tpaRealmPath }}
-
-trustedProfileAnalyzerRealm:
-  enabled: {{ $keycloakEnabled }}
-  appDomain: "{{ $tpaAppDomain }}"
-  keycloakCR:
-    namespace: {{ $keycloakNamespace }}
-    name: keycloak
-  oidcIssuerURL: {{ $tpaOIDCIssuerURL }}
-  oidcClientsSecretName: {{ $tpaOIDCClientsSecretName }}
-  clients:
-    cli:
-      enabled: true
-    testingManager:
-      enabled: {{ $tpaTestingUsersEnabled }}
-    testingUser:
-      enabled: {{ $tpaTestingUsersEnabled }}
-  frontendRedirectUris:
-    - "http://localhost:8080"
-{{- range list "server" "sbom" }}
-    - "{{ printf "%s://%s-%s.%s" $protocol . $tpa.Namespace $ingressDomain }}"
-    - "{{ printf "%s://%s-%s.%s/*" $protocol . $tpa.Namespace $ingressDomain }}"
-{{- end }}
-  integrationSecret:
-    bombasticAPI: {{
-      printf "%s://server-%s.%s"
-        $protocol
-        $tpa.Namespace
-        $ingressDomain
-    }}
-    namespace: {{ .Installer.Namespace }}
-    name: tssc-trustification-integration
+  oidc:
+    clientID: rhdh
+    metadataURL: {{ printf "%s://%s/realms/%s/.well-known/openid-configuration" $protocol $keycloakRouteHost $realmsName }}
+    baseURL: {{ printf "%s://%s" $protocol $keycloakRouteHost }}
+    loginRealm: {{ $realmsName }}
+    realm: {{ $realmsName }}
 
 #
 # tssc-tpa
 #
 
 {{- $tpaDatabaseSecretName := "tpa-pgsql-user" }}
+{{- $tpaAppDomain := printf "-%s.%s" $tpa.Namespace $ingressDomain }}
+{{- $tpaOIDCClientsSecretName := "tpa-realm-clients" }}
 
 trustedProfileAnalyzer:
   enabled: {{ $tpa.Enabled }}
@@ -374,27 +385,18 @@ trustification:
 # tssc-tas
 #
 
-{{- $tasRealmPath := "realms/trusted-artifact-signer" }}
+{{- $tasRealmPath := printf "realms/%s" $realmsName }}
 
 trustedArtifactSigner:
   enabled: {{ $tas.Enabled }}
   ingressDomain: "{{ $ingressDomain }}"
-  keycloakRealmImport:
-    enabled: {{ $keycloakEnabled }}
-    keycloakCR:
-      namespace: {{ $keycloakNamespace }}
-      name: keycloak
   secureSign:
     enabled: {{ $tas.Enabled }}
     namespace: {{ $tas.Namespace }}
     fulcio:
       oidc:
         clientID: trusted-artifact-signer
-{{- if $crc }}
-        issuerURL: {{ printf "http://%s/%s" $keycloakRouteHost $tasRealmPath }}
-{{- else }}
-        issuerURL: {{ printf "https://%s/%s" $keycloakRouteHost $tasRealmPath }}
-{{- end }}
+        issuerURL: {{ printf "%s://%s/%s" $protocol $keycloakRouteHost $tasRealmPath }}
       certificate:
         # TODO: promopt the user for organization email/name input!
         organizationEmail: trusted-artifact-signer@company.dev

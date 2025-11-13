@@ -1,12 +1,1 @@
-{{- $keycloak := .Values.trustedArtifactSigner.keycloakRealmImport }}
-{{- if $keycloak.enabled -}}
-Keycloak Realm Import:
-  - Namespace: {{ $keycloak.keycloakCR.namespace }}
-    Name:      {{ $keycloak.keycloakCR.name }}
-
-Keycloak "trusted-artifact-signer" Realm Credentials:
-  - Namespace:    {{ .Release.Namespace }}
-    Username:     {{ .Values.trustedArtifactSigner.secureSign.fulcio.oidc.clientID }}
-    Secret:       {{ $keycloak.userSecretName }}
-    OIDC Secret:  {{ $keycloak.oidcClientsSecretName }}
-{{- end }}
+Trusted Artifact Signer deployed.
