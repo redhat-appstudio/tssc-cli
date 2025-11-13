@@ -28,6 +28,18 @@ data:
     ARTIFACTORY__API_TOKEN: {{ $artifactorySecretData.token }}
     ARTIFACTORY__URL: {{ $artifactorySecretData.url }}
 {{- end }}
+{{- $authoidcSecretObj := (lookup "v1" "Secret" $integrationNamespace "rhdh-realm-clients") }}
+{{- $authoidcSecretData := ($authoidcSecretObj.data | default dict) }}
+{{- if $authoidcSecretData }}
+    AUTH__OIDC__CLIENT__ID: {{ .Values.developerHub.oidc.clientID | b64enc }}
+    AUTH__OIDC__CLIENT__SECRET: {{ $authoidcSecretData.rhdh }}
+    AUTH__OIDC__METADATA__URL: {{ .Values.developerHub.oidc.metadataURL | b64enc }}
+    KEYCLOAK__BASE__URL: {{ .Values.developerHub.oidc.baseURL | b64enc }}
+    KEYCLOAK__CLIENT__ID: {{ .Values.developerHub.oidc.clientID | b64enc }}
+    KEYCLOAK__CLIENT__SECRET: {{ $authoidcSecretData.rhdh }}
+    KEYCLOAK__LOGIN__REALM: {{ .Values.developerHub.oidc.loginRealm | b64enc }}
+    KEYCLOAK__REALM: {{ .Values.developerHub.oidc.realm | b64enc }}
+{{- end }}
 {{- $azureSecretObj := (lookup "v1" "Secret" $integrationNamespace "tssc-azure-integration") }}
 {{- $azureSecretData := ($azureSecretObj.data | default dict) }}
 {{- if $azureSecretData }}

@@ -206,4 +206,11 @@ plugins:
     package: ./dynamic-plugins/dist/backstage-plugin-techdocs
   - disabled: false
     package: ./dynamic-plugins/dist/backstage-plugin-techdocs-backend-dynamic
+  #
+  # Keycloak
+  #
+  {{- if eq .Values.developerHub.authProvider "oidc" }}
+  - disabled: false
+    package: ./dynamic-plugins/dist/backstage-community-plugin-catalog-backend-module-keycloak-dynamic
+  {{- end }}
 {{- end }}
