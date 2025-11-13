@@ -264,11 +264,99 @@ spec:
                 echo "=== Cluster Provisioning Completed Successfully on Attempt $provisioning_attempt ==="
                 break
               done
-              oc get co
+
               if [[ "$provisioning_successful" == "false" ]]; then
                 echo "Cluster provisioning failed after $provisioning_max_retries attempts."
                 exit 1
               fi
+
+              # --- Cluster Stability Observation ---
+              echo "--- Starting Cluster Stability Observation ---"
+              observation_duration=600  # 10 minutes
+              observation_interval=5    # Check every 5 seconds
+              observation_iterations=$((observation_duration / observation_interval))
+
+              co_success=0
+              co_failure=0
+              console_success=0
+              console_failure=0
+              api_success=0
+              api_failure=0
+
+              co_pattern=""
+              console_pattern=""
+              api_pattern=""
+
+              echo "Will perform $observation_iterations observations over $observation_duration seconds"
+              echo "Observation interval: ${observation_interval}s"
+              echo ""
+
+              for ((obs=1; obs<=observation_iterations; obs++)); do
+                timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+
+                # Test 1: Cluster Operators
+                if oc get co >/dev/null 2>&1; then
+                  ((co_success++))
+                  co_pattern="${co_pattern}S"
+                else
+                  ((co_failure++))
+                  co_pattern="${co_pattern}F"
+                  echo "[$timestamp] Observation $obs: FAILURE - oc get co failed"
+                fi
+
+                # Test 2: Console URL accessibility
+                if curl -k --silent --output /dev/null --head --fail --connect-timeout 5 "$console_url"; then
+                  ((console_success++))
+                  console_pattern="${console_pattern}S"
+                else
+                  ((console_failure++))
+                  console_pattern="${console_pattern}F"
+                  echo "[$timestamp] Observation $obs: FAILURE - console URL not accessible"
+                fi
+
+                # Test 3: API server (namespaces)
+                if oc get namespaces >/dev/null 2>&1; then
+                  ((api_success++))
+                  api_pattern="${api_pattern}S"
+                else
+                  ((api_failure++))
+                  api_pattern="${api_pattern}F"
+                  echo "[$timestamp] Observation $obs: FAILURE - oc get namespaces failed"
+                fi
+
+                # Print progress every 20 observations (approximately every 100 seconds)
+                if (( obs % 20 == 0 )); then
+                  echo "[$timestamp] Progress: $obs/$observation_iterations observations completed"
+                fi
+
+                # Sleep between observations (except on the last iteration)
+                if [[ "$obs" -lt "$observation_iterations" ]]; then
+                  sleep "$observation_interval"
+                fi
+              done
+
+              echo ""
+              echo "=== Cluster Stability Observation Results ==="
+              echo "Total observations: $observation_iterations"
+              echo ""
+              echo "Cluster Operators (oc get co):"
+              echo "  Success: $co_success, Failures: $co_failure"
+              echo "  Pattern: $co_pattern"
+              echo ""
+              echo "Console URL accessibility:"
+              echo "  Success: $console_success, Failures: $console_failure"
+              echo "  Pattern: $console_pattern"
+              echo ""
+              echo "API Server (oc get namespaces):"
+              echo "  Success: $api_success, Failures: $api_failure"
+              echo "  Pattern: $api_pattern"
+              echo ""
+              echo "--- Cluster Stability Observation Finished ---"
+
+              # Show current cluster operator status for reference
+              echo ""
+              echo "Final cluster operator status:"
+              oc get co
     - name: tssc-install
       runAfter:
         - provision-cluster
