@@ -373,8 +373,8 @@ github.com/yosida95/uritemplate/v3 v3.0.2/go.mod h1:ILOh0sOhIJR3+L/8afwt/kE++YT0
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
-gitlab.com/gitlab-org/api/client-go v0.159.0 h1:ibKeribio/OCsrsUz7pkgIN4E7HWDyrw/lDR6P2R7lU=
-gitlab.com/gitlab-org/api/client-go v0.159.0/go.mod h1:D0DHF7ILUfFo/JcoGMAEndiKMm8SiP/WjyJ4OfXxCKw=
+gitlab.com/gitlab-org/api/client-go v0.160.0 h1:aMQzbcE8zFe0lR/J+a3zneEgH+/EBFs8rD8Chrr4Snw=
+gitlab.com/gitlab-org/api/client-go v0.160.0/go.mod h1:ooCNtKB7OyP7GBa279+HrUS3eeJF6Yi6XABZZy7RTSk=
 go.opentelemetry.io/auto/sdk v1.2.1 h1:jXsnJ4Lmnqd11kwkBV2LgLoFMZKizbCi5fNZ/ipaZ64=
 go.opentelemetry.io/auto/sdk v1.2.1/go.mod h1:KRTj+aOaElaLi+wW1kO/DZRXwkF4C5xPbEe3ZiIhN7Y=
 go.opentelemetry.io/contrib/bridges/prometheus v0.57.0 h1:UW0+QyeyBVhn+COBec3nGhfnFe5lwB0ic1JBVjzhk0w=
