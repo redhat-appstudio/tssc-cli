@@ -1,3 +1,19 @@
+## 0.160.0
+
+### 🚀 Features
+
+- feat (project_members): Add show_seat_info option to ProjectMembers ([!2572](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2572)) by [Zubeen](https://gitlab.com/syedzubeen)
+
+### 🔄 Other Changes
+
+- refactor: fix modernize lint issues ([!2574](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2574)) by [Oleksandr Redko](https://gitlab.com/alexandear)
+- chore(deps): update module cel.dev/expr to v0.25.1 ([!2573](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2573)) by [GitLab Dependency Bot](https://gitlab.com/gitlab-dependency-update-bot)
+- docs(no-release): format examples, update pkg doc url ([!2543](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2543)) by [Oleksandr Redko](https://gitlab.com/alexandear)
+
+
+
+# [0.160.0](https://gitlab.com/gitlab-org/api/client-go/compare/v0.159.0...v0.160.0) (2025-11-12)
+
 ## 0.159.0
 
 ### 🚀 Features

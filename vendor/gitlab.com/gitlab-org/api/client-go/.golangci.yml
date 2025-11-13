@@ -24,6 +24,7 @@ linters:
     - goconst
     - godoclint
     - misspell
+    - modernize
     - nakedret
     - nolintlint
     - revive
@@ -41,6 +42,9 @@ linters:
       locale: US
       ignore-rules:
         - noteable
+    modernize:
+      disable:
+        - omitzero
     revive:
       enable-all-rules: false
       rules:
