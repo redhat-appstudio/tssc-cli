@@ -1,4 +1,4 @@
-{{- if .Values.iam.enabled -}}
+{{- if .Values.iam.enabled }}
 ---
 {{- include "common.test" . }}
   containers:
@@ -7,6 +7,10 @@
     #
   {{- $keycloak := .Values.iam }}
   {{- $keycloakName := include "iam.name" . }}
+  {{- $tpa := $keycloak.keycloakCR.trustedProfileAnalyzerRealm }}
+  {{- $tas := $keycloak.keycloakCR.trustedArtifactSignerRealm }}
+  {{- $rhdh := $keycloak.keycloakCR.rhdhRealm }}
+
     - name: {{ printf "keycloak-%s" $keycloakName }}
       image: registry.redhat.io/openshift4/ose-tools-rhel9
       env:
@@ -26,4 +30,20 @@
           mountPath: /scripts
       securityContext:
         allowPrivilegeEscalation: false
+  {{- if or $tas.enabled $tpa.enabled $rhdh.enabled }}
+    - name: realm-test
+      image: registry.redhat.io/openshift4/ose-tools-rhel9
+      env:
+        - name: NAMESPACE
+          value: {{ $keycloak.keycloakCR.namespace }}
+      command:
+        - /scripts/test-keycloakrealmimport.sh
+      args:
+        - {{ $keycloak.keycloakCR.realmsName }}
+      volumeMounts:
+        - name: scripts
+          mountPath: /scripts
+      securityContext:
+        allowPrivilegeEscalation: false
+  {{- end }}
 {{- end }}
