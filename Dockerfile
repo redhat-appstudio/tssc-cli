@@ -5,6 +5,9 @@
 FROM registry.redhat.io/openshift4/ose-tools-rhel9@sha256:2ee57795ce3deab75ae32e8e8dac06ab8ae6b8b75ffa29578355189270f79317 AS ose-tools
 FROM registry.access.redhat.com/ubi9/go-toolset:1.24.6-1760420453 AS builder
 
+ARG COMMIT_SHA
+ARG VERSION
+
 USER root
 WORKDIR /workdir/tssc
 
@@ -25,7 +28,7 @@ RUN tar -xvf ./image/goreleaser_Linux_x86_64.tar.gz -C /usr/local/bin/
 RUN rm ./image/goreleaser_Linux_x86_64.tar.gz
 
 RUN make test
-RUN make GOFLAGS='-buildvcs=false' commit=${COMMIT_SHA} version=${VERSION}
+RUN make GOFLAGS='-buildvcs=false' COMMIT=${COMMIT_SHA} VERSION=${VERSION}
 
 #
 # Run

@@ -70,7 +70,7 @@ COMMIT ?= $(shell git rev-parse --short HEAD)
 # Builds the application executable with installer resources embedded.
 .PHONY: $(BIN)
 $(BIN): installer-tarball
-$(BIN): tool-goreleaser
+$(BIN):  
 	@echo "# Building '$(BIN)'"
 	@[ -d $(BIN_DIR) ] || mkdir -p $(BIN_DIR)
 	go build -ldflags "-X github.com/redhat-appstudio/tssc-cli/pkg/constants.Version=$(VERSION) -X github.com/redhat-appstudio/tssc-cli/pkg/constants.Commit=$(COMMIT)" -o $(BIN) $(CMD)
