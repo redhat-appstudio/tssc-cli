@@ -111,10 +111,14 @@ spec:
           REPO_ORG="redhat-appstudio"
           BRANCH="main"
         fi
-        echo "REPO_ORG:"
-        echo "$REPO_ORG"
-        echo "BRANCH:"
-        echo "$BRANCH"
+        echo "REPO_ORG: $REPO_ORG"
+        echo "BRANCH: $BRANCH"
+        URL_ORG=$(jq -r '.git.org' <<< $JOB_SPEC)
+        echo "URL_ORG: $URL_ORG"
+        URL_REPOSITORY=$(jq -r '.git.repo' <<< $JOB_SPEC)
+        echo "URL_REPOSITORY: $URL_REPOSITORY"
+        GIT_REVISION=$(jq -r '.git.commit_sha // empty' <<< $JOB_SPEC)
+        echo "GIT_REVISION: $GIT_REVISION"
 
         PIPELINERUNS_ARRAY=()
 
@@ -153,6 +157,9 @@ spec:
             "--labels" "appstudio.openshift.io/application=${KONFLUX_APPLICATION_NAME}"
             "--labels" "pipelines.appstudio.openshift.io/type=${CONTEXT_PIPELINE_RUN_NAME}"
             "--labels" "test.appstudio.openshift.io/scenario=pr-e2e-tests"
+            "--labels" "pac.test.appstudio.openshift.io/url-org=${URL_ORG}"
+            "--labels" "pac.test.appstudio.openshift.io/url-repository=${URL_REPOSITORY}"
+            "--labels" "pac.test.appstudio.openshift.io/git-revision=${GIT_REVISION}"
             "--labels" "custom.appstudio.openshift.io/main-pipeline-run=${CONTEXT_PIPELINE_RUN_NAME}"
             "--prefix-name" "e2e-$ocp_version$config_suffix"
             "-o" "name"
@@ -160,7 +167,12 @@ spec:
           )
           echo "Starting pipeline with testplan (${#testplan_b64} chars): ${testplan_b64:0:50}..."
           pipeline_run=$(tkn pipeline start -f https://raw.githubusercontent.com/$REPO_ORG/tssc-cli/refs/heads/$BRANCH/integration-tests/pipelines/tssc-cli-e2e.yaml "${tkn_params[@]}")
-          echo "Started new pipelinerun: ${KONFLUX_URL}/ns/${KONFLUX_NAMESPACE}/applications/${KONFLUX_APPLICATION_NAME}/pipelineruns/${pipeline_run}"
+          # Construct console URL for the new PipelineRun
+          CONSOLE_URL="${KONFLUX_URL}/ns/${KONFLUX_NAMESPACE}/applications/${KONFLUX_APPLICATION_NAME}/pipelineruns/${pipeline_run}"
+          echo "Started new pipelinerun: ${CONSOLE_URL}"
+          # Set console URL as annotation for store-pipeline-status task
+          # Annotations can contain full URLs, unlike labels which have restrictions
+          oc annotate pipelinerun "${pipeline_run}" -n "${KONFLUX_NAMESPACE}" "pac.test.appstudio.openshift.io/log-url=${CONSOLE_URL}" --overwrite
           PIPELINERUNS_ARRAY+=($pipeline_run)
         }
 
@@ -286,8 +298,8 @@ spec:
               echo "Configuration content: $CONFIG"
               exit 1
             fi
-                      done
-            echo "Started $CONFIG_INDEX sub-pipelines for periodic testing"
+          done
+          echo "Started $CONFIG_INDEX sub-pipelines for periodic testing"
           fi
         else
           echo "Processing single configuration..."
