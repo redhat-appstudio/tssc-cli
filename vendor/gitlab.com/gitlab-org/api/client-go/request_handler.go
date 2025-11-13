@@ -115,7 +115,7 @@ func do[T any](client *Client, opts ...doOption) (T, *Response, error) {
 		as   T
 		resp *Response
 	)
-	if reflect.TypeOf(as) == reflect.TypeOf(none{}) {
+	if reflect.TypeOf(as) == reflect.TypeFor[none]() {
 		resp, err = client.Do(req, nil)
 	} else {
 		resp, err = client.Do(req, &as)
