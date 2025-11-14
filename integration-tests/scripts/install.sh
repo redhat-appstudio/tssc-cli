@@ -496,6 +496,19 @@ install_tssc() {
   cat "$tpl_file"
   set +x
 
+  updateCert
+
+  jenkins_integration
+  azure_integration
+  tpa_integration
+  acs_integration
+  github_integration
+  gitlab_integration
+  bitbucket_integration
+  quay_integration
+  artifactory_integration
+  nexus_integration
+
   echo "[INFO] Running 'tssc deploy' command..."
   set -x
     "${TSSC_BINARY}" deploy --timeout 35m --values-template "$tpl_file" --kube-config "$KUBECONFIG"
