@@ -355,6 +355,8 @@ install_tssc() {
   cat "$tpl_file"
   set +x
 
+  updateCert
+
   jenkins_integration
   azure_integration
   tpa_integration
