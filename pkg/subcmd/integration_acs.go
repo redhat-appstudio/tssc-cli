@@ -17,18 +17,22 @@ type IntegrationACS struct {
 	logger      *slog.Logger             // application logger
 	cfg         *config.Config           // installer configuration
 	kube        *k8s.Kube                // kubernetes client
+	manager     *config.ConfigMapManager // cluster configuration manager
 	integration *integration.Integration // integration instance
 }
 
 var _ Interface = &IntegrationACS{}
 
-const acsIntegrationLongDesc = `
+const (
+	acsIntegrationLongDesc = `
 Manages the ACS integration with TSSC, by storing the required
 credentials required by the TSSC services to interact with ACS.
 
 The credentials are stored in a Kubernetes Secret in the configured namespace
 for RHDH.
 `
+	acsProductName = "Advanced Cluster Security"
+)
 
 // Cmd exposes the cobra instance.
 func (a *IntegrationACS) Cmd() *cobra.Command {
@@ -49,7 +53,16 @@ func (a *IntegrationACS) Validate() error {
 
 // Run creates or updates the ACS integration secret.
 func (a *IntegrationACS) Run() error {
-	return a.integration.Create(a.cmd.Context(), a.cfg)
+	if err := a.integration.Create(a.cmd.Context(), a.cfg); err != nil {
+		return err
+	}
+	// Integration tssc-acs-integration created, disable ACS
+	config, err := a.cfg.EnableDisableProduct(acsProductName, false)
+	if err != nil {
+		return err
+	}
+	return a.manager.Update(a.cmd.Context(), config)
+
 }
 
 // NewIntegrationACS creates the sub-command for the "integration acs"
@@ -69,6 +82,7 @@ func NewIntegrationACS(
 
 		logger:      logger,
 		kube:        kube,
+		manager:     config.NewConfigMapManager(kube),
 		integration: i,
 	}
 	i.PersistentFlags(a.cmd)
