@@ -23,9 +23,6 @@ COPY vendor/ ./vendor/
 COPY go.mod go.sum Makefile .goreleaser.yaml ./
 
 RUN tar -xvf ./image/gh_2.81.0_linux_amd64.tar.gz -C ./image
-RUN cp /cachi2/output/deps/generic/goreleaser_Linux_x86_64.tar.gz ./image
-RUN tar -xvf ./image/goreleaser_Linux_x86_64.tar.gz -C /usr/local/bin/
-RUN rm ./image/goreleaser_Linux_x86_64.tar.gz
 
 RUN make test
 RUN make GOFLAGS='-buildvcs=false' COMMIT=${revision} VERSION=${version}

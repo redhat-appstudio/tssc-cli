@@ -31,6 +31,8 @@ spec:
     value: 5d
   - name: dockerfile
     value: Dockerfile
+  - name: version
+    value: "" 
   - name: prefetch-input
     value: '{"type": "generic", "path": "."}'
   - name: path-context
@@ -177,6 +179,70 @@ spec:
       workspaces:
       - name: basic-auth
         workspace: git-auth
+    - name: get-version
+      params:
+      - name: SOURCE_ARTIFACT
+        value: $(tasks.clone-repository.results.SOURCE_ARTIFACT)
+      runAfter:
+      - clone-repository
+      taskSpec:
+        description: Extract version from git repository
+        params:
+        - name: SOURCE_ARTIFACT
+          description: OCI artifact containing the source code
+          type: string
+        results:
+        - name: version
+          description: Git version/tag
+        steps:
+        - name: extract-and-get-version
+          image: quay.io/konflux-ci/appstudio-utils:ab6b0b8e40e440158e7288c73aff1cf83a2cc8a9@sha256:24179f0efd06c65d16868c2d7eb82573cce8e43533de6cea14fec3b7446e0b14
+          env:
+          - name: SOURCE_ARTIFACT
+            value: $(params.SOURCE_ARTIFACT)
+          script: |
+            #!/usr/bin/env bash
+            set -euo pipefail
+            
+            echo "Extracting source from artifact: $SOURCE_ARTIFACT"
+            
+            # Create temporary directory
+            WORKDIR=$(mktemp -d)
+            cd "$WORKDIR"
+            
+            # Extract source from OCI artifact
+            skopeo copy --src-tls-verify=false "docker://$SOURCE_ARTIFACT" oci:./source:latest || true
+            
+            # Find and extract the tarball
+            if [ -d "./source/blobs" ]; then
+              TARBALL=$(find ./source/blobs -type f | head -1)
+              if [ -n "$TARBALL" ]; then
+                echo "Extracting tarball: $TARBALL"
+                tar -xf "$TARBALL" -C . --strip-components=1 || true
+              fi
+            fi
+            
+            # Get version using git describe (same logic as Makefile)
+            if [ -d ".git" ]; then
+              VERSION=$(git describe --tags --always 2>/dev/null || echo "v0.0.0-SNAPSHOT")
+            else
+              # If no .git directory, try to get from tags in the extracted source
+              VERSION="v0.0.0-SNAPSHOT"
+              if command -v git &> /dev/null; then
+                # Try to initialize git and get version
+                git init . >/dev/null 2>&1 || true
+                git add . >/dev/null 2>&1 || true
+                VERSION=$(git describe --tags --always 2>/dev/null || echo "v0.0.0-SNAPSHOT")
+              fi
+            fi
+            
+            echo "Computed version: $VERSION"
+            echo "$VERSION" > $(results.version.path)
+      when:
+      - input: $(tasks.init.results.build)
+        operator: in
+        values:
+        - "true"
     - name: prefetch-dependencies
       params:
       - name: input
@@ -207,6 +273,10 @@ spec:
       params:
       - name: IMAGE
         value: $(params.output-image)
+      - name: revision
+        value: $(params.revision)
+      - name: version
+        value: $(tasks.get-version.results.version)
       - name: DOCKERFILE
         value: $(params.dockerfile)
       - name: CONTEXT
@@ -234,6 +304,7 @@ spec:
         value: $(params.buildah-format)
       runAfter:
       - prefetch-dependencies
+      - get-version
       taskRef:
         params:
         - name: name
