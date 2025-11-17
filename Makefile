@@ -82,7 +82,7 @@ build: $(BIN)
 .PHONY: goreleaser-snapshot
 goreleaser-snapshot: installer-tarball
 goreleaser-snapshot: tool-goreleaser
-	goreleaser release --clean --snapshot $(ARGS)
+	goreleaser build --clean --snapshot $(ARGS)
 
 snapshot: goreleaser-snapshot
 

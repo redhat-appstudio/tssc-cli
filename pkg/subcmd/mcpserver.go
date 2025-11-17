@@ -40,10 +40,10 @@ Starts the MCP server for the TSSC installer, using STDIO communication.
 func (m *MCPServer) PersistentFlags(cmd *cobra.Command) {
 	p := cmd.PersistentFlags()
 	var defaultImage string
-	if constants.Commit == "unknown" {
+	if constants.Commit == "unknown" || constants.Commit == "" {
 		defaultImage = "quay.io/redhat-user-workloads/rhtap-shared-team-tenant/tssc-cli:latest"
 	} else {
-		defaultImage = fmt.Sprintf("quay.io/redhat-user-workloads/rhtap-shared-team-tenant/tssc-cli:%s", constants.Commit)
+		defaultImage = fmt.Sprintf("quay.io/redhat-user-workloads/rhtap-shared-team-tenant/tssc-cli:on-pr-%s", constants.Commit)
 	}
 	p.StringVar(&m.image, "image", defaultImage, "container image for the installer\n")
 }

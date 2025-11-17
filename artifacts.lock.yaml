@@ -1,7 +1,0 @@
----
-metadata:
-  version: "1.0"
-artifacts:
-  - download_url: "https://github.com/goreleaser/goreleaser/releases/download/v2.12.7/goreleaser_Linux_x86_64.tar.gz"
-    checksum: "sha256:de95c5d1e728e18753c3ddcf02974d63d6432f0a7355a5afa6813971a95a01b8"
-    filename: "goreleaser_Linux_x86_64.tar.gz"

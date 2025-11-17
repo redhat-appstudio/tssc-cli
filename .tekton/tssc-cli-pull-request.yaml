@@ -34,7 +34,7 @@ spec:
   - name: version
     value: "" 
   - name: prefetch-input
-    value: '{"type": "generic", "path": "."}'
+    value: ""
   - name: path-context
     value: .
   pipelineSpec:
@@ -90,6 +90,7 @@ spec:
       type: string
     - description: Build dependencies to be prefetched by Cachi2
       name: prefetch-input
+      type: string
       default: ""
     - default: ""
       description: Image tag expiration time, time values could be something like 1h, 2d, 3w for hours, days, and weeks, respectively.
@@ -215,9 +216,6 @@ spec:
             #!/usr/bin/env bash
             set -eo pipefail
             
-            echo "Cloning repository to get version: $GIT_URL"
-            echo "Checking out revision: $GIT_REVISION"
-            
             # Create temporary directory
             WORKDIR=$(mktemp -d)
             cd "$WORKDIR"
@@ -232,7 +230,7 @@ spec:
             VERSION=$(git describe --tags --always 2>/dev/null || echo "v0.0.0-SNAPSHOT")
             
             echo "Computed version: $VERSION"
-            echo "$VERSION" > $(results.version.path)
+            printf "%s" "$VERSION" > $(results.version.path)
       when:
       - input: $(tasks.init.results.build)
         operator: in
