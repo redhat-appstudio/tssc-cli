@@ -181,60 +181,55 @@ spec:
         workspace: git-auth
     - name: get-version
       params:
-      - name: SOURCE_ARTIFACT
-        value: $(tasks.clone-repository.results.SOURCE_ARTIFACT)
+      - name: url
+        value: $(params.git-url)
+      - name: revision
+        value: $(params.revision)
       runAfter:
       - clone-repository
       taskSpec:
-        description: Extract version from git repository
+        description: Extract version from git repository by cloning it
         params:
-        - name: SOURCE_ARTIFACT
-          description: OCI artifact containing the source code
+        - name: url
+          description: Git repository URL
+          type: string
+        - name: revision
+          description: Git revision to checkout
           type: string
         results:
         - name: version
           description: Git version/tag
+        workspaces:
+        - name: basic-auth
+          description: Workspace for git authentication credentials
+          optional: true
         steps:
-        - name: extract-and-get-version
+        - name: clone-and-get-version
           image: quay.io/konflux-ci/appstudio-utils:ab6b0b8e40e440158e7288c73aff1cf83a2cc8a9@sha256:24179f0efd06c65d16868c2d7eb82573cce8e43533de6cea14fec3b7446e0b14
           env:
-          - name: SOURCE_ARTIFACT
-            value: $(params.SOURCE_ARTIFACT)
+          - name: GIT_URL
+            value: $(params.url)
+          - name: GIT_REVISION
+            value: $(params.revision)
           script: |
             #!/usr/bin/env bash
-            set -euo pipefail
+            set -eo pipefail
             
-            echo "Extracting source from artifact: $SOURCE_ARTIFACT"
+            echo "Cloning repository to get version: $GIT_URL"
+            echo "Checking out revision: $GIT_REVISION"
             
             # Create temporary directory
             WORKDIR=$(mktemp -d)
             cd "$WORKDIR"
             
-            # Extract source from OCI artifact
-            skopeo copy --src-tls-verify=false "docker://$SOURCE_ARTIFACT" oci:./source:latest || true
-            
-            # Find and extract the tarball
-            if [ -d "./source/blobs" ]; then
-              TARBALL=$(find ./source/blobs -type f | head -1)
-              if [ -n "$TARBALL" ]; then
-                echo "Extracting tarball: $TARBALL"
-                tar -xf "$TARBALL" -C . --strip-components=1 || true
-              fi
-            fi
+            # Clone repository with tags
+            echo "Cloning repository..."
+            # Use unshallow clone to get full history and tags for git describe
+            git clone --no-single-branch "$GIT_URL" .
             
             # Get version using git describe (same logic as Makefile)
-            if [ -d ".git" ]; then
-              VERSION=$(git describe --tags --always 2>/dev/null || echo "v0.0.0-SNAPSHOT")
-            else
-              # If no .git directory, try to get from tags in the extracted source
-              VERSION="v0.0.0-SNAPSHOT"
-              if command -v git &> /dev/null; then
-                # Try to initialize git and get version
-                git init . >/dev/null 2>&1 || true
-                git add . >/dev/null 2>&1 || true
-                VERSION=$(git describe --tags --always 2>/dev/null || echo "v0.0.0-SNAPSHOT")
-              fi
-            fi
+            # Try to get the closest tag, or use commit SHA as fallback
+            VERSION=$(git describe --tags --always 2>/dev/null || echo "v0.0.0-SNAPSHOT")
             
             echo "Computed version: $VERSION"
             echo "$VERSION" > $(results.version.path)
@@ -243,6 +238,9 @@ spec:
         operator: in
         values:
         - "true"
+      workspaces:
+      - name: basic-auth
+        workspace: git-auth
     - name: prefetch-dependencies
       params:
       - name: input
