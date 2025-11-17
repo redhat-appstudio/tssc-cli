@@ -3,23 +3,6 @@ trustedArtifactSigner:
   # OpenShift cluster's ingress domain, e.g. apps.cluster.example.com. The domain
   # is used to generate the "trusted-artifact-signer" Fulcio's email.
   ingressDomain: __OVERWRITE_ME__
-  # Imports the "Trusted Artifact Signer" realm into Keycloak.
-  keycloakRealmImport:
-    # Enable the Keycloak realm import.
-    enabled: true
-    # Keycloak instance to import the realm into, the Kubernetes namespace and
-    # name of the Keycloak instance.
-    keycloakCR:
-      namespace: __OVERWRITE_ME__
-      name: __OVERWRITE_ME__
-    # Secret holding the commong user, "trusted-artifact-signer", credentials.
-    userSecretName: trusted-artifact-signer-user
-    # Secret holding the OIDC client secrets.
-    oidcClientsSecretName: trusted-artifact-signer-clients
-    # OIDC clients.
-    clients:
-      trustedArtifactSigner:
-        enabled: true
   # Configures the Trusted Artifact Signer.
   secureSign:
     # Enable the Trusted Artifact Signer.

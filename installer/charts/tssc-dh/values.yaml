@@ -13,6 +13,10 @@ developerHub:
     enabled: __OVERWRITE_ME__
     orgs: __OVERWRITE_ME__
   oidc:
+    adminUserName: admin
+    adminSecretName: tssc-realms-admin-user
+    secretNamespace: __OVERWRITE_ME__
+    enabled: false
     clientID: __OVERWRITE_ME__
     metadataURL: __OVERWRITE_ME__
     baseURL: __OVERWRITE_ME__

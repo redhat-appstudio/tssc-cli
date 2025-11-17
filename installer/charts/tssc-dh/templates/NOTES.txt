@@ -5,6 +5,7 @@ Developer Hub:
 {{- $integrationNamespace := .Values.developerHub.integrationSecrets.namespace }}
 {{- $gitlabObj := (lookup "v1" "Secret" $integrationNamespace "tssc-gitlab-integration") | default dict -}}
 {{- $bitbucketObj := (lookup "v1" "Secret" $integrationNamespace "tssc-bitbucket-integration") | default dict -}}
+{{- $oidcEnabled := .Values.developerHub.oidc.enabled }}
 {{- if (or $gitlabObj $bitbucketObj) }}
 
 Tekton Pipelines as Code:
@@ -49,4 +50,12 @@ Trusted Artifact Signer:
 
 Trusted Artifact Signer: not installed
     {{- end }}
+{{- end }}
+
+{{- if $oidcEnabled }}
+
+OIDC Admin Credential:
+- Namespace:   {{ .Values.developerHub.oidc.secretNamespace }}
+  Username:    {{ .Values.developerHub.oidc.adminUserName }}
+  Secret:      {{ .Values.developerHub.oidc.adminSecretName }}
 {{- end }}
