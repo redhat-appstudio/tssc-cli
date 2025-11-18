@@ -76,6 +76,35 @@ make &&
     bin/tssc deploy --help
 ```
 
+## Debugging `tssc mcp-server`
+
+The [`tssc mcp-server`](docs/mcp.md) subcommand communicates [via `STDIO`][mcpTransports], to debug this subcommand using `dlv` you can use the [`hack/dlv-tssc-mcp-server.sh`](hack/dlv-tssc-mcp-server.sh) script, make sure [the debugger is installed][delveInstallation]. This script wraps `dlv exec` around `tssc mcp-server`, ensuring `STDIO` communication is properly redirected and the Delve API is exposed on a local port.
+
+When you start the [`dlv-tssc-mcp-server.sh`](hack/dlv-tssc-mcp-server.sh) script, it will wait for the Delve client to connect before continuing execution. This is important to note, especially when using this approach with an LLM agentic client, as it can cause the client to hang while waiting for the debugger to attach.
+
+To configure VSCode for debugging, you can use the following `launch.json` snippet:
+
+```json
+{
+    "name": "tssc-mcp-dlv",
+    "type": "go",
+    "mode": "remote",
+    "host": "localhost",
+    "port": 8282,
+    "request": "attach",
+}
+```
+
+Follow these steps to start debugging the MCP server:
+
+1. Build the project with debug symbols enabled:
+    ```sh
+    make debug
+    ```
+2. Configure the MCP server on your favorite LLM client, using the [`hack/dlv-tssc-mcp-server.sh`](hack/dlv-tssc-mcp-server.sh) script as command.
+3. Start the LLM client, and right after attach the debugger.
+4. With the debugger client attached, you can use the LLM client and debug the project as usual.
+
 # GitHub Release
 
 This project uses [GitHub Actions](.github/workflows/release.yaml) to automate the release process, triggered by a new tag in the repository.
@@ -130,3 +159,5 @@ make snapshot
 [podman]: https://podman.io
 [releases]: https://github.com/redhat-appstudio/tssc-cli/releases
 [gnuTar]: https://www.gnu.org/software/tar
+[mcpTransports]: https://modelcontextprotocol.io/specification/2025-06-18/basic/transports
+[delveInstallation]: https://github.com/go-delve/delve/tree/master/Documentation/installation
