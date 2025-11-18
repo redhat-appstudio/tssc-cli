@@ -119,6 +119,8 @@ spec:
         echo "URL_REPOSITORY: $URL_REPOSITORY"
         GIT_REVISION=$(jq -r '.git.commit_sha // empty' <<< $JOB_SPEC)
         echo "GIT_REVISION: $GIT_REVISION"
+        PULL_REQUEST_NUM=$(jq -r '.pull_request_number // .pr_number // empty' <<< $JOB_SPEC)
+        echo "PULL_REQUEST_NUM: $PULL_REQUEST_NUM"
 
         PIPELINERUNS_ARRAY=()
 
@@ -160,6 +162,7 @@ spec:
             "--labels" "pac.test.appstudio.openshift.io/url-org=${URL_ORG}"
             "--labels" "pac.test.appstudio.openshift.io/url-repository=${URL_REPOSITORY}"
             "--labels" "pac.test.appstudio.openshift.io/git-revision=${GIT_REVISION}"
+            "--labels" "pac.test.appstudio.openshift.io/pull_request_num=${PULL_REQUEST_NUM}"
             "--labels" "custom.appstudio.openshift.io/main-pipeline-run=${CONTEXT_PIPELINE_RUN_NAME}"
             "--prefix-name" "e2e-$ocp_version$config_suffix"
             "-o" "name"
