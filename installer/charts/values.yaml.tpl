@@ -288,13 +288,16 @@ developerHub:
 {{- else if eq $authProvider "gitlab" }}
     adminUsers:
 {{ dig "Properties" "RBAC" "adminUsers" (list "${GITLAB__USERNAME}") $rhdh | toYaml | indent 6 }}
-{{- end }}
+{{- else if eq $authProvider "oidc" }}
   oidc:
+    secretNamespace: {{ .Installer.Namespace }}
+    enabled: true
     clientID: rhdh
     metadataURL: {{ printf "%s://%s/realms/%s/.well-known/openid-configuration" $protocol $keycloakRouteHost $realmsName }}
     baseURL: {{ printf "%s://%s" $protocol $keycloakRouteHost }}
     loginRealm: {{ $realmsName }}
     realm: {{ $realmsName }}
+{{- end }}
 
 #
 # tssc-tpa

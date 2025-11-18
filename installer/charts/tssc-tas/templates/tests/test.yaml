@@ -1,7 +1,6 @@
 {{- $secureSign := .Values.trustedArtifactSigner.secureSign -}}
 {{- if $secureSign.enabled }}
 ---
-  {{- $keycloak := .Values.trustedArtifactSigner.keycloakRealmImport -}}
 {{- include "common.test" . }}
   containers:
     - name: statefulsets-test
