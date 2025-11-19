@@ -15,7 +15,7 @@ Usage:
 
 Mandatory arguments:
     -b, --backend CI_BACKEND
-        Sets ci backend to one of this: github, gitlab, azure (required)
+        Sets ci backend to one of this: github, gitlab, azure, jenkins (required)
 
 Optional arguments:
     --dry-run
@@ -121,14 +121,18 @@ getValues() {
     ROX_CENTRAL_ENDPOINT="$(oc get secrets -n "$NAMESPACE" "$SECRET" -o json | jq -r '.data.endpoint | @base64d')"
     ROX_API_TOKEN="$(oc get secrets -n "$NAMESPACE" "$SECRET" -o json | jq -r '.data.token | @base64d')"
 
-    REKOR_HOST="https://$(oc get routes -n tssc-tas -l "app.kubernetes.io/name=rekor-server" -o jsonpath="{.items[0].spec.host}")"
+    TPA_SECRET="tssc-trustification-integration"
+    TPA_SECRET_JSON=$(oc get secret -n "$NAMESPACE" "$TPA_SECRET" -o json)
+    TPA_URL="$(echo "$TPA_SECRET_JSON" | jq -r '.data.bombastic_api_url | @base64d')"
+    TPA_OIDC_ISSUER_URL="$(echo "$TPA_SECRET_JSON" | jq -r '.data.oidc_issuer_url | @base64d')"
+    TPA_OIDC_CLIENT_ID="$(echo "$TPA_SECRET_JSON" | jq -r '.data.oidc_client_id | @base64d')"
+    TPA_OIDC_CLIENT_SECRET="$(echo "$TPA_SECRET_JSON" | jq -r '.data.oidc_client_secret | @base64d')"
+    TPA_SUPPORTED_CYCLONEDX_VERSION="$(echo "$TPA_SECRET_JSON" | jq -r '.data.supported_cyclonedx_version | @base64d')"
 
-    TPA_URL="https://$(oc get routes -n tssc-tpa -l "app.kubernetes.io/name=server" -o jsonpath="{.items[0].spec.host}")"
-    TPA_OIDC_CLIENT_ID="cli"
-    TPA_OIDC_CLIENT_SECRET="$(oc get secret -n tssc tpa-realm-clients -o json | jq -r '.data.cli | @base64d')"
-    TPA_OIDC_ISSUER_URL="https://$(oc get routes -n tssc-keycloak -l "app=keycloak" -o jsonpath="{.items[0].spec.host}")/realms/chicken"
-    TPA_SUPPORTED_CYCLONEDX_VERSION="1.5"
+    REKOR_HOST="https://$(oc get routes -n tssc-tas -l "app.kubernetes.io/name=rekor-server" -o jsonpath="{.items[0].spec.host}")"
     TUF_MIRROR="https://$(oc get routes -n tssc-tas -l "app.kubernetes.io/name=tuf" -o jsonpath="{.items[0].spec.host}")"
+
+    SECRET_VARS=("COSIGN_SECRET_KEY" "COSIGN_SECRET_PASSWORD" "GITOPS_AUTH_PASSWORD" "IMAGE_REGISTRY_PASSWORD" "ROX_API_TOKEN" "TRUSTIFICATION_OIDC_CLIENT_SECRET")
 }
 
 is_in_list() {
@@ -165,7 +169,7 @@ validateBackend() {
         exit 1
     fi
 
-    if ! is_in_list "$CI_BACKEND" gitlab github azure; then
+    if ! is_in_list "$CI_BACKEND" gitlab github azure jenkins; then
         echo "CI backend $CI_BACKEND is not supported"
         exit 1
     fi
@@ -221,11 +225,17 @@ githubGetValues() {
     SECRET_JSON=$(oc get secrets -n "$NAMESPACE" "$SECRET" -o json)
     GIT_ORG="$(echo "$SECRET_JSON" | jq -r '.data.ownerLogin | @base64d')"
     GIT_TOKEN="$(echo "$SECRET_JSON" | jq -r '.data.token | @base64d')"
+    GIT_USER="$(echo "$SECRET_JSON" | jq -r '.data.username | @base64d')"
     export GH_TOKEN=$GIT_TOKEN
 }
 
 githubSetVar() {
-    gh secret set "$NAME" -b "$VALUE" --org "$GIT_ORG" --visibility all
+    if is_in_list "$NAME" "${SECRET_VARS[@]}"; then
+        gh secret set "$NAME" -b "$VALUE" --org "$GIT_ORG" --visibility all
+    else
+        gh variable set "$NAME" -b "$VALUE" --org "$GIT_ORG" --visibility all
+    fi
+    
 }
 
 azureGetValues() {
@@ -266,8 +276,6 @@ EOF
         echo "Var Group $AZURE_VAR_GROUP already exists in project $AZURE_PROJECT"
         exit 1
     fi
-    SECRET_VARS=("COSIGN_SECRET_KEY" "COSIGN_SECRET_PASSWORD" "GITOPS_AUTH_PASSWORD" "IMAGE_REGISTRY_PASSWORD" "ROX_API_TOKEN" "TRUSTIFICATION_OIDC_CLIENT_SECRET")
- 
 }
 
 azureUpdateVars() {
@@ -312,6 +320,7 @@ gitlabGetValues() {
     SECRET="tssc-gitlab-integration"
     SECRET_JSON=$(oc get secrets -n "$NAMESPACE" "$SECRET" -o json)
     GIT_TOKEN="$(echo "$SECRET_JSON" | jq -r '.data.token | @base64d')"
+    GIT_USER="$(echo "$SECRET_JSON" | jq -r '.data.username | @base64d')"
     GIT_ORG="$(echo "$SECRET_JSON" | jq -r '.data.group | @base64d')"
     URL="https://$(echo "$SECRET_JSON" | jq -r '.data.host | @base64d')"
     PID=$(curl -sL --proto "=https" --header "PRIVATE-TOKEN: $GIT_TOKEN" "$URL/api/v4/groups/$GIT_ORG" | jq -r ".id")
@@ -329,6 +338,86 @@ gitlabSetVar() {
     )
   fi
   echo "$result" | jq --compact-output 'del(.description, .key, .value, .variable_type)'
+}
+
+# Functions to support Jenkins
+add_secret() {
+    local id=$1
+    local secret=$2
+
+    local json
+    json=$(cat <<EOF
+{
+  "": "0",
+  "credentials": {
+    "scope": "GLOBAL",
+    "id": "${id}",
+    "secret": "${secret}",
+    "description": "",
+    "\$class": "org.jenkinsci.plugins.plaincredentials.impl.StringCredentialsImpl"
+  }
+}
+EOF
+)
+
+    create_credentials "$json"    
+}
+
+add_username_with_password() {
+    local id=$1
+    local username=$2
+    local password=$3
+
+    local json
+    json=$(cat <<EOF
+{
+  "": "0",
+  "credentials": {
+    "scope": "GLOBAL",
+    "id": "${id}",
+    "username": "${username}",
+    "password": "${password}",
+    "description": "",
+    "\$class": "com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl"
+  }
+}
+EOF
+)
+
+    create_credentials "$json"
+}
+
+create_credentials() {
+    local json=$1
+
+    curl -X POST "$JENKINS__URL/credentials/store/system/domain/_/createCredentials" \
+    --user "$JENKINS__USERNAME:$JENKINS__TOKEN" \
+    --data-urlencode "json=$json"
+}
+
+jenkinsGetValues() {
+    SECRET="tssc-jenkins-integration"
+    JENKINS_SECRET_JSON=$(oc get secrets -n "$NAMESPACE" "$SECRET" -o json)
+    JENKINS__URL="$(echo "$JENKINS_SECRET_JSON" | jq -r '.data.baseUrl | @base64d')"
+    JENKINS__USERNAME="$(echo "$JENKINS_SECRET_JSON" | jq -r '.data.username | @base64d')"
+    JENKINS__TOKEN="$(echo "$JENKINS_SECRET_JSON" | jq -r '.data.token | @base64d')"
+
+    # Add usernames with passwords
+    if oc get secrets -n "$NAMESPACE" "tssc-quay-integration" -o name >/dev/null 2>&1; then
+        echo "Setting QUAY_IO_CREDS: *********"
+        add_username_with_password "QUAY_IO_CREDS" "$IMAGE_REGISTRY_USER" "$IMAGE_REGISTRY_PASSWORD"
+    fi
+    echo "Setting GITOPS_CREDENTIALS: *********"
+    add_username_with_password "GITOPS_CREDENTIALS" "$GIT_USER" "$GIT_TOKEN"
+}
+
+jenkinsSetVar() {
+    if is_in_list "$NAME" "${SECRET_VARS[@]}"; then
+        echo "*********"
+    else
+        echo "$VALUE"
+    fi
+    add_secret "$NAME" "$VALUE"
 }
 
 main() {
