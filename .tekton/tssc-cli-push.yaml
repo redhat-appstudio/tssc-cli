@@ -213,6 +213,12 @@ spec:
             echo "Cloning repository..."
             # Use unshallow clone to get full history and tags for git describe
             git clone --no-single-branch "$GIT_URL" .
+
+            # Checkout the specific revision
+            git checkout "$GIT_REVISION"  
+
+            # Fetch all tags explicitly
+            git fetch origin --tags 
             
             # Get version using git describe (same logic as Makefile)
             # Try to get the closest tag, or use commit SHA as fallback
