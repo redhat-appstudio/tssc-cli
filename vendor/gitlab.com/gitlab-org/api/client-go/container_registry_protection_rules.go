@@ -15,7 +15,6 @@
 package gitlab
 
 import (
-	"fmt"
 	"net/http"
 )
 
@@ -81,24 +80,11 @@ func (s ContainerRegistryProtectionRule) String() string {
 }
 
 func (s *ContainerRegistryProtectionRulesService) ListContainerRegistryProtectionRules(pid any, options ...RequestOptionFunc) ([]*ContainerRegistryProtectionRule, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/registry/protection/repository/rules", PathEscape(project))
-
-	req, err := s.client.NewRequest(http.MethodGet, u, nil, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var rules []*ContainerRegistryProtectionRule
-	resp, err := s.client.Do(req, &rules)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return rules, resp, nil
+	return do[[]*ContainerRegistryProtectionRule](s.client,
+		withMethod(http.MethodGet),
+		withPath("projects/%s/registry/protection/repository/rules", ProjectID{pid}),
+		withRequestOpts(options...),
+	)
 }
 
 // CreateContainerRegistryProtectionRuleOptions represents the available
@@ -113,24 +99,12 @@ type CreateContainerRegistryProtectionRuleOptions struct {
 }
 
 func (s *ContainerRegistryProtectionRulesService) CreateContainerRegistryProtectionRule(pid any, opt *CreateContainerRegistryProtectionRuleOptions, options ...RequestOptionFunc) (*ContainerRegistryProtectionRule, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/registry/protection/repository/rules", PathEscape(project))
-
-	req, err := s.client.NewRequest(http.MethodPost, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	rule := new(ContainerRegistryProtectionRule)
-	resp, err := s.client.Do(req, rule)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return rule, resp, nil
+	return do[*ContainerRegistryProtectionRule](s.client,
+		withMethod(http.MethodPost),
+		withPath("projects/%s/registry/protection/repository/rules", ProjectID{pid}),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 // UpdateContainerRegistryProtectionRuleOptions represents the available
@@ -145,37 +119,19 @@ type UpdateContainerRegistryProtectionRuleOptions struct {
 }
 
 func (s *ContainerRegistryProtectionRulesService) UpdateContainerRegistryProtectionRule(pid any, ruleID int, opt *UpdateContainerRegistryProtectionRuleOptions, options ...RequestOptionFunc) (*ContainerRegistryProtectionRule, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/registry/protection/repository/rules/%d", PathEscape(project), ruleID)
-
-	req, err := s.client.NewRequest(http.MethodPatch, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	rule := new(ContainerRegistryProtectionRule)
-	resp, err := s.client.Do(req, rule)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return rule, resp, nil
+	return do[*ContainerRegistryProtectionRule](s.client,
+		withMethod(http.MethodPatch),
+		withPath("projects/%s/registry/protection/repository/rules/%d", ProjectID{pid}, ruleID),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 func (s *ContainerRegistryProtectionRulesService) DeleteContainerRegistryProtectionRule(pid any, ruleID int, options ...RequestOptionFunc) (*Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, err
-	}
-	u := fmt.Sprintf("projects/%s/registry/protection/repository/rules/%d", PathEscape(project), ruleID)
-
-	req, err := s.client.NewRequest(http.MethodDelete, u, nil, options)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.client.Do(req, nil)
+	_, resp, err := do[none](s.client,
+		withMethod(http.MethodDelete),
+		withPath("projects/%s/registry/protection/repository/rules/%d", ProjectID{pid}, ruleID),
+		withRequestOpts(options...),
+	)
+	return resp, err
 }

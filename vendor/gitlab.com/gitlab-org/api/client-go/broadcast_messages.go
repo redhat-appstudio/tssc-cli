@@ -17,7 +17,6 @@
 package gitlab
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 )
@@ -92,35 +91,20 @@ type BroadcastMessage struct {
 type ListBroadcastMessagesOptions ListOptions
 
 func (s *BroadcastMessagesService) ListBroadcastMessages(opt *ListBroadcastMessagesOptions, options ...RequestOptionFunc) ([]*BroadcastMessage, *Response, error) {
-	req, err := s.client.NewRequest(http.MethodGet, "broadcast_messages", opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var bs []*BroadcastMessage
-	resp, err := s.client.Do(req, &bs)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return bs, resp, nil
+	return do[[]*BroadcastMessage](s.client,
+		withMethod(http.MethodGet),
+		withPath("broadcast_messages"),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 func (s *BroadcastMessagesService) GetBroadcastMessage(broadcast int, options ...RequestOptionFunc) (*BroadcastMessage, *Response, error) {
-	u := fmt.Sprintf("broadcast_messages/%d", broadcast)
-
-	req, err := s.client.NewRequest(http.MethodGet, u, nil, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	b := new(BroadcastMessage)
-	resp, err := s.client.Do(req, &b)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return b, resp, nil
+	return do[*BroadcastMessage](s.client,
+		withMethod(http.MethodGet),
+		withPath("broadcast_messages/%d", broadcast),
+		withRequestOpts(options...),
+	)
 }
 
 // CreateBroadcastMessageOptions represents the available CreateBroadcastMessage()
@@ -141,18 +125,12 @@ type CreateBroadcastMessageOptions struct {
 }
 
 func (s *BroadcastMessagesService) CreateBroadcastMessage(opt *CreateBroadcastMessageOptions, options ...RequestOptionFunc) (*BroadcastMessage, *Response, error) {
-	req, err := s.client.NewRequest(http.MethodPost, "broadcast_messages", opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	b := new(BroadcastMessage)
-	resp, err := s.client.Do(req, &b)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return b, resp, nil
+	return do[*BroadcastMessage](s.client,
+		withMethod(http.MethodPost),
+		withPath("broadcast_messages"),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 // UpdateBroadcastMessageOptions represents the available CreateBroadcastMessage()
@@ -173,29 +151,19 @@ type UpdateBroadcastMessageOptions struct {
 }
 
 func (s *BroadcastMessagesService) UpdateBroadcastMessage(broadcast int, opt *UpdateBroadcastMessageOptions, options ...RequestOptionFunc) (*BroadcastMessage, *Response, error) {
-	u := fmt.Sprintf("broadcast_messages/%d", broadcast)
-
-	req, err := s.client.NewRequest(http.MethodPut, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	b := new(BroadcastMessage)
-	resp, err := s.client.Do(req, &b)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return b, resp, nil
+	return do[*BroadcastMessage](s.client,
+		withMethod(http.MethodPut),
+		withPath("broadcast_messages/%d", broadcast),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 func (s *BroadcastMessagesService) DeleteBroadcastMessage(broadcast int, options ...RequestOptionFunc) (*Response, error) {
-	u := fmt.Sprintf("broadcast_messages/%d", broadcast)
-
-	req, err := s.client.NewRequest(http.MethodDelete, u, nil, options)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.client.Do(req, nil)
+	_, resp, err := do[none](s.client,
+		withMethod(http.MethodDelete),
+		withPath("broadcast_messages/%d", broadcast),
+		withRequestOpts(options...),
+	)
+	return resp, err
 }

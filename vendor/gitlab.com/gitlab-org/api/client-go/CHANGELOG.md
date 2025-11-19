@@ -1,3 +1,30 @@
+## 0.160.1
+
+### 🐛 Bug Fixes
+
+- fix: update input field from "key" to "name" in pipeline schedules to prevent an API error ([!2580](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2580)) by [Zubeen](https://gitlab.com/syedzubeen)
+
+### 🔄 Other Changes
+
+- Code Refactor Using Request Handlers - 9 ([!2524](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2524)) by [Yashesvinee V](https://gitlab.com/yashes7516)
+- Code Refactor Using Request Handlers - 7 ([!2522](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2522)) by [Yashesvinee V](https://gitlab.com/yashes7516)
+- Code Refactor Using Request Handlers - 5 ([!2518](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2518)) by [Yashesvinee V](https://gitlab.com/yashes7516)
+- Code Refactor Using Request Handlers - 2 ([!2515](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2515)) by [Yashesvinee V](https://gitlab.com/yashes7516)
+- Code Refactor Using Request Handlers - 4 ([!2517](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2517)) by [Yashesvinee V](https://gitlab.com/yashes7516)
+- Code Refactor Using Request Handlers - 3 ([!2516](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2516)) by [Yashesvinee V](https://gitlab.com/yashes7516)
+- chore(deps): update module github.com/godbus/dbus/v5 to v5.2.0 ([!2576](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2576)) by [GitLab Dependency Bot](https://gitlab.com/gitlab-dependency-update-bot)
+- chore(deps): update golangci/golangci-lint docker tag to v2.6.2 ([!2577](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2577)) by [GitLab Dependency Bot](https://gitlab.com/gitlab-dependency-update-bot)
+- Code Refactor Using Request Handlers - 1 ([!2514](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2514)) by [Yashesvinee V](https://gitlab.com/yashes7516)
+
+
+
+## [0.160.1](https://gitlab.com/gitlab-org/api/client-go/compare/v0.160.0...v0.160.1) (2025-11-19)
+
+
+### Bug Fixes
+
+* update input field from "key" to "name" in pipeline schedules to prevent an API error ([062133f](https://gitlab.com/gitlab-org/api/client-go/commit/062133f0c24b32ca6ae64a9f7b80fd3fa7e58256))
+
 ## 0.160.0
 
 ### 🚀 Features

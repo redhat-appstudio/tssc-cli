@@ -15,7 +15,6 @@
 package gitlab
 
 import (
-	"fmt"
 	"net/http"
 )
 
@@ -51,12 +50,11 @@ type MarkMigrationAsSuccessfulOptions struct {
 }
 
 func (s *DatabaseMigrationsService) MarkMigrationAsSuccessful(version int, opt *MarkMigrationAsSuccessfulOptions, options ...RequestOptionFunc) (*Response, error) {
-	u := fmt.Sprintf("admin/migrations/%d/mark", version)
-
-	req, err := s.client.NewRequest(http.MethodPost, u, opt, options)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.client.Do(req, nil)
+	_, resp, err := do[none](s.client,
+		withMethod(http.MethodPost),
+		withPath("admin/migrations/%d/mark", version),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
+	return resp, err
 }
