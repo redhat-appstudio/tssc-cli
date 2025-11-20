@@ -77,10 +77,10 @@ ci_enabled() {
 }
 
 update_dh_catalog_url() {
-  # if DEVELOPER_HUB__CATALOG__URL is not empty string, then update the catalog url
-  if [[ -n "${DEVELOPER_HUB__CATALOG__URL}" ]]; then
-    echo "[INFO] Update dh catalog url with $DEVELOPER_HUB__CATALOG__URL"
-    yq -i '.tssc.products[] |= select(.name == "Developer Hub").properties.catalogURL=strenv(DEVELOPER_HUB__CATALOG__URL)' "${config_file}"
+  # if DEVELOPER_HUB_CATALOG_URL is not empty string, then update the catalog url
+  if [[ -n "${DEVELOPER_HUB_CATALOG_URL}" ]]; then
+    echo "[INFO] Update dh catalog url with $DEVELOPER_HUB_CATALOG_URL"
+    yq -i '.tssc.products[] |= select(.name == "Developer Hub").properties.catalogURL=strenv(DEVELOPER_HUB_CATALOG_URL)' "${config_file}"
   fi
 }
 
@@ -89,8 +89,11 @@ update_dh_auth_config() {
   if [[ " ${auth_config[*]} " =~ " gitlab " ]]; then
     echo "[INFO] Change Developer Hub auth to gitlab"
     yq -i '.tssc.products[] |= select(.name == "Developer Hub").properties.authProvider = "gitlab"' "${config_file}"
+  elif [[ " ${auth_config[*]} " =~ " github " ]]; then
+    echo "[INFO] Change Developer Hub auth to github"
+    yq -i '.tssc.products[] |= select(.name == "Developer Hub").properties.authProvider = "github"' "${config_file}"
   else
-    echo "[INFO] Keep Developer Hub auth as github (default)"
+    echo "[INFO] Keep Developer Hub auth as oidc (default)"
   fi
 }
 
@@ -128,12 +131,12 @@ github_integration() {
   if [[ " ${scm_config[*]} " =~ " github " ]] || [[ " ${auth_config[*]} " =~ " github " ]]; then
     echo "[INFO] Config Github integration with TSSC"
 
-    GITHUB__APP__ID="${GITHUB__APP__ID:-$(cat /usr/local/rhtap-cli-install/rhdh-github-app-id)}"
-    GITHUB__APP__CLIENT__ID="${GITHUB__APP__CLIENT__ID:-$(cat /usr/local/rhtap-cli-install/rhdh-github-client-id)}"
-    GITHUB__APP__CLIENT__SECRET="${GITHUB__APP__CLIENT__SECRET:-$(cat /usr/local/rhtap-cli-install/rhdh-github-client-secret)}"
-    GITHUB__APP__PRIVATE_KEY="${GITHUB__APP__PRIVATE_KEY:-$(base64 -d < /usr/local/rhtap-cli-install/rhdh-github-private-key | sed 's/^/        /')}"
-    GITOPS__GIT_TOKEN="${GITOPS__GIT_TOKEN:-$(cat /usr/local/rhtap-cli-install/github_token)}"
-    GITHUB__APP__WEBHOOK__SECRET="${GITHUB__APP__WEBHOOK__SECRET:-$(cat /usr/local/rhtap-cli-install/rhdh-github-webhook-secret)}"
+    GITHUB_APP_ID="${GITHUB_APP_ID:-$(cat /usr/local/rhtap-cli-install/rhdh-github-app-id)}"
+    GITHUB_APP_CLIENT_ID="${GITHUB_APP_CLIENT_ID:-$(cat /usr/local/rhtap-cli-install/rhdh-github-client-id)}"
+    GITHUB_APP_CLIENT_SECRET="${GITHUB_APP_CLIENT_SECRET:-$(cat /usr/local/rhtap-cli-install/rhdh-github-client-secret)}"
+    GITHUB_APP_PRIVATE_KEY="${GITHUB_APP_PRIVATE_KEY:-$(base64 -d < /usr/local/rhtap-cli-install/rhdh-github-private-key | sed 's/^/        /')}"
+    GITOPS_GIT_TOKEN="${GITOPS_GIT_TOKEN:-$(cat /usr/local/rhtap-cli-install/github_token)}"
+    GITHUB_APP_WEBHOOK_SECRET="${GITHUB_APP_WEBHOOK_SECRET:-$(cat /usr/local/rhtap-cli-install/rhdh-github-webhook-secret)}"
 
     cat << EOF | kubectl apply -f -
 kind: Secret
@@ -143,14 +146,15 @@ metadata:
     name: tssc-github-integration
     namespace: tssc
 stringData:
-    id: "$GITHUB__APP__ID"
-    clientId: "$GITHUB__APP__CLIENT__ID"
-    clientSecret: "$GITHUB__APP__CLIENT__SECRET"
+    id: "$GITHUB_APP_ID"
+    clientId: "$GITHUB_APP_CLIENT_ID"
+    clientSecret: "$GITHUB_APP_CLIENT_SECRET"
     host: github.com
     pem: |
-$(printf "%s\n" "${GITHUB__APP__PRIVATE_KEY}" | sed 's/^/        /')
-    token: "$GITOPS__GIT_TOKEN"
-    webhookSecret: "$GITHUB__APP__WEBHOOK__SECRET"
+$(printf "%s\n" "${GITHUB_APP_PRIVATE_KEY}" | sed 's/^/        /')
+    token: "$GITOPS_GIT_TOKEN"
+    username: "$GITHUB_AUTH_USERNAME"
+    webhookSecret: "$GITHUB_APP_WEBHOOK_SECRET"
 EOF
   fi
 }
@@ -189,7 +193,7 @@ gitlab_integration() {
     GITLAB__APP_SECRET="${GITLAB__APP_SECRET:-$(cat /usr/local/rhtap-cli-install/gitlab-app-secret)}"
     GITLAB__GROUP="${GITLAB__GROUP:-$(cat /usr/local/rhtap-cli-install/gitlab-group)}"
 
-    "${TSSC_BINARY}" integration --kube-config "$KUBECONFIG" gitlab --token="${GITLAB__TOKEN}" --app-id="${GITLAB__APP__ID}" --app-secret="${GITLAB__APP_SECRET}" --group="${GITLAB__GROUP}"
+    "${TSSC_BINARY}" integration --kube-config "$KUBECONFIG" gitlab --token="${GITLAB__TOKEN}" --app-id="${GITLAB__APP__ID}" --app-secret="${GITLAB__APP_SECRET}" --group="${GITLAB__GROUP}" --force
   fi
 }
 
@@ -200,7 +204,7 @@ quay_integration() {
     QUAY__DOCKERCONFIGJSON="${QUAY__DOCKERCONFIGJSON:-$(cat /usr/local/rhtap-cli-install/quay-dockerconfig-json)}"
     QUAY__API_TOKEN="${QUAY__API_TOKEN:-$(cat /usr/local/rhtap-cli-install/quay-api-token)}"
 
-    "${TSSC_BINARY}" integration --kube-config "$KUBECONFIG" quay --url="https://quay.io" --dockerconfigjson="${QUAY__DOCKERCONFIGJSON}" --token="${QUAY__API_TOKEN}"
+    "${TSSC_BINARY}" integration --kube-config "$KUBECONFIG" quay --url="https://quay.io" --dockerconfigjson="${QUAY__DOCKERCONFIGJSON}" --token="${QUAY__API_TOKEN}" --force
   fi
 }
 
@@ -224,7 +228,7 @@ acs_integration() {
     ACS__CENTRAL_ENDPOINT="${ACS__CENTRAL_ENDPOINT:-$(cat /usr/local/rhtap-cli-install/acs-central-endpoint)}"
     ACS__API_TOKEN="${ACS__API_TOKEN:-$(cat /usr/local/rhtap-cli-install/acs-api-token)}"
 
-    "${TSSC_BINARY}" integration --kube-config "$KUBECONFIG" acs --endpoint="${ACS__CENTRAL_ENDPOINT}" --token="${ACS__API_TOKEN}"
+    "${TSSC_BINARY}" integration --kube-config "$KUBECONFIG" acs --endpoint="${ACS__CENTRAL_ENDPOINT}" --token="${ACS__API_TOKEN}" --force 
   fi
 }
 
@@ -235,7 +239,7 @@ bitbucket_integration() {
     BITBUCKET_USERNAME="${BITBUCKET_USERNAME:-$(cat /usr/local/rhtap-cli-install/bitbucket-username)}"
     BITBUCKET_APP_PASSWORD="${BITBUCKET_APP_PASSWORD:-$(cat /usr/local/rhtap-cli-install/bitbucket-app-password)}"
 
-    "${TSSC_BINARY}" integration --kube-config "$KUBECONFIG" bitbucket --host="${BITBUCKET_HOST}" --username="${BITBUCKET_USERNAME}" --app-password="${BITBUCKET_APP_PASSWORD}"
+    "${TSSC_BINARY}" integration --kube-config "$KUBECONFIG" bitbucket --host="${BITBUCKET_HOST}" --username="${BITBUCKET_USERNAME}" --app-password="${BITBUCKET_APP_PASSWORD}" --force
   fi
 }
 
@@ -261,7 +265,7 @@ tpa_integration() {
     OIDC_CLIENT_SECRET="${OIDC_CLIENT_SECRET:-$(cat /usr/local/rhtap-cli-install/oidc-client-secret)}"
     OIDC_ISSUER_URL="${OIDC_ISSUER_URL:-$(cat /usr/local/rhtap-cli-install/oidc-issuer-url)}"
 
-    "${TSSC_BINARY}" integration --kube-config "$KUBECONFIG" trustification --bombastic-api-url="${BOMBASTIC_API_URL}" --oidc-client-id="${OIDC_CLIENT_ID}" --oidc-client-secret="${OIDC_CLIENT_SECRET}" --oidc-issuer-url="${OIDC_ISSUER_URL}" --supported-cyclonedx-version="${SUPPORTED_CYCLONEDX_VERSION}"
+    "${TSSC_BINARY}" integration --kube-config "$KUBECONFIG" trustification --bombastic-api-url="${BOMBASTIC_API_URL}" --oidc-client-id="${OIDC_CLIENT_ID}" --oidc-client-secret="${OIDC_CLIENT_SECRET}" --oidc-issuer-url="${OIDC_ISSUER_URL}" --supported-cyclonedx-version="${SUPPORTED_CYCLONEDX_VERSION}" --force
   fi
 }
 
@@ -272,7 +276,7 @@ artifactory_integration() {
     ARTIFACTORY_URL="${ARTIFACTORY_URL:-$(cat /usr/local/rhtap-cli-install/artifactory-url)}"
     ARTIFACTORY_TOKEN="${ARTIFACTORY_TOKEN:-$(cat /usr/local/rhtap-cli-install/artifactory-token)}"
     ARTIFACTORY_DOCKERCONFIGJSON="${ARTIFACTORY_DOCKERCONFIGJSON:-$(cat /usr/local/rhtap-cli-install/artifactory-dockerconfig-json)}"
-    "${TSSC_BINARY}" integration --kube-config "$KUBECONFIG" artifactory --url="${ARTIFACTORY_URL}" --token="${ARTIFACTORY_TOKEN}" --dockerconfigjson="${ARTIFACTORY_DOCKERCONFIGJSON}"
+    "${TSSC_BINARY}" integration --kube-config "$KUBECONFIG" artifactory --url="${ARTIFACTORY_URL}" --token="${ARTIFACTORY_TOKEN}" --dockerconfigjson="${ARTIFACTORY_DOCKERCONFIGJSON}" --force
   fi
 }
 
@@ -282,7 +286,7 @@ nexus_integration() {
 
     NEXUS_URL="${NEXUS_URL:-$(cat /usr/local/rhtap-cli-install/nexus-ui-url)}"
     NEXUS_DOCKERCONFIGJSON="${NEXUS_DOCKERCONFIGJSON:-$(cat /usr/local/rhtap-cli-install/nexus-dockerconfig-json)}"
-    "${TSSC_BINARY}" integration --kube-config "$KUBECONFIG" nexus --url="${NEXUS_URL}" --dockerconfigjson="${NEXUS_DOCKERCONFIGJSON}"
+    "${TSSC_BINARY}" integration --kube-config "$KUBECONFIG" nexus --url="${NEXUS_URL}" --dockerconfigjson="${NEXUS_DOCKERCONFIGJSON}" --force
   fi
 }
 
@@ -300,7 +304,7 @@ create_cluster_config() {
 
   echo "[INFO] Applying the cluster configuration, and showing the 'config.yaml'"
   set -x
-    "${TSSC_BINARY}" config --kube-config "$KUBECONFIG" --get --create "$config_file"
+    "${TSSC_BINARY}" config --kube-config "$KUBECONFIG" --get --create "$config_file" --force
   set +x
   
   echo "[INFO] Cluster configuration created successfully"
