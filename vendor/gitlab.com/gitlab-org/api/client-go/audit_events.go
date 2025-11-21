@@ -1,7 +1,6 @@
 package gitlab
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 )
@@ -108,117 +107,52 @@ type ListAuditEventsOptions struct {
 }
 
 func (s *AuditEventsService) ListInstanceAuditEvents(opt *ListAuditEventsOptions, options ...RequestOptionFunc) ([]*AuditEvent, *Response, error) {
-	req, err := s.client.NewRequest(http.MethodGet, "audit_events", opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var aes []*AuditEvent
-	resp, err := s.client.Do(req, &aes)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return aes, resp, nil
+	return do[[]*AuditEvent](s.client,
+		withMethod(http.MethodGet),
+		withPath("audit_events"),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 func (s *AuditEventsService) GetInstanceAuditEvent(event int, options ...RequestOptionFunc) (*AuditEvent, *Response, error) {
-	u := fmt.Sprintf("audit_events/%d", event)
-
-	req, err := s.client.NewRequest(http.MethodGet, u, nil, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	ae := new(AuditEvent)
-	resp, err := s.client.Do(req, ae)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return ae, resp, nil
+	return do[*AuditEvent](s.client,
+		withMethod(http.MethodGet),
+		withPath("audit_events/%d", event),
+		withRequestOpts(options...),
+	)
 }
 
 func (s *AuditEventsService) ListGroupAuditEvents(gid any, opt *ListAuditEventsOptions, options ...RequestOptionFunc) ([]*AuditEvent, *Response, error) {
-	group, err := parseID(gid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("groups/%s/audit_events", PathEscape(group))
-
-	req, err := s.client.NewRequest(http.MethodGet, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var aes []*AuditEvent
-	resp, err := s.client.Do(req, &aes)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return aes, resp, nil
+	return do[[]*AuditEvent](s.client,
+		withMethod(http.MethodGet),
+		withPath("groups/%s/audit_events", GroupID{gid}),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 func (s *AuditEventsService) GetGroupAuditEvent(gid any, event int, options ...RequestOptionFunc) (*AuditEvent, *Response, error) {
-	group, err := parseID(gid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("groups/%s/audit_events/%d", PathEscape(group), event)
-
-	req, err := s.client.NewRequest(http.MethodGet, u, nil, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	ae := new(AuditEvent)
-	resp, err := s.client.Do(req, ae)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return ae, resp, nil
+	return do[*AuditEvent](s.client,
+		withMethod(http.MethodGet),
+		withPath("groups/%s/audit_events/%d", GroupID{gid}, event),
+		withRequestOpts(options...),
+	)
 }
 
 func (s *AuditEventsService) ListProjectAuditEvents(pid any, opt *ListAuditEventsOptions, options ...RequestOptionFunc) ([]*AuditEvent, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/audit_events", PathEscape(project))
-
-	req, err := s.client.NewRequest(http.MethodGet, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var aes []*AuditEvent
-	resp, err := s.client.Do(req, &aes)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return aes, resp, nil
+	return do[[]*AuditEvent](s.client,
+		withMethod(http.MethodGet),
+		withPath("projects/%s/audit_events", ProjectID{pid}),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 func (s *AuditEventsService) GetProjectAuditEvent(pid any, event int, options ...RequestOptionFunc) (*AuditEvent, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/audit_events/%d", PathEscape(project), event)
-
-	req, err := s.client.NewRequest(http.MethodGet, u, nil, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	ae := new(AuditEvent)
-	resp, err := s.client.Do(req, ae)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return ae, resp, nil
+	return do[*AuditEvent](s.client,
+		withMethod(http.MethodGet),
+		withPath("projects/%s/audit_events/%d", ProjectID{pid}, event),
+		withRequestOpts(options...),
+	)
 }

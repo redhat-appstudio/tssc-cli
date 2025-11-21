@@ -17,7 +17,6 @@
 package gitlab
 
 import (
-	"fmt"
 	"net/http"
 )
 
@@ -75,18 +74,12 @@ type CreateApplicationOptions struct {
 }
 
 func (s *ApplicationsService) CreateApplication(opt *CreateApplicationOptions, options ...RequestOptionFunc) (*Application, *Response, error) {
-	req, err := s.client.NewRequest(http.MethodPost, "applications", opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	a := new(Application)
-	resp, err := s.client.Do(req, a)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return a, resp, nil
+	return do[*Application](s.client,
+		withMethod(http.MethodPost),
+		withPath("applications"),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 // ListApplicationsOptions represents the available
@@ -94,27 +87,19 @@ func (s *ApplicationsService) CreateApplication(opt *CreateApplicationOptions, o
 type ListApplicationsOptions ListOptions
 
 func (s *ApplicationsService) ListApplications(opt *ListApplicationsOptions, options ...RequestOptionFunc) ([]*Application, *Response, error) {
-	req, err := s.client.NewRequest(http.MethodGet, "applications", opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var as []*Application
-	resp, err := s.client.Do(req, &as)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return as, resp, nil
+	return do[[]*Application](s.client,
+		withMethod(http.MethodGet),
+		withPath("applications"),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 func (s *ApplicationsService) DeleteApplication(application int, options ...RequestOptionFunc) (*Response, error) {
-	u := fmt.Sprintf("applications/%d", application)
-
-	req, err := s.client.NewRequest(http.MethodDelete, u, nil, options)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.client.Do(req, nil)
+	_, resp, err := do[none](s.client,
+		withMethod(http.MethodDelete),
+		withPath("applications/%d", application),
+		withRequestOpts(options...),
+	)
+	return resp, err
 }

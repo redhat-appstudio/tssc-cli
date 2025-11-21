@@ -17,7 +17,6 @@
 package gitlab
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 )
@@ -136,45 +135,21 @@ type ListRegistryRepositoriesOptions struct {
 }
 
 func (s *ContainerRegistryService) ListProjectRegistryRepositories(pid any, opt *ListRegistryRepositoriesOptions, options ...RequestOptionFunc) ([]*RegistryRepository, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/registry/repositories", PathEscape(project))
-
-	req, err := s.client.NewRequest(http.MethodGet, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var repos []*RegistryRepository
-	resp, err := s.client.Do(req, &repos)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return repos, resp, nil
+	return do[[]*RegistryRepository](s.client,
+		withMethod(http.MethodGet),
+		withPath("projects/%s/registry/repositories", ProjectID{pid}),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 func (s *ContainerRegistryService) ListGroupRegistryRepositories(gid any, opt *ListRegistryRepositoriesOptions, options ...RequestOptionFunc) ([]*RegistryRepository, *Response, error) {
-	group, err := parseID(gid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("groups/%s/registry/repositories", PathEscape(group))
-
-	req, err := s.client.NewRequest(http.MethodGet, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var repos []*RegistryRepository
-	resp, err := s.client.Do(req, &repos)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return repos, resp, nil
+	return do[[]*RegistryRepository](s.client,
+		withMethod(http.MethodGet),
+		withPath("groups/%s/registry/repositories", GroupID{gid}),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 // GetSingleRegistryRepositoryOptions represents the available
@@ -188,39 +163,21 @@ type GetSingleRegistryRepositoryOptions struct {
 }
 
 func (s *ContainerRegistryService) GetSingleRegistryRepository(pid any, opt *GetSingleRegistryRepositoryOptions, options ...RequestOptionFunc) (*RegistryRepository, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("registry/repositories/%s", PathEscape(project))
-
-	req, err := s.client.NewRequest(http.MethodGet, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	repo := new(RegistryRepository)
-	resp, err := s.client.Do(req, repo)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return repo, resp, nil
+	return do[*RegistryRepository](s.client,
+		withMethod(http.MethodGet),
+		withPath("registry/repositories/%s", ProjectID{pid}),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 func (s *ContainerRegistryService) DeleteRegistryRepository(pid any, repository int, options ...RequestOptionFunc) (*Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, err
-	}
-	u := fmt.Sprintf("projects/%s/registry/repositories/%d", PathEscape(project), repository)
-
-	req, err := s.client.NewRequest(http.MethodDelete, u, nil, options)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.client.Do(req, nil)
+	_, resp, err := do[none](s.client,
+		withMethod(http.MethodDelete),
+		withPath("projects/%s/registry/repositories/%d", ProjectID{pid}, repository),
+		withRequestOpts(options...),
+	)
+	return resp, err
 }
 
 // ListRegistryRepositoryTagsOptions represents the available
@@ -231,71 +188,29 @@ func (s *ContainerRegistryService) DeleteRegistryRepository(pid any, repository 
 type ListRegistryRepositoryTagsOptions ListOptions
 
 func (s *ContainerRegistryService) ListRegistryRepositoryTags(pid any, repository int, opt *ListRegistryRepositoryTagsOptions, options ...RequestOptionFunc) ([]*RegistryRepositoryTag, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/registry/repositories/%d/tags",
-		PathEscape(project),
-		repository,
+	return do[[]*RegistryRepositoryTag](s.client,
+		withMethod(http.MethodGet),
+		withPath("projects/%s/registry/repositories/%d/tags", ProjectID{pid}, repository),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
 	)
-
-	req, err := s.client.NewRequest(http.MethodGet, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var tags []*RegistryRepositoryTag
-	resp, err := s.client.Do(req, &tags)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return tags, resp, nil
 }
 
 func (s *ContainerRegistryService) GetRegistryRepositoryTagDetail(pid any, repository int, tagName string, options ...RequestOptionFunc) (*RegistryRepositoryTag, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/registry/repositories/%d/tags/%s",
-		PathEscape(project),
-		repository,
-		tagName,
+	return do[*RegistryRepositoryTag](s.client,
+		withMethod(http.MethodGet),
+		withPath("projects/%s/registry/repositories/%d/tags/%s", ProjectID{pid}, repository, tagName),
+		withRequestOpts(options...),
 	)
-
-	req, err := s.client.NewRequest(http.MethodGet, u, nil, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	tag := new(RegistryRepositoryTag)
-	resp, err := s.client.Do(req, &tag)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return tag, resp, nil
 }
 
 func (s *ContainerRegistryService) DeleteRegistryRepositoryTag(pid any, repository int, tagName string, options ...RequestOptionFunc) (*Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, err
-	}
-	u := fmt.Sprintf("projects/%s/registry/repositories/%d/tags/%s",
-		PathEscape(project),
-		repository,
-		tagName,
+	_, resp, err := do[none](s.client,
+		withMethod(http.MethodDelete),
+		withPath("projects/%s/registry/repositories/%d/tags/%s", ProjectID{pid}, repository, tagName),
+		withRequestOpts(options...),
 	)
-
-	req, err := s.client.NewRequest(http.MethodDelete, u, nil, options)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.client.Do(req, nil)
+	return resp, err
 }
 
 // DeleteRegistryRepositoryTagsOptions represents the available
@@ -314,19 +229,11 @@ type DeleteRegistryRepositoryTagsOptions struct {
 }
 
 func (s *ContainerRegistryService) DeleteRegistryRepositoryTags(pid any, repository int, opt *DeleteRegistryRepositoryTagsOptions, options ...RequestOptionFunc) (*Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, err
-	}
-	u := fmt.Sprintf("projects/%s/registry/repositories/%d/tags",
-		PathEscape(project),
-		repository,
+	_, resp, err := do[none](s.client,
+		withMethod(http.MethodDelete),
+		withPath("projects/%s/registry/repositories/%d/tags", ProjectID{pid}, repository),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
 	)
-
-	req, err := s.client.NewRequest(http.MethodDelete, u, opt, options)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.client.Do(req, nil)
+	return resp, err
 }

@@ -17,7 +17,6 @@
 package gitlab
 
 import (
-	"fmt"
 	"net/http"
 )
 
@@ -152,24 +151,12 @@ type CreateIssueBoardOptions struct {
 }
 
 func (s *IssueBoardsService) CreateIssueBoard(pid any, opt *CreateIssueBoardOptions, options ...RequestOptionFunc) (*IssueBoard, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/boards", PathEscape(project))
-
-	req, err := s.client.NewRequest(http.MethodPost, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	board := new(IssueBoard)
-	resp, err := s.client.Do(req, board)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return board, resp, nil
+	return do[*IssueBoard](s.client,
+		withMethod(http.MethodPost),
+		withPath("projects/%s/boards", ProjectID{pid}),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 // UpdateIssueBoardOptions represents the available UpdateIssueBoard() options.
@@ -184,39 +171,21 @@ type UpdateIssueBoardOptions struct {
 }
 
 func (s *IssueBoardsService) UpdateIssueBoard(pid any, board int, opt *UpdateIssueBoardOptions, options ...RequestOptionFunc) (*IssueBoard, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/boards/%d", PathEscape(project), board)
-
-	req, err := s.client.NewRequest(http.MethodPut, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	is := new(IssueBoard)
-	resp, err := s.client.Do(req, is)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return is, resp, nil
+	return do[*IssueBoard](s.client,
+		withMethod(http.MethodPut),
+		withPath("projects/%s/boards/%d", ProjectID{pid}, board),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 func (s *IssueBoardsService) DeleteIssueBoard(pid any, board int, options ...RequestOptionFunc) (*Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, err
-	}
-	u := fmt.Sprintf("projects/%s/boards/%d", PathEscape(project), board)
-
-	req, err := s.client.NewRequest(http.MethodDelete, u, nil, options)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.client.Do(req, nil)
+	_, resp, err := do[none](s.client,
+		withMethod(http.MethodDelete),
+		withPath("projects/%s/boards/%d", ProjectID{pid}, board),
+		withRequestOpts(options...),
+	)
+	return resp, err
 }
 
 // ListIssueBoardsOptions represents the available ListIssueBoards() options.
@@ -225,45 +194,20 @@ func (s *IssueBoardsService) DeleteIssueBoard(pid any, board int, options ...Req
 type ListIssueBoardsOptions ListOptions
 
 func (s *IssueBoardsService) ListIssueBoards(pid any, opt *ListIssueBoardsOptions, options ...RequestOptionFunc) ([]*IssueBoard, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/boards", PathEscape(project))
-
-	req, err := s.client.NewRequest(http.MethodGet, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var is []*IssueBoard
-	resp, err := s.client.Do(req, &is)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return is, resp, nil
+	return do[[]*IssueBoard](s.client,
+		withMethod(http.MethodGet),
+		withPath("projects/%s/boards", ProjectID{pid}),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 func (s *IssueBoardsService) GetIssueBoard(pid any, board int, options ...RequestOptionFunc) (*IssueBoard, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/boards/%d", PathEscape(project), board)
-
-	req, err := s.client.NewRequest(http.MethodGet, u, nil, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	ib := new(IssueBoard)
-	resp, err := s.client.Do(req, ib)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return ib, resp, nil
+	return do[*IssueBoard](s.client,
+		withMethod(http.MethodGet),
+		withPath("projects/%s/boards/%d", ProjectID{pid}, board),
+		withRequestOpts(options...),
+	)
 }
 
 // GetIssueBoardListsOptions represents the available GetIssueBoardLists() options.
@@ -272,49 +216,20 @@ func (s *IssueBoardsService) GetIssueBoard(pid any, board int, options ...Reques
 type GetIssueBoardListsOptions ListOptions
 
 func (s *IssueBoardsService) GetIssueBoardLists(pid any, board int, opt *GetIssueBoardListsOptions, options ...RequestOptionFunc) ([]*BoardList, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/boards/%d/lists", PathEscape(project), board)
-
-	req, err := s.client.NewRequest(http.MethodGet, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var bl []*BoardList
-	resp, err := s.client.Do(req, &bl)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return bl, resp, nil
+	return do[[]*BoardList](s.client,
+		withMethod(http.MethodGet),
+		withPath("projects/%s/boards/%d/lists", ProjectID{pid}, board),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 func (s *IssueBoardsService) GetIssueBoardList(pid any, board, list int, options ...RequestOptionFunc) (*BoardList, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/boards/%d/lists/%d",
-		PathEscape(project),
-		board,
-		list,
+	return do[*BoardList](s.client,
+		withMethod(http.MethodGet),
+		withPath("projects/%s/boards/%d/lists/%d", ProjectID{pid}, board, list),
+		withRequestOpts(options...),
 	)
-
-	req, err := s.client.NewRequest(http.MethodGet, u, nil, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	bl := new(BoardList)
-	resp, err := s.client.Do(req, bl)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return bl, resp, nil
 }
 
 // CreateIssueBoardListOptions represents the available CreateIssueBoardList()
@@ -329,24 +244,12 @@ type CreateIssueBoardListOptions struct {
 }
 
 func (s *IssueBoardsService) CreateIssueBoardList(pid any, board int, opt *CreateIssueBoardListOptions, options ...RequestOptionFunc) (*BoardList, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/boards/%d/lists", PathEscape(project), board)
-
-	req, err := s.client.NewRequest(http.MethodPost, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	bl := new(BoardList)
-	resp, err := s.client.Do(req, bl)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return bl, resp, nil
+	return do[*BoardList](s.client,
+		withMethod(http.MethodPost),
+		withPath("projects/%s/boards/%d/lists", ProjectID{pid}, board),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 // UpdateIssueBoardListOptions represents the available UpdateIssueBoardList()
@@ -358,45 +261,19 @@ type UpdateIssueBoardListOptions struct {
 }
 
 func (s *IssueBoardsService) UpdateIssueBoardList(pid any, board, list int, opt *UpdateIssueBoardListOptions, options ...RequestOptionFunc) (*BoardList, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/boards/%d/lists/%d",
-		PathEscape(project),
-		board,
-		list,
+	return do[*BoardList](s.client,
+		withMethod(http.MethodPut),
+		withPath("projects/%s/boards/%d/lists/%d", ProjectID{pid}, board, list),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
 	)
-
-	req, err := s.client.NewRequest(http.MethodPut, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	bl := new(BoardList)
-	resp, err := s.client.Do(req, bl)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return bl, resp, nil
 }
 
 func (s *IssueBoardsService) DeleteIssueBoardList(pid any, board, list int, options ...RequestOptionFunc) (*Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, err
-	}
-	u := fmt.Sprintf("projects/%s/boards/%d/lists/%d",
-		PathEscape(project),
-		board,
-		list,
+	_, resp, err := do[none](s.client,
+		withMethod(http.MethodDelete),
+		withPath("projects/%s/boards/%d/lists/%d", ProjectID{pid}, board, list),
+		withRequestOpts(options...),
 	)
-
-	req, err := s.client.NewRequest(http.MethodDelete, u, nil, options)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.client.Do(req, nil)
+	return resp, err
 }
