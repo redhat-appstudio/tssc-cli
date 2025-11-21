@@ -129,8 +129,10 @@ getValues() {
     TPA_OIDC_CLIENT_SECRET="$(echo "$TPA_SECRET_JSON" | jq -r '.data.oidc_client_secret | @base64d')"
     TPA_SUPPORTED_CYCLONEDX_VERSION="$(echo "$TPA_SECRET_JSON" | jq -r '.data.supported_cyclonedx_version | @base64d')"
 
-    REKOR_HOST="https://$(oc get routes -n tssc-tas -l "app.kubernetes.io/name=rekor-server" -o jsonpath="{.items[0].spec.host}")"
-    TUF_MIRROR="https://$(oc get routes -n tssc-tas -l "app.kubernetes.io/name=tuf" -o jsonpath="{.items[0].spec.host}")"
+    TAS_SECRET="tssc-tas-integration"
+    TAS_SECRET_JSON=$(oc get secret -n "$NAMESPACE" "$TAS_SECRET" -o json)
+    TAS_REKOR_HOST="$(echo "$TAS_SECRET_JSON" | jq -r '.data.rekor_url | @base64d')"
+    TAS_TUF_MIRROR="$(echo "$TAS_SECRET_JSON" | jq -r '.data.tuf_url | @base64d')"
 
     SECRET_VARS=("COSIGN_SECRET_KEY" "COSIGN_SECRET_PASSWORD" "GITOPS_AUTH_PASSWORD" "IMAGE_REGISTRY_PASSWORD" "ROX_API_TOKEN" "TRUSTIFICATION_OIDC_CLIENT_SECRET")
 }
@@ -195,7 +197,7 @@ setVars() {
     setVar IMAGE_REGISTRY "$IMAGE_REGISTRY"
     setVar IMAGE_REGISTRY_PASSWORD "$IMAGE_REGISTRY_PASSWORD"
     setVar IMAGE_REGISTRY_USER "$IMAGE_REGISTRY_USER"
-    setVar REKOR_HOST "$REKOR_HOST"
+    setVar REKOR_HOST "$TAS_REKOR_HOST"
     setVar ROX_CENTRAL_ENDPOINT "$ROX_CENTRAL_ENDPOINT"
     setVar ROX_API_TOKEN "$ROX_API_TOKEN"
     setVar TRUSTIFICATION_BOMBASTIC_API_URL "$TPA_URL"
@@ -203,7 +205,7 @@ setVars() {
     setVar TRUSTIFICATION_OIDC_CLIENT_SECRET "$TPA_OIDC_CLIENT_SECRET"
     setVar TRUSTIFICATION_OIDC_ISSUER_URL "$TPA_OIDC_ISSUER_URL"
     setVar TRUSTIFICATION_SUPPORTED_CYCLONEDX_VERSION "$TPA_SUPPORTED_CYCLONEDX_VERSION"
-    setVar TUF_MIRROR "$TUF_MIRROR"
+    setVar TUF_MIRROR "$TAS_TUF_MIRROR"
 }
 
 setVar() {
