@@ -267,10 +267,6 @@ spec:
       params:
       - name: IMAGE
         value: $(params.output-image)
-      - name: revision
-        value: $(params.revision)
-      - name: version
-        value: $(tasks.get-version.results.version)
       - name: DOCKERFILE
         value: $(params.dockerfile)
       - name: CONTEXT

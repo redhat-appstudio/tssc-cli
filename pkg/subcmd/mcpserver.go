@@ -104,11 +104,12 @@ func NewMCPServer(
 		kube:   kube,
 	}
 
+	m.image = "quay.io/redhat-user-workloads/rhtap-shared-team-tenant/tssc-cli"
 	// Set default image based on CommitID
 	if constants.CommitID == "" {
-		m.image = "quay.io/redhat-user-workloads/rhtap-shared-team-tenant/tssc-cli:latest"
+		m.image = fmt.Sprintf("%s:latest", m.image)
 	} else {
-		m.image = fmt.Sprintf("quay.io/redhat-user-workloads/rhtap-shared-team-tenant/tssc-cli:%s", constants.CommitID)
+		m.image = fmt.Sprintf("%s:%s", m.image, constants.CommitID)
 	}
 	m.PersistentFlags(m.cmd)
 	return m
