@@ -50,6 +50,21 @@ auth:
   environment: production
   providers:
   {{- $signInPage := "" }}
+  {{- if eq .Values.developerHub.authProvider "oidc" }}
+    {{- $signInPage = "oidc" }}
+    oidc:
+      production:
+        clientId: ${AUTH__OIDC__CLIENT__ID}
+        clientSecret: ${AUTH__OIDC__CLIENT__SECRET}
+        metadataUrl: ${AUTH__OIDC__METADATA__URL}
+        prompt: auto
+        signIn:
+          resolvers:
+          - resolver: preferredUsernameMatchingUserEntityName
+  session:
+    secret:
+      $env: BACKEND_SECRET
+  {{- end }}
   {{- if eq .Values.developerHub.authProvider "github" }}
     {{- $signInPage = "github" }}
     github:
@@ -94,8 +109,24 @@ backend:
   cors:
     origin: ${BACKEND_URL}
 catalog:
-  {{- if .Values.developerHub.RBAC.enabled }}
   providers:
+  {{- if eq .Values.developerHub.authProvider "oidc" }}
+    keycloakOrg:
+      default:
+        baseUrl: ${KEYCLOAK__BASE__URL}
+        clientId: ${KEYCLOAK__CLIENT__ID}
+        clientSecret: ${KEYCLOAK__CLIENT__SECRET}
+        loginRealm: ${KEYCLOAK__LOGIN__REALM}
+        realm: ${KEYCLOAK__REALM}
+        schedule:
+          frequency:
+            minutes: 2
+          initialDelay:
+            seconds: 15
+          timeout:
+            minutes: 2
+  {{- end }}
+  {{- if .Values.developerHub.RBAC.enabled }}
   {{- if eq .Values.developerHub.authProvider "github" }}
     githubOrg:
       id: production

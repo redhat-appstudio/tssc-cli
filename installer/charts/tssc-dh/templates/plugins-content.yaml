@@ -97,7 +97,7 @@ plugins:
     package: ./dynamic-plugins/dist/backstage-community-plugin-jenkins-backend-dynamic
 {{- end }}
   - disabled: false
-    package: oci://quay.io/redhat-tssc/backstage-plugins:1.7.0!tssc-plugins-backstage-community-plugin-multi-source-security-viewer-dynamic
+    package: oci://quay.io/redhat-tssc/backstage-plugins:1.8.0!tssc-plugins-backstage-community-plugin-multi-source-security-viewer-dynamic
     pluginConfig:
       dynamicPlugins:
         frontend:
@@ -206,4 +206,11 @@ plugins:
     package: ./dynamic-plugins/dist/backstage-plugin-techdocs
   - disabled: false
     package: ./dynamic-plugins/dist/backstage-plugin-techdocs-backend-dynamic
+  #
+  # Keycloak
+  #
+  {{- if eq .Values.developerHub.authProvider "oidc" }}
+  - disabled: false
+    package: ./dynamic-plugins/dist/backstage-community-plugin-catalog-backend-module-keycloak-dynamic
+  {{- end }}
 {{- end }}

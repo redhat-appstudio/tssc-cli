@@ -71,8 +71,8 @@ tssc:
         manageSubscription: true
         # namespacePrefixes:
         #   - tssc-app
-        authProvider: github
-        # Possible values: github, gitlab
+        authProvider: oidc
+        # Possible values: github, gitlab, oidc
         # RBAC:
         #   adminUsers:
         #     - myUsername

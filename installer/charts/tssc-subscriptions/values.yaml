@@ -57,7 +57,7 @@ subscriptions:
     apiResource: backstages.rhdh.redhat.com
     namespace: openshift-operators
     name: rhdh
-    channel: fast-1.7
+    channel: fast-1.8
     source: redhat-operators
     sourceNamespace: openshift-marketplace
   trustedProfileAnalyzer:

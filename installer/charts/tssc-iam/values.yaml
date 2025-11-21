@@ -24,3 +24,76 @@ iam:
   service:
     annotations:
       service.beta.openshift.io/serving-cert-secret-name: *keycloakRouteTLSSecretName
+  # Keycloak instance to import the realm into, the Kubernetes namespace and
+  # name of the Keycloak instance.
+  keycloakCR:
+    namespace: __OVERWRITE_ME__
+    name: keycloak
+    realmsName: tssc-iam
+    ingressDomain: __OVERWRITE_ME__
+    adminUsername: admin
+    adminSecretName: tssc-realms-admin-user
+    rhdhRealm:
+      enabled: false
+      clientID: rhdh
+      # RHDH redirect URI
+      rhdhRedirectUris: []
+      # RHDH origin URI
+      rhdhOriginUris: []
+      # Secret name to store RHDH client credentials
+      oidcClientsSecretName: rhdh-realm-clients
+      # RHDH client in realm import
+      clients:
+        rhdh:
+          enabled: true
+    trustedArtifactSignerRealm:
+      # Enable the trusted-artifact-signer Keycloak realm import.
+      enabled: false
+      clientID: trusted-artifact-signer
+      # Secret holding the OIDC client secrets.
+      oidcClientsSecretName: trusted-artifact-signer-clients
+      # OIDC clients.
+      clients:
+        trustedArtifactSigner:
+          enabled: true
+    trustedProfileAnalyzerRealm:
+      enabled: false
+      # Realm's OIDC issuer URL, the endpoint to TPA's realm.
+      oidcIssuerURL: __OVERWRITE_ME__
+      # Name of the Secret generated with the enabled OIDC clients secrets, each
+      # client key on the ".client" object will become a Secret key. These keys are
+      # used for authorization on TPA micro-services.
+      oidcClientsSecretName: tpa-realm-clients
+      # Realm clients are imported by default, and the ones described below you can
+      # toggle on/off. The testing users are disabled by default.
+      clients:
+        # The main TPA actor, responsible to parse the information from SBOMs and
+        # other source into its database.
+        cli:
+          enabled: true
+        # Testing user, meant to manage TPA's whole installation.
+        testingManager:
+          enabled: false
+        # Testing user, meant to use TPA's UI and services.
+        testingUser:
+          enabled: false
+      # List of valid project URIs added to the "frontend" client, all the TPA
+      # application endpoints must be listed here.
+      frontendRedirectUris:
+        - "http://localhost:8080"
+        - "http://server-tssc-tpa.apps-crc.testing"
+        - "http://server-tssc-tpa.apps-crc.testing/*"
+        - "http://sbom-tssc-tpa.apps-crc.testing"
+        - "http://sbom-tssc-tpa.apps-crc.testing/*"
+      # Describe details of Trustification installation for integration with other
+      # components.
+      integrationSecret:
+        # Bombastic API URL.
+        bombasticAPI: __OVERWRITE_ME__
+        # OIDC client ID to interact with the Bombastic API endpoint.
+        oidcClientID: cli
+        # Secret namespace and name.
+        namespace: __OVERWRITE_ME__
+        name: tssc-trustification-integration
+        # CycloneDX version supported by TPA (Trustification).
+        cycloneDXVersion: 1.4

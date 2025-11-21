@@ -59,6 +59,10 @@ const (
 	// https://modelcontextprotocol.io/docs/concepts/elicitation
 	MethodElicitationCreate MCPMethod = "elicitation/create"
 
+	// MethodListRoots requests roots list from the client during interactions.
+	// https://modelcontextprotocol.io/specification/2025-06-18/client/roots
+	MethodListRoots MCPMethod = "roots/list"
+
 	// MethodNotificationResourcesListChanged notifies when the list of available resources changes.
 	// https://modelcontextprotocol.io/specification/2025-03-26/server/resources#list-changed-notification
 	MethodNotificationResourcesListChanged = "notifications/resources/list_changed"
@@ -70,8 +74,12 @@ const (
 	MethodNotificationPromptsListChanged = "notifications/prompts/list_changed"
 
 	// MethodNotificationToolsListChanged notifies when the list of available tools changes.
-	// https://spec.modelcontextprotocol.io/specification/2024-11-05/server/tools/list_changed/
+	// https://modelcontextprotocol.io/specification/2025-06-18/server/tools#list-changed-notification
 	MethodNotificationToolsListChanged = "notifications/tools/list_changed"
+
+	// MethodNotificationRootsListChanged notifies when the list of available roots changes.
+	// https://modelcontextprotocol.io/specification/2025-06-18/client/roots#root-list-changes
+	MethodNotificationRootsListChanged = "notifications/roots/list_changed"
 )
 
 type URITemplate struct {
@@ -515,12 +523,15 @@ type ServerCapabilities struct {
 	} `json:"tools,omitempty"`
 	// Present if the server supports elicitation requests to the client.
 	Elicitation *struct{} `json:"elicitation,omitempty"`
+	// Present if the server supports roots requests to the client.
+	Roots *struct{} `json:"roots,omitempty"`
 }
 
 // Implementation describes the name and version of an MCP implementation.
 type Implementation struct {
 	Name    string `json:"name"`
 	Version string `json:"version"`
+	Title   string `json:"title,omitempty"`
 }
 
 /* Ping */
@@ -739,8 +750,9 @@ type ResourceContents interface {
 }
 
 type TextResourceContents struct {
-	// Meta is a metadata object that is reserved by MCP for storing additional information.
-	Meta *Meta `json:"_meta,omitempty"`
+	// Raw per‑resource metadata; pass‑through as defined by MCP. Not the same as mcp.Meta.
+	// Allows _meta to be used for MCP-UI features for example. Does not assume any specific format.
+	Meta map[string]any `json:"_meta,omitempty"`
 	// The URI of this resource.
 	URI string `json:"uri"`
 	// The MIME type of this resource, if known.
@@ -753,8 +765,9 @@ type TextResourceContents struct {
 func (TextResourceContents) isResourceContents() {}
 
 type BlobResourceContents struct {
-	// Meta is a metadata object that is reserved by MCP for storing additional information.
-	Meta *Meta `json:"_meta,omitempty"`
+	// Raw per‑resource metadata; pass‑through as defined by MCP. Not the same as mcp.Meta.
+	// Allows _meta to be used for MCP-UI features for example. Does not assume any specific format.
+	Meta map[string]any `json:"_meta,omitempty"`
 	// The URI of this resource.
 	URI string `json:"uri"`
 	// The MIME type of this resource, if known.
@@ -1141,7 +1154,6 @@ type PromptReference struct {
 // structure or access specific locations that the client has permission to read from.
 type ListRootsRequest struct {
 	Request
-	Header http.Header `json:"-"`
 }
 
 // ListRootsResult is the client's response to a roots/list request from the server.

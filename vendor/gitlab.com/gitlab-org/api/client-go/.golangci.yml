@@ -24,6 +24,7 @@ linters:
     - goconst
     - godoclint
     - misspell
+    - modernize
     - nakedret
     - nolintlint
     - revive
@@ -41,6 +42,9 @@ linters:
       locale: US
       ignore-rules:
         - noteable
+    modernize:
+      disable:
+        - omitzero
     revive:
       enable-all-rules: false
       rules:
@@ -68,6 +72,7 @@ linters:
         - error-nil
         - expected-actual
         - formatter
+        - go-require
         - len
         - negative-positive
         - nil-compare

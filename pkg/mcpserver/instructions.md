@@ -67,3 +67,4 @@ I will guide you with suggestions for the next logical action in my responses. L
 The installer has finished successfully and all components are running as expected.
 
 - Use `tssc_status` to view the overall installer status.
+- Use `tssc_notes` to retrieve instructions on how to connect to a service (product) deployed by the installer. You must provide the product name.

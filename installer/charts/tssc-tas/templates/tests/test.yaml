@@ -1,7 +1,6 @@
 {{- $secureSign := .Values.trustedArtifactSigner.secureSign -}}
 {{- if $secureSign.enabled }}
 ---
-  {{- $keycloak := .Values.trustedArtifactSigner.keycloakRealmImport -}}
 {{- include "common.test" . }}
   containers:
     - name: statefulsets-test
@@ -20,20 +19,4 @@
           mountPath: /scripts
       securityContext:
         allowPrivilegeEscalation: false
-  {{- if $keycloak.enabled }}
-    - name: realm-test
-      image: registry.redhat.io/openshift4/ose-tools-rhel9
-      env:
-        - name: NAMESPACE
-          value: {{ $keycloak.keycloakCR.namespace }}
-      command:
-        - /scripts/test-keycloakrealmimport.sh
-      args:
-        - "trusted-artifact-signer"
-      volumeMounts:
-        - name: scripts
-          mountPath: /scripts
-      securityContext:
-        allowPrivilegeEscalation: false
-  {{- end }}
 {{- end }}

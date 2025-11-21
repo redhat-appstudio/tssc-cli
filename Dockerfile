@@ -2,8 +2,8 @@
 # Build
 #
 
-FROM registry.redhat.io/openshift4/ose-tools-rhel9@sha256:2ee57795ce3deab75ae32e8e8dac06ab8ae6b8b75ffa29578355189270f79317 AS ose-tools
-FROM registry.access.redhat.com/ubi9/go-toolset:1.24.6-1760420453 AS builder
+FROM registry.redhat.io/openshift4/ose-tools-rhel9@sha256:c1baccf320b0acaed693a07fd8df76758db0a38767ace30ccc79aed9ba8c4987 AS ose-tools
+FROM registry.access.redhat.com/ubi9/go-toolset:9.7-1763038106 AS builder
 
 ARG COMMIT_ID
 ARG VERSION_ID
@@ -31,7 +31,7 @@ RUN make GOFLAGS='-buildvcs=false' COMMIT_ID=${COMMIT_ID} VERSION=${VERSION_ID}
 # Run
 #
 
-FROM registry.access.redhat.com/ubi9-minimal:9.6-1758184547
+FROM registry.access.redhat.com/ubi9-minimal:9.7-1762956380
 
 LABEL \
   name="tssc" \

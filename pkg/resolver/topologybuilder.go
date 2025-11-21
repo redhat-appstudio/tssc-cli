@@ -17,6 +17,11 @@ type TopologyBuilder struct {
 	integrationsManager *integrations.Manager // integrations manager
 }
 
+// GetCollection exposes the collection instance.
+func (t *TopologyBuilder) GetCollection() *Collection {
+	return t.collection
+}
+
 // Build inspects the dependencies, based on the cluster configuration, inspects
 // the integrations and generates a consolidated Topology
 func (t *TopologyBuilder) Build(
