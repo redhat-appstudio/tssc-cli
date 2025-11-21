@@ -25,8 +25,8 @@ Optional arguments:
     -e, --env-file
         Environment variables definitions (default: $SCRIPT_DIR/private.env)
     -i, --integration INTEGRATION
-        Use an external service [acs, bitbucket, ci, dh, github, gitlab, gitops,
-        jenkins, quay, tas, tpa].
+        Use an external service [acs, bitbucket, ci, github, gitlab,
+        jenkins, quay, tas].
     -d, --debug
         Activate tracing/debug mode.
     -h, --help
@@ -70,17 +70,11 @@ parse_args() {
             ci)
                 CI=1
                 ;;
-            dh)
-                DH=1
-                ;;
             github)
                 GITHUB=1
                 ;;
             gitlab)
                 GITLAB=1
-                ;;
-            gitops)
-                GITOPS=1
                 ;;
             jenkins)
                 JENKINS=1
@@ -90,9 +84,6 @@ parse_args() {
                 ;;
             tas)
                 TAS=1
-                ;;
-            tpa)
-                TPA=1
                 ;;
             *)
                 echo "[ERROR] Unknown integration: $1"
@@ -189,23 +180,8 @@ configure() {
         yq -i '.tssc.products[] |= select(.name == "Developer Hub").properties.catalogURL=strenv(CATALOG_URL)' "${CONFIG}"
     fi
 
-    if [[ -n "${ACS:-}" ]]; then
-        yq -i '.tssc.products[] |= select(.name == "Advanced Cluster Security").enabled = false' "${CONFIG}"
-    fi
     if [[ -n "${CI:-}" ]]; then
         sed -i 's/\( *ci\): .*/\1: true/' "$VALUES"
-    fi
-    if [[ -n "${DH:-}" ]]; then
-        yq -i '.tssc.products[] |= select(.name == "Developer Hub").enabled = false' "${CONFIG}"
-    fi
-    if [[ -n "${GITOPS:-}" ]]; then
-        yq -i '.tssc.products[] |= select(.name == "OpenShift GitOps").enabled = false' "${CONFIG}"
-    fi
-    if [[ -n "${TAS:-}" ]]; then
-        yq -i '.tssc.products[] |= select(.name == "Trusted Artifact Signer").enabled = false' "${CONFIG}"
-    fi
-    if [[ -n "${TPA:-}" ]]; then
-        yq -i '.tssc.products[] |= select(.name == "Trusted Profile Analyzer").enabled = false' "${CONFIG}"
     fi
     cd "$(dirname "$CONFIG")"
     tssc_cli config --force --get --create "$(basename "$CONFIG")"
@@ -258,6 +234,11 @@ integrations() {
         tssc_cli integration quay --force \
             --dockerconfigjson='"$QUAY__DOCKERCONFIGJSON"' \
             --token='"$QUAY__API_TOKEN"' --url='"$QUAY__URL"'
+    fi
+    if [[ -n "${TAS:-}" ]]; then
+        tssc_cli integration trusted-artifact-signer --force \
+            --rekor-url='"$TAS__REKOR_URL"' \
+            --tuf-url='"$TAS__TUF_URL"'
     fi
 }
 
