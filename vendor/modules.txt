@@ -458,8 +458,6 @@ github.com/yosida95/uritemplate/v3
 # gitlab.com/gitlab-org/api/client-go v0.160.0
 ## explicit; go 1.23.0
 gitlab.com/gitlab-org/api/client-go
-# go.opentelemetry.io/auto/sdk v1.2.1
-## explicit; go 1.24.0
 # go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.63.0
 ## explicit; go 1.23.0
 # go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.38.0
@@ -561,7 +559,7 @@ google.golang.org/genproto/googleapis/api/expr/v1alpha1
 # google.golang.org/genproto/googleapis/rpc v0.0.0-20251111163417-95abcf5c77ba
 ## explicit; go 1.24.0
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.76.0
+# google.golang.org/grpc v1.77.0
 ## explicit; go 1.24.0
 google.golang.org/grpc/codes
 google.golang.org/grpc/connectivity
