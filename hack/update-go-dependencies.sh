@@ -65,7 +65,11 @@ cleanup() {
 update_dependency() {
     echo "# $DEPENDENCY"
 
-    go get -u "$DEPENDENCY"
+    if ! go get -u "$DEPENDENCY"; then
+		echo "[ERROR] \`go get -u $DEPENDENCY\` failed"
+	    cleanup
+	    return
+	fi
     go mod verify
     if ! go mod tidy -v; then
 		echo "[ERROR] \`go mod tidy\` failed"
