@@ -16,7 +16,6 @@
 package gitlab
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 )
@@ -130,45 +129,18 @@ type ListProjectDeploymentsOptions struct {
 }
 
 func (s *DeploymentsService) ListProjectDeployments(pid any, opts *ListProjectDeploymentsOptions, options ...RequestOptionFunc) ([]*Deployment, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/deployments", PathEscape(project))
-
-	req, err := s.client.NewRequest(http.MethodGet, u, opts, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var ds []*Deployment
-	resp, err := s.client.Do(req, &ds)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return ds, resp, nil
+	return do[[]*Deployment](s.client,
+		withPath("projects/%s/deployments", ProjectID{pid}),
+		withAPIOpts(opts),
+		withRequestOpts(options...),
+	)
 }
 
 func (s *DeploymentsService) GetProjectDeployment(pid any, deployment int, options ...RequestOptionFunc) (*Deployment, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/deployments/%d", PathEscape(project), deployment)
-
-	req, err := s.client.NewRequest(http.MethodGet, u, nil, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	d := new(Deployment)
-	resp, err := s.client.Do(req, d)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return d, resp, nil
+	return do[*Deployment](s.client,
+		withPath("projects/%s/deployments/%d", ProjectID{pid}, deployment),
+		withRequestOpts(options...),
+	)
 }
 
 // CreateProjectDeploymentOptions represents the available
@@ -185,24 +157,12 @@ type CreateProjectDeploymentOptions struct {
 }
 
 func (s *DeploymentsService) CreateProjectDeployment(pid any, opt *CreateProjectDeploymentOptions, options ...RequestOptionFunc) (*Deployment, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/deployments", PathEscape(project))
-
-	req, err := s.client.NewRequest(http.MethodPost, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	d := new(Deployment)
-	resp, err := s.client.Do(req, &d)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return d, resp, nil
+	return do[*Deployment](s.client,
+		withMethod(http.MethodPost),
+		withPath("projects/%s/deployments", ProjectID{pid}),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 // UpdateProjectDeploymentOptions represents the available
@@ -215,24 +175,12 @@ type UpdateProjectDeploymentOptions struct {
 }
 
 func (s *DeploymentsService) UpdateProjectDeployment(pid any, deployment int, opt *UpdateProjectDeploymentOptions, options ...RequestOptionFunc) (*Deployment, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/deployments/%d", PathEscape(project), deployment)
-
-	req, err := s.client.NewRequest(http.MethodPut, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	d := new(Deployment)
-	resp, err := s.client.Do(req, &d)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return d, resp, nil
+	return do[*Deployment](s.client,
+		withMethod(http.MethodPut),
+		withPath("projects/%s/deployments/%d", ProjectID{pid}, deployment),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 // ApproveOrRejectProjectDeploymentOptions represents the available
@@ -246,34 +194,21 @@ type ApproveOrRejectProjectDeploymentOptions struct {
 	RepresentedAs *string                   `url:"represented_as,omitempty" json:"represented_as,omitempty"`
 }
 
-func (s *DeploymentsService) ApproveOrRejectProjectDeployment(pid any, deployment int,
-	opt *ApproveOrRejectProjectDeploymentOptions, options ...RequestOptionFunc,
-) (*Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, err
-	}
-	u := fmt.Sprintf("projects/%s/deployments/%d/approval", PathEscape(project), deployment)
-
-	req, err := s.client.NewRequest(http.MethodPost, u, opt, options)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.client.Do(req, nil)
+func (s *DeploymentsService) ApproveOrRejectProjectDeployment(pid any, deployment int, opt *ApproveOrRejectProjectDeploymentOptions, options ...RequestOptionFunc) (*Response, error) {
+	_, resp, err := do[none](s.client,
+		withMethod(http.MethodPost),
+		withPath("projects/%s/deployments/%d/approval", ProjectID{pid}, deployment),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
+	return resp, err
 }
 
 func (s *DeploymentsService) DeleteProjectDeployment(pid any, deployment int, options ...RequestOptionFunc) (*Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, err
-	}
-	u := fmt.Sprintf("projects/%s/deployments/%d", PathEscape(project), deployment)
-
-	req, err := s.client.NewRequest(http.MethodDelete, u, nil, options)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.client.Do(req, nil)
+	_, resp, err := do[none](s.client,
+		withMethod(http.MethodDelete),
+		withPath("projects/%s/deployments/%d", ProjectID{pid}, deployment),
+		withRequestOpts(options...),
+	)
+	return resp, err
 }

@@ -14,11 +14,6 @@
 
 package gitlab
 
-import (
-	"fmt"
-	"net/http"
-)
-
 type (
 	DependenciesServiceInterface interface {
 		// ListProjectDependencies Get a list of project dependencies. This API partially
@@ -82,22 +77,9 @@ type ListProjectDependenciesOptions struct {
 }
 
 func (s *DependenciesService) ListProjectDependencies(pid any, opt *ListProjectDependenciesOptions, options ...RequestOptionFunc) ([]*Dependency, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/dependencies", PathEscape(project))
-
-	req, err := s.client.NewRequest(http.MethodGet, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var dependencies []*Dependency
-	resp, err := s.client.Do(req, &dependencies)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return dependencies, resp, nil
+	return do[[]*Dependency](s.client,
+		withPath("projects/%s/dependencies", ProjectID{pid}),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }

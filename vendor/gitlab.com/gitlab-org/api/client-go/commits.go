@@ -19,7 +19,6 @@ package gitlab
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 	"time"
 )
 
@@ -177,24 +176,12 @@ type ListCommitsOptions struct {
 }
 
 func (s *CommitsService) ListCommits(pid any, opt *ListCommitsOptions, options ...RequestOptionFunc) ([]*Commit, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/repository/commits", PathEscape(project))
-
-	req, err := s.client.NewRequest(http.MethodGet, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var c []*Commit
-	resp, err := s.client.Do(req, &c)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return c, resp, nil
+	return do[[]*Commit](s.client,
+		withMethod(http.MethodGet),
+		withPath("projects/%s/repository/commits", ProjectID{pid}),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 // CommitRef represents the reference of branches/tags in a commit.
@@ -216,24 +203,12 @@ type GetCommitRefsOptions struct {
 }
 
 func (s *CommitsService) GetCommitRefs(pid any, sha string, opt *GetCommitRefsOptions, options ...RequestOptionFunc) ([]*CommitRef, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/repository/commits/%s/refs", PathEscape(project), url.PathEscape(sha))
-
-	req, err := s.client.NewRequest(http.MethodGet, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var cs []*CommitRef
-	resp, err := s.client.Do(req, &cs)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return cs, resp, nil
+	return do[[]*CommitRef](s.client,
+		withMethod(http.MethodGet),
+		withPath("projects/%s/repository/commits/%s/refs", ProjectID{pid}, sha),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 // GetCommitOptions represents the available GetCommit() options.
@@ -245,27 +220,16 @@ type GetCommitOptions struct {
 }
 
 func (s *CommitsService) GetCommit(pid any, sha string, opt *GetCommitOptions, options ...RequestOptionFunc) (*Commit, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
 	if sha == "" {
 		return nil, nil, fmt.Errorf("SHA must be a non-empty string")
 	}
-	u := fmt.Sprintf("projects/%s/repository/commits/%s", PathEscape(project), url.PathEscape(sha))
 
-	req, err := s.client.NewRequest(http.MethodGet, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	c := new(Commit)
-	resp, err := s.client.Do(req, c)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return c, resp, nil
+	return do[*Commit](s.client,
+		withMethod(http.MethodGet),
+		withPath("projects/%s/repository/commits/%s", ProjectID{pid}, sha),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 // CreateCommitOptions represents the available options for a new commit.
@@ -299,24 +263,12 @@ type CommitActionOptions struct {
 }
 
 func (s *CommitsService) CreateCommit(pid any, opt *CreateCommitOptions, options ...RequestOptionFunc) (*Commit, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/repository/commits", PathEscape(project))
-
-	req, err := s.client.NewRequest(http.MethodPost, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	c := new(Commit)
-	resp, err := s.client.Do(req, &c)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return c, resp, nil
+	return do[*Commit](s.client,
+		withMethod(http.MethodPost),
+		withPath("projects/%s/repository/commits", ProjectID{pid}),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 // Diff represents a GitLab diff.
@@ -347,24 +299,12 @@ type GetCommitDiffOptions struct {
 }
 
 func (s *CommitsService) GetCommitDiff(pid any, sha string, opt *GetCommitDiffOptions, options ...RequestOptionFunc) ([]*Diff, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/repository/commits/%s/diff", PathEscape(project), url.PathEscape(sha))
-
-	req, err := s.client.NewRequest(http.MethodGet, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var d []*Diff
-	resp, err := s.client.Do(req, &d)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return d, resp, nil
+	return do[[]*Diff](s.client,
+		withMethod(http.MethodGet),
+		withPath("projects/%s/repository/commits/%s/diff", ProjectID{pid}, sha),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 // CommitComment represents a GitLab commit comment.
@@ -400,24 +340,12 @@ func (c CommitComment) String() string {
 type GetCommitCommentsOptions ListOptions
 
 func (s *CommitsService) GetCommitComments(pid any, sha string, opt *GetCommitCommentsOptions, options ...RequestOptionFunc) ([]*CommitComment, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/repository/commits/%s/comments", PathEscape(project), url.PathEscape(sha))
-
-	req, err := s.client.NewRequest(http.MethodGet, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var c []*CommitComment
-	resp, err := s.client.Do(req, &c)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return c, resp, nil
+	return do[[]*CommitComment](s.client,
+		withMethod(http.MethodGet),
+		withPath("projects/%s/repository/commits/%s/comments", ProjectID{pid}, sha),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 // PostCommitCommentOptions represents the available PostCommitComment()
@@ -433,24 +361,12 @@ type PostCommitCommentOptions struct {
 }
 
 func (s *CommitsService) PostCommitComment(pid any, sha string, opt *PostCommitCommentOptions, options ...RequestOptionFunc) (*CommitComment, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/repository/commits/%s/comments", PathEscape(project), url.PathEscape(sha))
-
-	req, err := s.client.NewRequest(http.MethodPost, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	c := new(CommitComment)
-	resp, err := s.client.Do(req, c)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return c, resp, nil
+	return do[*CommitComment](s.client,
+		withMethod(http.MethodPost),
+		withPath("projects/%s/repository/commits/%s/comments", ProjectID{pid}, sha),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 // GetCommitStatusesOptions represents the available GetCommitStatuses() options.
@@ -486,24 +402,12 @@ type CommitStatus struct {
 }
 
 func (s *CommitsService) GetCommitStatuses(pid any, sha string, opt *GetCommitStatusesOptions, options ...RequestOptionFunc) ([]*CommitStatus, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/repository/commits/%s/statuses", PathEscape(project), url.PathEscape(sha))
-
-	req, err := s.client.NewRequest(http.MethodGet, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var cs []*CommitStatus
-	resp, err := s.client.Do(req, &cs)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return cs, resp, nil
+	return do[[]*CommitStatus](s.client,
+		withMethod(http.MethodGet),
+		withPath("projects/%s/repository/commits/%s/statuses", ProjectID{pid}, sha),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 // SetCommitStatusOptions represents the available SetCommitStatus() options.
@@ -521,45 +425,20 @@ type SetCommitStatusOptions struct {
 }
 
 func (s *CommitsService) SetCommitStatus(pid any, sha string, opt *SetCommitStatusOptions, options ...RequestOptionFunc) (*CommitStatus, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/statuses/%s", PathEscape(project), url.PathEscape(sha))
-
-	req, err := s.client.NewRequest(http.MethodPost, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	cs := new(CommitStatus)
-	resp, err := s.client.Do(req, &cs)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return cs, resp, nil
+	return do[*CommitStatus](s.client,
+		withMethod(http.MethodPost),
+		withPath("projects/%s/statuses/%s", ProjectID{pid}, sha),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 func (s *CommitsService) ListMergeRequestsByCommit(pid any, sha string, options ...RequestOptionFunc) ([]*BasicMergeRequest, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/repository/commits/%s/merge_requests", PathEscape(project), url.PathEscape(sha))
-
-	req, err := s.client.NewRequest(http.MethodGet, u, nil, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var mrs []*BasicMergeRequest
-	resp, err := s.client.Do(req, &mrs)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return mrs, resp, nil
+	return do[[]*BasicMergeRequest](s.client,
+		withMethod(http.MethodGet),
+		withPath("projects/%s/repository/commits/%s/merge_requests", ProjectID{pid}, sha),
+		withRequestOpts(options...),
+	)
 }
 
 // CherryPickCommitOptions represents the available CherryPickCommit() options.
@@ -571,53 +450,28 @@ type CherryPickCommitOptions struct {
 	Message *string `url:"message,omitempty" json:"message,omitempty"`
 }
 
-func (s *CommitsService) CherryPickCommit(pid any, sha string, opt *CherryPickCommitOptions, options ...RequestOptionFunc) (*Commit, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/repository/commits/%s/cherry_pick", PathEscape(project), url.PathEscape(sha))
-
-	req, err := s.client.NewRequest(http.MethodPost, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	c := new(Commit)
-	resp, err := s.client.Do(req, &c)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return c, resp, nil
-}
-
 // RevertCommitOptions represents the available RevertCommit() options.
-//
 // GitLab API docs: https://docs.gitlab.com/api/commits/#revert-a-commit
 type RevertCommitOptions struct {
 	Branch *string `url:"branch,omitempty" json:"branch,omitempty"`
 }
 
+func (s *CommitsService) CherryPickCommit(pid any, sha string, opt *CherryPickCommitOptions, options ...RequestOptionFunc) (*Commit, *Response, error) {
+	return do[*Commit](s.client,
+		withMethod(http.MethodPost),
+		withPath("projects/%s/repository/commits/%s/cherry_pick", ProjectID{pid}, sha),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
+}
+
 func (s *CommitsService) RevertCommit(pid any, sha string, opt *RevertCommitOptions, options ...RequestOptionFunc) (*Commit, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/repository/commits/%s/revert", PathEscape(project), url.PathEscape(sha))
-
-	req, err := s.client.NewRequest(http.MethodPost, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	c := new(Commit)
-	resp, err := s.client.Do(req, &c)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return c, resp, nil
+	return do[*Commit](s.client,
+		withMethod(http.MethodPost),
+		withPath("projects/%s/repository/commits/%s/revert", ProjectID{pid}, sha),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 // GPGSignature represents a GitLab commit's GPG Signature.
@@ -634,22 +488,9 @@ type GPGSignature struct {
 }
 
 func (s *CommitsService) GetGPGSignature(pid any, sha string, options ...RequestOptionFunc) (*GPGSignature, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/repository/commits/%s/signature", PathEscape(project), url.PathEscape(sha))
-
-	req, err := s.client.NewRequest(http.MethodGet, u, nil, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	sig := new(GPGSignature)
-	resp, err := s.client.Do(req, &sig)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return sig, resp, nil
+	return do[*GPGSignature](s.client,
+		withMethod(http.MethodGet),
+		withPath("projects/%s/repository/commits/%s/signature", ProjectID{pid}, sha),
+		withRequestOpts(options...),
+	)
 }
