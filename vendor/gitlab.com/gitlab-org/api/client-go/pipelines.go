@@ -86,7 +86,7 @@ type PipelineVariable struct {
 //
 // GitLab API docs: https://docs.gitlab.com/api/pipelines/
 type PipelineInput struct {
-	Name  string `json:"key"`
+	Name  string `json:"name"`
 	Value any    `json:"value"`
 }
 

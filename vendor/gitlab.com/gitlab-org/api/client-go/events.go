@@ -17,8 +17,6 @@
 package gitlab
 
 import (
-	"fmt"
-	"net/http"
 	"time"
 )
 
@@ -104,35 +102,20 @@ func (s *UsersService) ListUserContributionEvents(uid any, opt *ListContribution
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("users/%s/events", user)
 
-	req, err := s.client.NewRequest(http.MethodGet, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var cs []*ContributionEvent
-	resp, err := s.client.Do(req, &cs)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return cs, resp, nil
+	return do[[]*ContributionEvent](s.client,
+		withPath("users/%s/events", user),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 func (s *EventsService) ListCurrentUserContributionEvents(opt *ListContributionEventsOptions, options ...RequestOptionFunc) ([]*ContributionEvent, *Response, error) {
-	req, err := s.client.NewRequest(http.MethodGet, "events", opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var cs []*ContributionEvent
-	resp, err := s.client.Do(req, &cs)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return cs, resp, nil
+	return do[[]*ContributionEvent](s.client,
+		withPath("events"),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 // ProjectEvent represents a GitLab project event.
@@ -218,22 +201,9 @@ type ListProjectVisibleEventsOptions struct {
 }
 
 func (s *EventsService) ListProjectVisibleEvents(pid any, opt *ListProjectVisibleEventsOptions, options ...RequestOptionFunc) ([]*ProjectEvent, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/events", PathEscape(project))
-
-	req, err := s.client.NewRequest(http.MethodGet, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var p []*ProjectEvent
-	resp, err := s.client.Do(req, &p)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return p, resp, nil
+	return do[[]*ProjectEvent](s.client,
+		withPath("projects/%s/events", ProjectID{pid}),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }

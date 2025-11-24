@@ -54,15 +54,9 @@ type ApplicationStatistics struct {
 }
 
 func (s *ApplicationStatisticsService) GetApplicationStatistics(options ...RequestOptionFunc) (*ApplicationStatistics, *Response, error) {
-	req, err := s.client.NewRequest(http.MethodGet, "application/statistics", nil, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	statistics := new(ApplicationStatistics)
-	resp, err := s.client.Do(req, statistics)
-	if err != nil {
-		return nil, resp, err
-	}
-	return statistics, resp, nil
+	return do[*ApplicationStatistics](s.client,
+		withMethod(http.MethodGet),
+		withPath("application/statistics"),
+		withRequestOpts(options...),
+	)
 }
