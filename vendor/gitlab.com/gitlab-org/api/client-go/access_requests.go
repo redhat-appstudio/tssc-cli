@@ -17,7 +17,6 @@
 package gitlab
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 )
@@ -110,87 +109,37 @@ type AccessRequest struct {
 type ListAccessRequestsOptions ListOptions
 
 func (s *AccessRequestsService) ListProjectAccessRequests(pid any, opt *ListAccessRequestsOptions, options ...RequestOptionFunc) ([]*AccessRequest, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/access_requests", PathEscape(project))
-
-	req, err := s.client.NewRequest(http.MethodGet, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var ars []*AccessRequest
-	resp, err := s.client.Do(req, &ars)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return ars, resp, nil
+	return do[[]*AccessRequest](s.client,
+		withMethod(http.MethodGet),
+		withPath("projects/%s/access_requests", ProjectID{pid}),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 func (s *AccessRequestsService) ListGroupAccessRequests(gid any, opt *ListAccessRequestsOptions, options ...RequestOptionFunc) ([]*AccessRequest, *Response, error) {
-	group, err := parseID(gid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("groups/%s/access_requests", PathEscape(group))
-
-	req, err := s.client.NewRequest(http.MethodGet, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var ars []*AccessRequest
-	resp, err := s.client.Do(req, &ars)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return ars, resp, nil
+	return do[[]*AccessRequest](s.client,
+		withMethod(http.MethodGet),
+		withPath("groups/%s/access_requests", GroupID{gid}),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 func (s *AccessRequestsService) RequestProjectAccess(pid any, options ...RequestOptionFunc) (*AccessRequest, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/access_requests", PathEscape(project))
-
-	req, err := s.client.NewRequest(http.MethodPost, u, nil, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	ar := new(AccessRequest)
-	resp, err := s.client.Do(req, ar)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return ar, resp, nil
+	return do[*AccessRequest](s.client,
+		withMethod(http.MethodPost),
+		withPath("projects/%s/access_requests", ProjectID{pid}),
+		withRequestOpts(options...),
+	)
 }
 
 func (s *AccessRequestsService) RequestGroupAccess(gid any, options ...RequestOptionFunc) (*AccessRequest, *Response, error) {
-	group, err := parseID(gid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("groups/%s/access_requests", PathEscape(group))
-
-	req, err := s.client.NewRequest(http.MethodPost, u, nil, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	ar := new(AccessRequest)
-	resp, err := s.client.Do(req, ar)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return ar, resp, nil
+	return do[*AccessRequest](s.client,
+		withMethod(http.MethodPost),
+		withPath("groups/%s/access_requests", GroupID{gid}),
+		withRequestOpts(options...),
+	)
 }
 
 // ApproveAccessRequestOptions represents the available
@@ -203,73 +152,37 @@ type ApproveAccessRequestOptions struct {
 }
 
 func (s *AccessRequestsService) ApproveProjectAccessRequest(pid any, user int, opt *ApproveAccessRequestOptions, options ...RequestOptionFunc) (*AccessRequest, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/access_requests/%d/approve", PathEscape(project), user)
-
-	req, err := s.client.NewRequest(http.MethodPut, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	ar := new(AccessRequest)
-	resp, err := s.client.Do(req, ar)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return ar, resp, nil
+	return do[*AccessRequest](s.client,
+		withMethod(http.MethodPut),
+		withPath("projects/%s/access_requests/%d/approve", ProjectID{pid}, user),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 func (s *AccessRequestsService) ApproveGroupAccessRequest(gid any, user int, opt *ApproveAccessRequestOptions, options ...RequestOptionFunc) (*AccessRequest, *Response, error) {
-	group, err := parseID(gid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("groups/%s/access_requests/%d/approve", PathEscape(group), user)
-
-	req, err := s.client.NewRequest(http.MethodPut, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	ar := new(AccessRequest)
-	resp, err := s.client.Do(req, ar)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return ar, resp, nil
+	return do[*AccessRequest](s.client,
+		withMethod(http.MethodPut),
+		withPath("groups/%s/access_requests/%d/approve", GroupID{gid}, user),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 func (s *AccessRequestsService) DenyProjectAccessRequest(pid any, user int, options ...RequestOptionFunc) (*Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, err
-	}
-	u := fmt.Sprintf("projects/%s/access_requests/%d", PathEscape(project), user)
-
-	req, err := s.client.NewRequest(http.MethodDelete, u, nil, options)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.client.Do(req, nil)
+	_, resp, err := do[none](s.client,
+		withMethod(http.MethodDelete),
+		withPath("projects/%s/access_requests/%d", ProjectID{pid}, user),
+		withRequestOpts(options...),
+	)
+	return resp, err
 }
 
 func (s *AccessRequestsService) DenyGroupAccessRequest(gid any, user int, options ...RequestOptionFunc) (*Response, error) {
-	group, err := parseID(gid)
-	if err != nil {
-		return nil, err
-	}
-	u := fmt.Sprintf("groups/%s/access_requests/%d", PathEscape(group), user)
-
-	req, err := s.client.NewRequest(http.MethodDelete, u, nil, options)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.client.Do(req, nil)
+	_, resp, err := do[none](s.client,
+		withMethod(http.MethodDelete),
+		withPath("groups/%s/access_requests/%d", GroupID{gid}, user),
+		withRequestOpts(options...),
+	)
+	return resp, err
 }
