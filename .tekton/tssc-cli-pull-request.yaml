@@ -10,12 +10,12 @@ metadata:
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-cel-expression: |
       event == "pull_request"
-      && target_branch == "main"
+      && target_branch == "release-1.8"
       && files.all.exists(x, !x.matches('^(?:docs|.github|.vscode|.ci)/|\\.md$|^(?:.*/)?(?:\\.gitignore|OWNERS|PROJECT|LICENSE.txt|.golangci.yaml|.goreleaser.yaml|.snyk|.dockerignore|yamllint.yaml)$'))
   creationTimestamp:
   labels:
-    appstudio.openshift.io/application: tssc-cli
-    appstudio.openshift.io/component: tssc-cli
+    appstudio.openshift.io/application: tssc-cli-1-8
+    appstudio.openshift.io/component: tssc-cli-1-8
     pipelines.appstudio.openshift.io/type: build
   name: tssc-cli-on-pull-request
   namespace: rhtap-shared-team-tenant
