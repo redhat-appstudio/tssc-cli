@@ -166,7 +166,7 @@ spec:
             "--serviceaccount" "konflux-integration-runner"
           )
           echo "Starting pipeline with testplan (${#testplan_b64} chars): ${testplan_b64:0:50}..."
-          pipeline_run=$(tkn pipeline start -f https://raw.githubusercontent.com/$REPO_ORG/tssc-cli/refs/heads/$BRANCH/integration-tests/pipelines/tssc-cli-e2e.yaml "${tkn_params[@]}")
+          pipeline_run=$(tkn pipeline start -f https://raw.githubusercontent.com/xinredhat/tssc-cli/refs/heads/test_ci/integration-tests/pipelines/tssc-cli-e2e.yaml "${tkn_params[@]}")
           # Construct console URL for the new PipelineRun
           CONSOLE_URL="${KONFLUX_URL}/ns/${KONFLUX_NAMESPACE}/applications/${KONFLUX_APPLICATION_NAME}/pipelineruns/${pipeline_run}"
           echo "Started new pipelinerun: ${CONSOLE_URL}"
