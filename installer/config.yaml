@@ -67,7 +67,7 @@ tssc:
       enabled: true
       namespace: tssc-dh
       properties:
-        catalogURL: https://github.com/redhat-appstudio/tssc-sample-templates/blob/release-v1.7.x/all.yaml
+        catalogURL: https://github.com/redhat-appstudio/tssc-sample-templates/blob/release-v1.8.x/all.yaml
         manageSubscription: true
         # namespacePrefixes:
         #   - tssc-app

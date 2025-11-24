@@ -3,7 +3,7 @@ apiVersion: v2
 name: tssc-gitops
 description: TSSC OpenShift GitOps
 type: application
-version: "1.7.0"
+version: "1.8.0"
 appVersion: "1.18"
 annotations:
   tssc.redhat-appstudio.github.com/product-name: OpenShift GitOps

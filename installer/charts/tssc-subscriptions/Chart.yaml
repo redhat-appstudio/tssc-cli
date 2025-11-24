@@ -3,4 +3,4 @@ apiVersion: v2
 name: tssc-subscriptions
 description: TSSC OpenShift Operator Hub Subscriptions
 type: application
-version: "1.7.0"
+version: "1.8.0"

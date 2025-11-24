@@ -3,7 +3,7 @@ apiVersion: v2
 name: tssc-acs
 description: TSSC Advanced Cluster Security
 type: application
-version: "1.7.0"
+version: "1.8.0"
 appVersion: "4.8"
 annotations:
   tssc.redhat-appstudio.github.com/product-name: Advanced Cluster Security

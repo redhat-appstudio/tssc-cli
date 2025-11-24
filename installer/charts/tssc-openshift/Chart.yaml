@@ -3,4 +3,4 @@ apiVersion: v2
 name: tssc-openshift
 description: TSSC OpenShift Projects
 type: application
-version: "1.7.0"
+version: "1.8.0"
