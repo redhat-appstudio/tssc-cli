@@ -17,7 +17,6 @@
 package gitlab
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 )
@@ -153,18 +152,11 @@ type ListInstanceDeployKeysOptions struct {
 }
 
 func (s *DeployKeysService) ListAllDeployKeys(opt *ListInstanceDeployKeysOptions, options ...RequestOptionFunc) ([]*InstanceDeployKey, *Response, error) {
-	req, err := s.client.NewRequest(http.MethodGet, "deploy_keys", opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var ks []*InstanceDeployKey
-	resp, err := s.client.Do(req, &ks)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return ks, resp, nil
+	return do[[]*InstanceDeployKey](s.client,
+		withPath("deploy_keys"),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 // AddInstanceDeployKeyOptions represents the available AddInstanceDeployKey()
@@ -179,18 +171,12 @@ type AddInstanceDeployKeyOptions struct {
 }
 
 func (s *DeployKeysService) AddInstanceDeployKey(opt *AddInstanceDeployKeyOptions, options ...RequestOptionFunc) (*InstanceDeployKey, *Response, error) {
-	req, err := s.client.NewRequest(http.MethodPost, "deploy_keys", opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	key := new(InstanceDeployKey)
-	resp, err := s.client.Do(req, &key)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return key, resp, nil
+	return do[*InstanceDeployKey](s.client,
+		withMethod(http.MethodPost),
+		withPath("deploy_keys"),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 // ListProjectDeployKeysOptions represents the available ListProjectDeployKeys()
@@ -201,24 +187,11 @@ func (s *DeployKeysService) AddInstanceDeployKey(opt *AddInstanceDeployKeyOption
 type ListProjectDeployKeysOptions ListOptions
 
 func (s *DeployKeysService) ListProjectDeployKeys(pid any, opt *ListProjectDeployKeysOptions, options ...RequestOptionFunc) ([]*ProjectDeployKey, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/deploy_keys", PathEscape(project))
-
-	req, err := s.client.NewRequest(http.MethodGet, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var ks []*ProjectDeployKey
-	resp, err := s.client.Do(req, &ks)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return ks, resp, nil
+	return do[[]*ProjectDeployKey](s.client,
+		withPath("projects/%s/deploy_keys", ProjectID{pid}),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 // ListUserProjectDeployKeysOptions represents the available ListUserProjectDeployKeys()
@@ -229,45 +202,18 @@ func (s *DeployKeysService) ListProjectDeployKeys(pid any, opt *ListProjectDeplo
 type ListUserProjectDeployKeysOptions ListOptions
 
 func (s *DeployKeysService) ListUserProjectDeployKeys(uid any, opt *ListUserProjectDeployKeysOptions, options ...RequestOptionFunc) ([]*ProjectDeployKey, *Response, error) {
-	user, err := parseID(uid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("users/%s/project_deploy_keys", PathEscape(user))
-
-	req, err := s.client.NewRequest(http.MethodGet, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var ks []*ProjectDeployKey
-	resp, err := s.client.Do(req, &ks)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return ks, resp, nil
+	return do[[]*ProjectDeployKey](s.client,
+		withPath("users/%s/project_deploy_keys", UserID{uid}),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 func (s *DeployKeysService) GetDeployKey(pid any, deployKey int, options ...RequestOptionFunc) (*ProjectDeployKey, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/deploy_keys/%d", PathEscape(project), deployKey)
-
-	req, err := s.client.NewRequest(http.MethodGet, u, nil, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	k := new(ProjectDeployKey)
-	resp, err := s.client.Do(req, k)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return k, resp, nil
+	return do[*ProjectDeployKey](s.client,
+		withPath("projects/%s/deploy_keys/%d", ProjectID{pid}, deployKey),
+		withRequestOpts(options...),
+	)
 }
 
 // AddDeployKeyOptions represents the available ADDDeployKey() options.
@@ -282,60 +228,29 @@ type AddDeployKeyOptions struct {
 }
 
 func (s *DeployKeysService) AddDeployKey(pid any, opt *AddDeployKeyOptions, options ...RequestOptionFunc) (*ProjectDeployKey, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/deploy_keys", PathEscape(project))
-
-	req, err := s.client.NewRequest(http.MethodPost, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	k := new(ProjectDeployKey)
-	resp, err := s.client.Do(req, k)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return k, resp, nil
+	return do[*ProjectDeployKey](s.client,
+		withMethod(http.MethodPost),
+		withPath("projects/%s/deploy_keys", ProjectID{pid}),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
 
 func (s *DeployKeysService) DeleteDeployKey(pid any, deployKey int, options ...RequestOptionFunc) (*Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, err
-	}
-	u := fmt.Sprintf("projects/%s/deploy_keys/%d", PathEscape(project), deployKey)
-
-	req, err := s.client.NewRequest(http.MethodDelete, u, nil, options)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.client.Do(req, nil)
+	_, resp, err := do[none](s.client,
+		withMethod(http.MethodDelete),
+		withPath("projects/%s/deploy_keys/%d", ProjectID{pid}, deployKey),
+		withRequestOpts(options...),
+	)
+	return resp, err
 }
 
 func (s *DeployKeysService) EnableDeployKey(pid any, deployKey int, options ...RequestOptionFunc) (*ProjectDeployKey, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/deploy_keys/%d/enable", PathEscape(project), deployKey)
-
-	req, err := s.client.NewRequest(http.MethodPost, u, nil, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	k := new(ProjectDeployKey)
-	resp, err := s.client.Do(req, k)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return k, resp, nil
+	return do[*ProjectDeployKey](s.client,
+		withMethod(http.MethodPost),
+		withPath("projects/%s/deploy_keys/%d/enable", ProjectID{pid}, deployKey),
+		withRequestOpts(options...),
+	)
 }
 
 // UpdateDeployKeyOptions represents the available UpdateDeployKey() options.
@@ -348,22 +263,10 @@ type UpdateDeployKeyOptions struct {
 }
 
 func (s *DeployKeysService) UpdateDeployKey(pid any, deployKey int, opt *UpdateDeployKeyOptions, options ...RequestOptionFunc) (*ProjectDeployKey, *Response, error) {
-	project, err := parseID(pid)
-	if err != nil {
-		return nil, nil, err
-	}
-	u := fmt.Sprintf("projects/%s/deploy_keys/%d", PathEscape(project), deployKey)
-
-	req, err := s.client.NewRequest(http.MethodPut, u, opt, options)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	k := new(ProjectDeployKey)
-	resp, err := s.client.Do(req, k)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return k, resp, nil
+	return do[*ProjectDeployKey](s.client,
+		withMethod(http.MethodPut),
+		withPath("projects/%s/deploy_keys/%d", ProjectID{pid}, deployKey),
+		withAPIOpts(opt),
+		withRequestOpts(options...),
+	)
 }
