@@ -12,7 +12,7 @@ require (
 	github.com/google/go-github/v75 v75.0.0
 	github.com/mark3labs/mcp-go v0.43.1
 	github.com/onsi/gomega v1.38.2
-	github.com/openshift/api v0.0.0-20251111193948-50e2ece149d7
+	github.com/openshift/api v0.0.0-20251124165233-999c45c0835a
 	github.com/openshift/client-go v0.0.0-20251015124057-db0dee36e235
 	github.com/pkg/errors v0.9.1
 	github.com/quay/claircore v1.5.45
@@ -21,8 +21,8 @@ require (
 	gitlab.com/gitlab-org/api/client-go v0.160.0
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.19.2
-	k8s.io/api v0.34.1
-	k8s.io/apimachinery v0.34.1
+	k8s.io/api v0.34.2
+	k8s.io/apimachinery v0.34.2
 	k8s.io/cli-runtime v0.34.0
 	k8s.io/client-go v0.34.1
 	k8s.io/kubectl v0.34.0
@@ -168,7 +168,7 @@ require (
 	sigs.k8s.io/kustomize/api v0.21.0 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.21.0 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
-	sigs.k8s.io/structured-merge-diff/v6 v6.3.0 // indirect
+	sigs.k8s.io/structured-merge-diff/v6 v6.3.1 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
