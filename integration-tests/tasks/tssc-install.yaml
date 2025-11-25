@@ -107,8 +107,8 @@ spec:
             GIT_REVISION="${GIT_REVISION:-$(echo "$JOB_SPEC" | jq -r '.git.commit_sha')}"
             GIT_URL="${GIT_URL:-$(echo "$JOB_SPEC" | jq -r '.git.source_repo_url')}"
             TEST_DH_CATALOG_URL="$GIT_URL/blob/$GIT_REVISION/all.yaml"
-            # Update DEVELOPER_HUB__CATALOG__URL value in .ci-env
-            sed -i "s|^export DEVELOPER_HUB__CATALOG__URL.*|export DEVELOPER_HUB__CATALOG__URL=${TEST_DH_CATALOG_URL}|" "${env_file}"
+            # Update DEVELOPER_HUB_CATALOG_URL value in .ci-env
+            sed -i "s|^export DEVELOPER_HUB_CATALOG_URL.*|export DEVELOPER_HUB_CATALOG_URL=${TEST_DH_CATALOG_URL}|" "${env_file}"
         fi
 
         echo "INFO: .env file for tssc installation"
