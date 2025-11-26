@@ -1,0 +1,98 @@
+package mcptools
+
+import (
+	"bytes"
+	"context"
+	"fmt"
+
+	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
+	"github.com/redhat-appstudio/tssc-cli/pkg/config"
+	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
+	"github.com/redhat-appstudio/tssc-cli/pkg/resolver"
+
+	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/mark3labs/mcp-go/server"
+)
+
+// TopologyTool represents the MCP tool that's responsible to report
+// the dependency topology of the installer based on the cluster
+// configuration and Helm charts.
+type TopologyTool struct {
+	cfs *chartfs.ChartFS
+	cm  *config.ConfigMapManager
+}
+
+const (
+	// TopologyToolName mcp topology tool name
+	TopologyToolName = constants.AppName + "_topology"
+)
+
+// topologyHandler shows a table of the topology.
+func (t *TopologyTool) topologyHandler(
+	ctx context.Context,
+	_ mcp.CallToolRequest,
+) (*mcp.CallToolResult, error) {
+	// Load all charts from the embedded filesystem, or from a local directory.
+	charts, err := t.cfs.GetAllCharts()
+	if err != nil {
+		return nil, err
+	}
+	// Create a new chart collection from the loaded charts.
+	collection, err := resolver.NewCollection(charts)
+	if err != nil {
+		return nil, err
+	}
+	// Load the installer configuration from the cluster.
+	cfg, err := t.cm.GetConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// Resolving the dependency topology based on the installer configuration and
+	// Helm charts.
+	r := resolver.NewResolver(cfg, collection, resolver.NewTopology())
+	if err := r.Resolve(); err != nil {
+		return nil, err
+	}
+
+	var buf bytes.Buffer
+	r.Print(&buf)
+
+	return mcp.NewToolResultText(fmt.Sprintf(`
+The topology is a table with following columns:
+
+  - Index: the index of the chart in the dependency graph.
+  - Dependency: the name of the Helm chart.
+  - Namespace: the OpenShift namespace where the chart is installed.
+  - Product: the name of the product the chart is associated with.
+  - Depends-On: comma-separated list of charts the chart depends on.
+  - Provided-Integrations: comma-separated integrations provided by the chart.
+  - Required-Integrations: CEL expressions with the required integrations.
+
+---
+%s`,
+		buf.String())), nil
+}
+
+func (t *TopologyTool) Init(s *server.MCPServer) {
+	s.AddTools([]server.ServerTool{{
+		Tool: mcp.NewTool(
+			TopologyToolName,
+			mcp.WithDescription(`
+Report the dependency topology of the installer based on the
+cluster configuration and installer dependencies (Helm charts).
+			`),
+		),
+		Handler: t.topologyHandler,
+	}}...)
+}
+
+// NewTopologyTool instantiates a new TopologyTool.
+func NewTopologyTool(
+	cfs *chartfs.ChartFS,
+	cm *config.ConfigMapManager,
+) *TopologyTool {
+	return &TopologyTool{
+		cfs: cfs,
+		cm:  cm,
+	}
+}
