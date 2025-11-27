@@ -1,3 +1,117 @@
+## 1.2.0
+
+### 🚀 Features
+
+- feat(credentials): Add support for listing all SaaS enterprise user personal access tokens ([!2593](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2593)) by [Heidi Berry](https://gitlab.com/heidi.berry)
+
+### 🔄 Other Changes
+
+- Code Refactor Using Request Handlers - 10 ([!2525](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2525)) by [Yashesvinee V](https://gitlab.com/yashes7516)
+
+
+
+# [1.2.0](https://gitlab.com/gitlab-org/api/client-go/compare/v1.1.0...v1.2.0) (2025-11-27)
+
+
+### Features
+
+* **credentials:** Add support for listing all SaaS enterprise user personal access tokens ([3697779](https://gitlab.com/gitlab-org/api/client-go/commit/369777938e435b043e37460ff1feffedd84b7dd1))
+
+## 1.1.0
+
+### 🚀 Features
+
+- feat(service_account): allow providing email when update a Service Account ([!2589](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2589)) by [kilianpaquier](https://gitlab.com/u.kilianpaquier)
+
+### 🔄 Other Changes
+
+- Bump dependencies ([!2591](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2591)) by [Timo Furrer](https://gitlab.com/timofurrer)
+- chore(deps): update docker docker tag to v29 ([!2586](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2586)) by [GitLab Dependency Bot](https://gitlab.com/gitlab-dependency-update-bot)
+
+
+
+# [1.1.0](https://gitlab.com/gitlab-org/api/client-go/compare/v1.0.1...v1.1.0) (2025-11-26)
+
+
+### Features
+
+* **service_account:** allow providing email when update a Service Account ([324d080](https://gitlab.com/gitlab-org/api/client-go/commit/324d0806a5cd8cb6ae7f68381d09cf5e2a31a0cc))
+
+## 1.0.1
+
+### 🐛 Bug Fixes
+
+- fix: fix ReviewerID() and let it accept int64 ([!2587](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2587)) by [Ilya Savitsky](https://gitlab.com/ipsavitsky234)
+
+
+
+## [1.0.1](https://gitlab.com/gitlab-org/api/client-go/compare/v1.0.0...v1.0.1) (2025-11-25)
+
+
+### Bug Fixes
+
+* fix ReviewerID() and let it accept int64 ([6a6d439](https://gitlab.com/gitlab-org/api/client-go/commit/6a6d43952b70191358e7b726eff4f7f24a0f7ff6))
+
+## 1.0.0
+
+### 💥 Breaking Changes
+
+- Release client-go 1.0 ([!2575](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2575)) by [Patrick Rice](https://gitlab.com/PatrickRice)
+
+
+
+# [1.0.0](https://gitlab.com/gitlab-org/api/client-go/compare/v0.161.1...v1.0.0) (2025-11-24)
+
+
+* Merge branch 'release-client-1.0' into 'main' ([f06b8c2](https://gitlab.com/gitlab-org/api/client-go/commit/f06b8c2cb4446e2e76a13bbc707c64e22a64d477))
+
+
+### Bug Fixes
+
+* **issues:** use AssigneeIDValue for ListProjectIssuesOptions.AssigneeID ([1dcb219](https://gitlab.com/gitlab-org/api/client-go/commit/1dcb219c343bc5b5622ff49933199c003a231bd4))
+
+
+### Features
+
+* **ListOptions:** Update ListOptions to use composition instead of aliasing ([60beef3](https://gitlab.com/gitlab-org/api/client-go/commit/60beef36d0f93a7dc66749f55d98defbc1b3fe28))
+
+
+### BREAKING CHANGES
+
+* Release 1.0
+* **ListOptions:** ListOptions implementation changed from aliasing to composition
+Changelog: Improvements
+
+## 0.161.1
+
+### 🐛 Bug Fixes
+
+- fix(users): Fix a bug where error parsing causes user blocking to not function properly ([!2584](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2584)) by [Patrick Rice](https://gitlab.com/PatrickRice)
+
+
+
+## [0.161.1](https://gitlab.com/gitlab-org/api/client-go/compare/v0.161.0...v0.161.1) (2025-11-24)
+
+
+### Bug Fixes
+
+* **users:** Fix a bug where error parsing causes user blocking to not function properly ([2ad5506](https://gitlab.com/gitlab-org/api/client-go/commit/2ad55065d624d27d1f539a3c41489989b9a0d036))
+
+## 0.161.0
+
+### 🚀 Features
+
+- fix: return detailed API errors for BlockUser instead of generic LDAP message ([!2581](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/2581)) by [Zubeen](https://gitlab.com/syedzubeen)
+
+
+
+# [0.161.0](https://gitlab.com/gitlab-org/api/client-go/compare/v0.160.2...v0.161.0) (2025-11-24)
+
+
+### Bug Fixes
+
+* return detailed API errors for BlockUser instead of generic LDAP message ([2ba9fa6](https://gitlab.com/gitlab-org/api/client-go/commit/2ba9fa6995de6cadf0dae1bf600979b73ee471ce))
+
 ## 0.160.2
 
 ### 🐛 Bug Fixes
