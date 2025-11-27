@@ -50,11 +50,11 @@ const (
 	apiVersionPath = "api/v4/"
 	userAgent      = "go-gitlab"
 
-	headerRateLimit = "RateLimit-Limit"
-	headerRateReset = "RateLimit-Reset"
+	headerRateLimit = "Ratelimit-Limit"
+	headerRateReset = "Ratelimit-Reset"
 
-	AccessTokenHeaderName = "PRIVATE-TOKEN"
-	JobTokenHeaderName    = "JOB-TOKEN"
+	AccessTokenHeaderName = "Private-Token"
+	JobTokenHeaderName    = "Job-Token"
 )
 
 // AuthType represents an authentication type within GitLab.
@@ -166,6 +166,7 @@ type Client struct {
 	GroupActivityAnalytics           GroupActivityAnalyticsServiceInterface
 	GroupBadges                      GroupBadgesServiceInterface
 	GroupCluster                     GroupClustersServiceInterface
+	GroupCredentials                 GroupCredentialsServiceInterface
 	GroupEpicBoards                  GroupEpicBoardsServiceInterface
 	GroupImportExport                GroupImportExportServiceInterface
 	Integrations                     IntegrationsServiceInterface
@@ -304,9 +305,9 @@ type ListOptions struct {
 	// For keyset-based paginated result sets, the value must be `"keyset"`
 	Pagination string `url:"pagination,omitempty" json:"pagination,omitempty"`
 	// For offset-based and keyset-based paginated result sets, the number of results to include per page.
-	PerPage int `url:"per_page,omitempty" json:"per_page,omitempty"`
+	PerPage int64 `url:"per_page,omitempty" json:"per_page,omitempty"`
 	// For offset-based paginated result sets, page of results to retrieve.
-	Page int `url:"page,omitempty" json:"page,omitempty"`
+	Page int64 `url:"page,omitempty" json:"page,omitempty"`
 	// For keyset-based paginated result sets, tree record ID at which to fetch the next page.
 	PageToken string `url:"page_token,omitempty" json:"page_token,omitempty"`
 	// For keyset-based paginated result sets, name of the column by which to order
@@ -479,6 +480,7 @@ func NewAuthSourceClient(as AuthSource, options ...ClientOptionFunc) (*Client, e
 	c.GroupActivityAnalytics = &GroupActivityAnalyticsService{client: c}
 	c.GroupBadges = &GroupBadgesService{client: c}
 	c.GroupCluster = &GroupClustersService{client: c}
+	c.GroupCredentials = &GroupCredentialsService{client: c}
 	c.GroupEpicBoards = &GroupEpicBoardsService{client: c}
 	c.GroupImportExport = &GroupImportExportService{client: c}
 	c.Integrations = &IntegrationsService{client: c}
@@ -719,7 +721,7 @@ func (c *Client) retryHTTPBackoff(min, max time.Duration, attemptNum int, resp *
 }
 
 // rateLimitBackoff provides a callback for Client.Backoff which will use the
-// RateLimit-Reset header to determine the time to wait. We add some jitter
+// Ratelimit-Reset header to determine the time to wait. We add some jitter
 // to prevent a thundering herd.
 //
 // min and max are mainly used for bounding the jitter that will be added to
@@ -741,7 +743,7 @@ func rateLimitBackoff(min, max time.Duration, attemptNum int, resp *http.Respons
 				}
 			}
 		} else {
-			// In case the RateLimit-Reset header is not set, back off an additional
+			// In case the Ratelimit-Reset header is not set, back off an additional
 			// 100% exponentially. With the default milliseconds being set to 100 for
 			// `min`, this makes the 5th retry wait 3.2 seconds (3,200 ms) by default.
 			min = time.Duration(float64(min) * math.Pow(2, float64(attemptNum)))
@@ -963,12 +965,12 @@ type Response struct {
 	*http.Response
 
 	// Fields used for offset-based pagination.
-	TotalItems   int
-	TotalPages   int
-	ItemsPerPage int
-	CurrentPage  int
-	NextPage     int
-	PreviousPage int
+	TotalItems   int64
+	TotalPages   int64
+	ItemsPerPage int64
+	CurrentPage  int64
+	NextPage     int64
+	PreviousPage int64
 
 	// Fields used for keyset-based pagination.
 	PreviousLink string
@@ -1005,28 +1007,28 @@ const (
 // various pagination link values in the Response.
 func (r *Response) populatePageValues() {
 	if totalItems := r.Header.Get(xTotal); totalItems != "" {
-		r.TotalItems, _ = strconv.Atoi(totalItems)
+		r.TotalItems, _ = strconv.ParseInt(totalItems, 10, 64)
 	}
 	if totalPages := r.Header.Get(xTotalPages); totalPages != "" {
-		r.TotalPages, _ = strconv.Atoi(totalPages)
+		r.TotalPages, _ = strconv.ParseInt(totalPages, 10, 64)
 	}
 	if itemsPerPage := r.Header.Get(xPerPage); itemsPerPage != "" {
-		r.ItemsPerPage, _ = strconv.Atoi(itemsPerPage)
+		r.ItemsPerPage, _ = strconv.ParseInt(itemsPerPage, 10, 64)
 	}
 	if currentPage := r.Header.Get(xPage); currentPage != "" {
-		r.CurrentPage, _ = strconv.Atoi(currentPage)
+		r.CurrentPage, _ = strconv.ParseInt(currentPage, 10, 64)
 	}
 	if nextPage := r.Header.Get(xNextPage); nextPage != "" {
-		r.NextPage, _ = strconv.Atoi(nextPage)
+		r.NextPage, _ = strconv.ParseInt(nextPage, 10, 64)
 	}
 	if previousPage := r.Header.Get(xPrevPage); previousPage != "" {
-		r.PreviousPage, _ = strconv.Atoi(previousPage)
+		r.PreviousPage, _ = strconv.ParseInt(previousPage, 10, 64)
 	}
 }
 
 func (r *Response) populateLinkValues() {
 	if link := r.Header.Get("Link"); link != "" {
-		for _, link := range strings.Split(link, ",") {
+		for link := range strings.SplitSeq(link, ",") {
 			parts := strings.Split(link, ";")
 			if len(parts) < 2 {
 				continue
@@ -1141,6 +1143,8 @@ func parseID(id any) (string, error) {
 	switch v := id.(type) {
 	case int:
 		return strconv.Itoa(v), nil
+	case int64:
+		return strconv.FormatInt(v, 10), nil
 	case string:
 		return v, nil
 	default:
