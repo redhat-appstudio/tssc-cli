@@ -26,12 +26,12 @@ import (
 type (
 	SnippetsServiceInterface interface {
 		ListSnippets(opt *ListSnippetsOptions, options ...RequestOptionFunc) ([]*Snippet, *Response, error)
-		GetSnippet(snippet int, options ...RequestOptionFunc) (*Snippet, *Response, error)
-		SnippetContent(snippet int, options ...RequestOptionFunc) ([]byte, *Response, error)
-		SnippetFileContent(snippet int, ref, filename string, options ...RequestOptionFunc) ([]byte, *Response, error)
+		GetSnippet(snippet int64, options ...RequestOptionFunc) (*Snippet, *Response, error)
+		SnippetContent(snippet int64, options ...RequestOptionFunc) ([]byte, *Response, error)
+		SnippetFileContent(snippet int64, ref, filename string, options ...RequestOptionFunc) ([]byte, *Response, error)
 		CreateSnippet(opt *CreateSnippetOptions, options ...RequestOptionFunc) (*Snippet, *Response, error)
-		UpdateSnippet(snippet int, opt *UpdateSnippetOptions, options ...RequestOptionFunc) (*Snippet, *Response, error)
-		DeleteSnippet(snippet int, options ...RequestOptionFunc) (*Response, error)
+		UpdateSnippet(snippet int64, opt *UpdateSnippetOptions, options ...RequestOptionFunc) (*Snippet, *Response, error)
+		DeleteSnippet(snippet int64, options ...RequestOptionFunc) (*Response, error)
 		ExploreSnippets(opt *ExploreSnippetsOptions, options ...RequestOptionFunc) ([]*Snippet, *Response, error)
 		ListAllSnippets(opt *ListAllSnippetsOptions, options ...RequestOptionFunc) ([]*Snippet, *Response, error)
 	}
@@ -51,40 +51,60 @@ var _ SnippetsServiceInterface = (*SnippetsService)(nil)
 //
 // GitLab API docs: https://docs.gitlab.com/api/snippets/
 type Snippet struct {
-	ID          int    `json:"id"`
-	Title       string `json:"title"`
-	FileName    string `json:"file_name"`
-	Description string `json:"description"`
-	Visibility  string `json:"visibility"`
-	Author      struct {
-		ID        int        `json:"id"`
-		Username  string     `json:"username"`
-		Email     string     `json:"email"`
-		Name      string     `json:"name"`
-		State     string     `json:"state"`
-		CreatedAt *time.Time `json:"created_at"`
-	} `json:"author"`
-	UpdatedAt *time.Time `json:"updated_at"`
-	CreatedAt *time.Time `json:"created_at"`
-	ProjectID int        `json:"project_id"`
-	WebURL    string     `json:"web_url"`
-	RawURL    string     `json:"raw_url"`
-	Files     []struct {
-		Path   string `json:"path"`
-		RawURL string `json:"raw_url"`
-	} `json:"files"`
-	RepositoryStorage string `json:"repository_storage"`
+	ID                int64         `json:"id"`
+	Title             string        `json:"title"`
+	FileName          string        `json:"file_name"`
+	Description       string        `json:"description"`
+	Visibility        string        `json:"visibility"`
+	Author            SnippetAuthor `json:"author"`
+	UpdatedAt         *time.Time    `json:"updated_at"`
+	CreatedAt         *time.Time    `json:"created_at"`
+	ProjectID         int64         `json:"project_id"`
+	WebURL            string        `json:"web_url"`
+	RawURL            string        `json:"raw_url"`
+	Files             []SnippetFile `json:"files"`
+	RepositoryStorage string        `json:"repository_storage"`
 }
 
 func (s Snippet) String() string {
 	return Stringify(s)
 }
 
+// SnippetAuthor represents a GitLab snippet author.
+//
+// GitLab API docs: https://docs.gitlab.com/api/snippets/
+type SnippetAuthor struct {
+	ID        int64      `json:"id"`
+	Username  string     `json:"username"`
+	Email     string     `json:"email"`
+	Name      string     `json:"name"`
+	State     string     `json:"state"`
+	CreatedAt *time.Time `json:"created_at"`
+}
+
+func (a SnippetAuthor) String() string {
+	return Stringify(a)
+}
+
+// SnippetFile represents a GitLab snippet file.
+//
+// GitLab API docs: https://docs.gitlab.com/api/snippets/
+type SnippetFile struct {
+	Path   string `json:"path"`
+	RawURL string `json:"raw_url"`
+}
+
+func (f SnippetFile) String() string {
+	return Stringify(f)
+}
+
 // ListSnippetsOptions represents the available ListSnippets() options.
 //
 // GitLab API docs:
 // https://docs.gitlab.com/api/snippets/#list-all-snippets-for-current-user
-type ListSnippetsOptions ListOptions
+type ListSnippetsOptions struct {
+	ListOptions
+}
 
 // ListSnippets gets a list of snippets.
 //
@@ -107,7 +127,7 @@ func (s *SnippetsService) ListSnippets(opt *ListSnippetsOptions, options ...Requ
 //
 // GitLab API docs:
 // https://docs.gitlab.com/api/snippets/#get-a-single-snippet
-func (s *SnippetsService) GetSnippet(snippet int, options ...RequestOptionFunc) (*Snippet, *Response, error) {
+func (s *SnippetsService) GetSnippet(snippet int64, options ...RequestOptionFunc) (*Snippet, *Response, error) {
 	res, resp, err := do[*Snippet](s.client,
 		withMethod(http.MethodGet),
 		withPath("snippets/%d", snippet),
@@ -124,7 +144,7 @@ func (s *SnippetsService) GetSnippet(snippet int, options ...RequestOptionFunc) 
 //
 // GitLab API docs:
 // https://docs.gitlab.com/api/snippets/#single-snippet-contents
-func (s *SnippetsService) SnippetContent(snippet int, options ...RequestOptionFunc) ([]byte, *Response, error) {
+func (s *SnippetsService) SnippetContent(snippet int64, options ...RequestOptionFunc) ([]byte, *Response, error) {
 	u := fmt.Sprintf("snippets/%d/raw", snippet)
 
 	req, err := s.client.NewRequest(http.MethodGet, u, nil, options)
@@ -145,7 +165,7 @@ func (s *SnippetsService) SnippetContent(snippet int, options ...RequestOptionFu
 //
 // GitLab API docs:
 // https://docs.gitlab.com/api/snippets/#snippet-repository-file-content
-func (s *SnippetsService) SnippetFileContent(snippet int, ref, filename string, options ...RequestOptionFunc) ([]byte, *Response, error) {
+func (s *SnippetsService) SnippetFileContent(snippet int64, ref, filename string, options ...RequestOptionFunc) ([]byte, *Response, error) {
 	filepath := PathEscape(filename)
 	u := fmt.Sprintf("snippets/%d/files/%s/%s/raw", snippet, ref, filepath)
 
@@ -232,7 +252,7 @@ type UpdateSnippetOptions struct {
 //
 // GitLab API docs:
 // https://docs.gitlab.com/api/snippets/#update-snippet
-func (s *SnippetsService) UpdateSnippet(snippet int, opt *UpdateSnippetOptions, options ...RequestOptionFunc) (*Snippet, *Response, error) {
+func (s *SnippetsService) UpdateSnippet(snippet int64, opt *UpdateSnippetOptions, options ...RequestOptionFunc) (*Snippet, *Response, error) {
 	res, resp, err := do[*Snippet](s.client,
 		withMethod(http.MethodPut),
 		withPath("snippets/%d", snippet),
@@ -251,7 +271,7 @@ func (s *SnippetsService) UpdateSnippet(snippet int, opt *UpdateSnippetOptions, 
 //
 // GitLab API docs:
 // https://docs.gitlab.com/api/snippets/#delete-snippet
-func (s *SnippetsService) DeleteSnippet(snippet int, options ...RequestOptionFunc) (*Response, error) {
+func (s *SnippetsService) DeleteSnippet(snippet int64, options ...RequestOptionFunc) (*Response, error) {
 	_, resp, err := do[none](s.client,
 		withMethod(http.MethodDelete),
 		withPath("snippets/%d", snippet),
@@ -265,7 +285,9 @@ func (s *SnippetsService) DeleteSnippet(snippet int, options ...RequestOptionFun
 //
 // GitLab API docs:
 // https://docs.gitlab.com/api/snippets/#list-all-public-snippets
-type ExploreSnippetsOptions ListOptions
+type ExploreSnippetsOptions struct {
+	ListOptions
+}
 
 // ExploreSnippets gets the list of public snippets.
 //

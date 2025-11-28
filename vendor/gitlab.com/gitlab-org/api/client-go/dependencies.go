@@ -54,7 +54,7 @@ type Dependency struct {
 type DependencyVulnerability struct {
 	Name     string `url:"name" json:"name"`
 	Severity string `url:"severity" json:"severity"`
-	ID       int    `url:"id" json:"id"`
+	ID       int64  `url:"id" json:"id"`
 	URL      string `url:"url" json:"url"`
 }
 

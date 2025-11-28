@@ -28,10 +28,10 @@ import (
 type (
 	TopicsServiceInterface interface {
 		ListTopics(opt *ListTopicsOptions, options ...RequestOptionFunc) ([]*Topic, *Response, error)
-		GetTopic(topic int, options ...RequestOptionFunc) (*Topic, *Response, error)
+		GetTopic(topic int64, options ...RequestOptionFunc) (*Topic, *Response, error)
 		CreateTopic(opt *CreateTopicOptions, options ...RequestOptionFunc) (*Topic, *Response, error)
-		UpdateTopic(topic int, opt *UpdateTopicOptions, options ...RequestOptionFunc) (*Topic, *Response, error)
-		DeleteTopic(topic int, options ...RequestOptionFunc) (*Response, error)
+		UpdateTopic(topic int64, opt *UpdateTopicOptions, options ...RequestOptionFunc) (*Topic, *Response, error)
+		DeleteTopic(topic int64, options ...RequestOptionFunc) (*Response, error)
 	}
 
 	// TopicsService handles communication with the topics related methods
@@ -49,7 +49,7 @@ var _ TopicsServiceInterface = (*TopicsService)(nil)
 //
 // GitLab API docs: https://docs.gitlab.com/api/topics/
 type Topic struct {
-	ID                 int    `json:"id"`
+	ID                 int64  `json:"id"`
 	Name               string `json:"name"`
 	Title              string `json:"title"`
 	Description        string `json:"description"`
@@ -89,7 +89,7 @@ func (s *TopicsService) ListTopics(opt *ListTopicsOptions, options ...RequestOpt
 // GetTopic gets a project topic by ID.
 //
 // GitLab API docs: https://docs.gitlab.com/api/topics/#get-a-topic
-func (s *TopicsService) GetTopic(topic int, options ...RequestOptionFunc) (*Topic, *Response, error) {
+func (s *TopicsService) GetTopic(topic int64, options ...RequestOptionFunc) (*Topic, *Response, error) {
 	res, resp, err := do[*Topic](s.client,
 		withMethod(http.MethodGet),
 		withPath("topics/%d", topic),
@@ -180,7 +180,7 @@ type UpdateTopicOptions struct {
 //
 // GitLab API docs:
 // https://docs.gitlab.com/api/topics/#update-a-project-topic
-func (s *TopicsService) UpdateTopic(topic int, opt *UpdateTopicOptions, options ...RequestOptionFunc) (*Topic, *Response, error) {
+func (s *TopicsService) UpdateTopic(topic int64, opt *UpdateTopicOptions, options ...RequestOptionFunc) (*Topic, *Response, error) {
 	var err error
 	var req *retryablehttp.Request
 
@@ -214,7 +214,7 @@ func (s *TopicsService) UpdateTopic(topic int, opt *UpdateTopicOptions, options 
 //
 // GitLab API docs:
 // https://docs.gitlab.com/api/topics/#delete-a-project-topic
-func (s *TopicsService) DeleteTopic(topic int, options ...RequestOptionFunc) (*Response, error) {
+func (s *TopicsService) DeleteTopic(topic int64, options ...RequestOptionFunc) (*Response, error) {
 	_, resp, err := do[none](s.client,
 		withMethod(http.MethodDelete),
 		withPath("topics/%d", topic),
