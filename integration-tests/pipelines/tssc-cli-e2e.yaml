@@ -93,7 +93,7 @@ spec:
           - name: url
             value: https://github.com/redhat-appstudio/tssc-cli.git
           - name: revision
-            value: main
+            value: release-1.8
           - name: pathInRepo
             value: integration-tests/tasks/tssc-install.yaml
       params:
