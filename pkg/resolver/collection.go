@@ -73,6 +73,27 @@ func (c *Collection) GetProductDependency(product string) (*Dependency, error) {
 	return productDependency, nil
 }
 
+// GetProductNameForIntegration searches and returns the product name by integration name.
+// It goes though all charts and search for annotation "integrations-provided"
+// If it matches integration name, then returns product name, which is from
+// annotation "product-name"
+func (c *Collection) GetProductNameForIntegration(integrationName string) string {
+	var productName string
+	_ = c.Walk(func(_ string, d Dependency) error {
+		if productName != "" {
+			return nil // stop walking
+		}
+
+		if d.IntegrationsProvided() != nil &&
+			slices.Contains(d.IntegrationsProvided(), integrationName) {
+			productName = d.ProductName()
+		}
+		return nil
+	})
+
+	return productName
+}
+
 // NewCollection creates a new Collection from the given charts. It returns an
 // error if there are duplicate charts and product names.
 func NewCollection(charts []chart.Chart) (*Collection, error) {

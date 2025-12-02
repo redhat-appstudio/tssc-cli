@@ -35,7 +35,7 @@ func (r *RootCmd) Cmd() *cobra.Command {
 
 	logger := r.flags.GetLogger(os.Stdout)
 
-	r.cmd.AddCommand(subcmd.NewIntegration(logger, r.kube))
+	r.cmd.AddCommand(subcmd.NewIntegration(logger, r.kube, r.cfs))
 
 	for _, sub := range []subcmd.Interface{
 		subcmd.NewConfig(logger, r.flags, r.cfs, r.kube),
