@@ -74,7 +74,7 @@ func (m *MCPServer) Run() error {
 	jm := installer.NewJob(m.kube)
 	statusTool := mcptools.NewStatusTool(cm, tb, jm)
 
-	integrationCmd := NewIntegration(m.logger, m.kube)
+	integrationCmd := NewIntegration(m.logger, m.kube, m.cfs)
 	integrationTools := mcptools.NewIntegrationTools(integrationCmd, cm, im)
 
 	deployTools := mcptools.NewDeployTools(cm, tb, jm, m.image)
