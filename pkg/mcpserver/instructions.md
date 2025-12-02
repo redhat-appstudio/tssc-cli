@@ -25,6 +25,7 @@ This is the starting point. You must define the installation configuration.
 1. Use `tssc_status` to view the overall installer status.
 2. Use `tssc_config_get` to view the current configuration. Take note of each `.tssc.products[]` top comment to understand what each product does, so you can decide whether to install it or not.
 3. Use `tssc_config_get` to view the current configuration. For each entry in `.tssc.products[]`, read its leading comment/description to understand what the product does so you can decide whether to install it
+4. Use `tssc_topology` to display the dependency topology of the installer based on the cluster configuration and installer dependencies (Helm charts). After the installer configuration is updated, the user can inspect the topology of the Helm charts to be deployed.
 
 Once the configuration is successfully applied, we will proceed to the next phase.
 
