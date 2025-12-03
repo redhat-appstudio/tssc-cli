@@ -65,7 +65,7 @@ plugins:
                     gridColumn: "1 / -1"
                   if:
                     allOf:
-                      - isAzureDevOpsAvailable
+                      - isAzurePipelinesAvailable
 {{- end }}
 {{- if (lookup "v1" "Secret" $integrationNamespace "tssc-github-integration") }}
   - disabled: false
