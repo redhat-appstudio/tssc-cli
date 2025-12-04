@@ -28,7 +28,9 @@ spec:
         set -euo pipefail
 
         echo "Downloading rhads-config file:"
-        GIT_REPO="$(jq -r '.git.repo // empty' <<< $JOB_SPEC)"
+        # Extract the repository name from the source_repo_url
+        SOURCE_REPO_URL=$(jq -r '.git.source_repo_url' <<< $JOB_SPEC)
+        GIT_REPO=$(basename "$SOURCE_REPO_URL" .git)
         REPO_ORG=$(jq -r '.git.source_repo_org' <<< $JOB_SPEC)
         # Determine the branch name for the curl command.
         # If source_repo_branch starts with "refs/heads/", strip that prefix; otherwise, use as is.
