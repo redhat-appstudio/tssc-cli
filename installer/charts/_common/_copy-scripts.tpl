@@ -21,5 +21,6 @@
     - name: scripts
       mountPath: /scripts
   securityContext:
+    runAsNonRoot: false
     allowPrivilegeEscalation: false
 {{- end -}}
