@@ -3,7 +3,7 @@
 # No op container
 #
 - name: no-op
-    image: registry.redhat.io/openshift4/ose-tools-rhel9
+    image: registry.access.redhat.com/ubi9/ubi-minimal:latest
     command:
         - bash
         - -c
