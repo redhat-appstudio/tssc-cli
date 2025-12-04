@@ -104,7 +104,7 @@ func (m *ConfigMapManager) GetConfig(ctx context.Context) (*Config, error) {
 		)
 	}
 
-	return NewConfigFromBytes([]byte(payload))
+	return NewConfigFromBytes([]byte(payload), configMap.GetNamespace())
 }
 
 // configMapForConfig generate a ConfigMap resource based on informed Config.
@@ -114,7 +114,7 @@ func (m *ConfigMapManager) configMapForConfig(
 	return &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      Name,
-			Namespace: cfg.Installer.Namespace,
+			Namespace: cfg.Namespace(),
 			Labels: map[string]string{
 				Label: "true",
 			},
@@ -131,12 +131,12 @@ func (m *ConfigMapManager) Create(ctx context.Context, cfg *Config) error {
 	if err != nil {
 		return err
 	}
-	coreClient, err := m.kube.CoreV1ClientSet(cfg.Installer.Namespace)
+	coreClient, err := m.kube.CoreV1ClientSet(cfg.Namespace())
 	if err != nil {
 		return nil
 	}
 	_, err = coreClient.
-		ConfigMaps(cfg.Installer.Namespace).
+		ConfigMaps(cfg.Namespace()).
 		Create(ctx, cm, metav1.CreateOptions{})
 	return err
 }
@@ -147,12 +147,12 @@ func (m *ConfigMapManager) Update(ctx context.Context, cfg *Config) error {
 	if err != nil {
 		return err
 	}
-	coreClient, err := m.kube.CoreV1ClientSet(cfg.Installer.Namespace)
+	coreClient, err := m.kube.CoreV1ClientSet(cfg.Namespace())
 	if err != nil {
 		return nil
 	}
 	_, err = coreClient.
-		ConfigMaps(cfg.Installer.Namespace).
+		ConfigMaps(cfg.Namespace()).
 		Update(ctx, cm, metav1.UpdateOptions{})
 	return err
 }

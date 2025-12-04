@@ -32,11 +32,11 @@ func TestEngine_Render(t *testing.T) {
 	cfs, err := chartfs.NewChartFS("../../installer")
 	g.Expect(err).To(o.Succeed())
 
-	cfg, err := config.NewConfigFromFile(cfs, "config.yaml")
+	cfg, err := config.NewConfigFromFile(cfs, "config.yaml", "test-namespace")
 	g.Expect(err).To(o.Succeed())
 
 	variables := NewVariables()
-	err = variables.SetInstaller(&cfg.Installer)
+	err = variables.SetInstaller(cfg)
 	g.Expect(err).To(o.Succeed())
 
 	t.Logf("Template: %s", testYamlTmpl)
@@ -60,7 +60,7 @@ func TestEngine_Render(t *testing.T) {
 
 	root := outputMap["root"].(map[string]interface{})
 	g.Expect(root).To(o.HaveKey("namespace"))
-	g.Expect(root["namespace"]).To(o.Equal(cfg.Installer.Namespace))
+	g.Expect(root["namespace"]).To(o.Equal(cfg.Namespace()))
 
 	g.Expect(root).To(o.HaveKey("settings"))
 	g.Expect(root["settings"]).NotTo(o.BeNil())
