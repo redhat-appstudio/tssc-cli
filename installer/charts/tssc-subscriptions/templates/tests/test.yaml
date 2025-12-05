@@ -5,7 +5,7 @@
     # Tests the subcriptions CRDs.
     #
     - name: test-subscriptions-crds
-      image: registry.redhat.io/openshift4/ose-tools-rhel9
+      image: registry.redhat.io/openshift4/ose-tools-rhel9:v4.19
       command:
         - /scripts/test-subscriptions.sh
       args:
@@ -25,7 +25,7 @@
     # Tests the {{ $sub.name }} rollout status.
     #
     - name: {{ printf "test-%s" ($sub.name | lower) }} 
-      image: registry.redhat.io/openshift4/ose-tools-rhel9
+      image: registry.redhat.io/openshift4/ose-tools-rhel9:v4.19
       env:
         - name: NAMESPACE
           value: {{ $sub.namespace }}

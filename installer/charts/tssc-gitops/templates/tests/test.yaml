@@ -7,7 +7,7 @@
     # Test the ArgoCD rollout status.
     #
     - name: {{ printf "argocd-%s" $argoCD.name }}
-      image: registry.redhat.io/openshift4/ose-tools-rhel9
+      image: registry.redhat.io/openshift4/ose-tools-rhel9:v4.19
       env:
         - name: NAMESPACE
           value: {{ $argoCD.namespace }}

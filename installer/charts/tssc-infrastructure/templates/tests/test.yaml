@@ -37,7 +37,7 @@
     # Tests the OpenShift Pipelines rollout status.
     #
     - name: test-rollout-openshift-pipelines
-      image: registry.redhat.io/openshift4/ose-tools-rhel9
+      image: registry.redhat.io/openshift4/ose-tools-rhel9:v4.19
       env:
         - name: NAMESPACE
           value: {{ $osp.namespace }}

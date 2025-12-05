@@ -4,7 +4,7 @@
 {{- include "common.test" . }}
   containers:
     - name: statefulsets-test
-      image: registry.redhat.io/openshift4/ose-tools-rhel9
+      image: registry.redhat.io/openshift4/ose-tools-rhel9:v4.19
       env:
         - name: NAMESPACE
           value: {{ $secureSign.namespace }}
