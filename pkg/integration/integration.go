@@ -56,6 +56,10 @@ func (i *Integration) log() *slog.Logger {
 	))
 }
 
+func (i *Integration) Name() string {
+	return i.name
+}
+
 // secretName generates the namespaced name for the integration secret.
 func (i *Integration) secretName(cfg *config.Config) types.NamespacedName {
 	return types.NamespacedName{

@@ -17,22 +17,18 @@ type IntegrationTrustification struct {
 	logger      *slog.Logger             // application logger
 	cfg         *config.Config           // installer configuration
 	kube        *k8s.Kube                // kubernetes client
-	manager     *config.ConfigMapManager // cluster configuration manager
 	integration *integration.Integration // integration instance
 }
 
 var _ Interface = &IntegrationTrustification{}
 
-const (
-	trustificationIntegrationLongDesc = `
+const trustificationIntegrationLongDesc = `
 Manages the Trustification integration with TSSC, by storing the required
 credentials required by the TSSC services to interact with Trustification.
 
 The credentials are stored in a Kubernetes Secret in the configured namespace
 for RHDH.
 `
-	tpaProductName = "Trusted Profile Analyzer"
-)
 
 // Cmd exposes the cobra instance.
 func (t *IntegrationTrustification) Cmd() *cobra.Command {
@@ -57,11 +53,11 @@ func (t *IntegrationTrustification) Run() error {
 		return err
 	}
 	// Integration created, disable TPA product
-	config, err := t.cfg.EnableDisableProduct(tpaProductName, false)
-	if err != nil {
-		return err
-	}
-	return t.manager.Update(t.cmd.Context(), config)
+	return disableProduct(t.integration.Name(),
+		t.cmd.Context(),
+		t.cfg,
+		t.kube,
+	)
 }
 
 // NewIntegrationTrustification creates the sub-command for the "integration
@@ -82,7 +78,6 @@ func NewIntegrationTrustification(
 
 		logger:      logger,
 		kube:        kube,
-		manager:     config.NewConfigMapManager(kube),
 		integration: i,
 	}
 	i.PersistentFlags(t.cmd)
