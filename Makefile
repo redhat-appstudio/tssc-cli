@@ -119,7 +119,7 @@ image: image-podman
 # Builds the container image with Podman.
 image-podman:
 	@echo "# Building '$(IMAGE_FQN)'..."
-	podman build --tag="$(IMAGE_FQN)" .
+	podman build --build-arg COMMIT_ID=$(COMMIT_ID) --build-arg VERSION_ID=$(VERSION) --tag="$(IMAGE_FQN)" .
 
 # Logins into the container registry.
 login-buildah:
@@ -132,7 +132,7 @@ login-buildah:
 # Builds the container image with Buildah.
 image-buildah:
 	@echo "# Building '$(IMAGE_FQN)'..."
-	buildah bud --tag="$(IMAGE_FQN)" .
+	buildah bud --build-arg COMMIT_ID=$(COMMIT_ID) --build-arg VERSION_ID=$(VERSION) --tag="$(IMAGE_FQN)" .
 
 # Tags the container image with the provided arguments as tag.
 image-buildah-tag: NEW_IMAGE_FQN = $(IMAGE_REPO)/$(IMAGE_NAMESPACE)/$(APP):$(ARGS)
