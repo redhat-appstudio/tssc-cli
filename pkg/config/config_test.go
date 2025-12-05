@@ -14,7 +14,7 @@ func TestNewConfigFromFile(t *testing.T) {
 	cfs, err := chartfs.NewChartFS("../../installer")
 	g.Expect(err).To(o.Succeed())
 
-	cfg, err := NewConfigFromFile(cfs, "config.yaml")
+	cfg, err := NewConfigFromFile(cfs, "config.yaml", "test-namespace")
 	g.Expect(err).To(o.Succeed())
 	g.Expect(cfg).NotTo(o.BeNil())
 	g.Expect(cfg.Installer).NotTo(o.BeNil())
@@ -65,13 +65,6 @@ func TestNewConfigFromFile(t *testing.T) {
 
 		// Asserting the original configuration looks like the marshaled one.
 		g.Expect(string(original)).To(o.Equal(configString))
-	})
-
-	t.Run("SetNamespace", func(t *testing.T) {
-		err := cfg.Set("tssc.namespace", "testnamespace")
-		g.Expect(err).To(o.Succeed())
-		configString := cfg.String()
-		g.Expect(string(configString)).To(o.ContainSubstring("testnamespace"))
 	})
 
 	t.Run("SetSettings", func(t *testing.T) {

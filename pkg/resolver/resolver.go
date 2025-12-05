@@ -41,7 +41,7 @@ func (r *Resolver) setDependencyNamespace(d *Dependency) error {
 	// defined for it, while regular charts will use the installer's namespace.
 	var namespace string
 	if product == "" {
-		namespace = r.cfg.Installer.Namespace
+		namespace = r.cfg.Namespace()
 	} else {
 		spec, err := r.cfg.GetProduct(product)
 		if err != nil {
