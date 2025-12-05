@@ -31,7 +31,7 @@ RUN make GOFLAGS='-buildvcs=false' COMMIT_ID=${COMMIT_ID} VERSION=${VERSION_ID}
 # Run
 #
 
-FROM registry.access.redhat.com/ubi9-minimal:9.7-1762956380
+FROM registry.access.redhat.com/ubi10:10.1-1763341459
 
 LABEL \
   name="tssc" \
@@ -66,8 +66,8 @@ COPY --from=builder /workdir/tssc/bin/tssc /usr/local/bin/tssc
 COPY --from=builder /workdir/tssc/image/gh_2.81.0_linux_amd64/bin/gh /usr/local/bin/gh
 COPY --from=builder /workdir/tssc/scripts/ ./scripts/
 
-RUN groupadd --gid 999 -r tssc && \
-    useradd -r -d /tssc -g tssc -s /sbin/nologin --uid 999 tssc && \
+RUN groupadd --gid 9999 -r tssc && \
+    useradd -r -d /tssc -g tssc -s /sbin/nologin --uid 9999 tssc && \
     chown -R tssc:tssc .
 
 USER tssc

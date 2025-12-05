@@ -3,7 +3,7 @@
 # No op container
 #
 - name: no-op
-    image: registry.access.redhat.com/ubi9/ubi-minimal:latest
+    image: registry.access.redhat.com/ubi10/ubi-minimal:latest
     command:
         - bash
         - -c
