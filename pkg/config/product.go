@@ -19,9 +19,8 @@ type Product struct {
 	Name string `yaml:"name"`
 	// Enabled product toggle.
 	Enabled bool `yaml:"enabled"`
-	// Namespace target namespace for the product, which may involve different
-	// Helm charts targeting the specific product namespace, while the chart
-	// target is deployed in a different namespace.
+	// Namespace target namespace for product's dependency (Helm chart). If empty,
+	// it defaults to the installer's namespace.
 	Namespace *string `yaml:"namespace,omitempty"`
 	// Properties contains the product specific configuration.
 	Properties map[string]interface{} `yaml:"properties"`

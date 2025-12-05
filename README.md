@@ -11,7 +11,7 @@
 </p>
 
 Red Hat Trusted Software Supply Chain CLI (`tssc`)
-------------------------------------------------------------
+--------------------------------------------------
 
 # Abstract
 
@@ -37,6 +37,9 @@ tssc config --help
 
 # Creates a new default configuration in the cluster, showing the result.
 tssc config --create --get
+
+# Creates a new default configuration in the cluster in a specific namespace.
+tssc config --create --namespace tssc
 ```
 
 2. Run the command `tssc` to display help text that shows all the supported commands and options. 
@@ -70,14 +73,12 @@ The [`config.yaml`](installer/config.yaml) file is structured to outline key com
 ```yaml
 ---
 tssc:
-  namespace: tssc
   settings: {}
   products: {}
 ```
 
 The attributes of the `tssc` object are as follows:
 
-- `.namespace`: Specifies the default namespace used by the installer, set to `tssc`. This namespace acts as the primary operational area for the installation process.
 - `.settings`: Defines the settings of the deployment. This can control a wide set of properties.
 - `.products`: Defines the features to be deployed by the installer. Each feature is identified by a unique name and a set of properties.
 
