@@ -123,8 +123,8 @@ build() {
         make
     else
         if [ "${CLI_IMAGE:-}" = "dev" ]; then
-            podman build . -t tssc
-            CLI_IMAGE="tssc:latest"
+            make image-podman
+            CLI_IMAGE="ghcr.io/redhat-appstudio/tssc:latest"
         fi
     fi
 }
@@ -141,9 +141,6 @@ init_config() {
     cp "$PROJECT_DIR/installer/charts/values.yaml.tpl" "$VALUES"
     cp "$KUBECONFIG" "$CONFIG_DIR/kubeconfig"
     KUBECONFIG="$CONFIG_DIR/kubeconfig"
-
-    NAMESPACE="$(yq '.tssc.namespace' "$CONFIG")"
-    export NAMESPACE
 
     # shellcheck disable=SC1090
     source "$ENVFILE"
@@ -185,6 +182,15 @@ configure() {
     fi
     cd "$(dirname "$CONFIG")"
     tssc_cli config --force --get --create "$(basename "$CONFIG")"
+
+    NAMESPACE="$(
+        kubectl get configmap \
+        -A \
+        --selector "tssc.redhat-appstudio.github.com/config=true" \
+        -o jsonpath="{.items[0].metadata.namespace}"
+    )"
+    export NAMESPACE
+
     cd - >/dev/null
 }
 
