@@ -102,6 +102,20 @@ func (c *ConfigTools) initHandler(
 	ctx context.Context,
 	ctr mcp.CallToolRequest,
 ) (*mcp.CallToolResult, error) {
+	// Checking whether the configuration already exists in the cluster.
+	if _, err := c.cm.GetConfig(ctx); err == nil {
+		return mcp.NewToolResultErrorf(`
+The TSSC configuration already exists in the cluster! Use the %q tool to inspect
+the current configuration.`,
+			ConfigGetTool,
+		), nil
+	} else if !errors.Is(err, config.ErrConfigMapNotFound) {
+		return mcp.NewToolResultErrorFromErr(`
+Unable to retrieve the configuration from the cluster!`,
+			err,
+		), nil
+	}
+
 	// Setting the namespace from user input, if provided.
 	ns, ok := ctr.GetArguments()[NamespaceArg].(string)
 	if !ok || ns == "" {
@@ -551,7 +565,7 @@ func NewConfigTools(
 	cm *config.ConfigMapManager,
 ) (*ConfigTools, error) {
 	// Loading the default configuration to serve as a reference for MCP tools.
-	defaultCfg, err := config.NewConfigDefault("")
+	defaultCfg, err := config.NewConfigDefault(constants.Namespace)
 	if err != nil {
 		return nil, err
 	}
