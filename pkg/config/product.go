@@ -58,7 +58,8 @@ func (p *Product) GetNamespace() string {
 // Validate validates the product configuration, checking for missing fields.
 func (p *Product) Validate() error {
 	if p.Enabled && p.GetNamespace() == "" {
-		return fmt.Errorf("%w: missing namespace", ErrInvalidConfig)
+		return fmt.Errorf("%w: product %q: missing namespace",
+			ErrInvalidConfig, p.Name)
 	}
 	return nil
 }
