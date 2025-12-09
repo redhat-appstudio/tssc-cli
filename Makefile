@@ -13,6 +13,10 @@ GOFLAGS_TEST ?= -failfast -v -cover
 CGO_ENABLED ?= 0
 CGO_LDFLAGS ?= 
 
+# GoReleaser executable and version.
+GORELEASER_BIN ?= goreleaser
+GORELEASER_VERSION ?= v2.13.1
+
 # GitHub action current ref name, provided by the action context environment
 # variables, and credentials needed to push the release.
 GITHUB_REF_NAME ?= ${GITHUB_REF_NAME:-}
@@ -87,7 +91,7 @@ debug: $(BIN)
 .PHONY: goreleaser-snapshot
 goreleaser-snapshot: installer-tarball
 goreleaser-snapshot: tool-goreleaser
-	goreleaser build --clean --snapshot $(ARGS)
+	$(GORELEASER_BIN) build --clean --snapshot $(ARGS)
 
 snapshot: goreleaser-snapshot
 
@@ -164,8 +168,8 @@ tool-gh:
 # Installs GoReleaser.
 tool-goreleaser: GOFLAGS =
 tool-goreleaser:
-	@which goreleaser  || \
-		go install github.com/goreleaser/goreleaser@latest
+	@which $(GORELEASER_BIN) >/dev/null 2>&1 || \
+		go install github.com/goreleaser/goreleaser/v2@$(GORELEASER_VERSION)
 
 #
 # Test and Lint
@@ -217,7 +221,7 @@ goreleaser-release: tool-goreleaser
 goreleaser-release: CGO_ENABLED = 0
 goreleaser-release: GOFLAGS = -a
 goreleaser-release:
-	goreleaser release --clean --fail-fast $(ARGS)
+	$(GORELEASER_BIN) release --clean --fail-fast $(ARGS)
 
 # Releases the GITHUB_REF_NAME.
 github-release: \
