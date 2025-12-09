@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi9/go-toolset:9.7-1763038106
+FROM registry.access.redhat.com/ubi10/go-toolset:1.25.3-1763633883 AS builder
 
 ENV SHELLCHECK_VERSION=0.7.1
 ENV YQ_VERSION=v4.25.2
@@ -19,13 +19,13 @@ RUN dnf install -y -q --allowerasing --nobest \
     gcc-c++ \
     jq \
     make \
-    nodejs-devel \
+    nodejs \
     nodejs-libs \
-    nodejs-packaging \
     openssl \
     openssl-devel \
     python3 \
     python3-pip \
+    xz \
     zlib \
     zlib-devel && \
     pip3 install --upgrade pip && \
