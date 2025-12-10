@@ -220,12 +220,15 @@ github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/google/go-github/scrape v0.0.0-20251008171934-06b8b3a37d13
+# github.com/google/go-github/scrape v0.0.0-20251209012504-06ab3a273511
 ## explicit; go 1.24.0
 github.com/google/go-github/scrape
 # github.com/google/go-github/v75 v75.0.0
 ## explicit; go 1.24.0
 github.com/google/go-github/v75/github
+# github.com/google/go-github/v80 v80.0.0
+## explicit; go 1.24.0
+github.com/google/go-github/v80/github
 # github.com/google/go-querystring v1.1.0
 ## explicit; go 1.10
 github.com/google/go-querystring/query
@@ -243,8 +246,6 @@ github.com/gosuri/uitable/util/wordwrap
 # github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
 ## explicit
 github.com/gregjones/httpcache
-# github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.3
-## explicit; go 1.24.0
 # github.com/hashicorp/errwrap v1.1.0
 ## explicit
 github.com/hashicorp/errwrap
@@ -347,7 +348,7 @@ github.com/munnerz/goautoneg
 # github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f
 ## explicit
 github.com/mxk/go-flowrate/flowrate
-# github.com/onsi/gomega v1.38.2
+# github.com/onsi/gomega v1.38.3
 ## explicit; go 1.23.0
 github.com/onsi/gomega
 github.com/onsi/gomega/format
@@ -398,11 +399,9 @@ github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
 ## explicit
 github.com/pmezard/go-difflib/difflib
-# github.com/prometheus/common v0.67.4
-## explicit; go 1.24.0
 # github.com/prometheus/procfs v0.19.2
 ## explicit; go 1.24.0
-# github.com/quay/claircore v1.5.45
+# github.com/quay/claircore v1.5.48
 ## explicit; go 1.24.0
 github.com/quay/claircore/pkg/tarfs
 # github.com/rubenv/sql-migrate v1.8.1
@@ -426,7 +425,7 @@ github.com/sirupsen/logrus
 ## explicit; go 1.21.0
 github.com/spf13/cast
 github.com/spf13/cast/internal
-# github.com/spf13/cobra v1.10.1
+# github.com/spf13/cobra v1.10.2
 ## explicit; go 1.15
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.10
@@ -463,8 +462,6 @@ gitlab.com/gitlab-org/api/client-go
 # go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.38.0
 ## explicit; go 1.23.0
 # go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.38.0
-## explicit; go 1.23.0
-# go.opentelemetry.io/proto/otlp v1.9.0
 ## explicit; go 1.23.0
 # go.yaml.in/yaml/v2 v2.4.3
 ## explicit; go 1.15

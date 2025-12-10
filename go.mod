@@ -1,22 +1,21 @@
 module github.com/redhat-appstudio/tssc-cli
 
-go 1.24.6
-
-toolchain go1.25.5
+go 1.25.3
 
 require (
 	dario.cat/mergo v1.0.2
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/google/cel-go v0.26.1
-	github.com/google/go-github/scrape v0.0.0-20251008171934-06b8b3a37d13
+	github.com/google/go-github/scrape v0.0.0-20251209012504-06ab3a273511
 	github.com/google/go-github/v75 v75.0.0
+	github.com/google/go-github/v80 v80.0.0
 	github.com/mark3labs/mcp-go v0.43.1
-	github.com/onsi/gomega v1.38.2
+	github.com/onsi/gomega v1.38.3
 	github.com/openshift/api v0.0.0-20251124165233-999c45c0835a
 	github.com/openshift/client-go v0.0.0-20251123231646-4685125c2287
 	github.com/pkg/errors v0.9.1
-	github.com/quay/claircore v1.5.45
-	github.com/spf13/cobra v1.10.1
+	github.com/quay/claircore v1.5.48
+	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	gitlab.com/gitlab-org/api/client-go v0.160.2
 	gopkg.in/yaml.v3 v3.0.1
@@ -88,7 +87,6 @@ require (
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect
 	github.com/gosuri/uitable v0.0.4 // indirect
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.3 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
@@ -121,7 +119,6 @@ require (
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/prometheus/common v0.67.4 // indirect
 	github.com/prometheus/procfs v0.19.2 // indirect
 	github.com/rubenv/sql-migrate v1.8.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
@@ -139,7 +136,6 @@ require (
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.63.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.38.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.38.0 // indirect
-	go.opentelemetry.io/proto/otlp v1.9.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/crypto v0.45.0 // indirect
