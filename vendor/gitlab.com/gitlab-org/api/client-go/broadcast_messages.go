@@ -33,7 +33,7 @@ type (
 		//
 		// GitLab API docs:
 		// https://docs.gitlab.com/api/broadcast_messages/#get-a-specific-broadcast-message
-		GetBroadcastMessage(broadcast int, options ...RequestOptionFunc) (*BroadcastMessage, *Response, error)
+		GetBroadcastMessage(broadcast int64, options ...RequestOptionFunc) (*BroadcastMessage, *Response, error)
 
 		// CreateBroadcastMessage creates a message to broadcast.
 		//
@@ -45,13 +45,13 @@ type (
 		//
 		// GitLab API docs:
 		// https://docs.gitlab.com/api/broadcast_messages/#update-a-broadcast-message
-		UpdateBroadcastMessage(broadcast int, opt *UpdateBroadcastMessageOptions, options ...RequestOptionFunc) (*BroadcastMessage, *Response, error)
+		UpdateBroadcastMessage(broadcast int64, opt *UpdateBroadcastMessageOptions, options ...RequestOptionFunc) (*BroadcastMessage, *Response, error)
 
 		// DeleteBroadcastMessage deletes a broadcasted message.
 		//
 		// GitLab API docs:
 		// https://docs.gitlab.com/api/broadcast_messages/#delete-a-broadcast-message
-		DeleteBroadcastMessage(broadcast int, options ...RequestOptionFunc) (*Response, error)
+		DeleteBroadcastMessage(broadcast int64, options ...RequestOptionFunc) (*Response, error)
 	}
 
 	// BroadcastMessagesService handles communication with the broadcast
@@ -74,7 +74,7 @@ type BroadcastMessage struct {
 	StartsAt           *time.Time         `json:"starts_at"`
 	EndsAt             *time.Time         `json:"ends_at"`
 	Font               string             `json:"font"`
-	ID                 int                `json:"id"`
+	ID                 int64              `json:"id"`
 	Active             bool               `json:"active"`
 	TargetAccessLevels []AccessLevelValue `json:"target_access_levels"`
 	TargetPath         string             `json:"target_path"`
@@ -88,7 +88,9 @@ type BroadcastMessage struct {
 //
 // GitLab API docs:
 // https://docs.gitlab.com/api/broadcast_messages/#get-all-broadcast-messages
-type ListBroadcastMessagesOptions ListOptions
+type ListBroadcastMessagesOptions struct {
+	ListOptions
+}
 
 func (s *BroadcastMessagesService) ListBroadcastMessages(opt *ListBroadcastMessagesOptions, options ...RequestOptionFunc) ([]*BroadcastMessage, *Response, error) {
 	return do[[]*BroadcastMessage](s.client,
@@ -99,7 +101,7 @@ func (s *BroadcastMessagesService) ListBroadcastMessages(opt *ListBroadcastMessa
 	)
 }
 
-func (s *BroadcastMessagesService) GetBroadcastMessage(broadcast int, options ...RequestOptionFunc) (*BroadcastMessage, *Response, error) {
+func (s *BroadcastMessagesService) GetBroadcastMessage(broadcast int64, options ...RequestOptionFunc) (*BroadcastMessage, *Response, error) {
 	return do[*BroadcastMessage](s.client,
 		withMethod(http.MethodGet),
 		withPath("broadcast_messages/%d", broadcast),
@@ -150,7 +152,7 @@ type UpdateBroadcastMessageOptions struct {
 	Theme              *string            `url:"theme,omitempty" json:"theme,omitempty"`
 }
 
-func (s *BroadcastMessagesService) UpdateBroadcastMessage(broadcast int, opt *UpdateBroadcastMessageOptions, options ...RequestOptionFunc) (*BroadcastMessage, *Response, error) {
+func (s *BroadcastMessagesService) UpdateBroadcastMessage(broadcast int64, opt *UpdateBroadcastMessageOptions, options ...RequestOptionFunc) (*BroadcastMessage, *Response, error) {
 	return do[*BroadcastMessage](s.client,
 		withMethod(http.MethodPut),
 		withPath("broadcast_messages/%d", broadcast),
@@ -159,7 +161,7 @@ func (s *BroadcastMessagesService) UpdateBroadcastMessage(broadcast int, opt *Up
 	)
 }
 
-func (s *BroadcastMessagesService) DeleteBroadcastMessage(broadcast int, options ...RequestOptionFunc) (*Response, error) {
+func (s *BroadcastMessagesService) DeleteBroadcastMessage(broadcast int64, options ...RequestOptionFunc) (*Response, error) {
 	_, resp, err := do[none](s.client,
 		withMethod(http.MethodDelete),
 		withPath("broadcast_messages/%d", broadcast),

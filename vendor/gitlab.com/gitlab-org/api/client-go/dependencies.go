@@ -54,7 +54,7 @@ type Dependency struct {
 type DependencyVulnerability struct {
 	Name     string `url:"name" json:"name"`
 	Severity string `url:"severity" json:"severity"`
-	ID       int    `url:"id" json:"id"`
+	ID       int64  `url:"id" json:"id"`
 	URL      string `url:"url" json:"url"`
 }
 
@@ -73,7 +73,7 @@ type DependencyLicense struct {
 // https://docs.gitlab.com/api/dependencies/#list-project-dependencies
 type ListProjectDependenciesOptions struct {
 	ListOptions
-	PackageManager []*DependencyPackageManagerValue `url:"package_manager,omitempty" json:"package_manager,omitempty"`
+	PackageManager []*DependencyPackageManagerValue `url:"package_manager,comma,omitempty" json:"package_manager,omitempty"`
 }
 
 func (s *DependenciesService) ListProjectDependencies(pid any, opt *ListProjectDependenciesOptions, options ...RequestOptionFunc) ([]*Dependency, *Response, error) {
