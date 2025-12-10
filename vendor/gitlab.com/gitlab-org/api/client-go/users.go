@@ -1102,21 +1102,12 @@ func (s *UsersService) BlockUser(user int, options ...RequestOptionFunc) error {
 		return err
 	}
 
-	resp, err := s.client.Do(req, nil)
-	if err != nil && resp == nil {
-		return err
+	_, doErr := s.client.Do(req, nil)
+	if doErr != nil {
+		return doErr
 	}
 
-	switch resp.StatusCode {
-	case 201:
-		return nil
-	case 403:
-		return ErrUserBlockPrevented
-	case 404:
-		return ErrUserNotFound
-	default:
-		return fmt.Errorf("%w: %d", errUnexpectedResultCode, resp.StatusCode)
-	}
+	return nil
 }
 
 // UnblockUser unblocks the specified user. Available only for admin.
