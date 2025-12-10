@@ -7,7 +7,6 @@ require (
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/google/cel-go v0.26.1
 	github.com/google/go-github/scrape v0.0.0-20251209012504-06ab3a273511
-	github.com/google/go-github/v75 v75.0.0
 	github.com/google/go-github/v80 v80.0.0
 	github.com/mark3labs/mcp-go v0.43.1
 	github.com/onsi/gomega v1.38.3
