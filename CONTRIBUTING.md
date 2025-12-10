@@ -1,6 +1,8 @@
 Contributing to `tssc`
 ---------------------------
 
+This project also provides a [`GEMINI.md`](GEMINI.md) file with context for AI-powered code assistants.
+
 In order to contribute to this project you need the following requirements:
 
 - [Golang 1.23 or higher][golang]
