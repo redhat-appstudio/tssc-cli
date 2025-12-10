@@ -11,7 +11,7 @@ import (
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
 
 	"github.com/google/go-github/scrape"
-	"github.com/google/go-github/v75/github"
+	"github.com/google/go-github/v80/github"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 )
