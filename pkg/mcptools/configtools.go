@@ -76,7 +76,7 @@ func (c *ConfigTools) getHandler(
 
 	// The cluster is not configured yet, showing the user a default configuration
 	// and hints on how to proceed.
-	if cfg, err = config.NewConfigDefault(); err != nil {
+	if cfg, err = config.NewConfigDefault(""); err != nil {
 		return nil, err
 	}
 
@@ -102,23 +102,36 @@ func (c *ConfigTools) initHandler(
 	ctx context.Context,
 	ctr mcp.CallToolRequest,
 ) (*mcp.CallToolResult, error) {
+	// Checking whether the configuration already exists in the cluster.
+	if _, err := c.cm.GetConfig(ctx); err == nil {
+		return mcp.NewToolResultErrorf(`
+The TSSC configuration already exists in the cluster! Use the %q tool to inspect
+the current configuration.`,
+			ConfigGetTool,
+		), nil
+	} else if !errors.Is(err, config.ErrConfigMapNotFound) {
+		return mcp.NewToolResultErrorFromErr(`
+Unable to retrieve the configuration from the cluster!`,
+			err,
+		), nil
+	}
+
+	// Setting the namespace from user input, if provided.
+	ns, ok := ctr.GetArguments()[NamespaceArg].(string)
+	if !ok || ns == "" {
+		return nil, fmt.Errorf("namespace argument is required")
+	}
+
 	// Deep-copy the default config to avoid mutating c.defaultCfg.
 	payload, err := c.defaultCfg.MarshalYAML()
 	if err != nil {
 		return nil, err
 	}
-	cfgPtr, err := config.NewConfigFromBytes(payload)
+	cfgPtr, err := config.NewConfigFromBytes(payload, ns)
 	if err != nil {
 		return nil, err
 	}
 	cfg := cfgPtr
-
-	// Setting the namespace from user input, if provided.
-	if ns, ok := ctr.GetArguments()[NamespaceArg].(string); ok {
-		if err := cfg.Set("tssc.namespace", ns); err != nil {
-			return nil, err
-		}
-	}
 
 	// Ensure the configuration is valid.
 	if err := cfg.Validate(); err != nil {
@@ -131,7 +144,7 @@ func (c *ConfigTools) initHandler(
 		ctx,
 		c.logger,
 		c.kube,
-		cfg.Installer.Namespace,
+		cfg.Namespace(),
 	); err != nil {
 		return nil, err
 	}
@@ -143,7 +156,7 @@ func (c *ConfigTools) initHandler(
 
 	return mcp.NewToolResultText(fmt.Sprintf(`
 TSSC default configuration is successfully applied in %q namespace`,
-		cfg.Installer.Namespace,
+		cfg.Namespace(),
 	)), nil
 }
 
@@ -447,7 +460,7 @@ exists yet.`,
 The main namespace for TSSC ('.tssc.namespace'), where Red Hat Developer Hub (DH)
 and other fundamental services will be deployed.`,
 				),
-				mcp.DefaultString(c.defaultCfg.Installer.Namespace),
+				mcp.DefaultString(c.defaultCfg.Namespace()),
 			),
 		),
 		Handler: c.initHandler,
@@ -552,7 +565,7 @@ func NewConfigTools(
 	cm *config.ConfigMapManager,
 ) (*ConfigTools, error) {
 	// Loading the default configuration to serve as a reference for MCP tools.
-	defaultCfg, err := config.NewConfigDefault()
+	defaultCfg, err := config.NewConfigDefault(constants.Namespace)
 	if err != nil {
 		return nil, err
 	}

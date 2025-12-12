@@ -18,15 +18,15 @@ type Variables struct {
 }
 
 // SetInstaller sets the installer configuration.
-func (v *Variables) SetInstaller(cfg *config.Spec) error {
-	v.Installer["Namespace"] = cfg.Namespace
-	settings, err := UnstructuredType(cfg.Settings)
+func (v *Variables) SetInstaller(cfg *config.Config) error {
+	v.Installer["Namespace"] = cfg.Namespace()
+	settings, err := UnstructuredType(cfg.Installer.Settings)
 	if err != nil {
 		return err
 	}
 	v.Installer["Settings"] = settings.AsMap()
 	products := map[string]interface{}{}
-	for _, product := range cfg.Products {
+	for _, product := range cfg.Installer.Products {
 		products[product.KeyName()] = product
 	}
 	v.Installer["Products"], err = UnstructuredType(products)

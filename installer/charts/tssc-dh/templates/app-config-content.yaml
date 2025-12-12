@@ -49,24 +49,7 @@ azureDevOps:
 auth:
   environment: production
   providers:
-  {{- $signInPage := "" }}
-  {{- if eq .Values.developerHub.authProvider "oidc" }}
-    {{- $signInPage = "oidc" }}
-    oidc:
-      production:
-        clientId: ${AUTH__OIDC__CLIENT__ID}
-        clientSecret: ${AUTH__OIDC__CLIENT__SECRET}
-        metadataUrl: ${AUTH__OIDC__METADATA__URL}
-        prompt: auto
-        signIn:
-          resolvers:
-          - resolver: preferredUsernameMatchingUserEntityName
-  session:
-    secret:
-      $env: BACKEND_SECRET
-  {{- end }}
-  {{- if eq .Values.developerHub.authProvider "github" }}
-    {{- $signInPage = "github" }}
+  {{- if $githubSecretObj }}
     github:
       production:
         clientId: ${GITHUB__APP__CLIENT__ID}
@@ -81,10 +64,9 @@ auth:
               dangerouslyAllowSignInWithoutUserInCatalog: true
       {{- end }}
   {{- end }}
-  {{- if eq .Values.developerHub.authProvider "gitlab" }}
+  {{- if $gitlabSecretObj }}
     {{- $gitlabSecretData := ($gitlabSecretObj.data | default dict) }}
     {{- if and $gitlabSecretData.clientId $gitlabSecretData.clientSecret }}
-    {{- $signInPage = "gitlab" }}
     gitlab:
       production:
       {{- if ne ($gitlabSecretData.host | b64dec) "gitlab.com" }}
@@ -97,6 +79,20 @@ auth:
             - resolver: usernameMatchingUserEntityName
               dangerouslyAllowSignInWithoutUserInCatalog: true
     {{- end }}
+  {{- end }}
+  {{- if eq .Values.developerHub.authProvider "oidc" }}
+    oidc:
+      production:
+        clientId: ${AUTH__OIDC__CLIENT__ID}
+        clientSecret: ${AUTH__OIDC__CLIENT__SECRET}
+        metadataUrl: ${AUTH__OIDC__METADATA__URL}
+        prompt: auto
+        signIn:
+          resolvers:
+          - resolver: preferredUsernameMatchingUserEntityName
+  session:
+    secret:
+      $env: BACKEND_SECRET
   {{- end }}
 backend:
   auth:
@@ -272,8 +268,8 @@ proxy:
 quay:
   uiUrl: ${QUAY__URL}
 {{- end }}
-{{- if $signInPage }}
-signInPage: {{ $signInPage }}
+{{- if .Values.developerHub.authProvider }}
+signInPage: {{ .Values.developerHub.authProvider }}
 {{- end }}
 techdocs:
   builder: 'local'

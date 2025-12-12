@@ -29,7 +29,7 @@ spec:
         # Generates a token for StackRox API, using the ACS Central credentials.
         #
         - name: stackrox-api-generate-token
-          image: registry.redhat.io/openshift4/ose-tools-rhel9
+          image: registry.redhat.io/openshift4/ose-tools-rhel9:v4.19
           env:
             - name: ROX_ENDPOINT
               value: {{ include "acs.centralEndPoint" . }}

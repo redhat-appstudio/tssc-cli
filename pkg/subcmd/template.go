@@ -116,7 +116,7 @@ func (t *Template) Run() error {
 	// Setting values and loading cluster's information.
 	if err = i.SetValues(
 		t.cmd.Context(),
-		&t.cfg.Installer,
+		t.cfg,
 		string(valuesTmplPayload),
 	); err != nil {
 		return err

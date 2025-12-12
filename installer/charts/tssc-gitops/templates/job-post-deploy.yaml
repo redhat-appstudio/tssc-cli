@@ -68,7 +68,7 @@ spec:
         # on a environment file.
         #
         - name: argocd-store-token
-          image: registry.redhat.io/openshift4/ose-tools-rhel9
+          image: registry.redhat.io/openshift4/ose-tools-rhel9:v4.19
           env:
             - name: SECRET_NAME
               value: {{ $argoCD.integrationSecret.name }}

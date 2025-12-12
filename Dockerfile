@@ -3,7 +3,7 @@
 #
 
 FROM registry.redhat.io/openshift4/ose-tools-rhel9@sha256:c1baccf320b0acaed693a07fd8df76758db0a38767ace30ccc79aed9ba8c4987 AS ose-tools
-FROM registry.access.redhat.com/ubi9/go-toolset:9.7-1763038106 AS builder
+FROM registry.access.redhat.com/ubi10/go-toolset:1.25.3-1763633883 AS builder
 
 ARG COMMIT_ID
 ARG VERSION_ID
@@ -31,7 +31,7 @@ RUN make GOFLAGS='-buildvcs=false' COMMIT_ID=${COMMIT_ID} VERSION=${VERSION_ID}
 # Run
 #
 
-FROM registry.access.redhat.com/ubi9-minimal:9.7-1762956380
+FROM registry.access.redhat.com/ubi10:10.1-1763341459
 
 LABEL \
   name="tssc" \
@@ -66,8 +66,8 @@ COPY --from=builder /workdir/tssc/bin/tssc /usr/local/bin/tssc
 COPY --from=builder /workdir/tssc/image/gh_2.81.0_linux_amd64/bin/gh /usr/local/bin/gh
 COPY --from=builder /workdir/tssc/scripts/ ./scripts/
 
-RUN groupadd --gid 999 -r tssc && \
-    useradd -r -d /tssc -g tssc -s /sbin/nologin --uid 999 tssc && \
+RUN groupadd --gid 9999 -r tssc && \
+    useradd -r -d /tssc -g tssc -s /sbin/nologin --uid 9999 tssc && \
     chown -R tssc:tssc .
 
 USER tssc

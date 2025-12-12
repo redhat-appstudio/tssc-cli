@@ -1,7 +1,5 @@
 ---
 tssc:
-  # Main installer namespace.
-  namespace: &installerNamespace tssc
   settings:
     # Toggles the CRC settings for the installer, which adapts the deployment to
     # work on a CRC development environment.
@@ -45,8 +43,7 @@ tssc:
     # application delivery and reduces time to market on Red Hat OpenShift.
     - name: OpenShift Pipelines
       enabled: true
-      # No new resources will be created in the namespace
-      namespace: *installerNamespace
+      # Uses the installer's namespace.
       properties:
         manageSubscription: true
     # Red Hat Trusted Profile Analyzer (TPA), which leverages the community-driven

@@ -195,7 +195,7 @@ acs: &acs
     namespace: {{ .Installer.Namespace }}
   test:
     scanner:
-      image: registry.access.redhat.com/ubi9:latest
+      image: registry.access.redhat.com/ubi10:latest
   tssc:
     namespace: {{ .Installer.Namespace }}
 acsTest: *acs

@@ -10,7 +10,7 @@
     # Test ACS availibility, pending https://issues.redhat.com/browse/RFE-6727
     #
     - name: acs-image-scan-test
-      image: registry.redhat.io/openshift4/ose-tools-rhel9
+      image: registry.redhat.io/openshift4/ose-tools-rhel9:v4.19
       command:
         - /scripts/test-acs-image-scan.sh
         - -d

@@ -15,7 +15,8 @@ func TestNewResolver(t *testing.T) {
 	cfs, err := chartfs.NewChartFS("../../installer")
 	g.Expect(err).To(o.Succeed())
 
-	cfg, err := config.NewConfigFromFile(cfs, "config.yaml")
+	installerNamespace := "test-namespace"
+	cfg, err := config.NewConfigFromFile(cfs, "config.yaml", installerNamespace)
 	g.Expect(err).To(o.Succeed())
 
 	charts, err := cfs.GetAllCharts()
@@ -50,19 +51,19 @@ func TestNewResolver(t *testing.T) {
 		// Validating the order of the resolved dependencies, as well as the
 		// namespace of each dependency.
 		g.Expect(dependencyNamespaceMap).To(o.Equal(map[string]string{
-			"tssc-openshift":      "tssc",
-			"tssc-subscriptions":  "tssc",
-			"tssc-infrastructure": "tssc",
-			"tssc-iam":            "tssc",
+			"tssc-openshift":      installerNamespace,
+			"tssc-subscriptions":  installerNamespace,
+			"tssc-infrastructure": installerNamespace,
+			"tssc-iam":            installerNamespace,
 			"tssc-tpa":            "tssc-tpa",
 			"tssc-tas":            "tssc-tas",
-			"tssc-pipelines":      "tssc",
+			"tssc-pipelines":      installerNamespace,
 			"tssc-gitops":         "tssc-gitops",
-			"tssc-app-namespaces": "tssc",
+			"tssc-app-namespaces": installerNamespace,
 			"tssc-dh":             "tssc-dh",
 			"tssc-acs":            "tssc-acs",
 			"tssc-acs-test":       "tssc-acs",
-			"tssc-integrations":   "tssc",
+			"tssc-integrations":   installerNamespace,
 		}))
 		g.Expect(dependencySlice).To(o.Equal([]string{
 			"tssc-openshift",

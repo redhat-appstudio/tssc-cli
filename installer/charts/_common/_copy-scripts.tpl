@@ -5,7 +5,7 @@
 */}}
 {{- define "common.copyScripts" -}}
 - name: copy-scripts
-  image: registry.access.redhat.com/ubi8/ubi-minimal:latest
+  image: registry.access.redhat.com/ubi10/ubi-minimal:latest
   workingDir: /scripts
   command:
     - /bin/bash
@@ -21,5 +21,6 @@
     - name: scripts
       mountPath: /scripts
   securityContext:
+    runAsNonRoot: false
     allowPrivilegeEscalation: false
 {{- end -}}
