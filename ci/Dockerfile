@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi10/go-toolset:1.25.3-1763633883 AS builder
+FROM registry.access.redhat.com/ubi10/go-toolset:1.25.3-1765297185 AS builder
 
 ENV SHELLCHECK_VERSION=0.7.1
 ENV YQ_VERSION=v4.25.2
