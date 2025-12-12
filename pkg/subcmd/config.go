@@ -6,6 +6,7 @@ import (
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
+	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
 	"github.com/redhat-appstudio/tssc-cli/pkg/flags"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
 	"github.com/redhat-appstudio/tssc-cli/pkg/printer"
@@ -26,10 +27,11 @@ type Config struct {
 	manager    *config.ConfigMapManager // cluster configuration manager
 	configPath string                   // configuration file relative path
 
-	create bool // create a new configuration
-	force  bool // overrides existing configuration
-	get    bool // show the current configuration
-	delete bool // delete the current configuration
+	namespace string // installer's namespace
+	create    bool   // create a new configuration
+	force     bool   // overrides existing configuration
+	get       bool   // show the current configuration
+	delete    bool   // delete the current configuration
 }
 
 var _ Interface = &Config{}
@@ -75,6 +77,13 @@ func (c *Config) PersistentFlags(p *pflag.FlagSet) {
 		false,
 		"Create new cluster configuration",
 	)
+	p.StringVarP(
+		&c.namespace,
+		"namespace",
+		"n",
+		constants.Namespace,
+		"Installer target namespace (only used with --create)",
+	)
 	p.BoolVarP(
 		&c.force,
 		"force",
@@ -105,6 +114,9 @@ func (c *Config) validateFlags() error {
 	}
 	if !c.create && !c.force && !c.get && !c.delete {
 		return fmt.Errorf("either create, get or delete must be set")
+	}
+	if c.cmd.Flags().Changed("namespace") && !c.create {
+		return fmt.Errorf("--namespace flag can only be used with --create")
 	}
 	return nil
 }
@@ -150,7 +162,7 @@ func (c *Config) runCreate() error {
 	printer.Disclaimer()
 
 	c.log().Debug("Loading configuration from file")
-	cfg, err := config.NewConfigFromFile(c.cfs, c.configPath)
+	cfg, err := config.NewConfigFromFile(c.cfs, c.configPath, c.namespace)
 	if err != nil {
 		return err
 	}
@@ -175,7 +187,7 @@ func (c *Config) runCreate() error {
 		c.log().Debug("[DRY-RUN] Only showing the configuration payload")
 		fmt.Printf(
 			"[DRY-RUN] Creating the ConfigMap %q/%q, with the label selector %q\n",
-			cfg.Installer.Namespace,
+			cfg.Namespace(),
 			config.Name,
 			fmt.Sprintf("%s=true", config.Label),
 		)
@@ -191,7 +203,7 @@ func (c *Config) runCreate() error {
 		c.cmd.Context(),
 		c.log(),
 		c.kube,
-		cfg.Installer.Namespace,
+		cfg.Namespace(),
 	); err != nil {
 		return err
 	}

@@ -73,10 +73,10 @@ place. Inspect the error message below to assess the issue.`,
 	}
 
 	// Command to get the logs of the deployment job.
-	logsCmd := d.job.GetJobLogFollowCmd(cfg.Installer.Namespace)
+	logsCmd := d.job.GetJobLogFollowCmd(cfg.Namespace())
 
 	// Issue the deployment job using the informed flags.
-	err = d.job.Run(ctx, debug, dryRun, force, cfg.Installer.Namespace, d.image)
+	err = d.job.Run(ctx, debug, dryRun, force, cfg.Namespace(), d.image)
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Sprintf(`
 Unable to issue the deployment Job, it returned the following error:

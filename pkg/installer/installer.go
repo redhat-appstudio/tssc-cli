@@ -34,7 +34,7 @@ type Installer struct {
 // SetValues prepares the values template for the Helm chart installation.
 func (i *Installer) SetValues(
 	ctx context.Context,
-	cfg *config.Spec,
+	cfg *config.Config,
 	valuesTmpl string,
 ) error {
 	i.logger.Debug("Preparing values template context")

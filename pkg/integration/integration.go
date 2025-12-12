@@ -59,7 +59,7 @@ func (i *Integration) log() *slog.Logger {
 // secretName generates the namespaced name for the integration secret.
 func (i *Integration) secretName(cfg *config.Config) types.NamespacedName {
 	return types.NamespacedName{
-		Namespace: cfg.Installer.Namespace,
+		Namespace: cfg.Namespace(),
 		Name:      i.name,
 	}
 }

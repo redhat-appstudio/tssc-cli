@@ -58,7 +58,7 @@ func (s *StatusTool) statusHandler(
 	// Shell command to get the logs of the deployment job.
 	var logsCmdEx string
 	if cfg, cfgErr := s.cm.GetConfig(ctx); cfgErr == nil {
-		logsCmdEx = s.job.GetJobLogFollowCmd(cfg.Installer.Namespace)
+		logsCmdEx = s.job.GetJobLogFollowCmd(cfg.Namespace())
 	}
 
 	switch phase {

@@ -154,7 +154,7 @@ subcommand to configure them. For example:
 
 		i := installer.NewInstaller(d.log(), d.flags, d.kube, &dep)
 
-		err := i.SetValues(d.cmd.Context(), &d.cfg.Installer, string(valuesTmpl))
+		err := i.SetValues(d.cmd.Context(), d.cfg, string(valuesTmpl))
 		if err != nil {
 			return err
 		}
@@ -176,7 +176,7 @@ subcommand to configure them. For example:
 		if err = k8s.RetryDeleteResources(
 			d.cmd.Context(),
 			d.kube,
-			d.cfg.Installer.Namespace,
+			d.cfg.Namespace(),
 		); err != nil {
 			d.log().Debug(err.Error())
 		}

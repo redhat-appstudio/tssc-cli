@@ -19,10 +19,6 @@ type Products []Product
 
 // Spec contains all configuration sections.
 type Spec struct {
-	// Namespace installer's namespace, where the installer's resources will be
-	// deployed. Note, Helm charts deployed by the installer are likely to use a
-	// different namespace.
-	Namespace string `yaml:"namespace"`
 	// Settings contains the configuration for the installer settings.
 	Settings Settings `yaml:"settings"`
 	// Products contains the configuration for the installer products.
@@ -31,8 +27,9 @@ type Spec struct {
 
 // Config root configuration structure.
 type Config struct {
-	cfs  *chartfs.ChartFS // embedded filesystem
-	root yaml.Node        // yaml data representation
+	cfs       *chartfs.ChartFS // embedded filesystem
+	root      yaml.Node        // yaml data representation
+	namespace string           // installer's namespace
 
 	Installer Spec `yaml:"tssc"` // root configuration for the installer
 }
@@ -48,6 +45,11 @@ var (
 
 // DefaultRelativeConfigPath default relative path to YAML configuration file.
 var DefaultRelativeConfigPath = fmt.Sprintf("installer/%s", Filename)
+
+// Namespace returns the installer's namespace.
+func (c *Config) Namespace() string {
+	return c.namespace
+}
 
 // GetProduct returns a product by name, or an error if the product is not found.
 func (c *Config) GetProduct(name string) (*Product, error) {
@@ -70,13 +72,20 @@ func (c *Config) GetEnabledProducts() Products {
 	return enabled
 }
 
+// ApplyDefaults applies default values to the configuration.
+func (c *Config) ApplyDefaults() {
+	// Propagate the installer namespace to the products.
+	for i := range c.Installer.Products {
+		if c.Installer.Products[i].Namespace == nil {
+			ns := c.namespace
+			c.Installer.Products[i].Namespace = &ns
+		}
+	}
+}
+
 // Validate validates the configuration, checking for missing fields.
 func (c *Config) Validate() error {
 	root := c.Installer
-	// The installer itself must have a namespace.
-	if root.Namespace == "" {
-		return fmt.Errorf("%w: missing namespace", ErrInvalidConfig)
-	}
 
 	// The installer must have a settings section.
 	if root.Settings == nil {
@@ -265,6 +274,7 @@ func (c *Config) UnmarshalYAML(payload []byte) error {
 	if err := c.DecodeNode(); err != nil {
 		return fmt.Errorf("%w: %w", ErrUnmarshalConfig, err)
 	}
+	c.ApplyDefaults()
 	return c.Validate()
 }
 
@@ -278,8 +288,12 @@ func (c *Config) String() string {
 }
 
 // NewConfigFromFile returns a new Config instance based on the informed file.
-func NewConfigFromFile(cfs *chartfs.ChartFS, configPath string) (*Config, error) {
-	c := &Config{cfs: cfs}
+func NewConfigFromFile(
+	cfs *chartfs.ChartFS,
+	configPath string,
+	namespace string,
+) (*Config, error) {
+	c := &Config{cfs: cfs, namespace: namespace}
 	var err error
 	payload, err := c.cfs.ReadFile(configPath)
 	if err != nil {
@@ -292,8 +306,8 @@ func NewConfigFromFile(cfs *chartfs.ChartFS, configPath string) (*Config, error)
 }
 
 // NewConfigFromBytes instantiates a new Config from the bytes payload informed.
-func NewConfigFromBytes(payload []byte) (*Config, error) {
-	c := &Config{}
+func NewConfigFromBytes(payload []byte, namespace string) (*Config, error) {
+	c := &Config{namespace: namespace}
 	if err := c.UnmarshalYAML(payload); err != nil {
 		return nil, err
 	}
@@ -302,10 +316,10 @@ func NewConfigFromBytes(payload []byte) (*Config, error) {
 
 // NewConfigDefault returns a new Config instance with default values, i.e. the
 // configuration payload is loading embedded data.
-func NewConfigDefault() (*Config, error) {
+func NewConfigDefault(namespace string) (*Config, error) {
 	cfs, err := chartfs.NewChartFSForCWD()
 	if err != nil {
 		return nil, err
 	}
-	return NewConfigFromFile(cfs, DefaultRelativeConfigPath)
+	return NewConfigFromFile(cfs, DefaultRelativeConfigPath, namespace)
 }
