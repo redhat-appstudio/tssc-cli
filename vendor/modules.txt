@@ -553,10 +553,10 @@ golang.org/x/text/unicode/norm
 # golang.org/x/time v0.14.0
 ## explicit; go 1.24.0
 golang.org/x/time/rate
-# google.golang.org/genproto/googleapis/api v0.0.0-20251111163417-95abcf5c77ba
+# google.golang.org/genproto/googleapis/api v0.0.0-20251213004720-97cd9d5aeac2
 ## explicit; go 1.24.0
 google.golang.org/genproto/googleapis/api/expr/v1alpha1
-# google.golang.org/genproto/googleapis/rpc v0.0.0-20251111163417-95abcf5c77ba
+# google.golang.org/genproto/googleapis/rpc v0.0.0-20251124214823-79d6a2a48846
 ## explicit; go 1.24.0
 google.golang.org/genproto/googleapis/rpc/status
 # google.golang.org/grpc v1.77.0
