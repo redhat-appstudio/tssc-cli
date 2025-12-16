@@ -104,13 +104,13 @@ spec:
 
 
         # Check if GIT_REPO is tssc-sample-templates and update Developer Hub catalog url based on PR changes
-        if [[ "${GIT_REPO}" = "tssc-sample-templates" ]]; then
+        # if [[ "${GIT_REPO}" = "tssc-sample-templates" ]]; then
             GIT_REVISION="${GIT_REVISION:-$(echo "$JOB_SPEC" | jq -r '.git.commit_sha')}"
             GIT_URL="${GIT_URL:-$(echo "$JOB_SPEC" | jq -r '.git.source_repo_url')}"
             TEST_DH_CATALOG_URL="$GIT_URL/blob/$GIT_REVISION/all.yaml"
             # Update DEVELOPER_HUB_CATALOG_URL value in .ci-env
-            sed -i "s|^export DEVELOPER_HUB_CATALOG_URL.*|export DEVELOPER_HUB_CATALOG_URL=${TEST_DH_CATALOG_URL}|" "${env_file}"
-        fi
+            sed -i "s|^export DEVELOPER_HUB_CATALOG_URL.*|export DEVELOPER_HUB_CATALOG_URL=https://github.com/redhat-appstudio/tssc-sample-templates/blob/main/all.yaml|" "${env_file}"
+        # fi
 
         echo "INFO: .env file for tssc installation"
         cat ${env_file}
