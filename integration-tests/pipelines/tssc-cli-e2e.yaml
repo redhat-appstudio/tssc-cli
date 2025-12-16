@@ -80,6 +80,7 @@ spec:
                 namespace: hive
               spec:
                 clusterPoolName: rhopp-test-clusterpool
+                lifetime: 6h
               EOF
               ## wait for cluster for up to 60 minutes
               if ! kubectl wait --for=condition=ClusterRunning clusterclaims.hive.openshift.io/$(context.pipelineRun.name) -n hive --timeout 60m; then
@@ -460,7 +461,8 @@ spec:
               set -x
               oc login $(cat /usr/local/hive-creds/kube_api_url) -u cluster-admin -p $(cat /usr/local/hive-creds/password)
               oc whoami
-              oc delete clusterclaims.hive.openshift.io $(context.pipelineRun.name) -n hive
+              echo "/me Acting like I'm deleting a clusterclaim. tehehe"
+              # oc delete clusterclaims.hive.openshift.io $(context.pipelineRun.name) -n hive
     - name: sprayproxy-deprovision
       when:
         - input: "$(tasks.sprayproxy-provision.status)"
