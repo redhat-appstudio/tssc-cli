@@ -1,6 +1,7 @@
 package subcmd
 
 import (
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"fmt"
 	"log/slog"
 
@@ -25,7 +26,7 @@ type IntegrationGitHub struct {
 	update bool // update a existing github app
 }
 
-var _ Interface = &IntegrationGitHub{}
+var _ api.SubCommand = &IntegrationGitHub{}
 
 const integrationLongDesc = `
 Manages the GitHub App integration with TSSC, by creating a new application

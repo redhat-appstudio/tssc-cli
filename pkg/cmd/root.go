@@ -3,6 +3,7 @@ package cmd
 import (
 	"os"
 
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
 	"github.com/redhat-appstudio/tssc-cli/pkg/flags"
@@ -37,7 +38,7 @@ func (r *RootCmd) Cmd() *cobra.Command {
 
 	r.cmd.AddCommand(subcmd.NewIntegration(logger, r.kube, r.cfs))
 
-	for _, sub := range []subcmd.Interface{
+	for _, sub := range []api.SubCommand{
 		subcmd.NewConfig(logger, r.flags, r.cfs, r.kube),
 		subcmd.NewDeploy(logger, r.flags, r.cfs, r.kube),
 		subcmd.NewInstaller(r.flags),
@@ -45,7 +46,7 @@ func (r *RootCmd) Cmd() *cobra.Command {
 		subcmd.NewTemplate(logger, r.flags, r.cfs, r.kube),
 		subcmd.NewTopology(logger, r.cfs, r.kube),
 	} {
-		r.cmd.AddCommand(subcmd.NewRunner(sub).Cmd())
+		r.cmd.AddCommand(api.NewRunner(sub).Cmd())
 	}
 	return r.cmd
 }

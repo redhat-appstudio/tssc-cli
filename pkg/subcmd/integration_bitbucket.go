@@ -1,6 +1,7 @@
 package subcmd
 
 import (
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"log/slog"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
@@ -20,7 +21,7 @@ type IntegrationBitBucket struct {
 	integration *integration.Integration // integration instance
 }
 
-var _ Interface = &IntegrationBitBucket{}
+var _ api.SubCommand = &IntegrationBitBucket{}
 
 const bitbucketIntegrationLongDesc = `
 Manages the BitBucket integration with TSSC, by storing the required

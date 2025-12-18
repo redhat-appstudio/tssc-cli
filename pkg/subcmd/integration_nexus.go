@@ -1,6 +1,7 @@
 package subcmd
 
 import (
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"log/slog"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
@@ -20,7 +21,7 @@ type IntegrationNexus struct {
 	integration *integration.Integration // integration instance
 }
 
-var _ Interface = &IntegrationNexus{}
+var _ api.SubCommand = &IntegrationNexus{}
 
 const nexusIntegrationLongDesc = `
 Manages the Nexus integration with TSSC, by storing the required

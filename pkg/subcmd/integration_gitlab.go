@@ -1,6 +1,7 @@
 package subcmd
 
 import (
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"log/slog"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
@@ -20,7 +21,7 @@ type IntegrationGitLab struct {
 	integration *integration.Integration // integration instance
 }
 
-var _ Interface = &IntegrationGitLab{}
+var _ api.SubCommand = &IntegrationGitLab{}
 
 const gitlabIntegrationLongDesc = `
 Manages the GitLab integration with TSSC, by storing the required

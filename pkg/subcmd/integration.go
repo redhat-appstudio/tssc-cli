@@ -3,6 +3,7 @@ package subcmd
 import (
 	"log/slog"
 
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integrations"
@@ -72,7 +73,7 @@ func NewIntegration(
 		},
 	}
 
-	for _, integration := range []Interface{
+	for _, integration := range []api.SubCommand{
 		NewIntegrationACS(
 			logger, kube, manager.Integration(integrations.ACS)),
 		NewIntegrationArtifactory(
@@ -96,7 +97,7 @@ func NewIntegration(
 		NewIntegrationTrustification(
 			logger, kube, manager.Integration(integrations.Trustification)),
 	} {
-		cmd.AddCommand(NewRunner(integration).Cmd())
+		cmd.AddCommand(api.NewRunner(integration).Cmd())
 	}
 
 	return cmd

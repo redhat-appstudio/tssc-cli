@@ -1,6 +1,7 @@
 package subcmd
 
 import (
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"log/slog"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
@@ -20,7 +21,7 @@ type IntegrationQuay struct {
 	integration *integration.Integration // integration instance
 }
 
-var _ Interface = &IntegrationQuay{}
+var _ api.SubCommand = &IntegrationQuay{}
 
 const quayIntegrationLongDesc = `
 Manages the Quay integration with TSSC, by storing the required

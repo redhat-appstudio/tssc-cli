@@ -1,6 +1,7 @@
 package subcmd
 
 import (
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"log/slog"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
@@ -20,7 +21,7 @@ type IntegrationTrustedArtifactSigner struct {
 	integration *integration.Integration // integration instance
 }
 
-var _ Interface = &IntegrationTrustedArtifactSigner{}
+var _ api.SubCommand = &IntegrationTrustedArtifactSigner{}
 
 const trustedArtifactSignerIntegrationLongDesc = `
 Manages the TrustedArtifactSigner integration with TSSC, by storing the required

@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
@@ -33,7 +34,7 @@ type Deploy struct {
 	valuesTemplatePath string                    // values template file path
 }
 
-var _ Interface = &Deploy{}
+var _ api.SubCommand = &Deploy{}
 
 const deployDesc = `
 Deploys the TSSC platform components.
@@ -193,7 +194,7 @@ func NewDeploy(
 	f *flags.Flags,
 	cfs *chartfs.ChartFS,
 	kube *k8s.Kube,
-) Interface {
+) api.SubCommand {
 	d := &Deploy{
 		cmd: &cobra.Command{
 			Use:          "deploy [chart]",

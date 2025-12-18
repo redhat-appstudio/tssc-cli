@@ -1,6 +1,7 @@
 package subcmd
 
 import (
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"log/slog"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
@@ -20,7 +21,7 @@ type IntegrationTrustification struct {
 	integration *integration.Integration // integration instance
 }
 
-var _ Interface = &IntegrationTrustification{}
+var _ api.SubCommand = &IntegrationTrustification{}
 
 const trustificationIntegrationLongDesc = `
 Manages the Trustification integration with TSSC, by storing the required
