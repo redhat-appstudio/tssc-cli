@@ -1,6 +1,7 @@
 package subcmd
 
 import (
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"log/slog"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
@@ -20,7 +21,7 @@ type IntegrationJenkins struct {
 	integration *integration.Integration // integration instance
 }
 
-var _ Interface = &IntegrationJenkins{}
+var _ api.SubCommand = &IntegrationJenkins{}
 
 const jenkinsIntegrationLongDesc = `
 Manages the Jenkins integration with TSSC, by storing the required

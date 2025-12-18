@@ -5,6 +5,7 @@ import (
 	"io"
 	"log/slog"
 
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
@@ -30,7 +31,7 @@ type MCPServer struct {
 	image string // installer's container image
 }
 
-var _ Interface = &MCPServer{}
+var _ api.SubCommand = &MCPServer{}
 
 const mcpServerDesc = ` 
 Starts the MCP server for the TSSC installer, using STDIO communication.
@@ -47,12 +48,12 @@ func (m *MCPServer) Cmd() *cobra.Command {
 	return m.cmd
 }
 
-// Complete implements Interface.
+// Complete implements api.SubCommand.
 func (m *MCPServer) Complete(_ []string) error {
 	return nil
 }
 
-// Validate implements Interface.
+// Validate implements api.SubCommand.
 func (m *MCPServer) Validate() error {
 	return nil
 }

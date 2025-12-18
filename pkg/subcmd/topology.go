@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
@@ -24,7 +25,7 @@ type Topology struct {
 	cfg        *config.Config       // installer configuration
 }
 
-var _ Interface = &Topology{}
+var _ api.SubCommand = &Topology{}
 
 const topologyDesc = `
 Report the dependency topology of the installer based on the cluster configuration

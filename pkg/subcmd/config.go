@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
@@ -34,7 +35,7 @@ type Config struct {
 	delete    bool   // delete the current configuration
 }
 
-var _ Interface = &Config{}
+var _ api.SubCommand = &Config{}
 
 const configDesc = `
 Manages installer's cluster configuration.
@@ -285,7 +286,7 @@ func NewConfig(
 	f *flags.Flags,
 	cfs *chartfs.ChartFS,
 	kube *k8s.Kube,
-) Interface {
+) api.SubCommand {
 	c := &Config{
 		cmd: &cobra.Command{
 			Use:          "config [flags] [path/to/config.yaml]",

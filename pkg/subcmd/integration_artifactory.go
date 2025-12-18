@@ -1,6 +1,7 @@
 package subcmd
 
 import (
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"log/slog"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
@@ -23,7 +24,7 @@ type IntegrationArtifactory struct {
 	dockerconfigjson string // credentials to push/pull from the registry
 }
 
-var _ Interface = &IntegrationArtifactory{}
+var _ api.SubCommand = &IntegrationArtifactory{}
 
 const artifactoryIntegrationLongDesc = `
 Manages the artifactory integration with TSSC, by storing the required

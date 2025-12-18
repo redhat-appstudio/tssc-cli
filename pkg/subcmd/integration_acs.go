@@ -1,6 +1,7 @@
 package subcmd
 
 import (
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"log/slog"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
@@ -20,7 +21,7 @@ type IntegrationACS struct {
 	integration *integration.Integration // integration instance
 }
 
-var _ Interface = &IntegrationACS{}
+var _ api.SubCommand = &IntegrationACS{}
 
 const acsIntegrationLongDesc = `
 Manages the ACS integration with TSSC, by storing the required

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/flags"
@@ -33,7 +34,7 @@ type Template struct {
 	dep                resolver.Dependency // chart to render
 }
 
-var _ Interface = &Template{}
+var _ api.SubCommand = &Template{}
 
 const templateDesc = `
 The Template subcommand is used to render the values template file and,

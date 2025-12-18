@@ -1,6 +1,7 @@
 package subcmd
 
 import (
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"log/slog"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
@@ -20,7 +21,7 @@ type IntegrationAzure struct {
 	integration *integration.Integration // integration instance
 }
 
-var _ Interface = &IntegrationAzure{}
+var _ api.SubCommand = &IntegrationAzure{}
 
 const azureIntegrationLongDesc = `
 Manages the Azure integration with TSSC, by storing the required
