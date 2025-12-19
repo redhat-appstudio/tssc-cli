@@ -140,7 +140,7 @@ type Commit struct {
 	Stats            *CommitStats      `json:"stats"`
 	Status           *BuildStateValue  `json:"status"`
 	LastPipeline     *PipelineInfo     `json:"last_pipeline"`
-	ProjectID        int               `json:"project_id"`
+	ProjectID        int64             `json:"project_id"`
 	Trailers         map[string]string `json:"trailers"`
 	ExtendedTrailers map[string]string `json:"extended_trailers"`
 	WebURL           string            `json:"web_url"`
@@ -150,9 +150,9 @@ type Commit struct {
 //
 // GitLab API docs: https://docs.gitlab.com/api/commits/
 type CommitStats struct {
-	Additions int `json:"additions"`
-	Deletions int `json:"deletions"`
-	Total     int `json:"total"`
+	Additions int64 `json:"additions"`
+	Deletions int64 `json:"deletions"`
+	Total     int64 `json:"total"`
 }
 
 func (c Commit) String() string {
@@ -313,14 +313,14 @@ func (s *CommitsService) GetCommitDiff(pid any, sha string, opt *GetCommitDiffOp
 type CommitComment struct {
 	Note     string `json:"note"`
 	Path     string `json:"path"`
-	Line     int    `json:"line"`
+	Line     int64  `json:"line"`
 	LineType string `json:"line_type"`
 	Author   Author `json:"author"`
 }
 
 // Author represents a GitLab commit author
 type Author struct {
-	ID        int        `json:"id"`
+	ID        int64      `json:"id"`
 	Username  string     `json:"username"`
 	Email     string     `json:"email"`
 	Name      string     `json:"name"`
@@ -337,7 +337,9 @@ func (c CommitComment) String() string {
 //
 // GitLab API docs:
 // https://docs.gitlab.com/api/commits/#get-the-comments-of-a-commit
-type GetCommitCommentsOptions ListOptions
+type GetCommitCommentsOptions struct {
+	ListOptions
+}
 
 func (s *CommitsService) GetCommitComments(pid any, sha string, opt *GetCommitCommentsOptions, options ...RequestOptionFunc) ([]*CommitComment, *Response, error) {
 	return do[[]*CommitComment](s.client,
@@ -356,7 +358,7 @@ func (s *CommitsService) GetCommitComments(pid any, sha string, opt *GetCommitCo
 type PostCommitCommentOptions struct {
 	Note     *string `url:"note,omitempty" json:"note,omitempty"`
 	Path     *string `url:"path" json:"path"`
-	Line     *int    `url:"line" json:"line"`
+	Line     *int64  `url:"line" json:"line"`
 	LineType *string `url:"line_type" json:"line_type"`
 }
 
@@ -377,7 +379,7 @@ type GetCommitStatusesOptions struct {
 	Ref        *string `url:"ref,omitempty" json:"ref,omitempty"`
 	Stage      *string `url:"stage,omitempty" json:"stage,omitempty"`
 	Name       *string `url:"name,omitempty" json:"name,omitempty"`
-	PipelineID *int    `url:"pipeline_id,omitempty" json:"pipeline_id,omitempty"`
+	PipelineID *int64  `url:"pipeline_id,omitempty" json:"pipeline_id,omitempty"`
 	All        *bool   `url:"all,omitempty" json:"all,omitempty"`
 }
 
@@ -385,7 +387,7 @@ type GetCommitStatusesOptions struct {
 //
 // GitLab API docs: https://docs.gitlab.com/api/commits/#commit-status
 type CommitStatus struct {
-	ID           int        `json:"id"`
+	ID           int64      `json:"id"`
 	SHA          string     `json:"sha"`
 	Ref          string     `json:"ref"`
 	Status       string     `json:"status"`
@@ -395,7 +397,7 @@ type CommitStatus struct {
 	Name         string     `json:"name"`
 	AllowFailure bool       `json:"allow_failure"`
 	Coverage     float64    `json:"coverage"`
-	PipelineId   int        `json:"pipeline_id"`
+	PipelineID   int64      `json:"pipeline_id"`
 	Author       Author     `json:"author"`
 	Description  string     `json:"description"`
 	TargetURL    string     `json:"target_url"`
@@ -421,7 +423,7 @@ type SetCommitStatusOptions struct {
 	TargetURL   *string         `url:"target_url,omitempty" json:"target_url,omitempty"`
 	Description *string         `url:"description,omitempty" json:"description,omitempty"`
 	Coverage    *float64        `url:"coverage,omitempty" json:"coverage,omitempty"`
-	PipelineID  *int            `url:"pipeline_id,omitempty" json:"pipeline_id,omitempty"`
+	PipelineID  *int64          `url:"pipeline_id,omitempty" json:"pipeline_id,omitempty"`
 }
 
 func (s *CommitsService) SetCommitStatus(pid any, sha string, opt *SetCommitStatusOptions, options ...RequestOptionFunc) (*CommitStatus, *Response, error) {
@@ -479,12 +481,12 @@ func (s *CommitsService) RevertCommit(pid any, sha string, opt *RevertCommitOpti
 // GitLab API docs:
 // https://docs.gitlab.com/api/commits/#get-signature-of-a-commit
 type GPGSignature struct {
-	KeyID              int    `json:"gpg_key_id"`
+	KeyID              int64  `json:"gpg_key_id"`
 	KeyPrimaryKeyID    string `json:"gpg_key_primary_keyid"`
 	KeyUserName        string `json:"gpg_key_user_name"`
 	KeyUserEmail       string `json:"gpg_key_user_email"`
 	VerificationStatus string `json:"verification_status"`
-	KeySubkeyID        int    `json:"gpg_key_subkey_id"`
+	KeySubkeyID        int64  `json:"gpg_key_subkey_id"`
 }
 
 func (s *CommitsService) GetGPGSignature(pid any, sha string, options ...RequestOptionFunc) (*GPGSignature, *Response, error) {
