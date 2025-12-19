@@ -62,10 +62,12 @@ const (
 )
 
 type noteEvent struct {
-	ObjectKind       string `json:"object_kind"`
-	ObjectAttributes struct {
-		NoteableType string `json:"noteable_type"`
-	} `json:"object_attributes"`
+	ObjectKind       string                    `json:"object_kind"`
+	ObjectAttributes noteEventObjectAttributes `json:"object_attributes"`
+}
+
+type noteEventObjectAttributes struct {
+	NoteableType string `json:"noteable_type"`
 }
 
 type serviceEvent struct {
