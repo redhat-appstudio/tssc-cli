@@ -74,6 +74,21 @@ plugins:
 {{- if (lookup "v1" "Secret" $integrationNamespace "tssc-gitlab-integration") }}
   - disabled: false
     package: ./dynamic-plugins/dist/immobiliarelabs-backstage-plugin-gitlab
+    pluginConfig:
+      dynamicPlugins:
+        frontend:
+          immobiliarelabs.backstage-plugin-gitlab:
+            mountPoints:
+              - mountPoint: entity.page.ci/cards
+                importName: EntityGitlabPipelinesTable
+                config:
+                  layout:
+                    gridColumn: 1 / -1
+                  if:
+                    allOf:
+                      - isGitlabAvailable
+                      - hasAnnotation:
+                          - gitlab.com/project-id
   - disabled: false
     package: ./dynamic-plugins/dist/immobiliarelabs-backstage-plugin-gitlab-backend-dynamic
 {{- end }}
