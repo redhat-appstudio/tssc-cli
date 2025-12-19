@@ -12,7 +12,7 @@ plugins:
   - disabled: false
     package: ./dynamic-plugins/dist/backstage-community-plugin-redhat-argocd
   - disabled: false
-    package: ./dynamic-plugins/dist/roadiehq-backstage-plugin-argo-cd-backend-dynamic
+    package: oci://quay.io/redhat-tssc/backstage-plugins:1.8.0!tssc-plugins-backstage-community-plugin-redhat-argocd-backend
     pluginConfig:
       argocd:
         appLocatorMethods:
