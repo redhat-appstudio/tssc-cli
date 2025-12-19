@@ -18,6 +18,14 @@ plugins:
         appLocatorMethods:
           - type: 'config'
             instances: []
+
+  - disabled: false
+    package: ./dynamic-plugins/dist/roadiehq-scaffolder-backend-argocd-dynamic
+    pluginConfig:
+      argocd:
+        appLocatorMethods:
+          - type: 'config'
+            instances: []
 {{- end }}
   #
   # CI
