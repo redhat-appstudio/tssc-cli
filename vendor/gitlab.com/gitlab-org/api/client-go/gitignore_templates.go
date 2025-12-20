@@ -54,7 +54,9 @@ type GitIgnoreTemplateListItem struct {
 //
 // GitLab API docs:
 // https://docs.gitlab.com/api/templates/gitignores/#get-all-gitignore-templates
-type ListTemplatesOptions ListOptions
+type ListTemplatesOptions struct {
+	ListOptions
+}
 
 // ListTemplates get a list of available git ignore templates
 //
