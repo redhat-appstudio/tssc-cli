@@ -1,30 +1,15 @@
 ---
+version: "2"
 run:
   concurrency: 2
-  timeout: 4m
+  modules-download-mode: readonly
   issues-exit-code: 1
   tests: true
-  modules-download-mode: readonly
   allow-parallel-runners: false
-
 output:
-  print-issued-lines: true
-  print-linter-name: true
-  uniq-by-line: false
   path-prefix: ""
-  sort-results: true
-
-issues:
-  max-issues-per-linter: 0
-  max-same-issues: 0
-  exclude-rules:
-    - path: (.+)_test.go
-      linters:
-        - revive
-
 linters:
-  fast: false
-  disable-all: true
+  default: none
   enable:
     - asasalint
     - asciicheck
@@ -35,15 +20,10 @@ linters:
     - errcheck
     - errname
     - errorlint
-    - exportloopref
     - gocritic
     - godot
-    - gofmt
-    - gofumpt
-    - goimports
     - gomoddirectives
     - gosec
-    - gosimple
     - govet
     - ineffassign
     - misspell
@@ -60,9 +40,6 @@ linters:
     - rowserrcheck
     - sqlclosecheck
     - staticcheck
-    - stylecheck
-    # - tagliatelle
-    - tenv
     - testableexamples
     - thelper
     - tparallel
@@ -71,3 +48,32 @@ linters:
     - unused
     - usestdlibvars
     - wastedassign
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - revive
+        path: (.+)_test.go
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+formatters:
+  enable:
+    - gofmt
+    - gofumpt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
