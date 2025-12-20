@@ -61,7 +61,7 @@ func (m *MCPServer) Validate() error {
 // Run starts the MCP server.
 func (m *MCPServer) Run() error {
 	cm := config.NewConfigMapManager(m.kube)
-	configTools, err := mcptools.NewConfigTools(m.logger, m.kube, cm)
+	configTools, err := mcptools.NewConfigTools(m.logger, m.cfs, m.kube, cm)
 	if err != nil {
 		return err
 	}

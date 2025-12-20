@@ -1,6 +1,7 @@
 package config
 
 import (
+	"os"
 	"testing"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
@@ -11,8 +12,7 @@ import (
 func TestNewConfigFromFile(t *testing.T) {
 	g := o.NewWithT(t)
 
-	cfs, err := chartfs.NewChartFS("../../installer")
-	g.Expect(err).To(o.Succeed())
+	cfs := chartfs.New(os.DirFS("../../installer"))
 
 	cfg, err := NewConfigFromFile(cfs, "config.yaml", "test-namespace")
 	g.Expect(err).To(o.Succeed())
@@ -152,29 +152,5 @@ func TestNewConfigFromFile(t *testing.T) {
 		g.Expect(err).NotTo(o.Succeed())
 		g.Expect(err.Error()).To(o.ContainSubstring(
 			"product \"NonExistentProduct\" not found"))
-	})
-
-	t.Run("EnableDisableProduct", func(t *testing.T) {
-		acsProductName := "Advanced Cluster Security"
-
-		// Disable the product
-		config, err := cfg.EnableDisableProduct(acsProductName, false)
-		g.Expect(err).To(o.Succeed())
-
-		// Verify the product is disabled
-		spec, err := config.GetProduct(acsProductName)
-		g.Expect(err).To(o.Succeed())
-		g.Expect(spec).NotTo(o.BeNil())
-		g.Expect(spec.Enabled).To(o.BeFalse())
-
-		// Enabled the product
-		config, err = cfg.EnableDisableProduct(acsProductName, true)
-		g.Expect(err).To(o.Succeed())
-
-		// Verify the product is enabled
-		spec, err = config.GetProduct(acsProductName)
-		g.Expect(err).To(o.Succeed())
-		g.Expect(spec).NotTo(o.BeNil())
-		g.Expect(spec.Enabled).To(o.BeTrue())
 	})
 }

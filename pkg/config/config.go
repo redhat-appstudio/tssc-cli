@@ -231,21 +231,6 @@ func (c *Config) SetProduct(name string, spec Product) error {
 	return fmt.Errorf("product %q not found", name)
 }
 
-// EnableDisableProduct enables or disables a product by its name in the
-// configuration. It searches for the product and updates its 'Enabled' field
-// accordingly. The updated configuration is then returned.
-func (c *Config) EnableDisableProduct(name string, enabled bool) (*Config, error) {
-	spec, err := c.GetProduct(name)
-	if err != nil {
-		return nil, err
-	}
-	spec.Enabled = enabled
-	if err := c.SetProduct(name, *spec); err != nil {
-		return nil, err
-	}
-	return c, nil
-}
-
 // MarshalYAML marshals the Config into a YAML byte array.
 func (c *Config) MarshalYAML() ([]byte, error) {
 	var buf bytes.Buffer
@@ -316,10 +301,6 @@ func NewConfigFromBytes(payload []byte, namespace string) (*Config, error) {
 
 // NewConfigDefault returns a new Config instance with default values, i.e. the
 // configuration payload is loading embedded data.
-func NewConfigDefault(namespace string) (*Config, error) {
-	cfs, err := chartfs.NewChartFSForCWD()
-	if err != nil {
-		return nil, err
-	}
+func NewConfigDefault(cfs *chartfs.ChartFS, namespace string) (*Config, error) {
 	return NewConfigFromFile(cfs, DefaultRelativeConfigPath, namespace)
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
@@ -22,6 +23,7 @@ import (
 // in the cluster.
 type ConfigTools struct {
 	logger *slog.Logger             // application logger
+	cfs    *chartfs.ChartFS         // embedded filesystem
 	cm     *config.ConfigMapManager // cluster config manager
 	kube   *k8s.Kube                // kubernetes client
 
@@ -76,7 +78,7 @@ func (c *ConfigTools) getHandler(
 
 	// The cluster is not configured yet, showing the user a default configuration
 	// and hints on how to proceed.
-	if cfg, err = config.NewConfigDefault(""); err != nil {
+	if cfg, err = config.NewConfigDefault(c.cfs, ""); err != nil {
 		return nil, err
 	}
 
@@ -561,17 +563,19 @@ The properties object with the attributes for the informed product name.`,
 // NewConfigTools instantiates a new ConfigTools.
 func NewConfigTools(
 	logger *slog.Logger,
+	cfs *chartfs.ChartFS,
 	kube *k8s.Kube,
 	cm *config.ConfigMapManager,
 ) (*ConfigTools, error) {
 	// Loading the default configuration to serve as a reference for MCP tools.
-	defaultCfg, err := config.NewConfigDefault(constants.Namespace)
+	defaultCfg, err := config.NewConfigDefault(cfs, constants.Namespace)
 	if err != nil {
 		return nil, err
 	}
 
 	c := &ConfigTools{
 		logger:     logger.With("component", "mcp-config-tools"),
+		cfs:        cfs,
 		kube:       kube,
 		cm:         cm,
 		defaultCfg: defaultCfg,

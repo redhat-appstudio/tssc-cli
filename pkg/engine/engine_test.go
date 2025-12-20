@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"os"
 	"testing"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
@@ -29,8 +30,7 @@ root:
 func TestEngine_Render(t *testing.T) {
 	g := o.NewWithT(t)
 
-	cfs, err := chartfs.NewChartFS("../../installer")
-	g.Expect(err).To(o.Succeed())
+	cfs := chartfs.New(os.DirFS("../../installer"))
 
 	cfg, err := config.NewConfigFromFile(cfs, "config.yaml", "test-namespace")
 	g.Expect(err).To(o.Succeed())

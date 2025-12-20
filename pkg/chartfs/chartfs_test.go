@@ -1,6 +1,7 @@
 package chartfs
 
 import (
+	"os"
 	"testing"
 
 	o "github.com/onsi/gomega"
@@ -9,8 +10,7 @@ import (
 func TestNewChartFS(t *testing.T) {
 	g := o.NewWithT(t)
 
-	c, err := NewChartFS("../../installer")
-	g.Expect(err).To(o.Succeed())
+	c := New(os.DirFS("../../installer"))
 	g.Expect(c).ToNot(o.BeNil())
 
 	t.Run("ReadFile", func(t *testing.T) {
