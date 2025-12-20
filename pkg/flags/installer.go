@@ -1,6 +1,10 @@
 package flags
 
-import "github.com/spf13/pflag"
+import (
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
+
+	"github.com/spf13/pflag"
+)
 
 // ValuesTemplateFlag flag name for the values template file.
 const ValuesTemplateFlag = "values-template"
@@ -10,7 +14,7 @@ func SetValuesTmplFlag(p *pflag.FlagSet, v *string) {
 	p.StringVar(
 		v,
 		ValuesTemplateFlag,
-		"installer/charts/values.yaml.tpl",
+		api.ValuesFilename,
 		"Path to the values template file",
 	)
 }

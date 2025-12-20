@@ -126,7 +126,7 @@ Windows users must be aware that the hook scripts are written in Bash and may no
 
 ## Template Functions
 
-The following functions are available for use in the [`values.yaml.tpl`](./installer/charts/values.yaml.tpl) file:
+The following functions are available for use in the [`values.yaml.tpl`](./installer/values.yaml.tpl) file:
 
 ### `{{ .Installer.Settings.* }}`
 

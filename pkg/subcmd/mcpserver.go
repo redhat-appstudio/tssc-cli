@@ -84,7 +84,12 @@ func (m *MCPServer) Run() error {
 
 	topologyTool := mcptools.NewTopologyTool(m.cfs, cm, tb)
 
-	s := mcpserver.NewMCPServer()
+	instructions, err := m.cfs.ReadFile(api.InstructionsFilename)
+	if err != nil {
+		return fmt.Errorf("failed to read %s: %w", api.InstructionsFilename, err)
+	}
+
+	s := mcpserver.NewMCPServer(string(instructions))
 	s.AddTools(configTools, statusTool, integrationTools, deployTools, notesTool, topologyTool)
 	return s.Start()
 }

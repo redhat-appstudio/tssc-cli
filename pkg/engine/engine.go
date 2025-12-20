@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"html/template"
 
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
 
 	"github.com/Masterminds/sprig/v3"
@@ -17,7 +18,7 @@ type Engine struct {
 
 // Render renders the template with the given variables.
 func (e *Engine) Render(variables *Variables) ([]byte, error) {
-	tmpl, err := template.New("values.yaml.tpl").
+	tmpl, err := template.New(api.ValuesFilename).
 		Funcs(e.funcMap).
 		Parse(e.templatePayload)
 	if err != nil {
