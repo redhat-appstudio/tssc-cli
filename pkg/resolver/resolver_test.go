@@ -1,6 +1,7 @@
 package resolver
 
 import (
+	"os"
 	"testing"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
@@ -12,8 +13,7 @@ import (
 func TestNewResolver(t *testing.T) {
 	g := o.NewWithT(t)
 
-	cfs, err := chartfs.NewChartFS("../../installer")
-	g.Expect(err).To(o.Succeed())
+	cfs := chartfs.New(os.DirFS("../../installer"))
 
 	installerNamespace := "test-namespace"
 	cfg, err := config.NewConfigFromFile(cfs, "config.yaml", installerNamespace)

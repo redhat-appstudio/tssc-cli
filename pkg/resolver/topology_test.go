@@ -1,6 +1,7 @@
 package resolver
 
 import (
+	"os"
 	"testing"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
@@ -11,8 +12,7 @@ import (
 func TestNewTopology(t *testing.T) {
 	g := o.NewWithT(t)
 
-	cfs, err := chartfs.NewChartFS("../../installer")
-	g.Expect(err).To(o.Succeed())
+	cfs := chartfs.New(os.DirFS("../../installer"))
 	g.Expect(cfs).ToNot(o.BeNil())
 
 	ns := "default"

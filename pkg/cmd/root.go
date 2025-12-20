@@ -1,12 +1,16 @@
 package cmd
 
 import (
+	"fmt"
+	"io/fs"
 	"os"
 
+	"github.com/redhat-appstudio/tssc-cli/installer"
 	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
 	"github.com/redhat-appstudio/tssc-cli/pkg/flags"
+	"github.com/redhat-appstudio/tssc-cli/pkg/framework"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
 	"github.com/redhat-appstudio/tssc-cli/pkg/subcmd"
 
@@ -55,9 +59,26 @@ func (r *RootCmd) Cmd() *cobra.Command {
 func NewRootCmd() (*RootCmd, error) {
 	f := flags.NewFlags()
 
-	cfs, err := chartfs.NewChartFSForCWD()
+	tfs, err := framework.NewTarFS(installer.InstallerTarball)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read embedded files: %w", err)
+	}
+
+	// For backward compatibility, the embedded FS is rooted at "installer"
+	// if it exists.
+	etfs, err := fs.Sub(tfs, "installer")
+	if err != nil {
+		etfs = tfs
+	}
+
+	cwd, err := os.Getwd()
 	if err != nil {
 		return nil, err
+	}
+
+	ofs := &chartfs.OverlayFS{
+		Embedded: etfs,
+		Local:    os.DirFS(cwd),
 	}
 
 	r := &RootCmd{
@@ -67,7 +88,7 @@ func NewRootCmd() (*RootCmd, error) {
 			Short:        "Trusted Software Supply Chain CLI",
 			SilenceUsage: true,
 		},
-		cfs:  cfs,
+		cfs:  chartfs.New(ofs),
 		kube: k8s.NewKube(f),
 	}
 	p := r.cmd.PersistentFlags()

@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"bytes"
+	"os"
 	"testing"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
@@ -16,8 +17,7 @@ func TestNewHooks(t *testing.T) {
 
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	cfs, err := chartfs.NewChartFS("../../test")
-	g.Expect(err).To(o.Succeed())
+	cfs := chartfs.New(os.DirFS("../../test"))
 
 	chart, err := cfs.GetChartFiles("charts/testing")
 	g.Expect(err).To(o.Succeed())
