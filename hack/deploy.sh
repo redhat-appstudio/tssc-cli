@@ -138,7 +138,7 @@ init_config() {
     unshare
 
     cp "$PROJECT_DIR/installer/config.yaml" "$CONFIG"
-    cp "$PROJECT_DIR/installer/charts/values.yaml.tpl" "$VALUES"
+    cp "$PROJECT_DIR/installer/values.yaml.tpl" "$VALUES"
     cp "$KUBECONFIG" "$CONFIG_DIR/kubeconfig"
     KUBECONFIG="$CONFIG_DIR/kubeconfig"
 

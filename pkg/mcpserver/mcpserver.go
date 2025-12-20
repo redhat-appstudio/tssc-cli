@@ -1,16 +1,11 @@
 package mcpserver
 
 import (
-	_ "embed"
-
 	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
 	"github.com/redhat-appstudio/tssc-cli/pkg/mcptools"
 
 	"github.com/mark3labs/mcp-go/server"
 )
-
-//go:embed instructions.md
-var instructionsBytes []byte
 
 type MCPServer struct {
 	s *server.MCPServer // mcp server instance
@@ -26,13 +21,13 @@ func (m *MCPServer) Start() error {
 	return server.ServeStdio(m.s)
 }
 
-func NewMCPServer() *MCPServer {
+func NewMCPServer(instructions string) *MCPServer {
 	return &MCPServer{s: server.NewMCPServer(
 		constants.AppName,
 		"1.6.0",
 		server.WithToolCapabilities(true),
 		server.WithPromptCapabilities(true),
 		server.WithLogging(),
-		server.WithInstructions(string(instructionsBytes)),
+		server.WithInstructions(instructions),
 	)}
 }
