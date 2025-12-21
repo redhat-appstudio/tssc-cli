@@ -21,6 +21,11 @@ func (c *ChartFS) ReadFile(name string) ([]byte, error) {
 	return fs.ReadFile(c.fsys, name)
 }
 
+// Open opens the named file. Implements "fs.FS" interface.`
+func (c *ChartFS) Open(name string) (fs.File, error) {
+	return c.fsys.Open(name)
+}
+
 // walkChartDir walks through the chart directory, and loads the chart files.
 func (c *ChartFS) walkChartDir(fsys fs.FS, chartPath string) (*chart.Chart, error) {
 	bf := NewBufferedFiles(fsys, chartPath)
