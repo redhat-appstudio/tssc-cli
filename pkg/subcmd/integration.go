@@ -14,12 +14,12 @@ import (
 )
 
 func NewIntegration(
+	appName string,
 	logger *slog.Logger,
 	kube *k8s.Kube,
 	cfs *chartfs.ChartFS,
+	manager *integrations.Manager,
 ) *cobra.Command {
-	manager := integrations.NewManager(logger, kube)
-
 	cmd := &cobra.Command{
 		Use:   "integration <type>",
 		Short: "Configures an external service provider for TSSC",
@@ -73,31 +73,10 @@ func NewIntegration(
 		},
 	}
 
-	for _, integration := range []api.SubCommand{
-		NewIntegrationACS(
-			logger, kube, manager.Integration(integrations.ACS)),
-		NewIntegrationArtifactory(
-			logger, kube, manager.Integration(integrations.Artifactory)),
-		NewIntegrationAzure(
-			logger, kube, manager.Integration(integrations.Azure)),
-		NewIntegrationBitBucket(
-			logger, kube, manager.Integration(integrations.BitBucket)),
-		NewIntegrationGitHub(
-			logger, kube, manager.Integration(integrations.GitHub)),
-		NewIntegrationGitLab(
-			logger, kube, manager.Integration(integrations.GitLab)),
-		NewIntegrationJenkins(
-			logger, kube, manager.Integration(integrations.Jenkins)),
-		NewIntegrationNexus(
-			logger, kube, manager.Integration(integrations.Nexus)),
-		NewIntegrationQuay(
-			logger, kube, manager.Integration(integrations.Quay)),
-		NewIntegrationTrustedArtifactSigner(
-			logger, kube, manager.Integration(integrations.TrustedArtifactSigner)),
-		NewIntegrationTrustification(
-			logger, kube, manager.Integration(integrations.Trustification)),
-	} {
-		cmd.AddCommand(api.NewRunner(integration).Cmd())
+	for _, mod := range manager.GetModules() {
+		wrapper := manager.Integration(integrations.IntegrationName(mod.Name))
+		sub := mod.Command(logger, kube, wrapper)
+		cmd.AddCommand(api.NewRunner(sub).Cmd())
 	}
 
 	return cmd

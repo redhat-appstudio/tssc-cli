@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/api"
+	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
 
 	corev1 "k8s.io/api/core/v1"
@@ -92,12 +92,12 @@ func (m *ConfigMapManager) GetConfig(ctx context.Context) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	payload, ok := configMap.Data[api.ConfigFilename]
+	payload, ok := configMap.Data[constants.ConfigFilename]
 	if !ok || len(payload) == 0 {
 		return nil, fmt.Errorf(
 			"%w: key %q not found in ConfigMap %s/%s",
 			ErrIncompleteConfigMap,
-			api.ConfigFilename,
+			constants.ConfigFilename,
 			configMap.GetNamespace(),
 			configMap.GetName(),
 		)
@@ -119,7 +119,7 @@ func (m *ConfigMapManager) configMapForConfig(
 			},
 		},
 		Data: map[string]string{
-			api.ConfigFilename: cfg.String(),
+			constants.ConfigFilename: cfg.String(),
 		},
 	}, nil
 }

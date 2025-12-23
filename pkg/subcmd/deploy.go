@@ -29,6 +29,7 @@ type Deploy struct {
 	cfs    *chartfs.ChartFS // embedded filesystem
 	kube   *k8s.Kube        // kubernetes client
 
+	manager            *integrations.Manager     // integration manager
 	topologyBuilder    *resolver.TopologyBuilder // topology builder
 	chartPath          string                    // single chart path
 	valuesTemplatePath string                    // values template file path
@@ -75,7 +76,7 @@ func (d *Deploy) log() *slog.Logger {
 func (d *Deploy) Complete(args []string) error {
 	var err error
 	d.topologyBuilder, err = resolver.NewTopologyBuilder(
-		d.logger, d.cfs, integrations.NewManager(d.logger, d.kube))
+		d.logger, d.cfs, d.manager)
 	if err != nil {
 		return err
 	}
@@ -194,6 +195,7 @@ func NewDeploy(
 	f *flags.Flags,
 	cfs *chartfs.ChartFS,
 	kube *k8s.Kube,
+	manager *integrations.Manager,
 ) api.SubCommand {
 	d := &Deploy{
 		cmd: &cobra.Command{
@@ -206,6 +208,7 @@ func NewDeploy(
 		flags:     f,
 		cfs:       cfs,
 		kube:      kube,
+		manager:   manager,
 		chartPath: "",
 	}
 	flags.SetValuesTmplFlag(d.cmd.PersistentFlags(), &d.valuesTemplatePath)

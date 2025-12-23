@@ -1,11 +1,13 @@
 package framework
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/tssc-cli/pkg/flags"
+	"github.com/redhat-appstudio/tssc-cli/pkg/integrations"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
 	"github.com/redhat-appstudio/tssc-cli/pkg/subcmd"
 	"github.com/spf13/cobra"
@@ -19,9 +21,11 @@ type App struct {
 	Long    string           // long description
 	ChartFS *chartfs.ChartFS // installer filesystem
 
-	rootCmd *cobra.Command // root cobra instance
-	flags   *flags.Flags   // global flags
-	kube    *k8s.Kube      // kubernetes client
+	integrations       []api.IntegrationModule // supported integrations
+	integrationManager *integrations.Manager   // integrations manager
+	rootCmd            *cobra.Command          // root cobra instance
+	flags              *flags.Flags            // global flags
+	kube               *k8s.Kube               // kubernetes client
 }
 
 // Command exposes the Cobra command.
@@ -36,7 +40,7 @@ func (a *App) Run() error {
 
 // setupRootCmd instantiates the Cobra Root command with subcommand, description,
 // Kubernetes API client instance and more.
-func (a *App) setupRootCmd() {
+func (a *App) setupRootCmd() error {
 	short := a.Short
 	if short == "" {
 		short = a.Name + " installer"
@@ -63,26 +67,37 @@ func (a *App) setupRootCmd() {
 
 	logger := a.flags.GetLogger(os.Stdout)
 
+	// Loading informed integrations into the manager.
+	a.integrationManager = integrations.NewManager()
+	if err := a.integrationManager.LoadModules(
+		a.Name, logger, a.kube, a.integrations,
+	); err != nil {
+		return fmt.Errorf("failed to load modules: %w", err)
+	}
+
 	// Register standard subcommands.
-	a.rootCmd.AddCommand(subcmd.NewIntegration(logger, a.kube, a.ChartFS))
+	a.rootCmd.AddCommand(subcmd.NewIntegration(
+		a.Name, logger, a.kube, a.ChartFS, a.integrationManager,
+	))
 
 	// Other subcommands via api.Runner.
 	subs := []api.SubCommand{
 		subcmd.NewConfig(logger, a.flags, a.ChartFS, a.kube),
-		subcmd.NewDeploy(logger, a.flags, a.ChartFS, a.kube),
+		subcmd.NewDeploy(logger, a.flags, a.ChartFS, a.kube, a.integrationManager),
 		subcmd.NewInstaller(a.flags),
-		subcmd.NewMCPServer(a.flags, a.ChartFS, a.kube),
+		subcmd.NewMCPServer(a.flags, a.ChartFS, a.kube, a.integrationManager),
 		subcmd.NewTemplate(logger, a.flags, a.ChartFS, a.kube),
 		subcmd.NewTopology(logger, a.ChartFS, a.kube),
 	}
 	for _, sub := range subs {
 		a.rootCmd.AddCommand(api.NewRunner(sub).Cmd())
 	}
+	return nil
 }
 
 // NewApp creates a new installer application. It automatically sets up the Cobra
 // Root Command and standard subcommands (Config, Integration, Deploy).
-func NewApp(name string, cfs *chartfs.ChartFS, opts ...Option) *App {
+func NewApp(name string, cfs *chartfs.ChartFS, opts ...Option) (*App, error) {
 	app := &App{
 		Name:    name,
 		ChartFS: cfs,
@@ -96,7 +111,9 @@ func NewApp(name string, cfs *chartfs.ChartFS, opts ...Option) *App {
 	// Initialize Kube client with flags
 	app.kube = k8s.NewKube(app.flags)
 
-	app.setupRootCmd()
+	if err := app.setupRootCmd(); err != nil {
+		return nil, err
+	}
 
-	return app
+	return app, nil
 }
