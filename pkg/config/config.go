@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
+	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
 
 	"gopkg.in/yaml.v3"
 )
@@ -45,7 +45,7 @@ var (
 )
 
 // DefaultRelativeConfigPath default relative path to YAML configuration file.
-var DefaultRelativeConfigPath = api.ConfigFilename
+var DefaultRelativeConfigPath = constants.ConfigFilename
 
 // Namespace returns the installer's namespace.
 func (c *Config) Namespace() string {

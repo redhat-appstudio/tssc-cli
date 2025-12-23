@@ -1,5 +1,9 @@
 package framework
 
+import (
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
+)
+
 // Option represents a functional option for the App.
 type Option func(*App)
 
@@ -21,5 +25,12 @@ func WithShortDescription(short string) Option {
 func WithLongDescription(long string) Option {
 	return func(a *App) {
 		a.Long = long
+	}
+}
+
+// WithIntegrations sets the supported integrations for the application.
+func WithIntegrations(modules ...api.IntegrationModule) Option {
+	return func(a *App) {
+		a.integrations = append(a.integrations, modules...)
 	}
 }

@@ -28,7 +28,8 @@ type MCPServer struct {
 	cfs    *chartfs.ChartFS // embedded filesystem
 	kube   *k8s.Kube        // kubernetes client
 
-	image string // installer's container image
+	manager *integrations.Manager // integrations manager
+	image   string                // installer's container image
 }
 
 var _ api.SubCommand = &MCPServer{}
@@ -66,17 +67,17 @@ func (m *MCPServer) Run() error {
 		return err
 	}
 
-	im := integrations.NewManager(m.logger, m.kube)
-
-	tb, err := resolver.NewTopologyBuilder(m.logger, m.cfs, im)
+	tb, err := resolver.NewTopologyBuilder(m.logger, m.cfs, m.manager)
 	if err != nil {
 		return err
 	}
 	jm := installer.NewJob(m.kube)
 	statusTool := mcptools.NewStatusTool(cm, tb, jm)
 
-	integrationCmd := NewIntegration(m.logger, m.kube, m.cfs)
-	integrationTools := mcptools.NewIntegrationTools(integrationCmd, cm, im)
+	integrationCmd := NewIntegration(
+		constants.AppName, m.logger, m.kube, m.cfs, m.manager,
+	)
+	integrationTools := mcptools.NewIntegrationTools(integrationCmd, cm, m.manager)
 
 	deployTools := mcptools.NewDeployTools(cm, tb, jm, m.image)
 
@@ -84,9 +85,9 @@ func (m *MCPServer) Run() error {
 
 	topologyTool := mcptools.NewTopologyTool(m.cfs, cm, tb)
 
-	instructions, err := m.cfs.ReadFile(api.InstructionsFilename)
+	instructions, err := m.cfs.ReadFile(constants.InstructionsFilename)
 	if err != nil {
-		return fmt.Errorf("failed to read %s: %w", api.InstructionsFilename, err)
+		return fmt.Errorf("failed to read %s: %w", constants.InstructionsFilename, err)
 	}
 
 	s := mcpserver.NewMCPServer(string(instructions))
@@ -99,6 +100,7 @@ func NewMCPServer(
 	f *flags.Flags,
 	cfs *chartfs.ChartFS,
 	kube *k8s.Kube,
+	manager *integrations.Manager,
 ) *MCPServer {
 	m := &MCPServer{
 		cmd: &cobra.Command{
@@ -108,10 +110,11 @@ func NewMCPServer(
 		},
 		// Given the MCP server runs via STDIO, we can't use the logger to output
 		// to the console, for the time being it will be discarded.
-		logger: f.GetLogger(io.Discard),
-		flags:  f,
-		cfs:    cfs,
-		kube:   kube,
+		logger:  f.GetLogger(io.Discard),
+		flags:   f,
+		cfs:     cfs,
+		kube:    kube,
+		manager: manager,
 	}
 
 	m.image = "quay.io/redhat-user-workloads/rhtap-shared-team-tenant/tssc-cli"
