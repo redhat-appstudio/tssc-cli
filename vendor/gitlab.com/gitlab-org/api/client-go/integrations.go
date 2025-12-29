@@ -102,7 +102,7 @@ var _ IntegrationsServiceInterface = (*IntegrationsService)(nil)
 // https://docs.gitlab.com/api/group_integrations/
 // https://docs.gitlab.com/api/project_integrations/
 type Integration struct {
-	ID                             int        `json:"id"`
+	ID                             int64      `json:"id"`
 	Title                          string     `json:"title"`
 	Slug                           string     `json:"slug"`
 	CreatedAt                      *time.Time `json:"created_at"`
