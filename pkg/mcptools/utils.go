@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -14,17 +12,18 @@ import (
 // indicating that the cluster configuration is missing. It advises the user
 // on the next steps, including using `ConfigInitTool` to configure the cluster
 // and `StatusToolName` to check the installation status.
-func missingClusterConfigErrorFromErr(err error) string {
+func missingClusterConfigErrorFromErr(appName string, err error) string {
 	return fmt.Sprintf(`
 The cluster is not configured yet, use the tool %q to configure it. That's the
-first step to deploy TSSC components. Next, you can use %q to check the overall
+first step to deploy %s components. Next, you can use %q to check the overall
 installation status.
 
 Inspecting the configuration in the cluster returned the following error:
 
 > %s`,
-		ConfigInitTool,
-		StatusToolName,
+		appName+configInitSuffix,
+		appName,
+		appName+statusSuffix,
 		err.Error(),
 	)
 }
@@ -32,12 +31,9 @@ Inspecting the configuration in the cluster returned the following error:
 // generateIntegrationSubCmdUsage generates a formatted usage string for an
 // integration subcommand. It includes the command name, its long description, and
 // an example usage showing required flags with placeholder values.
-func generateIntegrationSubCmdUsage(cmd *cobra.Command) string {
+func generateIntegrationSubCmdUsage(appName string, cmd *cobra.Command) string {
 	var usage strings.Builder
-	usage.WriteString(fmt.Sprintf(
-		"%s integration %s",
-		constants.AppName, cmd.Name(),
-	))
+	usage.WriteString(fmt.Sprintf("%s integration %s", appName, cmd.Name()))
 
 	cmd.PersistentFlags().VisitAll(func(f *pflag.Flag) {
 		annotations, ok := f.Annotations[cobra.BashCompOneRequiredFlag]

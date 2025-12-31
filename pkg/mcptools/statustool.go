@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
-	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
 	"github.com/redhat-appstudio/tssc-cli/pkg/installer"
 	"github.com/redhat-appstudio/tssc-cli/pkg/resolver"
 
@@ -17,16 +16,17 @@ import (
 // StatusTool represents the MCP tool that's responsible to report the current
 // installer status in the cluster.
 type StatusTool struct {
-	cm  *config.ConfigMapManager  // cluster configuration
-	tb  *resolver.TopologyBuilder // topology builder
-	job *installer.Job            // cluster deployment job
+	appName string                    // application name
+	cm      *config.ConfigMapManager  // cluster configuration
+	tb      *resolver.TopologyBuilder // topology builder
+	job     *installer.Job            // cluster deployment job
 }
 
 var _ Interface = &StatusTool{}
 
 const (
-	// StatusToolName MCP status tool name.
-	StatusToolName = constants.AppName + "_status"
+	// statusSuffix MCP status tool name suffix.
+	statusSuffix = "_status"
 
 	// AwaitingConfigurationPhase first step, the cluster is not configured yet.
 	AwaitingConfigurationPhase = "AWAITING_CONFIGURATION"
@@ -65,7 +65,7 @@ func (s *StatusTool) statusHandler(
 	case AwaitingConfigurationPhase:
 		return mcp.NewToolResultText(fmt.Sprintf(
 			"# Current Status: %q\n\n%s",
-			phase, missingClusterConfigErrorFromErr(err),
+			phase, missingClusterConfigErrorFromErr(s.appName, err),
 		)), nil
 	case AwaitingIntegrationsPhase:
 		switch {
@@ -111,9 +111,9 @@ You can use %q to verify whether the integrations are configured.
 
 > %s`,
 				phase,
-				IntegrationListTool,
-				IntegrationScaffoldTool,
-				IntegrationStatusTool,
+				s.appName+integrationListSuffix,
+				s.appName+integrationScaffoldSuffix,
+				s.appName+integrationStatusSuffix,
 				err.Error(),
 			)), nil
 		default:
@@ -123,9 +123,9 @@ You can use %q to verify whether the integrations are configured.
 		return mcp.NewToolResultText(fmt.Sprintf(`
 # Current Status: %q
 
-The cluster is ready to deploy the TSSC components. Use the tool %q to deploy the
-TSSC components.`,
-			phase, DeployToolName,
+The cluster is ready to deploy the %s components. Use the tool %q to deploy the
+%s components.`,
+			phase, s.appName, s.appName+deploySuffix, s.appName,
 		)), nil
 	case DeployingPhase:
 		jobState, err := s.job.GetState(ctx)
@@ -149,22 +149,22 @@ related POD logs:
 		return mcp.NewToolResultText(fmt.Sprintf(`
 # Current Status: %q
 
-The cluster is deploying the TSSC components. Please wait for the deployment to
+The cluster is deploying the %s components. Please wait for the deployment to
 complete. You can use the following command to follow the deployment job logs:
 
 > %s`,
-			phase, logsCmdEx,
+			phase, s.appName, logsCmdEx,
 		)), nil
 	case CompletedPhase:
 		return mcp.NewToolResultText(fmt.Sprintf(`
 # Current Status: %q
 
-The TSSC components have been deployed successfully. You can use the following
+The %s components have been deployed successfully. You can use the following
 command to inspect the installation logs and get initial information for each
 product deployed:
 
 > %s`,
-			phase, logsCmdEx,
+			phase, s.appName, logsCmdEx,
 		)), nil
 	case InstallerErrorPhase:
 		// Indicates an operational error during job state determination.
@@ -178,7 +178,7 @@ product deployed:
 func (s *StatusTool) Init(mcpServer *server.MCPServer) {
 	mcpServer.AddTools([]server.ServerTool{{
 		Tool: mcp.NewTool(
-			StatusToolName,
+			s.appName+statusSuffix,
 			mcp.WithDescription(`
 Reports the overall installer status, the first tool to be called to identify the
 installer status in the cluster and define the next tool to call.
@@ -190,13 +190,15 @@ installer status in the cluster and define the next tool to call.
 
 // NewStatusTool creates a new StatusTool instance.
 func NewStatusTool(
+	appName string,
 	cm *config.ConfigMapManager,
 	tb *resolver.TopologyBuilder,
 	job *installer.Job,
 ) *StatusTool {
 	return &StatusTool{
-		cm:  cm,
-		tb:  tb,
-		job: job,
+		appName: appName,
+		cm:      cm,
+		tb:      tb,
+		job:     job,
 	}
 }

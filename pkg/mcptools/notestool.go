@@ -6,7 +6,6 @@ import (
 	"log/slog"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
-	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
 	"github.com/redhat-appstudio/tssc-cli/pkg/deployer"
 	"github.com/redhat-appstudio/tssc-cli/pkg/flags"
 	"github.com/redhat-appstudio/tssc-cli/pkg/installer"
@@ -20,19 +19,20 @@ import (
 // NotesTool a MCP tool to provide connection instructions for products. These
 // products must be completely deployed before its "NOTES.txt" is generated.
 type NotesTool struct {
-	logger *slog.Logger              // application logger
-	flags  *flags.Flags              // global flags
-	kube   *k8s.Kube                 // kubernetes client
-	cm     *config.ConfigMapManager  // cluster configuration
-	tb     *resolver.TopologyBuilder // topology builder
-	job    *installer.Job            // cluster deployment job
+	appName string                    // application name
+	logger  *slog.Logger              // application logger
+	flags   *flags.Flags              // global flags
+	kube    *k8s.Kube                 // kubernetes client
+	cm      *config.ConfigMapManager  // cluster configuration
+	tb      *resolver.TopologyBuilder // topology builder
+	job     *installer.Job            // cluster deployment job
 }
 
 var _ Interface = &NotesTool{}
 
 const (
-	// NotesToolName retrieves the connection instruction for a product.
-	NotesToolName = constants.AppName + "_notes"
+	// notesSuffix retrieves the connection instruction for a product suffix.
+	notesSuffix = "_notes"
 )
 
 // notesHandler retrieves the Helm chart notes (NOTES.txt) for a specified Red Hat
@@ -59,7 +59,7 @@ func (n *NotesTool) notesHandler(
 
 The cluster is not ready, use the tool %q to check the overall status and general
 directions on how to proceed.`,
-		phase, StatusToolName,
+		phase, n.appName+statusSuffix,
 	)
 	if err != nil {
 		return mcp.NewToolResultText(fmt.Sprintf(`%s
@@ -116,7 +116,7 @@ Unable to get "NOTES.txt" for the chart %q on namespace %q.`,
 func (n *NotesTool) Init(s *server.MCPServer) {
 	s.AddTools([]server.ServerTool{{
 		Tool: mcp.NewTool(
-			NotesToolName,
+			n.appName+notesSuffix,
 			mcp.WithDescription(`
 Retrieve the service notes, the initial coordinates to utilize services deployed
 by this installer, from the informed product name.`,
@@ -133,6 +133,7 @@ The name of the Red Hat product to retrieve connection information.`,
 }
 
 func NewNotesTool(
+	appName string,
 	logger *slog.Logger,
 	f *flags.Flags,
 	kube *k8s.Kube,
@@ -140,11 +141,12 @@ func NewNotesTool(
 	tb *resolver.TopologyBuilder,
 ) *NotesTool {
 	return &NotesTool{
-		logger: logger,
-		flags:  f,
-		kube:   kube,
-		cm:     cm,
-		tb:     tb,
-		job:    installer.NewJob(kube),
+		appName: appName,
+		logger:  logger,
+		flags:   f,
+		kube:    kube,
+		cm:      cm,
+		tb:      tb,
+		job:     installer.NewJob(kube),
 	}
 }

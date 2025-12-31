@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
-	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integrations"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -15,19 +14,19 @@ import (
 )
 
 type IntegrationTools struct {
+	appName        string                   // application name
 	integrationCmd *cobra.Command           // integration subcommand
 	cm             *config.ConfigMapManager // configuration manager
 	im             *integrations.Manager    // integrations manager
 }
 
 const (
-	// IntegrationListTool list integrations tool.
-	IntegrationListTool = constants.AppName + "_integration_list"
-	// IntegrationScaffoldTool generates the `tssc integration` command
-	// required to configure the integration type
-	IntegrationScaffoldTool = constants.AppName + "_integration_scaffold"
-	// IntegrationStatusTool checks if integrations are configured.
-	IntegrationStatusTool = constants.AppName + "_integration_status"
+	// integrationListSuffix list integrations tool suffix.
+	integrationListSuffix = "_integration_list"
+	// integrationScaffoldSuffix generates the `tssc integration` command suffix.
+	integrationScaffoldSuffix = "_integration_scaffold"
+	// integrationStatusSuffix checks if integrations are configured suffix.
+	integrationStatusSuffix = "_integration_status"
 )
 
 // Arguments for the integration tools.
@@ -44,7 +43,7 @@ func (i *IntegrationTools) listHandler(
 	ctr mcp.CallToolRequest,
 ) (*mcp.CallToolResult, error) {
 	var output strings.Builder
-	output.WriteString(fmt.Sprintf("# `%s` Integrations\n\n", constants.AppName))
+	output.WriteString(fmt.Sprintf("# `%s` Integrations\n\n", i.appName))
 
 	for _, subCmd := range i.integrationCmd.Commands() {
 		output.WriteString(fmt.Sprintf("## `%s`\n\n%s\n\n",
@@ -71,8 +70,8 @@ For security, automated agents **MUST NOT** execute these commands.
 
 Users **MUST** manually copy and paste the example "%s integration" command, then
 fill in the "OVERWRITE_ME" placeholders on a dedicated terminal session. For more
-details, run "tssc integration <name> --help".`,
-		constants.AppName, constants.AppName,
+details, run "%s integration <name> --help".`,
+		i.appName, i.appName, i.appName,
 	))
 
 	names := ctr.GetStringSlice(NamesArg, []string{})
@@ -91,7 +90,7 @@ You must inform the %q argument, with the integration name(s)!`,
 	for _, name := range names {
 		if sc, ok := byName[name]; ok {
 			output.WriteString("\n\n")
-			output.WriteString(generateIntegrationSubCmdUsage(sc))
+			output.WriteString(generateIntegrationSubCmdUsage(i.appName, sc))
 			output.WriteString("\n\n")
 		} else {
 			unknown = append(unknown, name)
@@ -100,7 +99,7 @@ You must inform the %q argument, with the integration name(s)!`,
 	if len(unknown) > 0 {
 		return mcp.NewToolResultErrorf(
 			"Unknown integration name(s): %s. Use %q to list valid names.",
-			strings.Join(unknown, ", "), IntegrationListTool,
+			strings.Join(unknown, ", "), i.appName+integrationListSuffix,
 		), nil
 	}
 
@@ -158,19 +157,22 @@ You must inform at least one integration name via the '%s' argument`,
 func (i *IntegrationTools) Init(s *server.MCPServer) {
 	s.AddTools([]server.ServerTool{{
 		Tool: mcp.NewTool(
-			IntegrationListTool,
-			mcp.WithDescription(`
-List and describe the TSSC integrations available for the user.`),
+			i.appName+integrationListSuffix,
+			mcp.WithDescription(fmt.Sprintf(`
+List and describe the %s integrations available for the user.`,
+				i.appName,
+			)),
 		),
 		Handler: i.listHandler,
 	}, {
 		Tool: mcp.NewTool(
-			IntegrationScaffoldTool,
-			mcp.WithDescription(`
-Scaffold the configuration required for a specific TSSC integration. The
+			i.appName+integrationScaffoldSuffix,
+			mcp.WithDescription(fmt.Sprintf(`
+Scaffold the configuration required for a specific %s integration. The
 scaffolded configuration can be used as a reference to create the integration
-using the 'tssc integration <name> ...' command.`,
-			),
+using the '%s integration <name> ...' command.`,
+				i.appName, i.appName,
+			)),
 			mcp.WithArray(
 				NamesArg,
 				mcp.Description(`
@@ -182,7 +184,7 @@ The missing integrations that are mandatory for deployment.`,
 		Handler: i.scaffoldHandler,
 	}, {
 		Tool: mcp.NewTool(
-			IntegrationStatusTool,
+			i.appName+integrationStatusSuffix,
 			mcp.WithDescription(`
 Detect whether the informed integration names are configured.`,
 			),
@@ -199,11 +201,13 @@ The integration names to check the status for.`,
 }
 
 func NewIntegrationTools(
+	appName string,
 	integrationCmd *cobra.Command,
 	cm *config.ConfigMapManager,
 	im *integrations.Manager,
 ) *IntegrationTools {
 	return &IntegrationTools{
+		appName:        appName,
 		integrationCmd: integrationCmd,
 		cm:             cm,
 		im:             im,

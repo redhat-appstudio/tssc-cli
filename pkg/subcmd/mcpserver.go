@@ -61,8 +61,10 @@ func (m *MCPServer) Validate() error {
 
 // Run starts the MCP server.
 func (m *MCPServer) Run() error {
+	appName := constants.AppName
 	cm := config.NewConfigMapManager(m.kube)
-	configTools, err := mcptools.NewConfigTools(m.logger, m.cfs, m.kube, cm)
+	configTools, err := mcptools.NewConfigTools(
+		appName, m.logger, m.cfs, m.kube, cm)
 	if err != nil {
 		return err
 	}
@@ -72,26 +74,35 @@ func (m *MCPServer) Run() error {
 		return err
 	}
 	jm := installer.NewJob(m.kube)
-	statusTool := mcptools.NewStatusTool(cm, tb, jm)
+	statusTool := mcptools.NewStatusTool(appName, cm, tb, jm)
 
 	integrationCmd := NewIntegration(
-		constants.AppName, m.logger, m.kube, m.cfs, m.manager,
+		appName, m.logger, m.kube, m.cfs, m.manager,
 	)
-	integrationTools := mcptools.NewIntegrationTools(integrationCmd, cm, m.manager)
+	integrationTools := mcptools.NewIntegrationTools(
+		appName, integrationCmd, cm, m.manager)
 
-	deployTools := mcptools.NewDeployTools(cm, tb, jm, m.image)
+	deployTools := mcptools.NewDeployTools(appName, cm, tb, jm, m.image)
 
-	notesTool := mcptools.NewNotesTool(m.logger, m.flags, m.kube, cm, tb)
+	notesTool := mcptools.NewNotesTool(appName, m.logger, m.flags, m.kube, cm, tb)
 
-	topologyTool := mcptools.NewTopologyTool(m.cfs, cm, tb)
+	topologyTool := mcptools.NewTopologyTool(appName, m.cfs, cm, tb)
 
 	instructions, err := m.cfs.ReadFile(constants.InstructionsFilename)
 	if err != nil {
-		return fmt.Errorf("failed to read %s: %w", constants.InstructionsFilename, err)
+		return fmt.Errorf("failed to read %s: %w",
+			constants.InstructionsFilename, err)
 	}
 
-	s := mcpserver.NewMCPServer(string(instructions))
-	s.AddTools(configTools, statusTool, integrationTools, deployTools, notesTool, topologyTool)
+	s := mcpserver.NewMCPServer(appName, string(instructions))
+	s.AddTools(
+		configTools,
+		statusTool,
+		integrationTools,
+		deployTools,
+		notesTool,
+		topologyTool,
+	)
 	return s.Start()
 }
 
