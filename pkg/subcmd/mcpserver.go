@@ -13,7 +13,7 @@ import (
 	"github.com/redhat-appstudio/tssc-cli/pkg/installer"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integrations"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
-	"github.com/redhat-appstudio/tssc-cli/pkg/mcpserver"
+	"github.com/redhat-appstudio/tssc-cli/pkg/framework/mcpserver"
 	"github.com/redhat-appstudio/tssc-cli/pkg/mcptools"
 	"github.com/redhat-appstudio/tssc-cli/pkg/resolver"
 
