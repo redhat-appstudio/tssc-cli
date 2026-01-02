@@ -2,6 +2,7 @@ package framework
 
 import (
 	"github.com/redhat-appstudio/tssc-cli/pkg/api"
+	"github.com/redhat-appstudio/tssc-cli/pkg/mcptools"
 )
 
 // Option represents a functional option for the App.
@@ -32,5 +33,19 @@ func WithLongDescription(long string) Option {
 func WithIntegrations(modules ...api.IntegrationModule) Option {
 	return func(a *App) {
 		a.integrations = append(a.integrations, modules...)
+	}
+}
+
+// WithMCPImage sets the container image for the MCP server.
+func WithMCPImage(image string) Option {
+	return func(a *App) {
+		a.mcpImage = image
+	}
+}
+
+// WithMCPToolsBuilder sets the MCP tools builder for the application.
+func WithMCPToolsBuilder(builder mcptools.MCPToolsBuilder) Option {
+	return func(a *App) {
+		a.mcpToolsBuilder = builder
 	}
 }

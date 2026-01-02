@@ -6,10 +6,13 @@ import (
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
+	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
 	"github.com/redhat-appstudio/tssc-cli/pkg/flags"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integrations"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
+	"github.com/redhat-appstudio/tssc-cli/pkg/mcptools"
 	"github.com/redhat-appstudio/tssc-cli/pkg/subcmd"
+
 	"github.com/spf13/cobra"
 )
 
@@ -26,6 +29,9 @@ type App struct {
 	rootCmd            *cobra.Command          // root cobra instance
 	flags              *flags.Flags            // global flags
 	kube               *k8s.Kube               // kubernetes client
+
+	mcpToolsBuilder mcptools.MCPToolsBuilder // tools builder
+	mcpImage        string                   // installer image
 }
 
 // Command exposes the Cobra command.
@@ -80,12 +86,38 @@ func (a *App) setupRootCmd() error {
 		a.Name, logger, a.kube, a.ChartFS, a.integrationManager,
 	))
 
+	// Use default builder if none provided
+	mcpBuilder := a.mcpToolsBuilder
+	if mcpBuilder == nil {
+		mcpBuilder = subcmd.StandardMCPToolsBuilder()
+	}
+
+	// Determine MCP image - use configured value or compute default from constants
+	mcpImage := a.mcpImage
+	if mcpImage == "" {
+		// Default image based on TSSC convention: image tagged with commit-id
+		mcpImage = "quay.io/redhat-user-workloads/rhtap-shared-team-tenant/tssc-cli"
+		if constants.CommitID == "" {
+			mcpImage = fmt.Sprintf("%s:latest", mcpImage)
+		} else {
+			mcpImage = fmt.Sprintf("%s:%s", mcpImage, constants.CommitID)
+		}
+	}
+
 	// Other subcommands via api.Runner.
 	subs := []api.SubCommand{
 		subcmd.NewConfig(logger, a.flags, a.ChartFS, a.kube),
 		subcmd.NewDeploy(logger, a.flags, a.ChartFS, a.kube, a.integrationManager),
 		subcmd.NewInstaller(a.flags),
-		subcmd.NewMCPServer(a.flags, a.ChartFS, a.kube, a.integrationManager),
+		subcmd.NewMCPServer(
+			a.Name,
+			a.flags,
+			a.ChartFS,
+			a.kube,
+			a.integrationManager,
+			mcpBuilder,
+			mcpImage,
+		),
 		subcmd.NewTemplate(logger, a.flags, a.ChartFS, a.kube),
 		subcmd.NewTopology(logger, a.ChartFS, a.kube),
 	}

@@ -2,20 +2,15 @@ package subcmd
 
 import (
 	"fmt"
-	"io"
-	"log/slog"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
-	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
 	"github.com/redhat-appstudio/tssc-cli/pkg/flags"
-	"github.com/redhat-appstudio/tssc-cli/pkg/installer"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integrations"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
 	"github.com/redhat-appstudio/tssc-cli/pkg/framework/mcpserver"
 	"github.com/redhat-appstudio/tssc-cli/pkg/mcptools"
-	"github.com/redhat-appstudio/tssc-cli/pkg/resolver"
 
 	"github.com/spf13/cobra"
 )
@@ -23,13 +18,14 @@ import (
 // MCPServer is a subcommand for starting the MCP server.
 type MCPServer struct {
 	cmd    *cobra.Command   // cobra command
-	logger *slog.Logger     // application logger
 	flags  *flags.Flags     // global flags
 	cfs    *chartfs.ChartFS // embedded filesystem
 	kube   *k8s.Kube        // kubernetes client
 
-	manager *integrations.Manager // integrations manager
-	image   string                // installer's container image
+	appName         string                    // application name
+	manager         *integrations.Manager     // integrations manager
+	mcpToolsBuilder mcptools.MCPToolsBuilder  // builder function
+	image           string                    // installer's container image
 }
 
 var _ api.SubCommand = &MCPServer{}
@@ -61,32 +57,21 @@ func (m *MCPServer) Validate() error {
 
 // Run starts the MCP server.
 func (m *MCPServer) Run() error {
-	appName := constants.AppName
-	cm := config.NewConfigMapManager(m.kube)
-	configTools, err := mcptools.NewConfigTools(
-		appName, m.logger, m.cfs, m.kube, cm)
-	if err != nil {
-		return err
-	}
-
-	tb, err := resolver.NewTopologyBuilder(m.logger, m.cfs, m.manager)
-	if err != nil {
-		return err
-	}
-	jm := installer.NewJob(m.kube)
-	statusTool := mcptools.NewStatusTool(appName, cm, tb, jm)
-
-	integrationCmd := NewIntegration(
-		appName, m.logger, m.kube, m.cfs, m.manager,
+	// Create context using constructor - this ensures logger uses io.Discard
+	toolsCtx := mcptools.NewMCPToolsContext(
+		m.appName,
+		m.flags,
+		m.cfs,
+		m.kube,
+		m.manager,
+		m.image,
 	)
-	integrationTools := mcptools.NewIntegrationTools(
-		appName, integrationCmd, cm, m.manager)
 
-	deployTools := mcptools.NewDeployTools(appName, cm, tb, jm, m.image)
-
-	notesTool := mcptools.NewNotesTool(appName, m.logger, m.flags, m.kube, cm, tb)
-
-	topologyTool := mcptools.NewTopologyTool(appName, m.cfs, cm, tb)
+	// Invoke the builder to create tools
+	tools, err := m.mcpToolsBuilder(toolsCtx)
+	if err != nil {
+		return fmt.Errorf("failed to create MCP tools: %w", err)
+	}
 
 	instructions, err := m.cfs.ReadFile(constants.InstructionsFilename)
 	if err != nil {
@@ -94,24 +79,21 @@ func (m *MCPServer) Run() error {
 			constants.InstructionsFilename, err)
 	}
 
-	s := mcpserver.NewMCPServer(appName, string(instructions))
-	s.AddTools(
-		configTools,
-		statusTool,
-		integrationTools,
-		deployTools,
-		notesTool,
-		topologyTool,
-	)
+	s := mcpserver.NewMCPServer(m.appName, string(instructions))
+	s.AddTools(tools...)
+
 	return s.Start()
 }
 
 // NewMCPServer creates a new MCPServer instance.
 func NewMCPServer(
+	appName string,
 	f *flags.Flags,
 	cfs *chartfs.ChartFS,
 	kube *k8s.Kube,
 	manager *integrations.Manager,
+	builder mcptools.MCPToolsBuilder,
+	image string,
 ) *MCPServer {
 	m := &MCPServer{
 		cmd: &cobra.Command{
@@ -119,22 +101,15 @@ func NewMCPServer(
 			Short: "Starts the MCP server",
 			Long:  mcpServerDesc,
 		},
-		// Given the MCP server runs via STDIO, we can't use the logger to output
-		// to the console, for the time being it will be discarded.
-		logger:  f.GetLogger(io.Discard),
-		flags:   f,
-		cfs:     cfs,
-		kube:    kube,
-		manager: manager,
+		flags:           f,
+		cfs:             cfs,
+		kube:            kube,
+		appName:         appName,
+		manager:         manager,
+		mcpToolsBuilder: builder,
+		image:           image,
 	}
 
-	m.image = "quay.io/redhat-user-workloads/rhtap-shared-team-tenant/tssc-cli"
-	// Set default image based on CommitID
-	if constants.CommitID == "" {
-		m.image = fmt.Sprintf("%s:latest", m.image)
-	} else {
-		m.image = fmt.Sprintf("%s:%s", m.image, constants.CommitID)
-	}
 	m.PersistentFlags(m.cmd)
 	return m
 }
