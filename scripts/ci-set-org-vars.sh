@@ -94,33 +94,6 @@ getValues() {
     COSIGN_SECRET_PASSWORD="$(echo "$COSIGN_SECRET_JSON" | jq -r '.data."cosign.password"')"
     COSIGN_PUBLIC_KEY="$(echo "$COSIGN_SECRET_JSON" | jq -r '.data."cosign.pub"')"
 
-    for REGISTRY in "artifactory" "nexus" "quay"; do
-        REGISTRY_SECRET="tssc-$REGISTRY-integration" # notsecret
-        if ! oc get secrets -n "$NAMESPACE" "$REGISTRY_SECRET" -o name >/dev/null 2>&1; then
-            continue
-        fi
-        REGISTRY_SECRET_JSON=$(oc get secrets -n "$NAMESPACE" "$REGISTRY_SECRET" -o json)
-        REGISTRY_ENDPOINT="$(echo "$REGISTRY_SECRET_JSON" | jq -r '.data.url | @base64d')"
-        IMAGE_REGISTRY="${REGISTRY_ENDPOINT//https:\/\//}"
-        IMAGE_REGISTRY_USER="$(
-            echo "$REGISTRY_SECRET_JSON" \
-            | jq -r '.data.".dockerconfigjson" | @base64d' \
-            | jq -r '.auths | to_entries[0].value.auth | @base64d' \
-            | cut -d: -f1
-        )"
-        IMAGE_REGISTRY_PASSWORD="$(
-            echo "$REGISTRY_SECRET_JSON" \
-            | jq -r '.data.".dockerconfigjson" | @base64d' \
-            | jq -r '.auths | to_entries[0].value.auth | @base64d' \
-            | cut -d: -f2-
-        )"
-        break
-    done
-
-    SECRET="tssc-acs-integration"
-    ROX_CENTRAL_ENDPOINT="$(oc get secrets -n "$NAMESPACE" "$SECRET" -o json | jq -r '.data.endpoint | @base64d')"
-    ROX_API_TOKEN="$(oc get secrets -n "$NAMESPACE" "$SECRET" -o json | jq -r '.data.token | @base64d')"
-
     TPA_SECRET="tssc-trustification-integration"
     TPA_SECRET_JSON=$(oc get secret -n "$NAMESPACE" "$TPA_SECRET" -o json)
     TPA_URL="$(echo "$TPA_SECRET_JSON" | jq -r '.data.bombastic_api_url | @base64d')"
@@ -134,7 +107,7 @@ getValues() {
     TAS_REKOR_HOST="$(echo "$TAS_SECRET_JSON" | jq -r '.data.rekor_url | @base64d')"
     TAS_TUF_MIRROR="$(echo "$TAS_SECRET_JSON" | jq -r '.data.tuf_url | @base64d')"
 
-    SECRET_VARS=("COSIGN_SECRET_KEY" "COSIGN_SECRET_PASSWORD" "GITOPS_AUTH_PASSWORD" "IMAGE_REGISTRY_PASSWORD" "ROX_API_TOKEN" "TRUSTIFICATION_OIDC_CLIENT_SECRET")
+    SECRET_VARS=("COSIGN_SECRET_KEY" "COSIGN_SECRET_PASSWORD" "GITOPS_AUTH_PASSWORD" "TRUSTIFICATION_OIDC_CLIENT_SECRET")
 }
 
 is_in_list() {
@@ -194,12 +167,7 @@ setVars() {
     setVar COSIGN_SECRET_KEY "$COSIGN_SECRET_KEY"
     setVar COSIGN_PUBLIC_KEY "$COSIGN_PUBLIC_KEY"
     setVar GITOPS_AUTH_PASSWORD "$GIT_TOKEN"
-    setVar IMAGE_REGISTRY "$IMAGE_REGISTRY"
-    setVar IMAGE_REGISTRY_PASSWORD "$IMAGE_REGISTRY_PASSWORD"
-    setVar IMAGE_REGISTRY_USER "$IMAGE_REGISTRY_USER"
     setVar REKOR_HOST "$TAS_REKOR_HOST"
-    setVar ROX_CENTRAL_ENDPOINT "$ROX_CENTRAL_ENDPOINT"
-    setVar ROX_API_TOKEN "$ROX_API_TOKEN"
     setVar TRUSTIFICATION_BOMBASTIC_API_URL "$TPA_URL"
     setVar TRUSTIFICATION_OIDC_CLIENT_ID "$TPA_OIDC_CLIENT_ID"
     setVar TRUSTIFICATION_OIDC_CLIENT_SECRET "$TPA_OIDC_CLIENT_SECRET"

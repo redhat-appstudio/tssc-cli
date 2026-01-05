@@ -1,8 +1,0 @@
-kind: Secret
-apiVersion: v1
-metadata:
-    name: dynamic-plugins-registry-auth
-    namespace: {{ .Release.Namespace }}
-data:
-    auth.json: {{ lookup "v1" "Secret" "openshift-config" "pull-secret" | dig "data" ".dockerconfigjson" "null" }}
-type: Opaque

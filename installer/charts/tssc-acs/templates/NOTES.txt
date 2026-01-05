@@ -1,6 +1,0 @@
-{{- $acs := .Values.acs -}}
-Red Hat Advanced Cluster Security (ACS):
-  - Name: {{ $acs.name }}
-    Namespace: {{ .Release.Namespace }}
-    Central URL: https://{{ include "acs.centralEndPoint" . }}
-    Secret: central-htpasswd

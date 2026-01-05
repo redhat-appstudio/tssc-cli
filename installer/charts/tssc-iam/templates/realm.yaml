@@ -1,8 +1,7 @@
 {{- $iam := .Values.iam.keycloakCR }}
 {{- $tpa := $iam.trustedProfileAnalyzerRealm }}
 {{- $tas := $iam.trustedArtifactSignerRealm }}
-{{- $rhdh := $iam.rhdhRealm }}
-{{- if or $tas.enabled $tpa.enabled $rhdh.enabled }}
+{{- if or $tas.enabled $tpa.enabled }}
 #
 # Realm admin credentials
 #
@@ -35,16 +34,6 @@
 }}
 {{- $oidcSecretDataTPA := (get $oidcSecretObjTPA "data") | default dict }}
 {{- $oidcCredentialsTPA := dict }}
-#
-# RHDH OIDC credentials
-#
-{{- 
-  $oidcSecretObjRHDH := 
-    (lookup "v1" "Secret" .Release.Namespace $rhdh.oidcClientsSecretName) |
-    default dict
-}}
-{{- $oidcSecretDataRHDH := (get $oidcSecretObjRHDH "data") | default dict }}
-{{- $oidcCredentialsRHDH := dict }}
 #
 # TAS clients
 #
@@ -141,33 +130,6 @@ stringData:
       $tpa.integrationSecret.cycloneDXVersion
   }}"
 {{- end }}
-#
-# RHDH Client
-# Create a secret to store RHDH client credentials
-#
-{{- if $rhdh.enabled }}
----
-apiVersion: v1
-kind: Secret
-metadata:
-  annotations:
-    helm.sh/resource-policy: keep
-  labels:
-    app: keycloak
-  namespace: {{ .Release.Namespace }}
-  name: {{
-    required ".oidcClientsSecretName is required"
-    $rhdh.oidcClientsSecretName
-  }}
-type: Opaque
-data:
-  {{- range $k, $v := $rhdh.clients }}
-    {{- $s := (get $oidcSecretDataRHDH $k) | default (include "generate.client.secret" . | b64enc) }}
-    {{- $oidcCredentialsRHDH = mergeOverwrite $oidcCredentialsRHDH (dict $k $s) }}
-  {{ $k }}: {{ $s }}
-  {{- end }}
-{{- end }}
-
 #
 # Realm Admin
 #
@@ -1265,83 +1227,6 @@ spec:
         surrogateAuthRequired: false
         webOrigins:
           - +
-  {{- if $rhdh.enabled }}
-      - alwaysDisplayInConsole: false
-        attributes:
-          backchannel.logout.session.required: "true"
-          backchannel.logout.revoke.offline.tokens: "false"
-        authenticationFlowBindingOverrides: {}
-        bearerOnly: false
-        clientAuthenticatorType: client-secret
-        clientId: rhdh
-        secret: {{ get $oidcCredentialsRHDH "rhdh" | b64dec }}
-        enabled: {{ $rhdh.clients.rhdh.enabled }}
-        consentRequired: false
-        defaultClientScopes:
-          - web-origins
-          - acr
-          - roles
-          - profile
-          - email
-        directAccessGrantsEnabled: true
-        frontchannelLogout: false
-        fullScopeAllowed: true
-        implicitFlowEnabled: false
-        nodeReRegistrationTimeout: -1
-        notBefore: 0
-        optionalClientScopes: []
-        protocol: openid-connect
-        protocolMappers:
-          - config:
-              access.token.claim: "true"
-              claim.name: clientAddress
-              id.token.claim: "true"
-              introspection.token.claim: "true"
-              jsonType.label: String
-              user.session.note: clientAddress
-            consentRequired: false
-            name: Client IP Address
-            protocol: openid-connect
-            protocolMapper: oidc-usersessionmodel-note-mapper
-          - config:
-              access.token.claim: "true"
-              claim.name: client_id
-              id.token.claim: "true"
-              introspection.token.claim: "true"
-              jsonType.label: String
-              user.session.note: client_id
-            consentRequired: false
-            name: Client ID
-            protocol: openid-connect
-            protocolMapper: oidc-usersessionmodel-note-mapper
-          - config:
-              access.token.claim: "true"
-              claim.name: clientHost
-              id.token.claim: "true"
-              introspection.token.claim: "true"
-              jsonType.label: String
-              user.session.note: clientHost
-            consentRequired: false
-            name: Client Host
-            protocol: openid-connect
-            protocolMapper: oidc-usersessionmodel-note-mapper
-        publicClient: false
-        redirectUris: {{
-          required ".rhdhRedirectUris is required"
-            $rhdh.rhdhRedirectUris |
-              toYaml |
-              nindent 10
-        }}
-        serviceAccountsEnabled: true
-        standardFlowEnabled: true
-        surrogateAuthRequired: false
-        webOrigins: {{
-          required ".rhdhOriginUris is required"
-            $rhdh.rhdhOriginUris |
-              toYaml |
-              nindent 10
-        }}
-  {{- end }}
   {{- if $tas.enabled }}
       - alwaysDisplayInConsole: false
         attributes:
@@ -2076,9 +1961,6 @@ spec:
         testing-user: []
         cli: []
   {{- end }}
-  {{- if $rhdh.enabled }}
-        rhdh: []
-  {{- end }}
       realm:
         - attributes: {}
           clientRole: false
@@ -2188,23 +2070,6 @@ spec:
         serviceAccountClientId: cli
         totp: false
         username: service-account-cli
-  {{- end }}
-  {{- if $rhdh.enabled }}
-      - disableableCredentialTypes: []
-        username: service-account-rhdh
-        emailVerified: false
-        enabled: true
-        totp: false
-        serviceAccountClientId: rhdh
-        requiredActions: []
-        realmRoles:
-          - default-roles-{{ $iam.realmsName }}
-        clientRoles:
-          realm-management:
-            - view-users
-            - query-groups
-            - query-users
-        groups: []
   {{- end }}
     verifyEmail: false
     waitIncrementSeconds: 60

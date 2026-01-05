@@ -102,22 +102,11 @@ func (g *GitHub) setClusterURLs(
 	ctx context.Context,
 	cfg *config.Config,
 ) error {
-	developerHub, err := cfg.GetProduct(config.DeveloperHub)
-	if err != nil {
-		return err
-	}
 	ingressDomain, err := k8s.GetOpenShiftIngressDomain(ctx, g.kube)
 	if err != nil {
 		return err
 	}
 
-	if g.callbackURL == "" {
-		g.callbackURL = fmt.Sprintf(
-			"https://backstage-developer-hub-%s.%s/api/auth/github/handler/frame",
-			developerHub.GetNamespace(),
-			ingressDomain,
-		)
-	}
 	if g.webhookURL == "" {
 		g.webhookURL = fmt.Sprintf(
 			"https://pipelines-as-code-controller-%s.%s",
@@ -127,8 +116,7 @@ func (g *GitHub) setClusterURLs(
 	}
 	if g.homepageURL == "" {
 		g.homepageURL = fmt.Sprintf(
-			"https://backstage-developer-hub-%s.%s",
-			developerHub.GetNamespace(),
+			"https://console-openshift-console.apps.%s/dashboards",
 			ingressDomain,
 		)
 	}

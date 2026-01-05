@@ -1,1 +1,0 @@
-../../../scripts/test-acs-image-scan.sh

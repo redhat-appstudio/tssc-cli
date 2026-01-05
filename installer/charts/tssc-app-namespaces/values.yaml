@@ -1,5 +1,0 @@
----
-appNamespaces:
-  argoCD:
-    name: __OVERWRITE_ME__
-  namespace_prefixes: __OVERWRITE_ME__

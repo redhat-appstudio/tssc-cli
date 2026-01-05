@@ -40,26 +40,6 @@ subscriptions:
     channel: stable-v1.3
     source: redhat-operators
     sourceNamespace: openshift-marketplace
-  advancedClusterSecurity:
-    enabled: false
-    description: Red Hat Advanced Cluster Security Operator
-    apiResource: centrals.platform.stackrox.io
-    channel: rhacs-4.8
-    namespace: rhacs-operator
-    name: rhacs-operator
-    source: redhat-operators
-    sourceNamespace: openshift-marketplace
-    operatorGroup:
-      upgradeStrategy: Default
-  developerHub:
-    enabled: false
-    description: Red Hat Developer Hub Operator
-    apiResource: backstages.rhdh.redhat.com
-    namespace: openshift-operators
-    name: rhdh
-    channel: fast-1.8
-    source: redhat-operators
-    sourceNamespace: openshift-marketplace
   trustedProfileAnalyzer:
     enabled: false
     description: Red Hat Trusted Profile Analyzer

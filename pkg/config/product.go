@@ -7,8 +7,6 @@ import (
 )
 
 const (
-	// DeveloperHub Red Hat Developer Hub (RHDH).
-	DeveloperHub = "Developer Hub"
 	// OpenShiftPipelines OpenShift Pipelines.
 	OpenShiftPipelines = "OpenShift Pipelines"
 )

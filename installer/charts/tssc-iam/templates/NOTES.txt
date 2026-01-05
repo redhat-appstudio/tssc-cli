@@ -12,8 +12,7 @@ Keycloak:
     Admin Secret: {{ printf "%s-initial-admin" $keycloakName }}
   {{- $tpa := $k.keycloakCR.trustedProfileAnalyzerRealm -}}
   {{- $tas := $k.keycloakCR.trustedArtifactSignerRealm -}}
-  {{- $rhdh := $k.keycloakCR.rhdhRealm -}}
-{{- if or $rhdh.enabled $tas.enabled $tpa.enabled}}
+{{- if or $tas.enabled $tpa.enabled}}
 Keycloak Realm Import:
   - Namespace:    {{ .Release.Namespace }}
     Username:     {{ $k.keycloakCR.adminUsername }}
@@ -29,9 +28,5 @@ Keycloak "trusted-profile-analyzer" Realm Credentials:
   - TPA OIDC Client Secret: {{ $tpa.oidcClientsSecretName }}
 {{- end }}
 
-{{- if $rhdh.enabled }}
-Keycloak "developer hub" Realm Credentials:
-  - RHDH OIDC Client Secret: {{ $rhdh.oidcClientsSecretName }}
-{{- end }}
 {{- end }}
 {{- end }}

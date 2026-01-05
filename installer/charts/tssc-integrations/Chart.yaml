@@ -5,4 +5,4 @@ description: TSSC Integrations
 type: application
 version: "1.8.0"
 annotations:
-  tssc.redhat-appstudio.github.com/depends-on: tssc-acs, tssc-gitops, tssc-dh
+  tssc.redhat-appstudio.github.com/depends-on: tssc-gitops

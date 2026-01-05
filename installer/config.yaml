@@ -9,16 +9,6 @@ tssc:
       # Enables installer verbose logging messages for troubleshooting issues.
       debug: false
   products:
-    # Red Hat Advanced Cluster Security (ACS) for OpenShift is a comprehensive
-    # security platform that protects cloud-native applications across the entire
-    # container lifecycle -- from build and deployment to runtime -- by providing
-    # visibility, vulnerability management, compliance auditing, and threat
-    # detection for OpenShift environments.
-    - name: Advanced Cluster Security
-      enabled: true
-      namespace: tssc-acs
-      properties:
-        manageSubscription: true
     # Red Hat OpenShift GitOps, built on ArgoCD, is an operator that provides a
     # declarative, Git-centric workflow to automate continuous delivery and
     # management of applications and infrastructure configurations across
@@ -56,23 +46,3 @@ tssc:
       namespace: tssc-tpa
       properties:
         manageSubscription: true
-    # Red Hat Developer Hub is an enterprise-grade internal developer portal built
-    # on Backstage, designed to enhance developer productivity, collaboration, and
-    # onboarding by centralizing tools, documentation, and resources within a
-    # unified and extensible platform. 
-    - name: Developer Hub
-      enabled: true
-      namespace: tssc-dh
-      properties:
-        catalogURL: https://github.com/redhat-appstudio/tssc-sample-templates/blob/release-v1.8.x/all.yaml
-        manageSubscription: true
-        # namespacePrefixes:
-        #   - tssc-app
-        authProvider: oidc
-        # Possible values: github, gitlab, oidc
-        # RBAC:
-        #   adminUsers:
-        #     - myUsername
-        #   enabled: true
-        #   orgs:
-        #     - myOrg
