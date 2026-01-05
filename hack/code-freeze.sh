@@ -102,7 +102,7 @@ update_charts() {
 update_template() {
     CONFIG="installer/config.yaml"
     get_version "developerHub"
-    CATALOG_URL="https://github.com/redhat-appstudio/tssc-sample-templates/blob/release-v${VERSION_XY}.x/all.yaml" \
+    CATALOG_URL="https://github.com/redhat-appstudio/tssc-dev-multi-ci/blob/release-v${VERSION_XY}.x/samples/all.yaml" \
     yq -i '(.tssc.products[] | select( .name == "Developer Hub") | .properties.catalogURL) = strenv(CATALOG_URL)' "$CONFIG"
 }
 
