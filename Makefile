@@ -77,7 +77,7 @@ $(BIN): installer-tarball
 $(BIN):  
 	@echo "# Building '$(BIN)'"
 	@[ -d $(BIN_DIR) ] || mkdir -p $(BIN_DIR)
-	go build -ldflags "-X github.com/redhat-appstudio/tssc-cli/pkg/constants.Version=$(VERSION) -X github.com/redhat-appstudio/tssc-cli/pkg/constants.CommitID=$(COMMIT_ID)" -o $(BIN) $(CMD)
+	go build -ldflags "-X main.version=$(VERSION) -X main.commitID=$(COMMIT_ID)" -o $(BIN) $(CMD)
 
 .PHONY: build
 build: $(BIN)

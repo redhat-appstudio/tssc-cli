@@ -6,7 +6,6 @@ import (
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
-	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
 	"github.com/redhat-appstudio/tssc-cli/pkg/flags"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integrations"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
@@ -18,11 +17,12 @@ import (
 
 // App represents the installer application.
 type App struct {
-	Name    string           // application name
-	Version string           // application version
-	Short   string           // short description
-	Long    string           // long description
-	ChartFS *chartfs.ChartFS // installer filesystem
+	Name     string           // application name
+	Version  string           // application version
+	CommitID string           // application commit ID
+	Short    string           // short description
+	Long     string           // long description
+	ChartFS  *chartfs.ChartFS // installer filesystem
 
 	integrations       []api.IntegrationModule // supported integrations
 	integrationManager *integrations.Manager   // integrations manager
@@ -65,7 +65,7 @@ func (a *App) setupRootCmd() error {
 	// Handle version flag and help.
 	a.rootCmd.RunE = func(cmd *cobra.Command, args []string) error {
 		if a.flags.Version {
-			a.flags.ShowVersion()
+			a.flags.ShowVersion(a.Name, a.Version, a.CommitID)
 			return nil
 		}
 		return cmd.Help()
@@ -86,22 +86,16 @@ func (a *App) setupRootCmd() error {
 		a.Name, logger, a.kube, a.ChartFS, a.integrationManager,
 	))
 
-	// Use default builder if none provided
+	// Use default builder if none provided.
 	mcpBuilder := a.mcpToolsBuilder
 	if mcpBuilder == nil {
 		mcpBuilder = subcmd.StandardMCPToolsBuilder()
 	}
 
-	// Determine MCP image - use configured value or compute default from constants
-	mcpImage := a.mcpImage
-	if mcpImage == "" {
-		// Default image based on TSSC convention: image tagged with commit-id
-		mcpImage = "quay.io/redhat-user-workloads/rhtap-shared-team-tenant/tssc-cli"
-		if constants.CommitID == "" {
-			mcpImage = fmt.Sprintf("%s:latest", mcpImage)
-		} else {
-			mcpImage = fmt.Sprintf("%s:%s", mcpImage, constants.CommitID)
-		}
+	// Validate MCP image is configured.
+	if a.mcpImage == "" {
+		return fmt.Errorf(
+			"MCP server image not configured: use WithMCPImage() option")
 	}
 
 	// Other subcommands via api.Runner.
@@ -116,7 +110,7 @@ func (a *App) setupRootCmd() error {
 			a.kube,
 			a.integrationManager,
 			mcpBuilder,
-			mcpImage,
+			a.mcpImage,
 		),
 		subcmd.NewTemplate(logger, a.flags, a.ChartFS, a.kube),
 		subcmd.NewTopology(logger, a.ChartFS, a.kube),

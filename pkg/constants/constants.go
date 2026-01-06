@@ -28,11 +28,4 @@ const (
 var (
 	// RepoURI is the reverse repository URI for the application.
 	RepoURI = fmt.Sprintf("%s.%s.%s", AppName, OrgName, Domain)
-
-	// Version is the application version, set at build time via ldflags.
-	Version = "v0.0.0-SNAPSHOT"
-
-	// CommitID is the commit ID of the application, set at build time via git
-	// commit hash.
-	CommitID = ""
 )
