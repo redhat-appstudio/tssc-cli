@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
 	"github.com/spf13/pflag"
 )
 
@@ -64,9 +63,9 @@ func (f *Flags) LoggerWith(l *slog.Logger) *slog.Logger {
 	return l.With("debug", f.Debug, "dry-run", f.DryRun, "timeout", f.Timeout)
 }
 
-// ShowVersion shows the application version and exits
-func (f *Flags) ShowVersion() {
-	fmt.Printf("%s Version: %s\nCommit: %s\n", constants.AppName, constants.Version, constants.CommitID)
+// ShowVersion shows the application version.
+func (f *Flags) ShowVersion(appName, version, commitID string) {
+	fmt.Printf("%s Version: %s\nCommit: %s\n", appName, version, commitID)
 }
 
 // NewFlags instantiates the global flags with default values.

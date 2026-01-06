@@ -18,5 +18,5 @@ builds:
       - arm64
       - amd64
     ldflags:
-      - -X github.com/redhat-appstudio/tssc-cli/pkg/constants.Version={{.Version}}
-      - -X github.com/redhat-appstudio/tssc-cli/pkg/constants.CommitID={{.Commit}}
+      - -X main.version={{.Version}}
+      - -X main.commitID={{.Commit}}

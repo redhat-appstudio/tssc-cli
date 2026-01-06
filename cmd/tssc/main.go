@@ -11,6 +11,12 @@ import (
 	"github.com/redhat-appstudio/tssc-cli/pkg/subcmd"
 )
 
+var (
+	// Build-time variables set via ldflags
+	version  = "v0.0.0-SNAPSHOT"
+	commitID = ""
+)
+
 func main() {
 	tfs, err := framework.NewTarFS(installer.InstallerTarball)
 	if err != nil {
@@ -28,13 +34,24 @@ func main() {
 	ofs := chartfs.NewOverlayFS(tfs, os.DirFS(cwd))
 	cfs := chartfs.New(ofs)
 
+	// Compute TSSC-specific MCP server image based on build-time commit ID
+	mcpImage := "quay.io/redhat-user-workloads/rhtap-shared-team-tenant/tssc-cli"
+	if commitID == "" {
+		mcpImage = fmt.Sprintf("%s:latest", mcpImage)
+	} else {
+		mcpImage = fmt.Sprintf("%s:%s", mcpImage, commitID)
+	}
+
 	// Creating a new TSSC application instance using all standard integration
 	// modules.
 	app, err := framework.NewApp(
 		constants.AppName,
 		cfs,
+		framework.WithVersion(version),
+		framework.WithCommitID(commitID),
 		framework.WithShortDescription("Trusted Software Supply Chain CLI"),
 		framework.WithIntegrations(subcmd.StandardModules()...),
+		framework.WithMCPImage(mcpImage),
 	)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to create application: %v\n", err)

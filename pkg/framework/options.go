@@ -15,6 +15,13 @@ func WithVersion(version string) Option {
 	}
 }
 
+// WithCommitID sets the application commit ID.
+func WithCommitID(commitID string) Option {
+	return func(a *App) {
+		a.CommitID = commitID
+	}
+}
+
 // WithShortDescription sets the application short description.
 func WithShortDescription(short string) Option {
 	return func(a *App) {
