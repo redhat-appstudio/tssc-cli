@@ -22,17 +22,11 @@ func main() {
 		fmt.Fprintf(os.Stderr, "failed to get the working directory: %v\n", err)
 		os.Exit(1)
 	}
-	ofs := &chartfs.OverlayFS{
-		Embedded: tfs,
-		Local:    os.DirFS(cwd),
-	}
-	cfs := chartfs.New(ofs)
 
-	// Given the tarball is build based on the "installer" directory, this is the
-	// base dir for the new filesystem.
-	if bcfs, err := cfs.WithBaseDir("installer"); err == nil {
-		cfs = bcfs
-	}
+	// Create overlay filesystem with embedded tarball (already contains installer
+	// directory contents at root) and local filesystem rooted at cwd.
+	ofs := chartfs.NewOverlayFS(tfs, os.DirFS(cwd))
+	cfs := chartfs.New(ofs)
 
 	// Creating a new TSSC application instance using all standard integration
 	// modules.
