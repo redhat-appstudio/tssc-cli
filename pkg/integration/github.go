@@ -116,7 +116,7 @@ func (g *GitHub) setClusterURLs(
 	}
 	if g.homepageURL == "" {
 		g.homepageURL = fmt.Sprintf(
-			"https://console-openshift-console.apps.%s/dashboards",
+			"https://console-openshift-console.%s/dashboards",
 			ingressDomain,
 		)
 	}
