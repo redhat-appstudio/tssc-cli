@@ -9,16 +9,6 @@ tssc:
       # Enables installer verbose logging messages for troubleshooting issues.
       debug: false
   products:
-    # Red Hat OpenShift GitOps, built on ArgoCD, is an operator that provides a
-    # declarative, Git-centric workflow to automate continuous delivery and
-    # management of applications and infrastructure configurations across
-    # multicluster OpenShift environments, ensuring consistency and accelerating
-    # deployments.
-    - name: OpenShift GitOps
-      enabled: true
-      namespace: tssc-gitops
-      properties:
-        manageSubscription: true
     # Red Hat Trusted Artifact Signer (TAS) enhances software supply chain
     # security by simplifying cryptographic signing and verification of software
     # artifacts like container images, binaries, and documents, leveraging an

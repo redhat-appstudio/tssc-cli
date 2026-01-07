@@ -1,7 +1,6 @@
 {{- $crc := required "CRC settings" .Installer.Settings.crc -}}
 {{- $tas := required "TAS settings" .Installer.Products.Trusted_Artifact_Signer -}}
 {{- $tpa := required "TPA settings" .Installer.Products.Trusted_Profile_Analyzer -}}
-{{- $gitops := required "GitOps settings" .Installer.Products.OpenShift_GitOps -}}
 {{- $pipelines := required "Pipelines settings" .Installer.Products.OpenShift_Pipelines -}}
 {{- $pipelinesNamespace := "openshift-pipelines" -}}
 {{- $ingressDomain := required "OpenShift ingress domain" .OpenShift.Ingress.Domain -}}
@@ -29,9 +28,6 @@ openshift:
     - rhtpa-operator
     {{- end }}
 {{- end }}
-{{- if $gitops.Enabled }}
-    - {{ $gitops.Namespace }}
-{{- end }}
 {{- if $tas.Enabled }}
     - {{ $tas.Namespace }}
 {{- end }}
@@ -45,11 +41,6 @@ openshift:
 
 
 subscriptions:
-  openshiftGitOps:
-    enabled: {{ $gitops.Enabled }}
-    managed: {{ and $gitops.Enabled $gitops.Properties.manageSubscription }}
-    config:
-      argoCDClusterNamespace: {{ $gitops.Namespace }}
   openshiftKeycloak:
     enabled: {{ $keycloakEnabled }}
     managed: {{ $keycloakEnabled }}
@@ -149,22 +140,6 @@ iam:
         namespace: {{ .Installer.Namespace }}
 
 #
-# tssc-gitops
-#
-{{- $argoCDName := printf "%s-gitops" .Installer.Namespace }}
-
-argoCD:
-  enabled: {{ $gitops.Enabled }}
-  name: {{ $argoCDName }}
-  namespace: {{ $gitops.Namespace }}
-  integrationSecret:
-    name: tssc-argocd-integration
-    namespace: {{ .Installer.Namespace }}
-  ingressDomain: {{ $ingressDomain }}
-  tssc:
-    namespace: {{ .Installer.Namespace }}
-
-#
 # tssc-pipelines
 #
 
@@ -172,29 +147,6 @@ pipelines:
   namespace: {{ $pipelinesNamespace }}
   tssc:
     namespace: {{ .Installer.Namespace }}
-
-#
-# tssc-integrations
-#
-
-integrations:
-  argoCD:
-    enabled: {{ $gitops.Enabled }}
-    namespace: {{ $gitops.Namespace }}
-  tssc:
-    namespace: {{ .Installer.Namespace }}
-#   github:
-#     clientId: ""
-#     clientSecret: ""
-#     id: ""
-#     host: "github.com"
-#     publicKey: |
-#       -----BEGIN RSA PRIVATE KEY-----   # notsecret
-#       -----END RSA PRIVATE KEY-----     # notsecret
-#     token: ""
-#     webhookSecret: ""
-#   gitlab:
-#     token: ""
 
 #
 # tssc-tpa

@@ -70,17 +70,6 @@ getNamespace() {
     return $?
 }
 
-gitops() {
-    if ! getNamespace "OpenShift GitOps"; then
-        return
-    fi
-    h1 "OpenShift GitOps"
-    SECRET_NAME="tssc-gitops-cluster"
-    echo "  - URL: $(oc get route -n "$NAMESPACE" tssc-gitops-server -o jsonpath="{.spec.port.targetPort}://{.spec.host}")"
-    echo "  - User: admin"
-    echo "  - Password: $(oc get secret -n "$NAMESPACE" "$SECRET_NAME" -o jsonpath="{.data.admin\.password}" | base64 -d)"
-}
-
 tas() {
     if ! getNamespace "Trusted Artifact Signer"; then
         return
@@ -107,7 +96,6 @@ tssc() {
 }
 
 action() {
-    gitops
     tas
     tpa
     tssc

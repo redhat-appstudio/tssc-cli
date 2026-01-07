@@ -1,9 +1,0 @@
-{{- if .Values.argoCD.enabled }}
-  {{- $argoCD := .Values.argoCD -}}
-ArgoCD:
-  - Name: {{ $argoCD.name }}
-    Namespace: {{ $argoCD.namespace }}
-    Server URL: https://{{ include "argoCD.serverHostname" . }}
-    Admin Secret: {{ include "argoCD.secretClusterName" . }}
-    Integration Secret: {{ $argoCD.integrationSecret.name }}
-{{- end }}

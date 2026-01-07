@@ -1,7 +1,0 @@
----
-integrations:
-  argoCD:
-    enabled: __OVERWRITE_ME__
-    namespace: __OVERWRITE_ME__
-  tssc:
-    namespace: __OVERWRITE_ME__

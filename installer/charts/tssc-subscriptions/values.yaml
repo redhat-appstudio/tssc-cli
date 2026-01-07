@@ -1,16 +1,5 @@
 ---
 subscriptions:
-  openshiftGitOps:
-    enabled: false
-    description: OpenShift GitOps Operator
-    apiResource: gitopsservices.pipelines.openshift.io
-    namespace: openshift-operators
-    name: openshift-gitops-operator
-    channel: gitops-1.18
-    source: redhat-operators
-    sourceNamespace: openshift-marketplace
-    config:
-      argoCDClusterNamespace: __OVERWRITE_ME__
   openshiftKeycloak:
     enabled: false
     description: Red Hat Keycloak Operator
