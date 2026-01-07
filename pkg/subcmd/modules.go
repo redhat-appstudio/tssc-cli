@@ -15,8 +15,8 @@ var (
 		Init: func(_ *slog.Logger, _ *k8s.Kube) integration.Interface {
 			return integration.NewACS()
 		},
-		Command: func(l *slog.Logger, k *k8s.Kube, i *integration.Integration) api.SubCommand {
-			return NewIntegrationACS(l, k, i)
+		Command: func(appCtx *api.AppContext, l *slog.Logger, k *k8s.Kube, i *integration.Integration) api.SubCommand {
+			return NewIntegrationACS(appCtx, l, k, i)
 		},
 	}
 
@@ -25,8 +25,8 @@ var (
 		Init: func(_ *slog.Logger, _ *k8s.Kube) integration.Interface {
 			return integration.NewContainerRegistry("")
 		},
-		Command: func(l *slog.Logger, k *k8s.Kube, i *integration.Integration) api.SubCommand {
-			return NewIntegrationArtifactory(l, k, i)
+		Command: func(appCtx *api.AppContext, l *slog.Logger, k *k8s.Kube, i *integration.Integration) api.SubCommand {
+			return NewIntegrationArtifactory(appCtx, l, k, i)
 		},
 	}
 
@@ -35,8 +35,8 @@ var (
 		Init: func(_ *slog.Logger, _ *k8s.Kube) integration.Interface {
 			return integration.NewAzure()
 		},
-		Command: func(l *slog.Logger, k *k8s.Kube, i *integration.Integration) api.SubCommand {
-			return NewIntegrationAzure(l, k, i)
+		Command: func(appCtx *api.AppContext, l *slog.Logger, k *k8s.Kube, i *integration.Integration) api.SubCommand {
+			return NewIntegrationAzure(appCtx, l, k, i)
 		},
 	}
 
@@ -45,8 +45,8 @@ var (
 		Init: func(_ *slog.Logger, _ *k8s.Kube) integration.Interface {
 			return integration.NewBitBucket()
 		},
-		Command: func(l *slog.Logger, k *k8s.Kube, i *integration.Integration) api.SubCommand {
-			return NewIntegrationBitBucket(l, k, i)
+		Command: func(appCtx *api.AppContext, l *slog.Logger, k *k8s.Kube, i *integration.Integration) api.SubCommand {
+			return NewIntegrationBitBucket(appCtx, l, k, i)
 		},
 	}
 
@@ -55,8 +55,8 @@ var (
 		Init: func(l *slog.Logger, k *k8s.Kube) integration.Interface {
 			return integration.NewGitHub(l, k)
 		},
-		Command: func(l *slog.Logger, k *k8s.Kube, i *integration.Integration) api.SubCommand {
-			return NewIntegrationGitHub(l, k, i)
+		Command: func(appCtx *api.AppContext, l *slog.Logger, k *k8s.Kube, i *integration.Integration) api.SubCommand {
+			return NewIntegrationGitHub(appCtx, l, k, i)
 		},
 	}
 
@@ -65,8 +65,8 @@ var (
 		Init: func(l *slog.Logger, _ *k8s.Kube) integration.Interface {
 			return integration.NewGitLab(l)
 		},
-		Command: func(l *slog.Logger, k *k8s.Kube, i *integration.Integration) api.SubCommand {
-			return NewIntegrationGitLab(l, k, i)
+		Command: func(appCtx *api.AppContext, l *slog.Logger, k *k8s.Kube, i *integration.Integration) api.SubCommand {
+			return NewIntegrationGitLab(appCtx, l, k, i)
 		},
 	}
 
@@ -75,8 +75,8 @@ var (
 		Init: func(_ *slog.Logger, _ *k8s.Kube) integration.Interface {
 			return integration.NewJenkins()
 		},
-		Command: func(l *slog.Logger, k *k8s.Kube, i *integration.Integration) api.SubCommand {
-			return NewIntegrationJenkins(l, k, i)
+		Command: func(appCtx *api.AppContext, l *slog.Logger, k *k8s.Kube, i *integration.Integration) api.SubCommand {
+			return NewIntegrationJenkins(appCtx, l, k, i)
 		},
 	}
 
@@ -85,8 +85,8 @@ var (
 		Init: func(_ *slog.Logger, _ *k8s.Kube) integration.Interface {
 			return integration.NewContainerRegistry("")
 		},
-		Command: func(l *slog.Logger, k *k8s.Kube, i *integration.Integration) api.SubCommand {
-			return NewIntegrationNexus(l, k, i)
+		Command: func(appCtx *api.AppContext, l *slog.Logger, k *k8s.Kube, i *integration.Integration) api.SubCommand {
+			return NewIntegrationNexus(appCtx, l, k, i)
 		},
 	}
 
@@ -95,8 +95,8 @@ var (
 		Init: func(_ *slog.Logger, _ *k8s.Kube) integration.Interface {
 			return integration.NewContainerRegistry(integration.QuayURL)
 		},
-		Command: func(l *slog.Logger, k *k8s.Kube, i *integration.Integration) api.SubCommand {
-			return NewIntegrationQuay(l, k, i)
+		Command: func(appCtx *api.AppContext, l *slog.Logger, k *k8s.Kube, i *integration.Integration) api.SubCommand {
+			return NewIntegrationQuay(appCtx, l, k, i)
 		},
 	}
 
@@ -105,8 +105,8 @@ var (
 		Init: func(_ *slog.Logger, _ *k8s.Kube) integration.Interface {
 			return integration.NewTrustedArtifactSigner()
 		},
-		Command: func(l *slog.Logger, k *k8s.Kube, i *integration.Integration) api.SubCommand {
-			return NewIntegrationTrustedArtifactSigner(l, k, i)
+		Command: func(appCtx *api.AppContext, l *slog.Logger, k *k8s.Kube, i *integration.Integration) api.SubCommand {
+			return NewIntegrationTrustedArtifactSigner(appCtx, l, k, i)
 		},
 	}
 
@@ -115,8 +115,8 @@ var (
 		Init: func(_ *slog.Logger, _ *k8s.Kube) integration.Interface {
 			return integration.NewTrustification()
 		},
-		Command: func(l *slog.Logger, k *k8s.Kube, i *integration.Integration) api.SubCommand {
-			return NewIntegrationTrustification(l, k, i)
+		Command: func(appCtx *api.AppContext, l *slog.Logger, k *k8s.Kube, i *integration.Integration) api.SubCommand {
+			return NewIntegrationTrustification(appCtx, l, k, i)
 		},
 	}
 )

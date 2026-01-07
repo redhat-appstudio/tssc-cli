@@ -4,6 +4,7 @@ import (
 	"io"
 	"log/slog"
 
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/tssc-cli/pkg/flags"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integrations"
@@ -16,7 +17,7 @@ import (
 // server uses STDIO for protocol communication. Any output to stdout/stderr will
 // corrupt the MCP protocol messages.
 type MCPToolsContext struct {
-	AppName            string
+	AppCtx             *api.AppContext       // application context
 	Logger             *slog.Logger          // discard logger
 	Flags              *flags.Flags          // global flags
 	ChartFS            *chartfs.ChartFS      // embedded filesystem
@@ -28,7 +29,7 @@ type MCPToolsContext struct {
 // NewMCPToolsContext creates a new MCPToolsContext with a logger configured for
 // MCP server operation.
 func NewMCPToolsContext(
-	appName string,
+	appCtx *api.AppContext,
 	f *flags.Flags,
 	cfs *chartfs.ChartFS,
 	kube *k8s.Kube,
@@ -36,7 +37,7 @@ func NewMCPToolsContext(
 	image string,
 ) MCPToolsContext {
 	return MCPToolsContext{
-		AppName: appName,
+		AppCtx: appCtx,
 		// CRITICAL: Logger MUST use io.Discard for MCP STDIO protocol compatibility
 		Logger:             f.GetLogger(io.Discard),
 		Flags:              f,

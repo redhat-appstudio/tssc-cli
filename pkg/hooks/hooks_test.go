@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
-	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
 	"github.com/redhat-appstudio/tssc-cli/pkg/resolver"
 
 	o "github.com/onsi/gomega"
@@ -22,8 +22,9 @@ func TestNewHooks(t *testing.T) {
 	chart, err := cfs.GetChartFiles("charts/testing")
 	g.Expect(err).To(o.Succeed())
 
+	appCtx := api.NewAppContext("tssc")
 	h := NewHooks(
-		resolver.NewDependencyWithNamespace(chart, constants.Namespace),
+		resolver.NewDependencyWithNamespace(chart, appCtx.Namespace, appCtx),
 		&stdout,
 		&stderr,
 	)

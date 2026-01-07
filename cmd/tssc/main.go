@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/redhat-appstudio/tssc-cli/installer"
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
-	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
 	"github.com/redhat-appstudio/tssc-cli/pkg/framework"
 	"github.com/redhat-appstudio/tssc-cli/pkg/subcmd"
 )
@@ -34,7 +34,15 @@ func main() {
 	ofs := chartfs.NewOverlayFS(tfs, os.DirFS(cwd))
 	cfs := chartfs.New(ofs)
 
-	// Compute TSSC-specific MCP server image based on build-time commit ID
+	// Create TSSC-specific application context (metadata/configuration).
+	appCtx := api.NewAppContext(
+		"tssc",
+		api.WithVersion(version),
+		api.WithCommitID(commitID),
+		api.WithShortDescription("Trusted Software Supply Chain CLI"),
+	)
+
+	// TSSC-specific MCP server image based on build-time commit ID.
 	mcpImage := "quay.io/redhat-user-workloads/rhtap-shared-team-tenant/tssc-cli"
 	if commitID == "" {
 		mcpImage = fmt.Sprintf("%s:latest", mcpImage)
@@ -42,14 +50,10 @@ func main() {
 		mcpImage = fmt.Sprintf("%s:%s", mcpImage, commitID)
 	}
 
-	// Creating a new TSSC application instance using all standard integration
-	// modules.
+	// Create application runtime with context and dependencies.
 	app, err := framework.NewApp(
-		constants.AppName,
+		appCtx,
 		cfs,
-		framework.WithVersion(version),
-		framework.WithCommitID(commitID),
-		framework.WithShortDescription("Trusted Software Supply Chain CLI"),
 		framework.WithIntegrations(subcmd.StandardModules()...),
 		framework.WithMCPImage(mcpImage),
 	)

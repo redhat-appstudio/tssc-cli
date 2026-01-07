@@ -1,8 +1,9 @@
 package subcmd
 
 import (
-	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"log/slog"
+
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integration"
@@ -15,6 +16,7 @@ import (
 // responsible for creating and updating the GitLab integration secret.
 type IntegrationGitLab struct {
 	cmd         *cobra.Command           // cobra command
+	appCtx      *api.AppContext          // application context
 	logger      *slog.Logger             // application logger
 	cfg         *config.Config           // installer configuration
 	kube        *k8s.Kube                // kubernetes client
@@ -39,7 +41,7 @@ func (g *IntegrationGitLab) Cmd() *cobra.Command {
 // Complete is a no-op in this case.
 func (g *IntegrationGitLab) Complete(args []string) error {
 	var err error
-	g.cfg, err = bootstrapConfig(g.cmd.Context(), g.kube)
+	g.cfg, err = bootstrapConfig(g.cmd.Context(), g.appCtx, g.kube)
 	return err
 }
 
@@ -56,6 +58,7 @@ func (g *IntegrationGitLab) Run() error {
 // NewIntegrationGitLab creates the sub-command for the "integration gitlab"
 // responsible to manage the TSSC integrations with the GitLab service.
 func NewIntegrationGitLab(
+	appCtx *api.AppContext,
 	logger *slog.Logger,
 	kube *k8s.Kube,
 	i *integration.Integration,
@@ -68,6 +71,7 @@ func NewIntegrationGitLab(
 			SilenceUsage: true,
 		},
 
+		appCtx:      appCtx,
 		logger:      logger,
 		kube:        kube,
 		integration: i,

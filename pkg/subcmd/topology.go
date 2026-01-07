@@ -18,6 +18,7 @@ import (
 type Topology struct {
 	cmd    *cobra.Command   // cobra command
 	logger *slog.Logger     // application logger
+	appCtx *api.AppContext  // application context
 	cfs    *chartfs.ChartFS // embedded filesystem
 	kube   *k8s.Kube        // kubernetes client
 
@@ -53,11 +54,11 @@ func (t *Topology) Complete(_ []string) error {
 		return err
 	}
 	// Create a new chart collection from the loaded charts.
-	if t.collection, err = resolver.NewCollection(charts); err != nil {
+	if t.collection, err = resolver.NewCollection(t.appCtx, charts); err != nil {
 		return err
 	}
 	// Load the installer configuration from the cluster.
-	if t.cfg, err = bootstrapConfig(t.cmd.Context(), t.kube); err != nil {
+	if t.cfg, err = bootstrapConfig(t.cmd.Context(), t.appCtx, t.kube); err != nil {
 		return err
 	}
 	return nil
@@ -83,6 +84,7 @@ func (t *Topology) Run() error {
 
 // NewTopology instantiates a new Topology subcommand.
 func NewTopology(
+	appCtx *api.AppContext, // application context
 	logger *slog.Logger, // application logger
 	cfs *chartfs.ChartFS, // chart filesystem
 	kube *k8s.Kube, // Kubernetes client
@@ -95,6 +97,7 @@ func NewTopology(
 			SilenceUsage: true,
 		},
 		logger: logger.WithGroup("topology"),
+		appCtx: appCtx,
 		cfs:    cfs,
 		kube:   kube,
 	}

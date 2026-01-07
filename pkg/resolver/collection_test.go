@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 
 	o "github.com/onsi/gomega"
@@ -17,7 +18,8 @@ func TestNewCollection(t *testing.T) {
 	charts, err := cfs.GetAllCharts()
 	g.Expect(err).To(o.Succeed())
 
-	c, err := NewCollection(charts)
+	appCtx := api.NewAppContext("tssc")
+	c, err := NewCollection(appCtx, charts)
 	g.Expect(err).To(o.Succeed())
 	g.Expect(c).NotTo(o.BeNil())
 }

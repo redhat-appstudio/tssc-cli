@@ -1,6 +1,7 @@
 package mcpserver
 
 import (
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/mcptools"
 
 	"github.com/mark3labs/mcp-go/server"
@@ -20,10 +21,10 @@ func (m *MCPServer) Start() error {
 	return server.ServeStdio(m.s)
 }
 
-func NewMCPServer(appName string, instructions string) *MCPServer {
+func NewMCPServer(appCtx *api.AppContext, instructions string) *MCPServer {
 	return &MCPServer{s: server.NewMCPServer(
-		appName,
-		"1.6.0",
+		appCtx.Name,
+		appCtx.Version,
 		server.WithToolCapabilities(true),
 		server.WithPromptCapabilities(true),
 		server.WithLogging(),

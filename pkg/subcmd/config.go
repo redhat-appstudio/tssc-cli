@@ -7,7 +7,6 @@ import (
 	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
-	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
 	"github.com/redhat-appstudio/tssc-cli/pkg/flags"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
 	"github.com/redhat-appstudio/tssc-cli/pkg/printer"
@@ -24,6 +23,7 @@ type Config struct {
 	flags  *flags.Flags     // global flags
 	cfs    *chartfs.ChartFS // embedded filesystem
 	kube   *k8s.Kube        // kubernetes client
+	appCtx *api.AppContext  // application context
 
 	manager    *config.ConfigMapManager // cluster configuration manager
 	configPath string                   // configuration file relative path
@@ -82,7 +82,7 @@ func (c *Config) PersistentFlags(p *pflag.FlagSet) {
 		&c.namespace,
 		"namespace",
 		"n",
-		constants.Namespace,
+		c.appCtx.Namespace,
 		"Installer target namespace (only used with --create)",
 	)
 	p.BoolVarP(
@@ -175,7 +175,7 @@ func (c *Config) runCreate() error {
 	if err != nil {
 		return err
 	}
-	collection, err := resolver.NewCollection(charts)
+	collection, err := resolver.NewCollection(c.appCtx, charts)
 	if err != nil {
 		return err
 	}
@@ -282,6 +282,7 @@ func (c *Config) Run() error {
 
 // NewConfig instantiates the "config" subcommand.
 func NewConfig(
+	appCtx *api.AppContext,
 	logger *slog.Logger,
 	f *flags.Flags,
 	cfs *chartfs.ChartFS,
@@ -298,6 +299,7 @@ func NewConfig(
 		flags:   f,
 		cfs:     cfs,
 		kube:    kube,
+		appCtx:  appCtx,
 		manager: config.NewConfigMapManager(kube),
 	}
 

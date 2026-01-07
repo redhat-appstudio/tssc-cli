@@ -139,6 +139,7 @@ func NewNotesTool(
 	kube *k8s.Kube,
 	cm *config.ConfigMapManager,
 	tb *resolver.TopologyBuilder,
+	job *installer.Job,
 ) *NotesTool {
 	return &NotesTool{
 		appName: appName,
@@ -147,6 +148,6 @@ func NewNotesTool(
 		kube:    kube,
 		cm:      cm,
 		tb:      tb,
-		job:     installer.NewJob(kube),
+		job:     job,
 	}
 }

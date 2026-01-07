@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
-	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
 
 	"dario.cat/mergo"
@@ -570,20 +570,20 @@ The properties object with the attributes for the informed product name.`,
 
 // NewConfigTools instantiates a new ConfigTools.
 func NewConfigTools(
-	appName string,
+	appCtx *api.AppContext,
 	logger *slog.Logger,
 	cfs *chartfs.ChartFS,
 	kube *k8s.Kube,
 	cm *config.ConfigMapManager,
 ) (*ConfigTools, error) {
 	// Loading the default configuration to serve as a reference for MCP tools.
-	defaultCfg, err := config.NewConfigDefault(cfs, constants.Namespace)
+	defaultCfg, err := config.NewConfigDefault(cfs, appCtx.Namespace)
 	if err != nil {
 		return nil, err
 	}
 
 	c := &ConfigTools{
-		appName:    appName,
+		appName:    appCtx.Name,
 		logger:     logger.With("component", "mcp-config-tools"),
 		cfs:        cfs,
 		kube:       kube,

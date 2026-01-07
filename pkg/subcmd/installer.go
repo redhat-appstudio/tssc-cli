@@ -214,7 +214,7 @@ func (i *Installer) Run() error {
 }
 
 // NewInstaller creates a new installer subcommand.
-func NewInstaller(f *flags.Flags) *Installer {
+func NewInstaller(appCtx *api.AppContext, f *flags.Flags) *Installer {
 	i := &Installer{
 		cmd: &cobra.Command{
 			Use:   "installer",

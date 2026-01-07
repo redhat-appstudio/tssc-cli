@@ -1,8 +1,9 @@
 package subcmd
 
 import (
-	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"log/slog"
+
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integration"
@@ -15,6 +16,7 @@ import (
 // responsible for creating and updating the Nexus integration secret.
 type IntegrationNexus struct {
 	cmd         *cobra.Command           // cobra command
+	appCtx      *api.AppContext          // application context
 	logger      *slog.Logger             // application logger
 	cfg         *config.Config           // installer configuration
 	kube        *k8s.Kube                // kubernetes client
@@ -39,7 +41,7 @@ func (n *IntegrationNexus) Cmd() *cobra.Command {
 // Complete is a no-op in this case.
 func (n *IntegrationNexus) Complete(args []string) error {
 	var err error
-	n.cfg, err = bootstrapConfig(n.cmd.Context(), n.kube)
+	n.cfg, err = bootstrapConfig(n.cmd.Context(), n.appCtx, n.kube)
 	return err
 }
 
@@ -56,6 +58,7 @@ func (n *IntegrationNexus) Run() error {
 // NewIntegrationNexus creates the sub-command for the "integration nexus"
 // responsible to manage the TSSC integrations with a Nexus image registry.
 func NewIntegrationNexus(
+	appCtx *api.AppContext,
 	logger *slog.Logger,
 	kube *k8s.Kube,
 	i *integration.Integration,
@@ -68,6 +71,7 @@ func NewIntegrationNexus(
 			SilenceUsage: true,
 		},
 
+		appCtx:      appCtx,
 		logger:      logger,
 		kube:        kube,
 		integration: i,

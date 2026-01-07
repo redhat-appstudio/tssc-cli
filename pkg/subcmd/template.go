@@ -20,6 +20,7 @@ type Template struct {
 	cmd    *cobra.Command   // cobra command
 	logger *slog.Logger     // application logger
 	flags  *flags.Flags     // global flags
+	appCtx *api.AppContext  // application context
 	cfg    *config.Config   // installer configuration
 	cfs    *chartfs.ChartFS // embedded filesystem
 	kube   *k8s.Kube        // kubernetes client
@@ -83,9 +84,9 @@ func (t *Template) Complete(args []string) error {
 	if err != nil {
 		return err
 	}
-	t.dep = *resolver.NewDependencyWithNamespace(hc, t.namespace)
+	t.dep = *resolver.NewDependencyWithNamespace(hc, t.namespace, t.appCtx)
 
-	if t.cfg, err = bootstrapConfig(t.cmd.Context(), t.kube); err != nil {
+	if t.cfg, err = bootstrapConfig(t.cmd.Context(), t.appCtx, t.kube); err != nil {
 		return err
 	}
 	return nil
@@ -147,6 +148,7 @@ func (t *Template) Run() error {
 
 // NewTemplate creates the "template" subcommand with flags.
 func NewTemplate(
+	appCtx *api.AppContext,
 	logger *slog.Logger,
 	f *flags.Flags,
 	cfs *chartfs.ChartFS,
@@ -161,6 +163,7 @@ func NewTemplate(
 		},
 		logger:        logger.WithGroup("template"),
 		flags:         f,
+		appCtx:        appCtx,
 		cfs:           cfs,
 		kube:          kube,
 		showValues:    true,

@@ -3,40 +3,50 @@ package resolver
 import (
 	"fmt"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 )
 
-var (
-	// ProductNameAnnotation defines the product name a chart is responsible for.
-	ProductNameAnnotation = fmt.Sprintf("%s/product-name", constants.RepoURI)
-
-	// DependsOnAnnotation defines the list of Helm chart names a chart requires
-	// to be installed before it can be installed.
-	DependsOnAnnotation = fmt.Sprintf("%s/depends-on", constants.RepoURI)
-
-	// WeightAnnotation defines the weight a chart has in the topology, which
-	// allows moving a dependency down or up in the topology. The annotation
-	// "depends-on" takes preference over the weight annotation.
-	WeightAnnotation = fmt.Sprintf("%s/weight", constants.RepoURI)
-
-	// UseProductNamespaceAnnotation defines the Helm chart should use the same
-	// namespace than the referred product name.
-	UseProductNamespaceAnnotation = fmt.Sprintf(
-		"%s/use-product-namespace",
-		constants.RepoURI,
-	)
-
-	// IntegrationsProvidedAnnotation defines the list of integrations secrets a
-	// Helm chart provides.
-	IntegrationsProvidedAnnotation = fmt.Sprintf(
-		"%s/integrations-provided",
-		constants.RepoURI,
-	)
-
-	// IntegrationsRequiredAnnotation defines the list of integrations secrets a
-	// Helm chart requires.
-	IntegrationsRequiredAnnotation = fmt.Sprintf(
-		"%s/integrations-required",
-		constants.RepoURI,
-	)
+// Annotation suffix constants
+const (
+	suffixProductName          = "product-name"
+	suffixDependsOn            = "depends-on"
+	suffixWeight               = "weight"
+	suffixUseProductNamespace  = "use-product-namespace"
+	suffixIntegrationsProvided = "integrations-provided"
+	suffixIntegrationsRequired = "integrations-required"
 )
+
+// AnnotationProductName returns the product-name annotation key for the given app
+// context.
+func AnnotationProductName(appCtx *api.AppContext) string {
+	return fmt.Sprintf("%s/%s", appCtx.RepoURI(), suffixProductName)
+}
+
+// AnnotationDependsOn returns the depends-on annotation key for the given app
+// context.
+func AnnotationDependsOn(appCtx *api.AppContext) string {
+	return fmt.Sprintf("%s/%s", appCtx.RepoURI(), suffixDependsOn)
+}
+
+// AnnotationWeight returns the weight annotation key for the given app context.
+func AnnotationWeight(appCtx *api.AppContext) string {
+	return fmt.Sprintf("%s/%s", appCtx.RepoURI(), suffixWeight)
+}
+
+// AnnotationUseProductNamespace returns the use-product-namespace annotation key
+// for the given app context.
+func AnnotationUseProductNamespace(appCtx *api.AppContext) string {
+	return fmt.Sprintf("%s/%s", appCtx.RepoURI(), suffixUseProductNamespace)
+}
+
+// AnnotationIntegrationsProvided returns the integrations-provided annotation key
+// for the given app context.
+func AnnotationIntegrationsProvided(appCtx *api.AppContext) string {
+	return fmt.Sprintf("%s/%s", appCtx.RepoURI(), suffixIntegrationsProvided)
+}
+
+// AnnotationIntegrationsRequired returns the integrations-required annotation key
+// for the given app context.
+func AnnotationIntegrationsRequired(appCtx *api.AppContext) string {
+	return fmt.Sprintf("%s/%s", appCtx.RepoURI(), suffixIntegrationsRequired)
+}

@@ -18,6 +18,11 @@ type IntegrationModule struct {
 	Init func(*slog.Logger, *k8s.Kube) integration.Interface
 
 	// Command creates the CLI subcommand for this integration.
-	// It receives the initialized integration wrapper (which handles Secrets).
-	Command func(*slog.Logger, *k8s.Kube, *integration.Integration) SubCommand
+	// It receives the application context and initialized integration wrapper.
+	Command func(
+		*AppContext,
+		*slog.Logger,
+		*k8s.Kube,
+		*integration.Integration,
+	) SubCommand
 }

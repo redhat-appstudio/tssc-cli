@@ -1,8 +1,9 @@
 package subcmd
 
 import (
-	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"log/slog"
+
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integration"
@@ -15,6 +16,7 @@ import (
 // responsible for creating and updating the Trustification integration secret.
 type IntegrationTrustification struct {
 	cmd         *cobra.Command           // cobra command
+	appCtx      *api.AppContext          // application context
 	logger      *slog.Logger             // application logger
 	cfg         *config.Config           // installer configuration
 	kube        *k8s.Kube                // kubernetes client
@@ -39,7 +41,7 @@ func (t *IntegrationTrustification) Cmd() *cobra.Command {
 // Complete is a no-op in this case.
 func (t *IntegrationTrustification) Complete(args []string) error {
 	var err error
-	t.cfg, err = bootstrapConfig(t.cmd.Context(), t.kube)
+	t.cfg, err = bootstrapConfig(t.cmd.Context(), t.appCtx, t.kube)
 	return err
 }
 
@@ -57,6 +59,7 @@ func (t *IntegrationTrustification) Run() error {
 // trustification" responsible to manage the TSSC integrations with the
 // Trustification service.
 func NewIntegrationTrustification(
+	appCtx *api.AppContext,
 	logger *slog.Logger,
 	kube *k8s.Kube,
 	i *integration.Integration,
@@ -69,6 +72,7 @@ func NewIntegrationTrustification(
 			SilenceUsage: true,
 		},
 
+		appCtx:      appCtx,
 		logger:      logger,
 		kube:        kube,
 		integration: i,
