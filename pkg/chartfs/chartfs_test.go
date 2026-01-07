@@ -4,8 +4,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
-
 	o "github.com/onsi/gomega"
 )
 
@@ -16,7 +14,7 @@ func TestNewChartFS(t *testing.T) {
 	g.Expect(c).ToNot(o.BeNil())
 
 	t.Run("ReadFile", func(t *testing.T) {
-		valuesTmplBytes, err := c.ReadFile(constants.ValuesFilename)
+		valuesTmplBytes, err := c.ReadFile("values.yaml.tpl")
 		g.Expect(err).To(o.Succeed())
 		g.Expect(valuesTmplBytes).ToNot(o.BeEmpty())
 	})

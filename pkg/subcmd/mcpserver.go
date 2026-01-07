@@ -7,9 +7,9 @@ import (
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
 	"github.com/redhat-appstudio/tssc-cli/pkg/flags"
+	"github.com/redhat-appstudio/tssc-cli/pkg/framework/mcpserver"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integrations"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
-	"github.com/redhat-appstudio/tssc-cli/pkg/framework/mcpserver"
 	"github.com/redhat-appstudio/tssc-cli/pkg/mcptools"
 
 	"github.com/spf13/cobra"
@@ -18,14 +18,14 @@ import (
 // MCPServer is a subcommand for starting the MCP server.
 type MCPServer struct {
 	cmd    *cobra.Command   // cobra command
+	appCtx *api.AppContext  // application context
 	flags  *flags.Flags     // global flags
 	cfs    *chartfs.ChartFS // embedded filesystem
 	kube   *k8s.Kube        // kubernetes client
 
-	appName         string                    // application name
-	manager         *integrations.Manager     // integrations manager
-	mcpToolsBuilder mcptools.MCPToolsBuilder  // builder function
-	image           string                    // installer's container image
+	manager         *integrations.Manager    // integrations manager
+	mcpToolsBuilder mcptools.MCPToolsBuilder // builder function
+	image           string                   // installer's container image
 }
 
 var _ api.SubCommand = &MCPServer{}
@@ -59,7 +59,7 @@ func (m *MCPServer) Validate() error {
 func (m *MCPServer) Run() error {
 	// Create context using constructor - this ensures logger uses io.Discard
 	toolsCtx := mcptools.NewMCPToolsContext(
-		m.appName,
+		m.appCtx,
 		m.flags,
 		m.cfs,
 		m.kube,
@@ -79,7 +79,7 @@ func (m *MCPServer) Run() error {
 			constants.InstructionsFilename, err)
 	}
 
-	s := mcpserver.NewMCPServer(m.appName, string(instructions))
+	s := mcpserver.NewMCPServer(m.appCtx, string(instructions))
 	s.AddTools(tools...)
 
 	return s.Start()
@@ -87,7 +87,7 @@ func (m *MCPServer) Run() error {
 
 // NewMCPServer creates a new MCPServer instance.
 func NewMCPServer(
-	appName string,
+	appCtx *api.AppContext,
 	f *flags.Flags,
 	cfs *chartfs.ChartFS,
 	kube *k8s.Kube,
@@ -101,10 +101,11 @@ func NewMCPServer(
 			Short: "Starts the MCP server",
 			Long:  mcpServerDesc,
 		},
+
+		appCtx:          appCtx,
 		flags:           f,
 		cfs:             cfs,
 		kube:            kube,
-		appName:         appName,
 		manager:         manager,
 		mcpToolsBuilder: builder,
 		image:           image,

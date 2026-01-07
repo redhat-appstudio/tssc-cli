@@ -1,8 +1,9 @@
 package subcmd
 
 import (
-	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"log/slog"
+
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integration"
@@ -15,6 +16,7 @@ import (
 // responsible for creating and updating the Artifactory integration secret.
 type IntegrationArtifactory struct {
 	cmd         *cobra.Command           // cobra command
+	appCtx      *api.AppContext          // application context
 	logger      *slog.Logger             // application logger
 	cfg         *config.Config           // installer configuration
 	kube        *k8s.Kube                // kubernetes client
@@ -42,7 +44,7 @@ func (a *IntegrationArtifactory) Cmd() *cobra.Command {
 // Complete is a no-op in this case.
 func (a *IntegrationArtifactory) Complete(args []string) error {
 	var err error
-	a.cfg, err = bootstrapConfig(a.cmd.Context(), a.kube)
+	a.cfg, err = bootstrapConfig(a.cmd.Context(), a.appCtx, a.kube)
 	return err
 }
 
@@ -59,6 +61,7 @@ func (a *IntegrationArtifactory) Run() error {
 // NewIntegrationArtifactory creates the sub-command for the "integration artifactory"
 // responsible to manage the TSSC integrations with a Artifactory image registry.
 func NewIntegrationArtifactory(
+	appCtx *api.AppContext,
 	logger *slog.Logger,
 	kube *k8s.Kube,
 	i *integration.Integration,
@@ -71,6 +74,7 @@ func NewIntegrationArtifactory(
 			SilenceUsage: true,
 		},
 
+		appCtx:      appCtx,
 		logger:      logger,
 		kube:        kube,
 		integration: i,

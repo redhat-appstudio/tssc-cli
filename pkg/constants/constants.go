@@ -1,31 +1,15 @@
 package constants
 
-import "fmt"
-
 const (
-	// AppName is the name of the application.
-	AppName = "tssc"
-
-	// Namespace is the default namespace for the application.
-	Namespace = "tssc"
-
-	// OrgName is the name of the organization.
-	OrgName = "redhat-appstudio"
-
-	// Domain organization domain.
-	Domain = "github.com"
-
-	// ConfigFilename is the name of the configuration file.
+	// ConfigFilename is the installer configuration file (framework contract).
+	// All installers using this framework must provide this file.
 	ConfigFilename = "config.yaml"
 
-	// ValuesFilename is the name of the values template file.
+	// ValuesFilename is the values template file (framework contract).
+	// All installers using this framework must provide this file.
 	ValuesFilename = "values.yaml.tpl"
 
-	// InstructionsFilename is the name of the instructions file.
+	// InstructionsFilename is the MCP instructions file (framework convention).
+	// This file provides instructions for the Model Context Protocol server.
 	InstructionsFilename = "instructions.md"
-)
-
-var (
-	// RepoURI is the reverse repository URI for the application.
-	RepoURI = fmt.Sprintf("%s.%s.%s", AppName, OrgName, Domain)
 )

@@ -14,7 +14,7 @@ import (
 )
 
 func NewIntegration(
-	appName string,
+	appCtx *api.AppContext,
 	logger *slog.Logger,
 	kube *k8s.Kube,
 	cfs *chartfs.ChartFS,
@@ -24,7 +24,7 @@ func NewIntegration(
 		Use:   "integration <type>",
 		Short: "Configures an external service provider for TSSC",
 		PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
-			cfg, err := bootstrapConfig(cmd.Context(), kube)
+			cfg, err := bootstrapConfig(cmd.Context(), appCtx, kube)
 			if err != nil {
 				return err
 			}
@@ -34,7 +34,7 @@ func NewIntegration(
 				return err
 			}
 
-			collection, err := resolver.NewCollection(charts)
+			collection, err := resolver.NewCollection(appCtx, charts)
 			if err != nil {
 				return err
 			}
@@ -75,7 +75,7 @@ func NewIntegration(
 
 	for _, mod := range manager.GetModules() {
 		wrapper := manager.Integration(integrations.IntegrationName(mod.Name))
-		sub := mod.Command(logger, kube, wrapper)
+		sub := mod.Command(appCtx, logger, kube, wrapper)
 		cmd.AddCommand(api.NewRunner(sub).Cmd())
 	}
 

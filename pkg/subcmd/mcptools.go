@@ -8,7 +8,7 @@ import (
 )
 
 // StandardMCPToolsBuilder returns a builder function that creates all standard
-// MCP tools for the installer framework. These tools provide the core MCP
+// MCP tools for the installer api. These tools provide the core MCP
 // functionality.
 func StandardMCPToolsBuilder() mcptools.MCPToolsBuilder {
 	return standardMCPTools
@@ -22,48 +22,63 @@ func standardMCPTools(
 
 	// Config tools.
 	configTools, err := mcptools.NewConfigTools(
-		toolsCtx.AppName, toolsCtx.Logger, toolsCtx.ChartFS, toolsCtx.Kube, cm)
+		toolsCtx.AppCtx,
+		toolsCtx.Logger,
+		toolsCtx.ChartFS,
+		toolsCtx.Kube,
+		cm,
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	// Topology builder (shared dependency).
 	tb, err := resolver.NewTopologyBuilder(
-		toolsCtx.Logger, toolsCtx.ChartFS, toolsCtx.IntegrationManager)
+		toolsCtx.AppCtx,
+		toolsCtx.Logger,
+		toolsCtx.ChartFS,
+		toolsCtx.IntegrationManager,
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	// Job manager (shared dependency).
-	jm := installer.NewJob(toolsCtx.Kube)
+	job := installer.NewJob(toolsCtx.AppCtx, toolsCtx.Kube)
 
 	// Status tool.
-	statusTool := mcptools.NewStatusTool(toolsCtx.AppName, cm, tb, jm)
+	statusTool := mcptools.NewStatusTool(toolsCtx.AppCtx.Name, cm, tb, job)
 
 	// Integration tools, creates its own instance for metadata introspection.
 	integrationCmd := NewIntegration(
-		toolsCtx.AppName,
+		toolsCtx.AppCtx,
 		toolsCtx.Logger,
 		toolsCtx.Kube,
 		toolsCtx.ChartFS,
 		toolsCtx.IntegrationManager,
 	)
 	integrationTools := mcptools.NewIntegrationTools(
-		toolsCtx.AppName, integrationCmd, cm, toolsCtx.IntegrationManager,
+		toolsCtx.AppCtx.Name, integrationCmd, cm, toolsCtx.IntegrationManager,
 	)
 
 	// Deploy tools.
 	deployTools := mcptools.NewDeployTools(
-		toolsCtx.AppName, cm, tb, jm, toolsCtx.Image)
+		toolsCtx.AppCtx.Name, cm, tb, job, toolsCtx.Image)
 
 	// Notes tool.
 	notesTool := mcptools.NewNotesTool(
-		toolsCtx.AppName, toolsCtx.Logger, toolsCtx.Flags, toolsCtx.Kube, cm, tb,
+		toolsCtx.AppCtx.Name,
+		toolsCtx.Logger,
+		toolsCtx.Flags,
+		toolsCtx.Kube,
+		cm,
+		tb,
+		job,
 	)
 
 	// Topology tool
 	topologyTool := mcptools.NewTopologyTool(
-		toolsCtx.AppName, toolsCtx.ChartFS, cm, tb)
+		toolsCtx.AppCtx.Name, toolsCtx.ChartFS, cm, tb)
 
 	return []mcptools.Interface{
 		configTools,

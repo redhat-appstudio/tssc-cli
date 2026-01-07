@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 
 	o "github.com/onsi/gomega"
@@ -15,22 +16,23 @@ func TestNewTopology(t *testing.T) {
 	cfs := chartfs.New(os.DirFS("../../installer"))
 	g.Expect(cfs).ToNot(o.BeNil())
 
+	appCtx := api.NewAppContext("tssc")
 	ns := "default"
 	openShiftChart, err := cfs.GetChartFiles("charts/tssc-openshift")
 	g.Expect(err).To(o.Succeed())
-	openShiftDep := NewDependencyWithNamespace(openShiftChart, ns)
+	openShiftDep := NewDependencyWithNamespace(openShiftChart, ns, appCtx)
 
 	subscriptionsChart, err := cfs.GetChartFiles("charts/tssc-subscriptions")
 	g.Expect(err).To(o.Succeed())
-	subscriptionsDep := NewDependencyWithNamespace(subscriptionsChart, ns)
+	subscriptionsDep := NewDependencyWithNamespace(subscriptionsChart, ns, appCtx)
 
 	infrastructureChart, err := cfs.GetChartFiles("charts/tssc-infrastructure")
 	g.Expect(err).To(o.Succeed())
-	infrastructureDep := NewDependencyWithNamespace(infrastructureChart, ns)
+	infrastructureDep := NewDependencyWithNamespace(infrastructureChart, ns, appCtx)
 
 	iamChart, err := cfs.GetChartFiles("charts/tssc-iam")
 	g.Expect(err).To(o.Succeed())
-	iamDep := NewDependencyWithNamespace(iamChart, ns)
+	iamDep := NewDependencyWithNamespace(iamChart, ns, appCtx)
 
 	topology := NewTopology()
 

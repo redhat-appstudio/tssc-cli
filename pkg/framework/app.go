@@ -15,14 +15,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// App represents the installer application.
+// App represents the installer application runtime.
+// It holds runtime dependencies and coordinates the execution of commands.
+// Application metadata (name, version, etc.) is stored in AppCtx.
 type App struct {
-	Name     string           // application name
-	Version  string           // application version
-	CommitID string           // application commit ID
-	Short    string           // short description
-	Long     string           // long description
-	ChartFS  *chartfs.ChartFS // installer filesystem
+	AppCtx  *api.AppContext  // application metadata (single source of truth)
+	ChartFS *chartfs.ChartFS // installer filesystem
 
 	integrations       []api.IntegrationModule // supported integrations
 	integrationManager *integrations.Manager   // integrations manager
@@ -47,15 +45,15 @@ func (a *App) Run() error {
 // setupRootCmd instantiates the Cobra Root command with subcommand, description,
 // Kubernetes API client instance and more.
 func (a *App) setupRootCmd() error {
-	short := a.Short
+	short := a.AppCtx.Short
 	if short == "" {
-		short = a.Name + " installer"
+		short = a.AppCtx.Name + " installer"
 	}
 
 	a.rootCmd = &cobra.Command{
-		Use:          a.Name,
+		Use:          a.AppCtx.Name,
 		Short:        short,
-		Long:         a.Long,
+		Long:         a.AppCtx.Long,
 		SilenceUsage: true,
 	}
 
@@ -65,7 +63,8 @@ func (a *App) setupRootCmd() error {
 	// Handle version flag and help.
 	a.rootCmd.RunE = func(cmd *cobra.Command, args []string) error {
 		if a.flags.Version {
-			a.flags.ShowVersion(a.Name, a.Version, a.CommitID)
+			a.flags.ShowVersion(
+				a.AppCtx.Name, a.AppCtx.Version, a.AppCtx.CommitID)
 			return nil
 		}
 		return cmd.Help()
@@ -76,14 +75,14 @@ func (a *App) setupRootCmd() error {
 	// Loading informed integrations into the manager.
 	a.integrationManager = integrations.NewManager()
 	if err := a.integrationManager.LoadModules(
-		a.Name, logger, a.kube, a.integrations,
+		a.AppCtx.Name, logger, a.kube, a.integrations,
 	); err != nil {
 		return fmt.Errorf("failed to load modules: %w", err)
 	}
 
 	// Register standard subcommands.
 	a.rootCmd.AddCommand(subcmd.NewIntegration(
-		a.Name, logger, a.kube, a.ChartFS, a.integrationManager,
+		a.AppCtx, logger, a.kube, a.ChartFS, a.integrationManager,
 	))
 
 	// Use default builder if none provided.
@@ -100,11 +99,27 @@ func (a *App) setupRootCmd() error {
 
 	// Other subcommands via api.Runner.
 	subs := []api.SubCommand{
-		subcmd.NewConfig(logger, a.flags, a.ChartFS, a.kube),
-		subcmd.NewDeploy(logger, a.flags, a.ChartFS, a.kube, a.integrationManager),
-		subcmd.NewInstaller(a.flags),
+		subcmd.NewConfig(
+			a.AppCtx,
+			logger,
+			a.flags,
+			a.ChartFS,
+			a.kube,
+		),
+		subcmd.NewDeploy(
+			a.AppCtx,
+			logger,
+			a.flags,
+			a.ChartFS,
+			a.kube,
+			a.integrationManager,
+		),
+		subcmd.NewInstaller(
+			a.AppCtx,
+			a.flags,
+		),
 		subcmd.NewMCPServer(
-			a.Name,
+			a.AppCtx,
 			a.flags,
 			a.ChartFS,
 			a.kube,
@@ -112,8 +127,19 @@ func (a *App) setupRootCmd() error {
 			mcpBuilder,
 			a.mcpImage,
 		),
-		subcmd.NewTemplate(logger, a.flags, a.ChartFS, a.kube),
-		subcmd.NewTopology(logger, a.ChartFS, a.kube),
+		subcmd.NewTemplate(
+			a.AppCtx,
+			logger,
+			a.flags,
+			a.ChartFS,
+			a.kube,
+		),
+		subcmd.NewTopology(
+			a.AppCtx,
+			logger,
+			a.ChartFS,
+			a.kube,
+		),
 	}
 	for _, sub := range subs {
 		a.rootCmd.AddCommand(api.NewRunner(sub).Cmd())
@@ -121,11 +147,19 @@ func (a *App) setupRootCmd() error {
 	return nil
 }
 
-// NewApp creates a new installer application. It automatically sets up the Cobra
-// Root Command and standard subcommands (Config, Integration, Deploy).
-func NewApp(name string, cfs *chartfs.ChartFS, opts ...Option) (*App, error) {
+// NewApp creates a new installer application runtime.
+// It automatically sets up the Cobra Root Command and standard subcommands.
+//
+// The appCtx parameter provides application metadata (name, version, etc.).
+// The cfs parameter provides access to the installer filesystem (charts, config).
+// Additional runtime options can be passed via functional options.
+func NewApp(
+	appCtx *api.AppContext,
+	cfs *chartfs.ChartFS,
+	opts ...Option,
+) (*App, error) {
 	app := &App{
-		Name:    name,
+		AppCtx:  appCtx,
 		ChartFS: cfs,
 		flags:   flags.NewFlags(),
 	}

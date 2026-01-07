@@ -1,8 +1,9 @@
 package subcmd
 
 import (
-	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"log/slog"
+
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integration"
@@ -15,6 +16,7 @@ import (
 // responsible for creating and updating the Jenkins integration secret.
 type IntegrationJenkins struct {
 	cmd         *cobra.Command           // cobra command
+	appCtx      *api.AppContext          // application context
 	logger      *slog.Logger             // application logger
 	cfg         *config.Config           // installer configuration
 	kube        *k8s.Kube                // kubernetes client
@@ -39,7 +41,7 @@ func (j *IntegrationJenkins) Cmd() *cobra.Command {
 // Complete is a no-op in this case.
 func (j *IntegrationJenkins) Complete(args []string) error {
 	var err error
-	j.cfg, err = bootstrapConfig(j.cmd.Context(), j.kube)
+	j.cfg, err = bootstrapConfig(j.cmd.Context(), j.appCtx, j.kube)
 	return err
 }
 
@@ -56,6 +58,7 @@ func (j *IntegrationJenkins) Run() error {
 // NewIntegrationJenkins creates the sub-command for the "integration jenkins"
 // responsible to manage the TSSC integrations with the Jenkins service.
 func NewIntegrationJenkins(
+	appCtx *api.AppContext,
 	logger *slog.Logger,
 	kube *k8s.Kube,
 	i *integration.Integration,
@@ -68,6 +71,7 @@ func NewIntegrationJenkins(
 			SilenceUsage: true,
 		},
 
+		appCtx:      appCtx,
 		logger:      logger,
 		kube:        kube,
 		integration: i,

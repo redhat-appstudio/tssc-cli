@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
 
 	batchv1 "k8s.io/api/batch/v1"
@@ -22,11 +22,14 @@ import (
 type Job struct {
 	kube    *k8s.Kube // kubernetes client
 	appName string    // common name for resources
+	repoURI string    // repository URI for labels
 	retries int32     // job retries
 }
 
-// JobLabelSelector finds the unique installer job in the cluster.
-var JobLabelSelector = fmt.Sprintf("installer-job.%s", constants.RepoURI)
+// LabelSelector returns the label selector for installer jobs.
+func (j *Job) LabelSelector() string {
+	return fmt.Sprintf("installer-job.%s", j.repoURI)
+}
 
 // JobState represents the state of the installer job in the cluster.
 type JobState int
@@ -51,7 +54,7 @@ func (j *Job) getJob(ctx context.Context) (*batchv1.Job, error) {
 	}
 
 	jobList, err := bc.Jobs("").List(ctx, metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("type=%s", JobLabelSelector),
+		LabelSelector: fmt.Sprintf("type=%s", j.LabelSelector()),
 	})
 	if err != nil {
 		return nil, err
@@ -218,12 +221,12 @@ func (j *Job) createJob(
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
 			Name:      fmt.Sprintf("%s-deploy-job", j.appName),
-			Labels:    map[string]string{"type": JobLabelSelector},
+			Labels:    map[string]string{"type": j.LabelSelector()},
 		},
 		Spec: batchv1.JobSpec{
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{"type": JobLabelSelector},
+					Labels: map[string]string{"type": j.LabelSelector()},
 				},
 				Spec: podSpec,
 			},
@@ -254,7 +257,7 @@ func (j *Job) GetJobLogFollowCmd(namespace string) string {
 	return fmt.Sprintf(
 		"oc --namespace=%s logs --follow --selector=\"type=%s\"",
 		namespace,
-		JobLabelSelector,
+		j.LabelSelector(),
 	)
 }
 
@@ -295,10 +298,11 @@ func (j *Job) Run(
 }
 
 // NewJob instantiates a new Job object.
-func NewJob(kube *k8s.Kube) *Job {
+func NewJob(appCtx *api.AppContext, kube *k8s.Kube) *Job {
 	return &Job{
 		kube:    kube,
-		appName: constants.AppName,
+		appName: appCtx.Name,
+		repoURI: appCtx.RepoURI(),
 		retries: 0,
 	}
 }

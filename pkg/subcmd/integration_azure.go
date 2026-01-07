@@ -1,8 +1,9 @@
 package subcmd
 
 import (
-	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"log/slog"
+
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integration"
@@ -15,6 +16,7 @@ import (
 // responsible for creating and updating the Azure integration secret.
 type IntegrationAzure struct {
 	cmd         *cobra.Command           // cobra command
+	appCtx      *api.AppContext          // application context
 	logger      *slog.Logger             // application logger
 	cfg         *config.Config           // installer configuration
 	kube        *k8s.Kube                // kubernetes client
@@ -38,7 +40,7 @@ func (a *IntegrationAzure) Cmd() *cobra.Command {
 // Complete is a no-op in this case.
 func (a *IntegrationAzure) Complete(args []string) error {
 	var err error
-	a.cfg, err = bootstrapConfig(a.cmd.Context(), a.kube)
+	a.cfg, err = bootstrapConfig(a.cmd.Context(), a.appCtx, a.kube)
 	return err
 }
 
@@ -55,6 +57,7 @@ func (a *IntegrationAzure) Run() error {
 // NewIntegrationAzure creates the sub-command for the "integration azure"
 // responsible to manage the TSSC integrations with the Azure service.
 func NewIntegrationAzure(
+	appCtx *api.AppContext,
 	logger *slog.Logger,
 	kube *k8s.Kube,
 	i *integration.Integration,
@@ -67,6 +70,7 @@ func NewIntegrationAzure(
 			SilenceUsage: true,
 		},
 
+		appCtx:      appCtx,
 		logger:      logger,
 		kube:        kube,
 		integration: i,
