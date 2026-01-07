@@ -1,5 +1,5 @@
 #### Templates
-# For testing your changes, replace with your fork and branch of tssc-sample-templates
+# For testing your changes, replace with your fork and branch of tssc-dev-multi-ci
 export DEVELOPER_HUB_CATALOG_URL=
 
 #### Customize App Deployment Namespaces
