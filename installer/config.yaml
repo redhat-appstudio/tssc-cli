@@ -9,6 +9,13 @@ tssc:
       # Enables installer verbose logging messages for troubleshooting issues.
       debug: false
   products:
+    # Red Hat cert-manager Operator provides application certificate lifecycle
+    # management.
+    - name: Cert-Manager
+      enabled: true
+      # Uses the installer's namespace.
+      properties:
+        manageSubscription: true
     # Red Hat Trusted Artifact Signer (TAS) enhances software supply chain
     # security by simplifying cryptographic signing and verification of software
     # artifacts like container images, binaries, and documents, leveraging an

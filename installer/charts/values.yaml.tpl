@@ -1,13 +1,24 @@
+# Settings
 {{- $crc := required "CRC settings" .Installer.Settings.crc -}}
-{{- $tas := required "TAS settings" .Installer.Products.Trusted_Artifact_Signer -}}
-{{- $tpa := required "TPA settings" .Installer.Products.Trusted_Profile_Analyzer -}}
+
+# Products settings
+{{- $certManager := required "Cert-Manager settings" .Installer.Products.Cert_Manager -}}
+{{- $certManagerNamespace := "cert-manager-operator" -}}
 {{- $pipelines := required "Pipelines settings" .Installer.Products.OpenShift_Pipelines -}}
 {{- $pipelinesNamespace := "openshift-pipelines" -}}
+{{- $tas := required "TAS settings" .Installer.Products.Trusted_Artifact_Signer -}}
+{{- $tpa := required "TPA settings" .Installer.Products.Trusted_Profile_Analyzer -}}
+
+{{- $keycloakEnabled := or $tpa.Enabled $tas.Enabled -}}
+{{- $keycloakNamespace := "tssc-keycloak" -}}
+
+# Cluster settings
 {{- $ingressDomain := required "OpenShift ingress domain" .OpenShift.Ingress.Domain -}}
 {{- $ingressRouterCA := required "OpenShift RouterCA" .OpenShift.Ingress.RouterCA -}}
 {{- $openshiftMinorVersion := required "OpenShift Version" .OpenShift.MinorVersion -}}
-{{- $keycloakEnabled := or $tpa.Enabled $tas.Enabled -}}
-{{- $keycloakNamespace := "tssc-keycloak" -}}
+
+
+
 ---
 debug:
   ci: {{ dig "ci" "debug" false .Installer.Settings }}
@@ -18,6 +29,9 @@ debug:
 
 openshift:
   projects:
+{{- if $certManager.Enabled }}
+    - {{ $certManagerNamespace }}
+{{- end }}
 {{- if $keycloakEnabled }}
     - {{ $keycloakNamespace }}
     - rhbk-operator
@@ -41,6 +55,9 @@ openshift:
 
 
 subscriptions:
+  openshiftCertManager:
+    enabled: {{ $certManager.Enabled }}
+    managed: {{ and $certManager.Enabled $certManager.Properties.manageSubscription }}
   openshiftKeycloak:
     enabled: {{ $keycloakEnabled }}
     managed: {{ $keycloakEnabled }}

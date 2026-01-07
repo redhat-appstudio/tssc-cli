@@ -1,5 +1,17 @@
 ---
 subscriptions:
+  openshiftCertManager:
+    enabled: false
+    description: Red Hat Cert-Manager Operator
+    apiResource: certificates.cert-manager.io
+    namespace: cert-manager-operator
+    name: openshift-cert-manager-operator
+    channel: stable-v1
+    source: redhat-operators
+    sourceNamespace: openshift-marketplace
+    operatorGroup:
+      upgradeStrategy: Default
+      targetNamespaces: []
   openshiftKeycloak:
     enabled: false
     description: Red Hat Keycloak Operator
