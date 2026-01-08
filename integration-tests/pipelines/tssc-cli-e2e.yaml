@@ -463,24 +463,6 @@ spec:
               oc whoami
               echo "/me Acting like I'm deleting a clusterclaim. tehehe"
               # oc delete clusterclaims.hive.openshift.io $(context.pipelineRun.name) -n hive
-    - name: sprayproxy-deprovision
-      when:
-        - input: "$(tasks.sprayproxy-provision.status)"
-          operator: in
-          values:
-            - "Succeeded"
-      taskRef:
-        resolver: git
-        params:
-          - name: url
-            value: https://github.com/konflux-ci/tekton-integration-catalog.git
-          - name: revision
-            value: main
-          - name: pathInRepo
-            value: tasks/sprayproxy/sprayproxy-deprovision/0.1/sprayproxy-deprovision.yaml
-      params:
-        - name: ocp-login-command
-          value: "$(tasks.provision-cluster.results.ocp-login-command)"
     - name: pull-request-status-message
       taskRef:
         resolver: git
