@@ -66,7 +66,8 @@ func NewIntegration(
 			}
 
 			if updated {
-				return config.NewConfigMapManager(kube).Update(cmd.Context(), cfg)
+				return config.NewConfigMapManager(kube, appCtx.Name).
+					Update(cmd.Context(), cfg)
 			}
 
 			return nil

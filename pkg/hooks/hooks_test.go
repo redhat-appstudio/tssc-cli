@@ -24,7 +24,7 @@ func TestNewHooks(t *testing.T) {
 
 	appCtx := api.NewAppContext("tssc")
 	h := NewHooks(
-		resolver.NewDependencyWithNamespace(chart, appCtx.Namespace, appCtx),
+		resolver.NewDependencyWithNamespace(chart, appCtx.Namespace),
 		&stdout,
 		&stderr,
 	)

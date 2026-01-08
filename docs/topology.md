@@ -15,17 +15,17 @@ tssc topology
 
 ## Annotations
 
-### `tssc.redhat-appstudio.github.com/product-name`
+### `helmet.redhat-appstudio.github.com/product-name`
 
 - **Purpose**: This **optional** annotation identifies the product name that a Helm chart is associated with. It links a specific Helm chart to a product defined in `config.yaml` (e.g., `.tssc.products[{name: "OpenShift GitOps"}]`). A single Helm chart should be associated with each product for consistency.
 - **Example**: For the OpenShift GitOps product, whose Helm chart is `charts/tssc-gitops`:
 
 ```yml
 annotations:
-  tssc.redhat-appstudio.github.com/product-name: "OpenShift GitOps"
+  helmet.redhat-appstudio.github.com/product-name: "OpenShift GitOps"
 ```
 
-### `tssc.redhat-appstudio.github.com/use-product-namespace`
+### `helmet.redhat-appstudio.github.com/use-product-namespace`
 
 - **Purpose**: This **optional** annotation specifies that a Helm chart, which is *not* directly associated with a product via `product-name`, should be deployed into the namespace of a *specific* product. This is useful for common dependencies that logically belong within a product's deployment but are not the primary product chart. If `product-name` is also present on the chart, the `product-name` annotation takes precedence for namespace determination.
 - **Usage**: The value of this annotation must be the name of an enabled product defined in `config.yaml`. The chart will be deployed into the namespace configured for that product.
@@ -33,10 +33,10 @@ annotations:
 
 ```yaml
 annotations:
-  tssc.redhat-appstudio.github.com/use-product-namespace: "OpenShift GitOps"
+  helmet.redhat-appstudio.github.com/use-product-namespace: "OpenShift GitOps"
 ```
 
-### `tssc.redhat-appstudio.github.com/depends-on`
+### `helmet.redhat-appstudio.github.com/depends-on`
 
 - **Purpose**: This **optional** annotation declares direct dependencies of the current chart. It specifies a comma-separated list of chart names that must be successfully deployed *before* this chart.
 - **Usage**: The installer uses this annotation to build a topological deployment order, ensuring that all dependencies are met before a chart is deployed.
@@ -44,21 +44,21 @@ annotations:
 
 ```yaml
 annotations:
-  tssc.redhat-appstudio.github.com/depends-on: "tssc-openshift, tssc-subscriptions"
+  helmet.redhat-appstudio.github.com/depends-on: "tssc-openshift, tssc-subscriptions"
 ```
 
-### `tssc.redhat-appstudio.github.com/weight`
+### `helmet.redhat-appstudio.github.com/weight`
 
-- **Purpose**: This **optional** annotation defines the weight of a chart in the topology. It allows for fine-tuning the order of chart deployments, especially when charts have indirect dependencies or no direct dependencies. The annotation `depends-on`, described before, takes precedence over the weight. 
+- **Purpose**: This **optional** annotation defines the weight of a chart in the topology. It allows for fine-tuning the order of chart deployments, especially when charts have indirect dependencies or no direct dependencies. The annotation `depends-on`, described before, takes precedence over the weight.
 - **Usage**: The value is an integer that defines the weight of the chart. Charts with lower weights are deployed earlier.
 - **Example**: If the OpenShift GitOps Helm chart has a weight of 10:
 
 ```yaml
 annotations:
-  tssc.redhat-appstudio.github.com/weight: "10"
+  helmet.redhat-appstudio.github.com/weight: "10"
 ```
 
-### `tssc.redhat-appstudio.github.com/integrations-provided`
+### `helmet.redhat-appstudio.github.com/integrations-provided`
 
 - **Purpose**: This **optional** annotation lists the names of integrations that the Helm chart provides.  The chart is responsible for creating the necessary secrets or configurations for these integrations.
 - **Usage**: The value is a comma-separated list of integration names.  These names should be supported by the project.
@@ -66,10 +66,10 @@ annotations:
 
 ```yaml
 annotations:
-  tssc.redhat-appstudio.github.com/integrations-provided: "trustification"
+  helmet.redhat-appstudio.github.com/integrations-provided: "trustification"
 ```
 
-### `tssc.redhat-appstudio.github.com/integrations-required`
+### `helmet.redhat-appstudio.github.com/integrations-required`
 
 - **Purpose**: This **optional** annotation specifies the integrations that the Helm chart requires.  The value is a CEL expression that, when evaluated, determines if the required integrations are available.
 - **Usage**: The CEL expression uses the names of the integrations.  If the expression evaluates to `true`, the integrations are considered available.
@@ -77,7 +77,7 @@ annotations:
 
 ```yaml
 annotations:
-  tssc.redhat-appstudio.github.com/integrations-required: "github && trustification"
+  helmet.redhat-appstudio.github.com/integrations-required: "github && trustification"
 ```
 
 ## Resolution Logic
@@ -91,7 +91,7 @@ The Resolver's core logic for determining the Helm chart deployment order is bas
 
 The target namespace for each Helm chart will be determined based on the presence of the `product-name` annotation:
 
-- **Product-Associated Charts**: If a Helm chart has the `tssc.redhat-appstudio.github.com/product-name` annotation, it will be deployed into the namespace specified by `.tssc.products[{name: product-name}].namespace` in `config.yaml`.
-- **Standalone (Dependency) Charts**: If a Helm chart does *not* have the `tssc.redhat-appstudio.github.com/product-name` annotation (i.e., it's a common dependency), it will be deployed into the installer's default namespace (`.tssc.namespace`) from `config.yaml`.
+- **Product-Associated Charts**: If a Helm chart has the `helmet.redhat-appstudio.github.com/product-name` annotation, it will be deployed into the namespace specified by `.tssc.products[{name: product-name}].namespace` in `config.yaml`.
+- **Standalone (Dependency) Charts**: If a Helm chart does *not* have the `helmet.redhat-appstudio.github.com/product-name` annotation (i.e., it's a common dependency), it will be deployed into the installer's default namespace (`.tssc.namespace`) from `config.yaml`.
 
 This approach provides a predictable namespace per Helm chart: typically, products are deployed in their own namespaces, while their common dependencies use the installer's default namespace.

@@ -1,9 +1,5 @@
 package api
 
-import (
-	"fmt"
-)
-
 // AppContext holds immutable application metadata.
 // This is passed throughout the component tree as the single source of truth
 // for application identity, versioning, and organizational information.
@@ -15,15 +11,8 @@ type AppContext struct {
 	Version   string // application version
 	CommitID  string // git commit ID
 	Namespace string // default installation namespace
-	OrgName   string // organization name
-	Domain    string // organization domain
 	Short     string // short description for CLI
 	Long      string // long description for CLI
-}
-
-// RepoURI returns the reverse repository URI.
-func (a *AppContext) RepoURI() string {
-	return fmt.Sprintf("%s.%s.%s", a.Name, a.OrgName, a.Domain)
 }
 
 // ContextOption is a functional option for configuring AppContext.
@@ -33,20 +22,6 @@ type ContextOption func(*AppContext)
 func WithNamespace(namespace string) ContextOption {
 	return func(a *AppContext) {
 		a.Namespace = namespace
-	}
-}
-
-// WithOrganization sets the organization name.
-func WithOrganization(org string) ContextOption {
-	return func(a *AppContext) {
-		a.OrgName = org
-	}
-}
-
-// WithDomain sets the domain.
-func WithDomain(domain string) ContextOption {
-	return func(a *AppContext) {
-		a.Domain = domain
 	}
 }
 
@@ -85,8 +60,6 @@ func NewAppContext(name string, opts ...ContextOption) *AppContext {
 	appCtx := &AppContext{
 		Name:      name,
 		Namespace: name,
-		Domain:    "github.com",
-		OrgName:   "redhat-appstudio",
 		Version:   "v0.0.0-SNAPSHOT",
 		CommitID:  "unknown",
 		Short:     "",

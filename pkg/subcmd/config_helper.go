@@ -16,7 +16,7 @@ func bootstrapConfig(
 	appCtx *api.AppContext,
 	kube *k8s.Kube,
 ) (*config.Config, error) {
-	mgr := config.NewConfigMapManager(kube)
+	mgr := config.NewConfigMapManager(kube, appCtx.Name)
 	cfg, err := mgr.GetConfig(ctx)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, `

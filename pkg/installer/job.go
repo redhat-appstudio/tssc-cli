@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/redhat-appstudio/tssc-cli/pkg/annotations"
 	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
 
@@ -22,13 +23,12 @@ import (
 type Job struct {
 	kube    *k8s.Kube // kubernetes client
 	appName string    // common name for resources
-	repoURI string    // repository URI for labels
 	retries int32     // job retries
 }
 
 // LabelSelector returns the label selector for installer jobs.
 func (j *Job) LabelSelector() string {
-	return fmt.Sprintf("installer-job.%s", j.repoURI)
+	return fmt.Sprintf("installer-job.%s", annotations.RepoURI)
 }
 
 // JobState represents the state of the installer job in the cluster.
@@ -302,7 +302,6 @@ func NewJob(appCtx *api.AppContext, kube *k8s.Kube) *Job {
 	return &Job{
 		kube:    kube,
 		appName: appCtx.Name,
-		repoURI: appCtx.RepoURI(),
 		retries: 0,
 	}
 }

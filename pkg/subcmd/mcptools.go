@@ -18,7 +18,7 @@ func StandardMCPToolsBuilder() mcptools.MCPToolsBuilder {
 func standardMCPTools(
 	toolsCtx mcptools.MCPToolsContext,
 ) ([]mcptools.Interface, error) {
-	cm := config.NewConfigMapManager(toolsCtx.Kube)
+	cm := config.NewConfigMapManager(toolsCtx.Kube, toolsCtx.AppCtx.Name)
 
 	// Config tools.
 	configTools, err := mcptools.NewConfigTools(

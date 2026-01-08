@@ -186,7 +186,7 @@ configure() {
     NAMESPACE="$(
         kubectl get configmap \
         -A \
-        --selector "tssc.redhat-appstudio.github.com/config=true" \
+        --selector "helmet.redhat-appstudio.github.com/config=true" \
         -o jsonpath="{.items[0].metadata.namespace}"
     )"
     export NAMESPACE
