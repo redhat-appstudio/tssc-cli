@@ -4,7 +4,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 
 	o "github.com/onsi/gomega"
@@ -18,8 +17,7 @@ func TestNewDependency(t *testing.T) {
 	developerHub, err := cfs.GetChartFiles("charts/tssc-dh")
 	g.Expect(err).To(o.Succeed())
 
-	appCtx := api.NewAppContext("tssc")
-	d := NewDependency(developerHub, appCtx)
+	d := NewDependency(developerHub)
 
 	t.Run("Chart", func(t *testing.T) {
 		g.Expect(d.Chart()).NotTo(o.BeNil())

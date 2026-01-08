@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"strconv"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/api"
+	"github.com/redhat-appstudio/tssc-cli/pkg/annotations"
 	"helm.sh/helm/v3/pkg/chart"
 )
 
@@ -13,9 +13,8 @@ import (
 // instance, namespace and metadata. The relevant Helm chart metadata is read by
 // helper methods.
 type Dependency struct {
-	chart     *chart.Chart    // Helm chart instance
-	namespace string          // Target namespace name
-	appCtx    *api.AppContext // Application context for annotation keys
+	chart     *chart.Chart // helm chart instance
+	namespace string       // target namespace
 }
 
 // Dependencies represents a slice of Dependency instances.
@@ -60,7 +59,7 @@ func (d *Dependency) getAnnotation(annotation string) string {
 
 // DependsOn returns a slice of dependencies names from the chart's annotation.
 func (d *Dependency) DependsOn() []string {
-	dependsOn := d.getAnnotation(AnnotationDependsOn(d.appCtx))
+	dependsOn := d.getAnnotation(annotations.DependsOn)
 	if dependsOn == "" {
 		return nil
 	}
@@ -70,12 +69,11 @@ func (d *Dependency) DependsOn() []string {
 // Weight returns the weight of this dependency. If no weight is specified, zero
 // is returned. The weight must be specified as an integer value.
 func (d *Dependency) Weight() (int, error) {
-	annotationKey := AnnotationWeight(d.appCtx)
-	if v, exists := d.chart.Metadata.Annotations[annotationKey]; exists {
+	if v, exists := d.chart.Metadata.Annotations[annotations.Weight]; exists {
 		w, err := strconv.Atoi(v)
 		if err != nil {
 			return -1, fmt.Errorf(
-				"invalid value %q for annotation %q", v, annotationKey)
+				"invalid value %q for annotation %q", v, annotations.Weight)
 		}
 		return w, nil
 	}
@@ -84,35 +82,35 @@ func (d *Dependency) Weight() (int, error) {
 
 // ProductName returns the product name from the chart annotations.
 func (d *Dependency) ProductName() string {
-	return d.getAnnotation(AnnotationProductName(d.appCtx))
+	return d.getAnnotation(annotations.ProductName)
 }
 
 // UseProductNamespace returns the product namespace from the chart annotations.
 func (d *Dependency) UseProductNamespace() string {
-	return d.getAnnotation(AnnotationUseProductNamespace(d.appCtx))
+	return d.getAnnotation(annotations.UseProductNamespace)
 }
 
 // IntegrationsProvided returns the integrations provided
 func (d *Dependency) IntegrationsProvided() []string {
-	provided := d.getAnnotation(AnnotationIntegrationsProvided(d.appCtx))
+	provided := d.getAnnotation(annotations.IntegrationsProvided)
 	return commaSeparatedToSlice(provided)
 }
 
 // IntegrationsRequired returns the integrations required.
 func (d *Dependency) IntegrationsRequired() string {
-	return d.getAnnotation(AnnotationIntegrationsRequired(d.appCtx))
+	return d.getAnnotation(annotations.IntegrationsRequired)
 }
 
 // NewDependency creates a new Dependency for the Helm chart and initially using
 // empty target namespace.
-func NewDependency(hc *chart.Chart, appCtx *api.AppContext) *Dependency {
-	return &Dependency{chart: hc, appCtx: appCtx}
+func NewDependency(hc *chart.Chart) *Dependency {
+	return &Dependency{chart: hc}
 }
 
 // NewDependencyWithNamespace creates a new Dependency for the Helm chart and sets
 // the target namespace.
-func NewDependencyWithNamespace(hc *chart.Chart, ns string, appCtx *api.AppContext) *Dependency {
-	d := NewDependency(hc, appCtx)
+func NewDependencyWithNamespace(hc *chart.Chart, ns string) *Dependency {
+	d := NewDependency(hc)
 	d.SetNamespace(ns)
 	return d
 }

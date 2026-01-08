@@ -103,7 +103,7 @@ func NewCollection(appCtx *api.AppContext, charts []chart.Chart) (*Collection, e
 	productNames := []string{}
 	// Populating the collection with dependencies.
 	for _, hc := range charts {
-		d := NewDependency(&hc, appCtx)
+		d := NewDependency(&hc)
 		// Asserting the weight annotation is a valid integer.
 		if _, err := d.Weight(); err != nil {
 			return nil, fmt.Errorf("%w:  %s", ErrInvalidCollection, err)

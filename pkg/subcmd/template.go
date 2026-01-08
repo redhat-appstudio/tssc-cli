@@ -84,7 +84,7 @@ func (t *Template) Complete(args []string) error {
 	if err != nil {
 		return err
 	}
-	t.dep = *resolver.NewDependencyWithNamespace(hc, t.namespace, t.appCtx)
+	t.dep = *resolver.NewDependencyWithNamespace(hc, t.namespace)
 
 	if t.cfg, err = bootstrapConfig(t.cmd.Context(), t.appCtx, t.kube); err != nil {
 		return err

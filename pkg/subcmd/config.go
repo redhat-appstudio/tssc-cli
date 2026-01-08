@@ -189,8 +189,8 @@ func (c *Config) runCreate() error {
 		fmt.Printf(
 			"[DRY-RUN] Creating the ConfigMap %q/%q, with the label selector %q\n",
 			cfg.Namespace(),
-			config.Name,
-			fmt.Sprintf("%s=true", config.Label),
+			c.manager.Name(),
+			config.Selector,
 		)
 		if err != nil {
 			return err
@@ -230,8 +230,8 @@ func (c *Config) runDelete() error {
 		c.log().Debug("[DRY-RUN] Configuration is not removed from the cluster")
 		fmt.Printf(
 			"[DRY-RUN] Removing the ConfigMap %q, with the label selector %q\n",
-			config.Name,
-			fmt.Sprintf("%s=true", config.Label),
+			c.manager.Name(),
+			config.Selector,
 		)
 		return nil
 	}
@@ -300,7 +300,7 @@ func NewConfig(
 		cfs:     cfs,
 		kube:    kube,
 		appCtx:  appCtx,
-		manager: config.NewConfigMapManager(kube),
+		manager: config.NewConfigMapManager(kube, appCtx.Name),
 	}
 
 	c.PersistentFlags(c.cmd.PersistentFlags())
