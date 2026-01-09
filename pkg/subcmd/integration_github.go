@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
+
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
-	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integration"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
 
@@ -16,6 +17,7 @@ import (
 // responsible for creating and updating the GitHub Apps integration secret.
 type IntegrationGitHub struct {
 	cmd         *cobra.Command           // cobra command
+	appCtx      *api.AppContext          // application context
 	logger      *slog.Logger             // application logger
 	cfg         *config.Config           // installer configuration
 	kube        *k8s.Kube                // kubernetes client
@@ -25,7 +27,7 @@ type IntegrationGitHub struct {
 	update bool // update a existing github app
 }
 
-var _ Interface = &IntegrationGitHub{}
+var _ api.SubCommand = &IntegrationGitHub{}
 
 const integrationLongDesc = `
 Manages the GitHub App integration with TSSC, by creating a new application
@@ -48,7 +50,7 @@ func (g *IntegrationGitHub) Cmd() *cobra.Command {
 // Complete captures the application name, and ensures it's ready to run.
 func (g *IntegrationGitHub) Complete(args []string) error {
 	var err error
-	g.cfg, err = bootstrapConfig(g.cmd.Context(), g.kube)
+	g.cfg, err = bootstrapConfig(g.cmd.Context(), g.appCtx, g.kube)
 	if err != nil {
 		return err
 	}
@@ -82,7 +84,7 @@ func (g *IntegrationGitHub) Run() error {
 	if g.update {
 		// TODO: implement update.
 		panic(fmt.Sprintf(
-			"TODO: '%s integration github --update'", constants.AppName,
+			"TODO: '%s integration github --update'", g.appCtx.Name,
 		))
 	}
 	return nil
@@ -91,6 +93,7 @@ func (g *IntegrationGitHub) Run() error {
 // NewIntegrationGitHub creates the sub-command for the "integration github",
 // which manages the TSSC integration with a GitHub App.
 func NewIntegrationGitHub(
+	appCtx *api.AppContext,
 	logger *slog.Logger,
 	kube *k8s.Kube,
 	i *integration.Integration,
@@ -104,6 +107,7 @@ func NewIntegrationGitHub(
 			SilenceUsage: true,
 		},
 
+		appCtx:      appCtx,
 		logger:      logger,
 		kube:        kube,
 		integration: i,

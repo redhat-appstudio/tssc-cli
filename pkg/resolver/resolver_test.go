@@ -1,8 +1,10 @@
 package resolver
 
 import (
+	"os"
 	"testing"
 
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 
@@ -12,8 +14,7 @@ import (
 func TestNewResolver(t *testing.T) {
 	g := o.NewWithT(t)
 
-	cfs, err := chartfs.NewChartFS("../../installer")
-	g.Expect(err).To(o.Succeed())
+	cfs := chartfs.New(os.DirFS("../../installer"))
 
 	installerNamespace := "test-namespace"
 	cfg, err := config.NewConfigFromFile(cfs, "config.yaml", installerNamespace)
@@ -22,7 +23,8 @@ func TestNewResolver(t *testing.T) {
 	charts, err := cfs.GetAllCharts()
 	g.Expect(err).To(o.Succeed())
 
-	c, err := NewCollection(charts)
+	appCtx := api.NewAppContext("tssc")
+	c, err := NewCollection(appCtx, charts)
 	g.Expect(err).To(o.Succeed())
 
 	t.Run("Resolve", func(t *testing.T) {

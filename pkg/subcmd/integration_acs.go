@@ -3,6 +3,8 @@ package subcmd
 import (
 	"log/slog"
 
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
+
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integration"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
@@ -14,13 +16,14 @@ import (
 // responsible for creating and updating the ACS integration secret.
 type IntegrationACS struct {
 	cmd         *cobra.Command           // cobra command
+	appCtx      *api.AppContext          // application context
 	logger      *slog.Logger             // application logger
 	cfg         *config.Config           // installer configuration
 	kube        *k8s.Kube                // kubernetes client
 	integration *integration.Integration // integration instance
 }
 
-var _ Interface = &IntegrationACS{}
+var _ api.SubCommand = &IntegrationACS{}
 
 const acsIntegrationLongDesc = `
 Manages the ACS integration with TSSC, by storing the required
@@ -38,7 +41,7 @@ func (a *IntegrationACS) Cmd() *cobra.Command {
 // Complete loads the configuration from cluster.
 func (a *IntegrationACS) Complete(args []string) error {
 	var err error
-	a.cfg, err = bootstrapConfig(a.cmd.Context(), a.kube)
+	a.cfg, err = bootstrapConfig(a.cmd.Context(), a.appCtx, a.kube)
 	return err
 }
 
@@ -55,6 +58,7 @@ func (a *IntegrationACS) Run() error {
 // NewIntegrationACS creates the sub-command for the "integration acs"
 // responsible to manage the TSSC integrations with the ACS service.
 func NewIntegrationACS(
+	appCtx *api.AppContext,
 	logger *slog.Logger,
 	kube *k8s.Kube,
 	i *integration.Integration,
@@ -67,6 +71,7 @@ func NewIntegrationACS(
 			SilenceUsage: true,
 		},
 
+		appCtx:      appCtx,
 		logger:      logger,
 		kube:        kube,
 		integration: i,

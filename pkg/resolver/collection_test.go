@@ -1,8 +1,10 @@
 package resolver
 
 import (
+	"os"
 	"testing"
 
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 
 	o "github.com/onsi/gomega"
@@ -11,13 +13,13 @@ import (
 func TestNewCollection(t *testing.T) {
 	g := o.NewWithT(t)
 
-	cfs, err := chartfs.NewChartFS("../../installer")
-	g.Expect(err).To(o.Succeed())
+	cfs := chartfs.New(os.DirFS("../../installer"))
 
 	charts, err := cfs.GetAllCharts()
 	g.Expect(err).To(o.Succeed())
 
-	c, err := NewCollection(charts)
+	appCtx := api.NewAppContext("tssc")
+	c, err := NewCollection(appCtx, charts)
 	g.Expect(err).To(o.Succeed())
 	g.Expect(c).NotTo(o.BeNil())
 }

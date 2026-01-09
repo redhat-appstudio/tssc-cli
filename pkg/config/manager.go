@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/redhat-appstudio/tssc-cli/pkg/annotations"
+	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
 
 	corev1 "k8s.io/api/core/v1"
@@ -15,16 +17,16 @@ import (
 // the cluster.
 type ConfigMapManager struct {
 	kube *k8s.Kube // kubernetes client
+	name string    // configmap name
 }
 
-const (
-	// Filename the default
-	Filename = "config.yaml"
-	// Label label selector to find the cluster's installer configuration.
-	Label = "tssc.redhat-appstudio.github.com/config"
-	// Name name of the installer's configuration ConfigMap.
-	Name = "tssc-config"
-)
+// Selector label selector for installer configuration.
+const Selector = annotations.Config + "=true"
+
+// Name returns the ConfigMap name.
+func (m *ConfigMapManager) Name() string {
+	return m.name
+}
 
 var (
 	// ErrConfigMapNotFound when the configmap isn't created in the cluster.
@@ -35,11 +37,6 @@ var (
 	// expected payload.
 	ErrIncompleteConfigMap = errors.New("invalid configmap found in the cluster")
 )
-
-// selectorLabel returns the label selector.
-func (m *ConfigMapManager) selectorLabel() string {
-	return fmt.Sprintf("%s=true", Label)
-}
 
 // GetConfigMap retrieves the ConfigMap from the cluster, checking if a single
 // resource is present.
@@ -53,7 +50,7 @@ func (m *ConfigMapManager) GetConfigMap(
 
 	// Listing all ConfigMaps matching the label selector.
 	configMapList, err := coreClient.ConfigMaps("").List(ctx, metav1.ListOptions{
-		LabelSelector: m.selectorLabel(),
+		LabelSelector: Selector,
 	})
 	if err != nil {
 		return nil, err
@@ -64,7 +61,7 @@ func (m *ConfigMapManager) GetConfigMap(
 		return nil, fmt.Errorf(
 			"%w: using label selector %q",
 			ErrConfigMapNotFound,
-			m.selectorLabel(),
+			Selector,
 		)
 	}
 	// Also, important to error out when multiple ConfigMaps are present in the
@@ -93,12 +90,12 @@ func (m *ConfigMapManager) GetConfig(ctx context.Context) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	payload, ok := configMap.Data[Filename]
+	payload, ok := configMap.Data[constants.ConfigFilename]
 	if !ok || len(payload) == 0 {
 		return nil, fmt.Errorf(
 			"%w: key %q not found in ConfigMap %s/%s",
 			ErrIncompleteConfigMap,
-			Filename,
+			constants.ConfigFilename,
 			configMap.GetNamespace(),
 			configMap.GetName(),
 		)
@@ -113,14 +110,14 @@ func (m *ConfigMapManager) configMapForConfig(
 ) (*corev1.ConfigMap, error) {
 	return &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      Name,
+			Name:      m.name,
 			Namespace: cfg.Namespace(),
 			Labels: map[string]string{
-				Label: "true",
+				annotations.Config: "true",
 			},
 		},
 		Data: map[string]string{
-			Filename: cfg.String(),
+			constants.ConfigFilename: cfg.String(),
 		},
 	}, nil
 }
@@ -174,8 +171,10 @@ func (m *ConfigMapManager) Delete(ctx context.Context) error {
 }
 
 // NewConfigMapManager instantiates the ConfigMapManager.
-func NewConfigMapManager(kube *k8s.Kube) *ConfigMapManager {
+// The appName parameter is used to generate the ConfigMap name as "{appName}-config".
+func NewConfigMapManager(kube *k8s.Kube, appName string) *ConfigMapManager {
 	return &ConfigMapManager{
 		kube: kube,
+		name: fmt.Sprintf("%s-config", appName),
 	}
 }

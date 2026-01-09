@@ -68,7 +68,7 @@ echo "[INFO] scm_config=(${scm_config[*]})"
 echo "[INFO] pipeline_config=(${pipeline_config[*]})"
 echo "[INFO] auth_config=(${auth_config[*]})"
 
-tpl_file="installer/charts/values.yaml.tpl"
+tpl_file="installer/values.yaml.tpl"
 config_file="installer/config.yaml"
 
 ci_enabled() {

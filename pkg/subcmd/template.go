@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/flags"
@@ -19,6 +20,7 @@ type Template struct {
 	cmd    *cobra.Command   // cobra command
 	logger *slog.Logger     // application logger
 	flags  *flags.Flags     // global flags
+	appCtx *api.AppContext  // application context
 	cfg    *config.Config   // installer configuration
 	cfs    *chartfs.ChartFS // embedded filesystem
 	kube   *k8s.Kube        // kubernetes client
@@ -33,7 +35,7 @@ type Template struct {
 	dep                resolver.Dependency // chart to render
 }
 
-var _ Interface = &Template{}
+var _ api.SubCommand = &Template{}
 
 const templateDesc = `
 The Template subcommand is used to render the values template file and,
@@ -84,7 +86,7 @@ func (t *Template) Complete(args []string) error {
 	}
 	t.dep = *resolver.NewDependencyWithNamespace(hc, t.namespace)
 
-	if t.cfg, err = bootstrapConfig(t.cmd.Context(), t.kube); err != nil {
+	if t.cfg, err = bootstrapConfig(t.cmd.Context(), t.appCtx, t.kube); err != nil {
 		return err
 	}
 	return nil
@@ -146,6 +148,7 @@ func (t *Template) Run() error {
 
 // NewTemplate creates the "template" subcommand with flags.
 func NewTemplate(
+	appCtx *api.AppContext,
 	logger *slog.Logger,
 	f *flags.Flags,
 	cfs *chartfs.ChartFS,
@@ -160,6 +163,7 @@ func NewTemplate(
 		},
 		logger:        logger.WithGroup("template"),
 		flags:         f,
+		appCtx:        appCtx,
 		cfs:           cfs,
 		kube:          kube,
 		showValues:    true,

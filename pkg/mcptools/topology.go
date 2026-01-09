@@ -7,7 +7,6 @@ import (
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
-	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
 	"github.com/redhat-appstudio/tssc-cli/pkg/resolver"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -18,14 +17,15 @@ import (
 // the dependency topology of the installer based on the cluster
 // configuration and Helm charts.
 type TopologyTool struct {
-	cfs *chartfs.ChartFS          // embedded filesystem
-	cm  *config.ConfigMapManager  // cluster configuration
-	tb  *resolver.TopologyBuilder // topology builder
+	appName string                    // application name
+	cfs     *chartfs.ChartFS          // embedded filesystem
+	cm      *config.ConfigMapManager  // cluster configuration
+	tb      *resolver.TopologyBuilder // topology builder
 }
 
 const (
-	// TopologyToolName mcp topology tool name
-	TopologyToolName = constants.AppName + "_topology"
+	// topologySuffix mcp topology tool name suffix
+	topologySuffix = "_topology"
 )
 
 // topologyHandler shows a table of the topology.
@@ -72,7 +72,7 @@ The topology is a table with following columns:
 func (t *TopologyTool) Init(s *server.MCPServer) {
 	s.AddTools([]server.ServerTool{{
 		Tool: mcp.NewTool(
-			TopologyToolName,
+			t.appName+topologySuffix,
 			mcp.WithDescription(`
 Report the dependency topology of the installer based on the
 cluster configuration and installer dependencies (Helm charts).
@@ -84,13 +84,15 @@ cluster configuration and installer dependencies (Helm charts).
 
 // NewTopologyTool instantiates a new TopologyTool.
 func NewTopologyTool(
+	appName string,
 	cfs *chartfs.ChartFS,
 	cm *config.ConfigMapManager,
 	tb *resolver.TopologyBuilder,
 ) *TopologyTool {
 	return &TopologyTool{
-		cfs: cfs,
-		cm:  cm,
-		tb:  tb,
+		appName: appName,
+		cfs:     cfs,
+		cm:      cm,
+		tb:      tb,
 	}
 }

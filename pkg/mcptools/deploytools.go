@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
-	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
 	"github.com/redhat-appstudio/tssc-cli/pkg/installer"
 	"github.com/redhat-appstudio/tssc-cli/pkg/resolver"
 
@@ -13,21 +12,22 @@ import (
 	"github.com/mark3labs/mcp-go/server"
 )
 
-// DeployTools represents the tools used for deploying the TSSC using the
+// DeployTools represents the tools used for deploying the components using the
 // installer on a container image, and running in the cluster, using a Kubernetes
 // Job.
 type DeployTools struct {
+	appName         string                    // application name
 	cm              *config.ConfigMapManager  // cluster configuration
 	topologyBuilder *resolver.TopologyBuilder // topology builder
 	job             *installer.Job            // cluster deployment job
-	image           string                    // tssc container image
+	image           string                    // installer container image
 }
 
 var _ Interface = &DeployTools{}
 
 const (
-	// DeployToolName deploy tool name.
-	DeployToolName = constants.AppName + "_deploy"
+	// deploySuffix deploy tool name suffix.
+	deploySuffix = "_deploy"
 
 	// DebugArg enables debug mode for the deployment job.
 	DebugArg = "debug"
@@ -37,16 +37,17 @@ const (
 	ForceArg = "force"
 )
 
-// deployHandler handles the deployment of TSSC components.
+// deployHandler handles the deployment of components.
 func (d *DeployTools) deployHandler(
 	ctx context.Context,
 	ctr mcp.CallToolRequest,
 ) (*mcp.CallToolResult, error) {
-	// Ensure the cluster is configured, if the ConfigMap is not found, creates a
+	// Ensure the cluster is configured, if theConfigMap is not found, creates a
 	// error to inform the user about MCP configuration tools.
 	cfg, err := d.cm.GetConfig(ctx)
 	if err != nil {
-		return mcp.NewToolResultError(missingClusterConfigErrorFromErr(err)), nil
+		return mcp.NewToolResultError(
+			missingClusterConfigErrorFromErr(d.appName, err)), nil
 	}
 
 	// Validating the topology as a whole, dependencies and integrations to ensure
@@ -107,7 +108,7 @@ Informed flags:
 You can follow the Kubernetes Job logs by running:
 
 	%s`,
-		StatusToolName, debug, dryRun, force, logsCmd,
+		d.appName+statusSuffix, debug, dryRun, force, logsCmd,
 	)), nil
 }
 
@@ -115,20 +116,22 @@ You can follow the Kubernetes Job logs by running:
 func (d *DeployTools) Init(mcpServer *server.MCPServer) {
 	mcpServer.AddTools([]server.ServerTool{{
 		Tool: mcp.NewTool(
-			DeployToolName,
-			mcp.WithDescription(`
-Deploys TSSC components to the cluster, using the cluster configuration to deploy
+			d.appName+deploySuffix,
+			mcp.WithDescription(fmt.Sprintf(`
+Deploys %s components to the cluster, using the cluster configuration to deploy
 the components sequentially. Note the "dry-run" flag: the deployment process will
 only be initiated when the "dry-run" flag is set to "false". By default, this flag
 is set to "true".`,
-			),
+				d.appName,
+			)),
 			mcp.WithBoolean(
 				DryRunArg,
-				mcp.Description(`
+				mcp.Description(fmt.Sprintf(`
 Run the installation Job in dry-run mode. This will not create any resources in
 the cluster and is useful for validating the configuration and integrations. You
-must set it to "false" in order to deploy the TSSC platform in your cluster.`,
-				),
+must set it to "false" in order to deploy the %s platform in your cluster.`,
+					d.appName,
+				)),
 				mcp.DefaultBool(true),
 			),
 			mcp.WithBoolean(
@@ -154,10 +157,11 @@ additional platform deployment information.`,
 
 // NewDeployTools creates a new DeployTools instance.
 func NewDeployTools(
+	appName string,
 	cm *config.ConfigMapManager,
 	topologyBuilder *resolver.TopologyBuilder,
 	job *installer.Job,
 	image string,
 ) *DeployTools {
-	return &DeployTools{cm: cm, topologyBuilder: topologyBuilder, job: job, image: image}
+	return &DeployTools{appName: appName, cm: cm, topologyBuilder: topologyBuilder, job: job, image: image}
 }

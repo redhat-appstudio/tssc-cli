@@ -4,5 +4,5 @@ description: Red Hat User Application Namespaces
 type: application
 version: "1.8.0"
 annotations:
-  tssc.redhat-appstudio.github.com/depends-on: tssc-acs, tssc-pipelines, tssc-tpa
-  tssc.redhat-appstudio.github.com/integrations-required: "(bitbucket || github || gitlab) && acs && trustification"
+  helmet.redhat-appstudio.github.com/depends-on: tssc-acs, tssc-pipelines, tssc-tpa
+  helmet.redhat-appstudio.github.com/integrations-required: "(bitbucket || github || gitlab) && acs && trustification"

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"helm.sh/helm/v3/pkg/chart"
 )
 
@@ -96,7 +97,7 @@ func (c *Collection) GetProductNameForIntegration(integrationName string) string
 
 // NewCollection creates a new Collection from the given charts. It returns an
 // error if there are duplicate charts and product names.
-func NewCollection(charts []chart.Chart) (*Collection, error) {
+func NewCollection(appCtx *api.AppContext, charts []chart.Chart) (*Collection, error) {
 	c := &Collection{dependencies: map[string]*Dependency{}}
 	// Stores the product names found in the slice of Helm charts.
 	productNames := []string{}

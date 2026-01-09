@@ -4,11 +4,13 @@ import (
 	"context"
 	"time"
 
+	"github.com/redhat-appstudio/tssc-cli/pkg/annotations"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // labelSelector is the label set for resources to be deleted.
-const labelSelector = "tssc.redhat-appstudio.github.com/post-deploy=delete"
+const labelSelector = annotations.PostDeploy + "=delete"
 
 // DeleteClusterRoleBindings deletes Kubernetes ClusterRoleBindings by label.
 func DeleteClusterRoleBindings(

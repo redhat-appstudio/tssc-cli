@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 
 	"github.com/redhat-appstudio/tssc-cli/installer"
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/flags"
 
 	"github.com/spf13/cobra"
@@ -25,7 +26,7 @@ type Installer struct {
 	extract string // extract into a directory
 }
 
-var _ Interface = &Installer{}
+var _ api.SubCommand = &Installer{}
 
 const installerDesc = `
 Shows the embedded installer resources, and extracts them to a directory.
@@ -56,7 +57,7 @@ func (i *Installer) Cmd() *cobra.Command {
 	return i.cmd
 }
 
-// Complete implements Interface.
+// Complete implements api.SubCommand.
 func (i *Installer) Complete(_ []string) error {
 	return nil
 }
@@ -213,7 +214,7 @@ func (i *Installer) Run() error {
 }
 
 // NewInstaller creates a new installer subcommand.
-func NewInstaller(f *flags.Flags) *Installer {
+func NewInstaller(appCtx *api.AppContext, f *flags.Flags) *Installer {
 	i := &Installer{
 		cmd: &cobra.Command{
 			Use:   "installer",
