@@ -1,1 +1,1 @@
-GEMINI.md
+ASSISTANTS.md
