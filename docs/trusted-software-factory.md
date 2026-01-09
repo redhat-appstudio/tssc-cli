@@ -26,5 +26,4 @@ The subscription has already been installed by a third party. Helm does not want
 
 #### Workaround
 
-* Edit `installer/config.yaml` and under `.tssc.products` set `enabled: false` for the `Cert-Manager` product.
-* Rerun the `./hack/tssc deploy` command.
+* Add `-i cert-manager` to the `./hack/tssc deploy` command.

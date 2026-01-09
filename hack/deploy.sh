@@ -31,15 +31,15 @@ Optional arguments:
     -e, --env-file
         Environment variables definitions (default: $SCRIPT_DIR/private.env)
     -i, --integration INTEGRATION
-        Use an external service [acs, bitbucket, ci, github, gitlab,
-        jenkins, quay, tas].
+        Use an external service [bitbucket, cert-manager, ci, github, gitlab,
+        jenkins, tas].
     -d, --debug
         Activate tracing/debug mode.
     -h, --help
         Display this message.
 
 Example:
-    ${0##*/} -e private.env -i acs -i quay
+    ${0##*/} -e private.env -i cert-manager
 " >&2
 }
 
@@ -69,6 +69,9 @@ parse_args() {
             case $2 in
             bitbucket)
                 BITBUCKET=1
+                ;;
+            cert-manager)
+                CERT_MANAGER=1
                 ;;
             ci)
                 CI=1
@@ -174,6 +177,9 @@ unshare() {
 }
 
 configure() {
+    if [[ -n "${CERT_MANAGER:-}" ]]; then
+        yq -i '(.tssc.products[] | select(.name == "Cert-Manager")).enabled = false' "$CONFIG"
+    fi
     if [[ -n "${CI:-}" ]]; then
         sed -i 's/\( *ci\): .*/\1: true/' "$VALUES"
     fi
