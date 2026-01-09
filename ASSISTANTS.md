@@ -1,5 +1,31 @@
 # Project: `github.com/redhat-appstudio/tssc-cli`
 
+## AI Assistant Guidelines
+
+You are a Go Staff Engineer, expert Systems Architect and a command-line assistant.
+
+**YOUR ROLE:**
+- **Always explain your plan and get confirmation before acting!**
+- Provide concise, idiomatic, and performant answers for the Go language, its standard library, and its ecosystem.
+- Always adhere to the best practices and features available in the Go version specified by the project's `go.mod` (e.g., Go 1.25+), avoiding legacy patterns when newer alternatives exist.
+- When applicable, generate code that follows functional programming principles, such as using dependency injection and closures.
+- Leverage Go generics to write type-safe, reusable code where they add clear value.
+- Do not commit changes unless directly prompted to do so.
+
+**PLANNING MODE:**
+- By default, you are in planning mode. This means you will explain your plan before acting on the code base.
+- Only when explicitly asked to "implement" or "code" something, you will provide the code.
+- Your plans should be clear, concise, and easy to follow.
+
+**WORKING WITH EXISTING PLANS:**
+- When the user asks you to implement an existing plan document (e.g., from `tmp/drafts/`), treat that as explicit permission to proceed with implementation.
+- Review the plan critically - not all suggested steps may be necessary for every change.
+- Apply your engineering judgment to determine which steps are actually required.
+- Focus on the actual requirements rather than blindly following every suggestion in the plan.
+- Example: Steps like `go mod verify/tidy/vendor` are only needed when project dependencies actually change (adding/removing/updating external packages), not for internal refactoring or code reorganization.
+
+## Project Automation
+
 All project automation is driven by [`Makefile`](./Makefile) targets (`build`, `test`, `run`, etc), to execute these targets use `make <target>`. When you run `make` without a target name, it runs the default target (`make build`); by convention the default target builds the primary application executable.
 
 ## Build System
@@ -27,17 +53,39 @@ All project automation is driven by [`Makefile`](./Makefile) targets (`build`, `
 - **Dependencies**: Services like `k8s.Kube` and `chartfs.ChartFS` are injected via constructors.
 
 ## Repository Structure
-- **`cmd/tssc/`**: Contains the `main` package.
-- **`docs/`**: Contains project documentation files.
-- **`installer/`**: Contains the Helm charts (dependencies), default installer configuration and the `values.yaml.tpl` file. These resources are embedded in the executable using `go:embed` directive.
-- **`pkg/chartfs`**: Contains a `io.FS` compatible abstraction that provides access to the `installer` directory resources. 
-- **`pkg/config/`**: Contains configuration handling logic.
-- **`pkg/engine/`**: Contains the Helm engine, responsible for installing the charts, templating functions and managing the lifecycle of the installation. Uses Helm SDK.
-- **`pkg/installer`**: Contains the overall installer logic.
-- **`pkg/integration`**: Contains the integration definitions. Integrations are used to connect to various external services like GitHub, Quay, etc.
-- **`pkg/integrations`**: Contains the logic to manage integrations lifecycle.
-- **`pkg/k8s`**: Contains the Kubernetes related machinery.
-- **`pkg/mcpserver`**: Contains the MCP (Model Context Protocol) server instance, responsible for the communication with the agentic LLM client, via a API. It also contains the `pkg/mcpserver/instructions.md`, the set of instructions passed to the LLM model to drive the installation process through MCP tools.
-- **`pkg/mcptools`**: Contains the MCP tools, which expose the whole installer features through MCP API.
-- **`pkg/monitor`**: Contains the logic for streaming the changes on certain Kubernetes resources managed by the installer.
-- **`pkg/resolver`**: Contains the logic to define the dependency topology, which is the main concept behind the installer's architecture. Defines the sequence of dependencies (Helm Charts) as well as the relationships between them and required integrations.
+
+The repository packages are organized by dependency tier:
+
+### Low-Level Packages
+- **`pkg/flags/`**: Global CLI flags infrastructure shared across subcommands.
+- **`pkg/k8s/`**: Kubernetes client wrapper and related machinery.
+- **`pkg/monitor/`**: Logic for streaming changes on Kubernetes resources managed by the installer.
+- **`pkg/engine/`**: Template rendering engine (Helm values with Sprig functions).
+
+### Mid-Level Packages
+- **`pkg/config/`**: Configuration management (config.yaml handling).
+- **`pkg/deployer/`**: Helm deployment abstraction (install/upgrade/test operations).
+- **`pkg/integration/`**: Integration interface and helpers for connecting to external services like GitHub, Quay, etc.
+- **`pkg/integrations/`**: Integration lifecycle manager.
+- **`pkg/api/`**: Core API types and interfaces (AppContext, SubCommand, etc.).
+
+### High-Level Packages
+- **`pkg/resolver/`**: Dependency topology resolution using Helm chart annotations. Defines the sequence of dependencies (Helm Charts) and their relationships.
+- **`pkg/hooks/`**: Pre/post deployment hooks execution.
+- **`pkg/installer/`**: Main installation orchestrator coordinating the entire deployment lifecycle.
+
+### CLI and MCP Interface Packages
+- **`pkg/subcmd/`**: CLI subcommands (config, deploy, template, topology, integration, mcpserver, etc.). Includes all integration subcommands.
+- **`pkg/mcptools/`**: MCP server tools exposing installer functionality via MCP protocol.
+
+### Application Bootstrap
+- **`pkg/framework/`**: Application runtime that wires together all components. Creates App type, manages lifecycle, and registers subcommands.
+
+### Application-Specific Directories
+- **`cmd/tssc/`**: Contains the `main` package - CLI entry point.
+- **`installer/`**: Helm charts (dependencies), default installer configuration, and `values.yaml.tpl` file. These resources are embedded in the executable using `go:embed` directive.
+- **`docs/`**: Project documentation files.
+- **`integration-tests/`**, **`test/`**: Test suites.
+- **`scripts/`**, **`hack/`**: Automation and helper scripts.
+- **`ci/`**, **`.github/`**, **`.tekton/`**: CI/CD pipeline configurations.
+- **`image/`**, **`Dockerfile`**: Container image artifacts.
