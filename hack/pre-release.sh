@@ -26,16 +26,29 @@ Optional arguments:
     -r, --tas-release-path PATH
         GitHub release path for TAS installation files.
         Example: https://github.com/securesign/releases/blob/release-1.3.1/1.3.1/stable
-        Required when using TAS product.
+        Optional when using TAS product. If not provided, will auto-detect latest release
+        using GitHub API (requires --github-token).
+    -v, --tas-release-version VERSION
+        TAS release version to use (e.g., 1.3.1).
+        Defaults to \"latest\" which will fetch the most recent release.
+        Requires --github-token for private repositories.
     -t, --github-token TOKEN
         GitHub personal access token for accessing private repositories.
+        Required for auto-detecting latest TAS release or accessing private repos.
         Can also be set via GITHUB_TOKEN environment variable.
     -d, --debug
         Activate tracing/debug mode.
     -h, --help
         Display this message.
 
-Example:
+Examples:
+    # Auto-detect latest release (requires GitHub token)
+    ${0##*/} --product rhtas --github-token ghp_xxxxx
+    
+    # Specify release version (requires GitHub token)
+    ${0##*/} --product rhtas --tas-release-version 1.3.1 --github-token ghp_xxxxx
+    
+    # Use full path (backward compatible)
     ${0##*/} --product rhtas --tas-release-path https://github.com/securesign/releases/blob/release-1.3.1/1.3.1/stable --github-token ghp_xxxxx
 " >&2
 }
@@ -43,7 +56,9 @@ Example:
 parse_args() {
     PRODUCT_LIST=()
     TAS_RELEASE_PATH=""
-    GITHUB_TOKEN="${GITHUB_TOKEN:-}"
+    TAS_RELEASE_VERSION="latest"
+    # Use GITHUB_TOKEN if set, otherwise fall back to GITOPS_GIT_TOKEN
+    GITHUB_TOKEN="${GITHUB_TOKEN:-${GITOPS_GIT_TOKEN:-}}"
     while [[ $# -gt 0 ]]; do
         case $1 in
         -p|--product)
@@ -77,6 +92,15 @@ parse_args() {
                 exit 1
             fi
             TAS_RELEASE_PATH="$2"
+            shift
+            ;;
+        -v|--tas-release-version)
+            if [[ -z "${2:-}" ]]; then
+                echo "[ERROR] Release version needs to be specified after '--tas-release-version'."
+                usage
+                exit 1
+            fi
+            TAS_RELEASE_VERSION="$2"
             shift
             ;;
         -t|--github-token)
@@ -164,6 +188,146 @@ format_version_for_filename() {
     # Convert version format from 4.19 to 4-19 (for catalogSource filename)
     local version=$1
     echo "${version//./-}"
+}
+
+# Fetch latest release tag from GitHub API
+fetch_latest_tas_release() {
+    local owner="securesign"
+    local repo="releases"
+    local api_url="https://api.github.com/repos/${owner}/${repo}/releases/latest"
+    
+    if [[ -z "${GITHUB_TOKEN:-}" ]]; then
+        echo "[ERROR] GitHub token is required to fetch latest release from private repository" >&2
+        echo "[ERROR] Please provide --github-token or set GITHUB_TOKEN environment variable" >&2
+        return 1
+    fi
+    
+    echo "[INFO] Fetching latest TAS release from GitHub API..." >&2
+    if [[ -n "${DEBUG:-}" ]]; then
+        echo "[DEBUG] API URL: $api_url" >&2
+    fi
+    
+    local curl_args=(-sSLf)
+    curl_args+=(-H "Authorization: token ${GITHUB_TOKEN}")
+    curl_args+=(-H "Accept: application/vnd.github.v3+json")
+    
+    local response
+    local curl_status
+    response=$(curl "${curl_args[@]}" "$api_url" 2>&1)
+    curl_status=$?
+    
+    if [[ $curl_status -ne 0 ]]; then
+        echo "[ERROR] Failed to fetch latest release from GitHub API" >&2
+        # Fallback: try listing all releases and get the first one
+        echo "[INFO] Attempting fallback: fetching all releases..." >&2
+        api_url="https://api.github.com/repos/${owner}/${repo}/releases"
+        response=$(curl "${curl_args[@]}" "$api_url" 2>&1)
+        curl_status=$?
+        if [[ $curl_status -ne 0 ]]; then
+            echo "[ERROR] Failed to fetch releases from GitHub API" >&2
+            return 1
+        fi
+        # Extract the first release tag_name
+        local latest_tag
+        latest_tag=$(echo "$response" | grep -o '"tag_name":"[^"]*"' | head -n1 | cut -d'"' -f4)
+        if [[ -z "$latest_tag" ]]; then
+            echo "[ERROR] Failed to parse latest release tag from GitHub API response" >&2
+            if [[ -n "${DEBUG:-}" ]]; then
+                echo "[DEBUG] API Response: $response" >&2
+            fi
+            return 1
+        fi
+        echo "[INFO] Found latest release tag: $latest_tag" >&2
+        echo "$latest_tag"
+        return 0
+    fi
+    
+    # Extract the tag_name from the latest release response
+    local latest_tag
+    latest_tag=$(echo "$response" | grep -o '"tag_name":"[^"]*"' | head -n1 | cut -d'"' -f4)
+    
+    if [[ -z "$latest_tag" ]]; then
+        echo "[ERROR] Failed to parse latest release tag from GitHub API response" >&2
+        if [[ -n "${DEBUG:-}" ]]; then
+            echo "[DEBUG] API Response: $response" >&2
+        fi
+        return 1
+    fi
+    
+    echo "[INFO] Found latest release tag: $latest_tag" >&2
+    echo "$latest_tag"
+}
+
+# Fetch specific release tag from GitHub API by version
+fetch_tas_release_by_version() {
+    local version=$1
+    local owner="securesign"
+    local repo="releases"
+    local api_url="https://api.github.com/repos/${owner}/${repo}/releases"
+    
+    if [[ -z "${GITHUB_TOKEN:-}" ]]; then
+        echo "[ERROR] GitHub token is required to fetch release from private repository" >&2
+        echo "[ERROR] Please provide --github-token or set GITHUB_TOKEN environment variable" >&2
+        return 1
+    fi
+    
+    echo "[INFO] Fetching TAS release version $version from GitHub API..." >&2
+    if [[ -n "${DEBUG:-}" ]]; then
+        echo "[DEBUG] API URL: $api_url" >&2
+        echo "[DEBUG] Looking for version: $version" >&2
+    fi
+    
+    local curl_args=(-sSLf)
+    curl_args+=(-H "Authorization: token ${GITHUB_TOKEN}")
+    curl_args+=(-H "Accept: application/vnd.github.v3+json")
+    
+    local response
+    local curl_status
+    response=$(curl "${curl_args[@]}" "$api_url" 2>&1)
+    curl_status=$?
+    
+    if [[ $curl_status -ne 0 ]]; then
+        echo "[ERROR] Failed to fetch releases from GitHub API" >&2
+        return 1
+    fi
+    
+    # Try to find a release matching the version
+    # Look for tag_name containing the version (e.g., "release-1.3.1" or "v1.3.1")
+    local matching_tag
+    matching_tag=$(echo "$response" | grep -o '"tag_name":"[^"]*' | grep -i "$version" | head -n1 | cut -d'"' -f4)
+    
+    if [[ -z "$matching_tag" ]]; then
+        echo "[ERROR] No release found matching version: $version" >&2
+        echo "[ERROR] Available releases:" >&2
+        echo "$response" | grep -o '"tag_name":"[^"]*"' | cut -d'"' -f4 | head -n5 | sed 's/^/  - /' >&2
+        return 1
+    fi
+    
+    echo "[INFO] Found release tag: $matching_tag" >&2
+    echo "$matching_tag"
+}
+
+# Construct TAS release path from tag
+construct_tas_release_path() {
+    local tag=$1
+    local version=$2
+    
+    # Extract version from tag if not provided
+    if [[ -z "$version" ]]; then
+        # Try to extract version from tag (e.g., "release-1.3.1" -> "1.3.1")
+        if [[ "$tag" =~ release-([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+            version="${BASH_REMATCH[1]}"
+        elif [[ "$tag" =~ v?([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+            version="${BASH_REMATCH[1]}"
+        else
+            echo "[ERROR] Failed to extract version from tag: $tag"
+            return 1
+        fi
+    fi
+    
+    # Construct the path: https://github.com/securesign/releases/blob/{tag}/{version}/stable
+    local path="https://github.com/securesign/releases/blob/${tag}/${version}/stable"
+    echo "$path"
 }
 
 download_release_file() {
@@ -257,7 +421,7 @@ download_release_file() {
         
         echo "[ERROR] Failed to download ${file_name} from ${raw_url}"
         if [[ -z "${GITHUB_TOKEN:-}" ]] && [[ "$raw_url" == *"github.com"* ]]; then
-            echo "[ERROR] This appears to be a private GitHub repository. Try using --github-token or set GITHUB_TOKEN environment variable."
+            echo "[ERROR] This appears to be a private GitHub repository. Try using --github-token, set GITHUB_TOKEN environment variable, or set GITOPS_GIT_TOKEN as a fallback."
         fi
         return 1
     fi
@@ -289,7 +453,7 @@ verify_tas_operator() {
         echo "[INFO] TAS Operator pods:"
         oc get pods -n openshift-operators | grep "trusted-artifact-signer" || true
         
-        READY_PODS=$(oc get pods -n openshift-operators -l app=trusted-artifact-signer --no-headers 2>/dev/null | grep -c "Running" || echo "0")
+        READY_PODS=$(oc get pods -n openshift-operators -l app.kubernetes.io/instance=trusted-artifact-signer --no-headers 2>/dev/null | grep -c "Running" || echo "0")
         if [[ "$READY_PODS" -gt 0 ]]; then
             echo "[INFO] ✓ Found $READY_PODS running TAS Operator pod(s)"
         else
@@ -301,10 +465,47 @@ verify_tas_operator() {
 }
 
 configure_rhtas() {
+    # Auto-detect release path if not provided
     if [[ -z "$TAS_RELEASE_PATH" ]]; then
-        echo "[ERROR] --tas-release-path is required when configuring TAS (rhtas)"
-        echo "[ERROR] Example: --tas-release-path https://github.com/securesign/releases/blob/release-1.3.1/1.3.1/stable"
-        exit 1
+        if [[ -z "${GITHUB_TOKEN:-}" ]]; then
+            echo "[ERROR] Either --tas-release-path or --github-token is required when configuring TAS (rhtas)"
+            echo "[ERROR] Option 1: Provide full path: --tas-release-path https://github.com/securesign/releases/blob/release-1.3.1/1.3.1/stable"
+            echo "[ERROR] Option 2: Auto-detect latest: --github-token ghp_xxxxx"
+            echo "[ERROR] Option 3: Specify version: --tas-release-version 1.3.1 --github-token ghp_xxxxx"
+            exit 1
+        fi
+        
+        echo "[INFO] Auto-detecting TAS release (version: $TAS_RELEASE_VERSION)..."
+        
+        local release_tag
+        local version_for_path
+        if [[ "$TAS_RELEASE_VERSION" == "latest" ]]; then
+            release_tag=$(fetch_latest_tas_release)
+            if [[ -z "$release_tag" ]]; then
+                echo "[ERROR] Failed to fetch latest release tag"
+                exit 1
+            fi
+            # Extract version from tag for path construction
+            version_for_path=""
+        else
+            release_tag=$(fetch_tas_release_by_version "$TAS_RELEASE_VERSION")
+            if [[ -z "$release_tag" ]]; then
+                echo "[ERROR] Failed to fetch release tag for version: $TAS_RELEASE_VERSION"
+                exit 1
+            fi
+            version_for_path="$TAS_RELEASE_VERSION"
+        fi
+        
+        # Construct path from tag
+        TAS_RELEASE_PATH=$(construct_tas_release_path "$release_tag" "$version_for_path")
+        if [[ -z "$TAS_RELEASE_PATH" ]]; then
+            echo "[ERROR] Failed to construct release path from tag: $release_tag"
+            exit 1
+        fi
+        
+        echo "[INFO] Auto-detected release path: $TAS_RELEASE_PATH"
+    else
+        echo "[INFO] Using provided TAS release path: $TAS_RELEASE_PATH"
     fi
     
     echo "[INFO] Configuring TAS Operator using release path: $TAS_RELEASE_PATH"
@@ -416,11 +617,16 @@ configure_subscription(){
 main() {
     parse_args "$@"
     
-    # Validate TAS release path if TAS is in product list
-    if [[ " ${PRODUCT_LIST[*]} " =~ " rhtas " ]] && [[ -z "$TAS_RELEASE_PATH" ]]; then
-        echo "[ERROR] --tas-release-path is required when using TAS (rhtas) product"
-        usage
-        exit 1
+    # Validate TAS configuration if TAS is in product list
+    if [[ " ${PRODUCT_LIST[*]} " =~ " rhtas " ]]; then
+        if [[ -z "$TAS_RELEASE_PATH" ]] && [[ -z "${GITHUB_TOKEN:-}" ]]; then
+            echo "[ERROR] Either --tas-release-path or --github-token is required when using TAS (rhtas) product"
+            echo "[ERROR] Option 1: Provide full path: --tas-release-path <path>"
+            echo "[ERROR] Option 2: Auto-detect latest: --github-token <token>"
+            echo "[ERROR] Option 3: Specify version: --tas-release-version <version> --github-token <token>"
+            usage
+            exit 1
+        fi
     fi
     
     init

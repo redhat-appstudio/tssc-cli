@@ -75,7 +75,7 @@ echo "[INFO] scm_config=(${scm_config[*]})"
 echo "[INFO] pipeline_config=(${pipeline_config[*]})"
 echo "[INFO] auth_config=(${auth_config[*]})"
 
-tpl_file="installer/charts/values.yaml.tpl"
+tpl_file="installer/values.yaml.tpl"
 config_file="installer/config.yaml"
 
 ci_enabled() {
@@ -348,16 +348,31 @@ run_pre_release() {
         ;;
       TAS)
         PRODUCT_ARG="rhtas"
-        # TAS requires --tas-release-path parameter
-        if [[ -z "${TAS_RELEASE_PATH:-}" ]]; then
+        # TAS requires --tas-release-path only if neither GITHUB_TOKEN nor TAS_VERSION is provided
+        # Use GITHUB_TOKEN if set, otherwise fall back to GITOPS_GIT_TOKEN
+        GITHUB_TOKEN_VALUE="${GITHUB_TOKEN:-${GITOPS_GIT_TOKEN:-}}"
+        if [[ -z "${TAS_RELEASE_PATH:-}" ]] && [[ -z "${GITHUB_TOKEN_VALUE:-}" ]] && [[ -z "${TAS_VERSION:-}" ]]; then
           echo "[ERROR] TAS_RELEASE_PATH environment variable is required when PRE_RELEASE=TAS"
+          echo "[ERROR] unless GITHUB_TOKEN (or GITOPS_GIT_TOKEN) or TAS_VERSION is provided"
           echo "[ERROR] Example: export TAS_RELEASE_PATH='https://github.com/securesign/releases/blob/release-1.3.1/1.3.1/stable'"
+          echo "[ERROR] Or: export GITHUB_TOKEN='ghp_xxxxx' (for auto-detection)"
+          echo "[ERROR] Or: export TAS_VERSION='1.3.1' (with GITHUB_TOKEN for private repos)"
           exit 1
         fi
-        PRE_RELEASE_CMD=("$PRE_RELEASE_SCRIPT" --product "$PRODUCT_ARG" --tas-release-path "$TAS_RELEASE_PATH")
-        # Add GitHub token if available (needed for private repos)
-        if [[ -n "${GITHUB_TOKEN:-}" ]]; then
-          PRE_RELEASE_CMD+=("--github-token" "$GITHUB_TOKEN")
+        PRE_RELEASE_CMD=("$PRE_RELEASE_SCRIPT" --product "$PRODUCT_ARG")
+        # Add --tas-release-path if provided
+        if [[ -n "${TAS_RELEASE_PATH:-}" ]]; then
+          PRE_RELEASE_CMD+=("--tas-release-path" "$TAS_RELEASE_PATH")
+        fi
+        # Add --tas-release-version if provided
+        if [[ -n "${TAS_VERSION:-}" ]]; then
+          PRE_RELEASE_CMD+=("--tas-release-version" "$TAS_VERSION")
+        fi
+        # Add GitHub token if available (needed for private repos and auto-detection)
+        if [[ -n "$GITHUB_TOKEN_VALUE" ]]; then
+          # Export as environment variable for pre-release.sh to use
+          export GITHUB_TOKEN="$GITHUB_TOKEN_VALUE"
+          PRE_RELEASE_CMD+=("--github-token" "$GITHUB_TOKEN_VALUE")
         fi
         ;;
       *)
@@ -368,7 +383,11 @@ run_pre_release() {
     
     echo "[INFO] Executing pre-release.sh with product: $PRODUCT_ARG"
     if [[ "${PRE_RELEASE^^}" == "TAS" ]]; then
-      echo "[INFO] Using TAS release path: $TAS_RELEASE_PATH"
+      if [[ -n "${TAS_RELEASE_PATH:-}" ]]; then
+        echo "[INFO] Using TAS release path: $TAS_RELEASE_PATH"
+      else
+        echo "[INFO] TAS release path will be auto-detected"
+      fi
     fi
     bash "${PRE_RELEASE_CMD[@]}"
   else
@@ -453,6 +472,7 @@ install_tssc() {
 }
 
 ci_enabled
+run_pre_release
 create_cluster_config
 configure_integrations
 install_tssc
