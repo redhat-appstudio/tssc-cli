@@ -26,7 +26,7 @@ type (
 		//
 		// GitLab API docs:
 		// https://docs.gitlab.com/api/database_migrations/#mark-a-migration-as-successful
-		MarkMigrationAsSuccessful(version int, opt *MarkMigrationAsSuccessfulOptions, options ...RequestOptionFunc) (*Response, error)
+		MarkMigrationAsSuccessful(version int64, opt *MarkMigrationAsSuccessfulOptions, options ...RequestOptionFunc) (*Response, error)
 	}
 
 	// DatabaseMigrationsService handles communication with the database
@@ -49,7 +49,7 @@ type MarkMigrationAsSuccessfulOptions struct {
 	Database string `url:"database,omitempty" json:"database,omitempty"`
 }
 
-func (s *DatabaseMigrationsService) MarkMigrationAsSuccessful(version int, opt *MarkMigrationAsSuccessfulOptions, options ...RequestOptionFunc) (*Response, error) {
+func (s *DatabaseMigrationsService) MarkMigrationAsSuccessful(version int64, opt *MarkMigrationAsSuccessfulOptions, options ...RequestOptionFunc) (*Response, error) {
 	_, resp, err := do[none](s.client,
 		withMethod(http.MethodPost),
 		withPath("admin/migrations/%d/mark", version),
