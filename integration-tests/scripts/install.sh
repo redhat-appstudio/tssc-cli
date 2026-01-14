@@ -356,8 +356,12 @@ run_pre_release() {
         fi
         PRE_RELEASE_CMD=("$PRE_RELEASE_SCRIPT" --product "$PRODUCT_ARG" --tas-release-path "$TAS_RELEASE_PATH")
         # Add GitHub token if available (needed for private repos)
-        if [[ -n "${GITHUB_TOKEN:-}" ]]; then
-          PRE_RELEASE_CMD+=("--github-token" "$GITHUB_TOKEN")
+        # Use GITHUB_TOKEN if set, otherwise fall back to GITOPS__GIT_TOKEN
+        GITHUB_TOKEN_VALUE="${GITHUB_TOKEN:-${GITOPS__GIT_TOKEN:-}}"
+        if [[ -n "$GITHUB_TOKEN_VALUE" ]]; then
+          # Export as environment variable for pre-release.sh to use
+          export GITHUB_TOKEN="$GITHUB_TOKEN_VALUE"
+          PRE_RELEASE_CMD+=("--github-token" "$GITHUB_TOKEN_VALUE")
         fi
         ;;
       *)
@@ -453,6 +457,7 @@ install_tssc() {
 }
 
 ci_enabled
+run_pre_release
 create_cluster_config
 configure_integrations
 install_tssc

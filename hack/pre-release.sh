@@ -43,7 +43,8 @@ Example:
 parse_args() {
     PRODUCT_LIST=()
     TAS_RELEASE_PATH=""
-    GITHUB_TOKEN="${GITHUB_TOKEN:-}"
+    # Use GITHUB_TOKEN if set, otherwise fall back to GITOPS__GIT_TOKEN
+    GITHUB_TOKEN="${GITHUB_TOKEN:-${GITOPS__GIT_TOKEN:-}}"
     while [[ $# -gt 0 ]]; do
         case $1 in
         -p|--product)
@@ -257,7 +258,7 @@ download_release_file() {
         
         echo "[ERROR] Failed to download ${file_name} from ${raw_url}"
         if [[ -z "${GITHUB_TOKEN:-}" ]] && [[ "$raw_url" == *"github.com"* ]]; then
-            echo "[ERROR] This appears to be a private GitHub repository. Try using --github-token or set GITHUB_TOKEN environment variable."
+            echo "[ERROR] This appears to be a private GitHub repository. Try using --github-token, set GITHUB_TOKEN environment variable, or set GITOPS__GIT_TOKEN as a fallback."
         fi
         return 1
     fi
