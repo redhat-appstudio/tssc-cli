@@ -31,7 +31,7 @@ RUN make GOFLAGS='-buildvcs=false' COMMIT_ID=${COMMIT_ID} VERSION=${VERSION_ID}
 # Run
 #
 
-FROM registry.access.redhat.com/ubi10:10.1-1763341459
+FROM registry.access.redhat.com/ubi10:10.1-1767602397
 
 LABEL \
   name="tssc" \
