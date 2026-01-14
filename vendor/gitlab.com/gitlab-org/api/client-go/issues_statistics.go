@@ -42,17 +42,27 @@ var _ IssuesStatisticsServiceInterface = (*IssuesStatisticsService)(nil)
 //
 // GitLab API docs: https://docs.gitlab.com/api/issues_statistics/
 type IssuesStatistics struct {
-	Statistics struct {
-		Counts struct {
-			All    int `json:"all"`
-			Closed int `json:"closed"`
-			Opened int `json:"opened"`
-		} `json:"counts"`
-	} `json:"statistics"`
+	Statistics IssuesStatisticsStatistics `json:"statistics"`
 }
 
 func (n IssuesStatistics) String() string {
 	return Stringify(n)
+}
+
+// IssuesStatisticsStatistics represents a GitLab issues statistic statistics.
+//
+// GitLab API docs: https://docs.gitlab.com/api/issues_statistics/
+type IssuesStatisticsStatistics struct {
+	Counts IssuesStatisticsCounts `json:"counts"`
+}
+
+// IssuesStatisticsCounts represents a GitLab issues statistic counts.
+//
+// GitLab API docs: https://docs.gitlab.com/api/issues_statistics/
+type IssuesStatisticsCounts struct {
+	All    int64 `json:"all"`
+	Closed int64 `json:"closed"`
+	Opened int64 `json:"opened"`
 }
 
 // GetIssuesStatisticsOptions represents the available GetIssuesStatistics() options.
@@ -63,12 +73,12 @@ type GetIssuesStatisticsOptions struct {
 	Labels           *LabelOptions `url:"labels,omitempty" json:"labels,omitempty"`
 	Milestone        *string       `url:"milestone,omitempty" json:"milestone,omitempty"`
 	Scope            *string       `url:"scope,omitempty" json:"scope,omitempty"`
-	AuthorID         *int          `url:"author_id,omitempty" json:"author_id,omitempty"`
+	AuthorID         *int64        `url:"author_id,omitempty" json:"author_id,omitempty"`
 	AuthorUsername   *string       `url:"author_username,omitempty" json:"author_username,omitempty"`
-	AssigneeID       *int          `url:"assignee_id,omitempty" json:"assignee_id,omitempty"`
+	AssigneeID       *int64        `url:"assignee_id,omitempty" json:"assignee_id,omitempty"`
 	AssigneeUsername *[]string     `url:"assignee_username,omitempty" json:"assignee_username,omitempty"`
 	MyReactionEmoji  *string       `url:"my_reaction_emoji,omitempty" json:"my_reaction_emoji,omitempty"`
-	IIDs             *[]int        `url:"iids[],omitempty" json:"iids,omitempty"`
+	IIDs             *[]int64      `url:"iids[],omitempty" json:"iids,omitempty"`
 	Search           *string       `url:"search,omitempty" json:"search,omitempty"`
 	In               *string       `url:"in,omitempty" json:"in,omitempty"`
 	CreatedAfter     *time.Time    `url:"created_after,omitempty" json:"created_after,omitempty"`
@@ -98,12 +108,12 @@ func (s *IssuesStatisticsService) GetIssuesStatistics(opt *GetIssuesStatisticsOp
 // https://docs.gitlab.com/api/issues_statistics/#get-group-issues-statistics
 type GetGroupIssuesStatisticsOptions struct {
 	Labels           *LabelOptions `url:"labels,omitempty" json:"labels,omitempty"`
-	IIDs             *[]int        `url:"iids[],omitempty" json:"iids,omitempty"`
+	IIDs             *[]int64      `url:"iids[],omitempty" json:"iids,omitempty"`
 	Milestone        *string       `url:"milestone,omitempty" json:"milestone,omitempty"`
 	Scope            *string       `url:"scope,omitempty" json:"scope,omitempty"`
-	AuthorID         *int          `url:"author_id,omitempty" json:"author_id,omitempty"`
+	AuthorID         *int64        `url:"author_id,omitempty" json:"author_id,omitempty"`
 	AuthorUsername   *string       `url:"author_username,omitempty" json:"author_username,omitempty"`
-	AssigneeID       *int          `url:"assignee_id,omitempty" json:"assignee_id,omitempty"`
+	AssigneeID       *int64        `url:"assignee_id,omitempty" json:"assignee_id,omitempty"`
 	AssigneeUsername *[]string     `url:"assignee_username,omitempty" json:"assignee_username,omitempty"`
 	MyReactionEmoji  *string       `url:"my_reaction_emoji,omitempty" json:"my_reaction_emoji,omitempty"`
 	Search           *string       `url:"search,omitempty" json:"search,omitempty"`
@@ -132,13 +142,13 @@ func (s *IssuesStatisticsService) GetGroupIssuesStatistics(gid any, opt *GetGrou
 // GitLab API docs:
 // https://docs.gitlab.com/api/issues_statistics/#get-project-issues-statistics
 type GetProjectIssuesStatisticsOptions struct {
-	IIDs             *[]int        `url:"iids[],omitempty" json:"iids,omitempty"`
+	IIDs             *[]int64      `url:"iids[],omitempty" json:"iids,omitempty"`
 	Labels           *LabelOptions `url:"labels,omitempty" json:"labels,omitempty"`
 	Milestone        *string       `url:"milestone,omitempty" json:"milestone,omitempty"`
 	Scope            *string       `url:"scope,omitempty" json:"scope,omitempty"`
-	AuthorID         *int          `url:"author_id,omitempty" json:"author_id,omitempty"`
+	AuthorID         *int64        `url:"author_id,omitempty" json:"author_id,omitempty"`
 	AuthorUsername   *string       `url:"author_username,omitempty" json:"author_username,omitempty"`
-	AssigneeID       *int          `url:"assignee_id,omitempty" json:"assignee_id,omitempty"`
+	AssigneeID       *int64        `url:"assignee_id,omitempty" json:"assignee_id,omitempty"`
 	AssigneeUsername *[]string     `url:"assignee_username,omitempty" json:"assignee_username,omitempty"`
 	MyReactionEmoji  *string       `url:"my_reaction_emoji,omitempty" json:"my_reaction_emoji,omitempty"`
 	Search           *string       `url:"search,omitempty" json:"search,omitempty"`
