@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/config"
-	"github.com/redhat-appstudio/tssc-cli/pkg/deployer"
-	"github.com/redhat-appstudio/tssc-cli/pkg/flags"
-	"github.com/redhat-appstudio/tssc-cli/pkg/installer"
-	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
-	"github.com/redhat-appstudio/tssc-cli/pkg/resolver"
+	"github.com/redhat-appstudio/helmet/pkg/config"
+	"github.com/redhat-appstudio/helmet/pkg/deployer"
+	"github.com/redhat-appstudio/helmet/pkg/flags"
+	"github.com/redhat-appstudio/helmet/pkg/installer"
+	"github.com/redhat-appstudio/helmet/pkg/k8s"
+	"github.com/redhat-appstudio/helmet/pkg/resolver"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"

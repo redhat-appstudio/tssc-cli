@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
-	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
+	"github.com/redhat-appstudio/helmet/pkg/chartfs"
+	"github.com/redhat-appstudio/helmet/pkg/constants"
 
 	"gopkg.in/yaml.v3"
 )

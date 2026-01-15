@@ -6,7 +6,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/config"
+	"github.com/redhat-appstudio/helmet/pkg/config"
 )
 
 // Resolver represents the actor that resolves dependencies between charts.

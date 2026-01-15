@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"strconv"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/annotations"
+	"github.com/redhat-appstudio/helmet/pkg/annotations"
 	"helm.sh/helm/v3/pkg/chart"
 )
 

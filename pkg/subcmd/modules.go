@@ -3,10 +3,10 @@ package subcmd
 import (
 	"log/slog"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/api"
-	"github.com/redhat-appstudio/tssc-cli/pkg/integration"
-	"github.com/redhat-appstudio/tssc-cli/pkg/integrations"
-	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
+	"github.com/redhat-appstudio/helmet/pkg/api"
+	"github.com/redhat-appstudio/helmet/pkg/integration"
+	"github.com/redhat-appstudio/helmet/pkg/integrations"
+	"github.com/redhat-appstudio/helmet/pkg/k8s"
 )
 
 var (

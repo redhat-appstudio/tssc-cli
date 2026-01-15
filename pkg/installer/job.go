@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/annotations"
-	"github.com/redhat-appstudio/tssc-cli/pkg/api"
-	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
+	"github.com/redhat-appstudio/helmet/pkg/annotations"
+	"github.com/redhat-appstudio/helmet/pkg/api"
+	"github.com/redhat-appstudio/helmet/pkg/k8s"
 
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"

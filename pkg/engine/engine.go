@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"html/template"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
-	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
+	"github.com/redhat-appstudio/helmet/pkg/constants"
+	"github.com/redhat-appstudio/helmet/pkg/k8s"
 
 	"github.com/Masterminds/sprig/v3"
 )

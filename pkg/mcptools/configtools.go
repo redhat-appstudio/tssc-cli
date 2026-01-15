@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/api"
-	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
-	"github.com/redhat-appstudio/tssc-cli/pkg/config"
-	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
+	"github.com/redhat-appstudio/helmet/pkg/api"
+	"github.com/redhat-appstudio/helmet/pkg/chartfs"
+	"github.com/redhat-appstudio/helmet/pkg/config"
+	"github.com/redhat-appstudio/helmet/pkg/k8s"
 
 	"dario.cat/mergo"
 	"github.com/mark3labs/mcp-go/mcp"

@@ -3,8 +3,8 @@ package api
 import (
 	"log/slog"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/integration"
-	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
+	"github.com/redhat-appstudio/helmet/pkg/integration"
+	"github.com/redhat-appstudio/helmet/pkg/k8s"
 )
 
 // IntegrationModule defines the contract for a pluggable integration.

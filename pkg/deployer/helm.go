@@ -8,10 +8,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/flags"
-	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
-	"github.com/redhat-appstudio/tssc-cli/pkg/monitor"
-	"github.com/redhat-appstudio/tssc-cli/pkg/printer"
+	"github.com/redhat-appstudio/helmet/pkg/flags"
+	"github.com/redhat-appstudio/helmet/pkg/k8s"
+	"github.com/redhat-appstudio/helmet/pkg/monitor"
+	"github.com/redhat-appstudio/helmet/pkg/printer"
 
 	"github.com/pkg/errors"
 	"helm.sh/helm/v3/pkg/action"

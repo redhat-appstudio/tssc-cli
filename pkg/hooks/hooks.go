@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"path"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/resolver"
+	"github.com/redhat-appstudio/helmet/pkg/resolver"
 )
 
 // Hooks represent the hooks that can be executed before and after the Helm Chart

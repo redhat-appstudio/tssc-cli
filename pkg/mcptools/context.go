@@ -4,11 +4,11 @@ import (
 	"io"
 	"log/slog"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/api"
-	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
-	"github.com/redhat-appstudio/tssc-cli/pkg/flags"
-	"github.com/redhat-appstudio/tssc-cli/pkg/integrations"
-	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
+	"github.com/redhat-appstudio/helmet/pkg/api"
+	"github.com/redhat-appstudio/helmet/pkg/chartfs"
+	"github.com/redhat-appstudio/helmet/pkg/flags"
+	"github.com/redhat-appstudio/helmet/pkg/integrations"
+	"github.com/redhat-appstudio/helmet/pkg/k8s"
 )
 
 // MCPToolsContext holds the dependencies needed to create MCP tools.

@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/api"
-	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
-	"github.com/redhat-appstudio/tssc-cli/pkg/flags"
-	"github.com/redhat-appstudio/tssc-cli/pkg/integrations"
-	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
-	"github.com/redhat-appstudio/tssc-cli/pkg/mcptools"
-	"github.com/redhat-appstudio/tssc-cli/pkg/subcmd"
+	"github.com/redhat-appstudio/helmet/pkg/api"
+	"github.com/redhat-appstudio/helmet/pkg/chartfs"
+	"github.com/redhat-appstudio/helmet/pkg/flags"
+	"github.com/redhat-appstudio/helmet/pkg/integrations"
+	"github.com/redhat-appstudio/helmet/pkg/k8s"
+	"github.com/redhat-appstudio/helmet/pkg/mcptools"
+	"github.com/redhat-appstudio/helmet/pkg/subcmd"
 
 	"github.com/spf13/cobra"
 )

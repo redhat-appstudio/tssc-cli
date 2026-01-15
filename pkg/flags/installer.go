@@ -1,7 +1,7 @@
 package flags
 
 import (
-	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
+	"github.com/redhat-appstudio/helmet/pkg/constants"
 
 	"github.com/spf13/pflag"
 )

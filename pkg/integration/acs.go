@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/config"
+	"github.com/redhat-appstudio/helmet/pkg/config"
 
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"

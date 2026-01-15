@@ -1,10 +1,10 @@
 package subcmd
 
 import (
-	"github.com/redhat-appstudio/tssc-cli/pkg/config"
-	"github.com/redhat-appstudio/tssc-cli/pkg/installer"
-	"github.com/redhat-appstudio/tssc-cli/pkg/mcptools"
-	"github.com/redhat-appstudio/tssc-cli/pkg/resolver"
+	"github.com/redhat-appstudio/helmet/pkg/config"
+	"github.com/redhat-appstudio/helmet/pkg/installer"
+	"github.com/redhat-appstudio/helmet/pkg/mcptools"
+	"github.com/redhat-appstudio/helmet/pkg/resolver"
 )
 
 // StandardMCPToolsBuilder returns a builder function that creates all standard

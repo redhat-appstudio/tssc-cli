@@ -1,8 +1,8 @@
 package framework
 
 import (
-	"github.com/redhat-appstudio/tssc-cli/pkg/api"
-	"github.com/redhat-appstudio/tssc-cli/pkg/mcptools"
+	"github.com/redhat-appstudio/helmet/pkg/api"
+	"github.com/redhat-appstudio/helmet/pkg/mcptools"
 )
 
 // Option represents a functional option for the App runtime.

@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/api"
-	"github.com/redhat-appstudio/tssc-cli/pkg/config"
-	"github.com/redhat-appstudio/tssc-cli/pkg/integration"
-	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
+	"github.com/redhat-appstudio/helmet/pkg/api"
+	"github.com/redhat-appstudio/helmet/pkg/config"
+	"github.com/redhat-appstudio/helmet/pkg/integration"
+	"github.com/redhat-appstudio/helmet/pkg/k8s"
 )
 
 // IntegrationName name of a integration.
@@ -18,8 +18,8 @@ type IntegrationName string
 // It centralizes the management of integration instances, keeping a consistent
 // set of integration names.
 type Manager struct {
-	integrations map[IntegrationName]*integration.Integration    // integrations
-	modules      map[IntegrationName]api.IntegrationModule // modules
+	integrations map[IntegrationName]*integration.Integration // integrations
+	modules      map[IntegrationName]api.IntegrationModule    // modules
 }
 
 const (

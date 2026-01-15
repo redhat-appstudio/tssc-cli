@@ -4,8 +4,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
-	"github.com/redhat-appstudio/tssc-cli/pkg/config"
+	"github.com/redhat-appstudio/helmet/pkg/chartfs"
+	"github.com/redhat-appstudio/helmet/pkg/config"
 
 	o "github.com/onsi/gomega"
 	"gopkg.in/yaml.v3"

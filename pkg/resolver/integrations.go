@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/config"
-	"github.com/redhat-appstudio/tssc-cli/pkg/integrations"
+	"github.com/redhat-appstudio/helmet/pkg/config"
+	"github.com/redhat-appstudio/helmet/pkg/integrations"
 )
 
 // Integrations represents the actor which inspects the integrations provided and

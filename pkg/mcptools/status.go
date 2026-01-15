@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/config"
-	"github.com/redhat-appstudio/tssc-cli/pkg/installer"
-	"github.com/redhat-appstudio/tssc-cli/pkg/resolver"
+	"github.com/redhat-appstudio/helmet/pkg/config"
+	"github.com/redhat-appstudio/helmet/pkg/installer"
+	"github.com/redhat-appstudio/helmet/pkg/resolver"
 )
 
 func getInstallerPhase(

@@ -3,11 +3,11 @@ package subcmd
 import (
 	"log/slog"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/api"
+	"github.com/redhat-appstudio/helmet/pkg/api"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/config"
-	"github.com/redhat-appstudio/tssc-cli/pkg/integration"
-	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
+	"github.com/redhat-appstudio/helmet/pkg/config"
+	"github.com/redhat-appstudio/helmet/pkg/integration"
+	"github.com/redhat-appstudio/helmet/pkg/k8s"
 
 	"github.com/spf13/cobra"
 )

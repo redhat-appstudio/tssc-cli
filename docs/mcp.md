@@ -1,91 +1,177 @@
-# `tssc`: Model Context Protocol Server (MCP)
+# Model Context Protocol (MCP) Server
+
+The framework includes built-in MCP support, enabling AI assistants to interact with your installer programmatically.
 
 ## Usage
 
-Configure your agentic LLM client to run the following command, and use STDIO for communication with the server.
+Configure your MCP client to run:
 
 ```sh
-tssc mcp-server --image="ghcr.io/redhat-appstudio/tssc:latest"
+<installer-name> mcp --image="<container-image>"
 ```
 
-Note: if you use Cursor, you can use the [Cursor MCP configuration](../.cursor/mcp.json)
+The `--image` flag specifies the container image for Kubernetes Job-based deployments.
 
-Then use the [recommended prompt](#prompt) to get started, and follow the instructions.
+### Client Configuration
 
-## Instructions
-
-When the MCP server is initialized, it will provide instructions for the LLM client to follow. The instructions are documented [here](../pkg/mcpserver/instructions.md).
-
-The instructions provide a clear overview of what the MCP server is designed to do, how it works, and the expected sequence of tools to follow.
-
-## Prompt
-
-This is the recommended prompt to instruct the AI agent to start a deployment.
-
-```text
-You are a senior Red Hat OpenShift Platform Engineer. You leverage a specialized OpenShift-based platform focused on Trusted Software Supply Chain (TSSC), primarily consisting of:
-
-- Advanced Cluster Security (ACS)
-- OpenShift GitOps
-- Trusted Artifact Signer (TAS)
-- OpenShift Pipelines
-- Trusted Profile Analyzer (TPA)
-- Red Hat Developer Hub (DH)
-- Quay and other container registries
-
-Your primary function is to provide actionable commands: YAML manifests and `oc`/`kubectl` CLI commands, all tailored for OpenShift 4.17+. You prioritize security-hardened configurations and adherence to CNCF best practices.
-
-Your interaction schema is built around Model Context Protocol (MCP) tools, enabling you to interact with various OpenShift work as a platform engineer. Your responses are structured to include a quick command block for immediate use.
-
-Now let's get started on deploying TSSC.
+**Cursor** (`.cursor/mcp.json`):
+```json
+{
+  "mcpServers": {
+    "myapp": {
+      "command": "myapp",
+      "args": ["mcp", "--image=ghcr.io/myorg/myapp:latest"]
+    }
+  }
+}
 ```
 
-## Tools
+**Claude Desktop**:
+```json
+{
+  "mcpServers": {
+    "myapp": {
+      "command": "/path/to/myapp",
+      "args": ["mcp", "--image=ghcr.io/myorg/myapp:latest"]
+    }
+  }
+}
+```
 
-The following MCP tools are exposed by the MCP server.
+## How It Works
+
+- **Instructions**: Reads `instructions.md` from your installer filesystem to provide context to the AI
+- **Tool Naming**: Automatically prefixes tools with your app name (e.g., `myapp_config_get`)
+- **Long Operations**: Delegates deployments to Kubernetes Jobs to keep the server responsive
+- **Communication**: Uses STDIO following the MCP specification
+
+## Built-in MCP Tools
+
+All tools are prefixed with `<app-name>_`. For example, if your app is `myapp`:
 
 ### Configuration
 
-This section covers for the features in `tssc config` subcommand.
+**`myapp_config_get`**
+- Returns current or default configuration
+- Arguments: None
 
-#### `tssc_config_get`
+**`myapp_config_create`**
+- Creates new configuration
+- Arguments: `namespace` (string, optional), `settings` (object, optional)
 
-- *Description*: Get the existing TSSC configuration in the cluster, or return the default if none exists yet. Use the default configuration as the reference to create a new TSSC configuration for the cluster.
-- *Arguments*: None.
+**`myapp_config_set`**
+- Updates configuration values
+- Arguments: `path` (string), `value` (any)
 
-#### `tssc_config_create`
+**`myapp_config_products_list`**
+- Lists available products and their status
+- Arguments: None
 
-- *Description*: Create a new TSSC configuration in the cluster, in case none exists yet. Use the defaults as the reference to create a new TSSC cluster configuration.
-- *Arguments*:
-    - **namespace** (string):
-        - **Description**: The main namespace for TSSC (`.tssc.namespace`), where Red Hat Developer Hub (DH) and other fundamental services will be deployed.
-        - **Default**: "tssc".
-    - **setting** (object):
-        - **Description**: The global settings object for TSSC (`.tssc.settings{}`). When empty the default settings will be used.
+### Integrations
 
-### Integration
+**`myapp_integration_list`**
+- Lists available and configured integrations
+- Arguments: None
 
-Integrations with external services are managed via the `tssc integration <integration-name>` command. Since these integrations often require sensitive information, credentials, the MCP server will not handle them directly. Instead, it will provide the user with the exact `tssc integration` commands needed to configure the integration.
+**Note**: The MCP server does not configure integrations directly (they contain credentials). It provides instructions for manual CLI commands.
 
-#### `tssc_integration_list`
+### Deployment
 
-- *Description*: List the TSSC integrations available for the user. Certain integrations are required for certain features, make sure to configure the integrations accordingly.
-- *Arguments*: None.
+**`myapp_deploy`**
+- Triggers deployment via Kubernetes Job
+- Arguments: `dry_run` (boolean, optional), `namespace` (string, optional)
 
-### Deploy
+**`myapp_deploy_status`**
+- Reports Job status and logs
+- Arguments: None
 
-To handle the long-running deployment process without blocking the MCP server, the MCP server will delegate tasks to the cluster.
+### Topology
 
-The `tssc` design maintains a single deployment per cluster by centralizing the installer configuration in a unique `ConfigMap`, ensuring a single RHADS installation per cluster.
+**`myapp_topology_get`**
+- Returns dependency topology with installation order
+- Arguments: None
 
-Following the same principle, the MCP server generates a Kubernetes Job to run the `tssc` container image (specifically the `tssc deploy` subcommand) which proceeds with installing the predefined sequence of Helm charts that makes up RHADS.
+### Status
 
-#### `tssc_deploy_status`
+**`myapp_status`**
+- Comprehensive status report
+- Arguments: None
 
-- *Description*: Reports the status of the TSSC deploy Job running in the cluster.
-- *Arguments*: None.
+## Custom Tools
 
-#### `tssc_deploy`
+Register custom tools when creating your app:
 
-- *Description*: Deploys TSSC components to the cluster, uses the cluster configuration to deploy the TSSC components sequentially.
-- *Arguments*: None.
+```go
+import (
+    "github.com/redhat-appstudio/helmet/pkg/api"
+    "github.com/redhat-appstudio/helmet/pkg/framework/mcpserver"
+)
+
+func customTools(ctx api.AppContext, server *mcpserver.Server) error {
+    server.AddTool(mcpserver.Tool{
+        Name:        "myapp_backup",
+        Description: "Creates a backup",
+        InputSchema: map[string]interface{}{
+            "type": "object",
+            "properties": map[string]interface{}{
+                "destination": {"type": "string", "description": "Backup path"},
+            },
+            "required": []string{"destination"},
+        },
+        Handler: func(args map[string]interface{}) (interface{}, error) {
+            // Implementation
+            return map[string]string{"status": "complete"}, nil
+        },
+    })
+    return nil
+}
+
+func main() {
+    app := framework.NewApp("myapp", filesystem,
+        framework.WithMCPToolsBuilder(customTools),
+    )
+    app.Run()
+}
+```
+
+## Example AI Prompts
+
+**Initial Deployment**:
+```
+You are a Kubernetes platform engineer using the [your product] installer.
+Help me deploy [products] to this cluster. Check the configuration and
+guide me through any necessary integrations.
+```
+
+**Configuration Review**:
+```
+Show me the current configuration and explain which products are enabled.
+List any missing integrations.
+```
+
+**Deployment**:
+```
+Show me the dependency topology, then deploy all enabled products.
+```
+
+## Best Practices
+
+- **Clear Instructions**: Provide comprehensive `instructions.md` explaining your products and workflow
+- **Semantic Names**: Use action-oriented tool names (e.g., `myapp_backup_create`)
+- **Long Operations**: Delegate to Jobs for operations >30 seconds
+- **Validate Inputs**: Always validate and return helpful error messages
+- **Security**: Never pass credentials through MCP tools; use manual integration commands
+
+## Security
+
+- **Credentials**: Never expose credentials via MCP; provide CLI instructions instead
+- **Authorization**: MCP server uses the user's `kubectl` permissions
+- **Images**: Use specific tags, trusted registries, and consider image signing
+
+## Troubleshooting
+
+**MCP server won't start**: Check binary is in PATH, `instructions.md` exists, `kubectl` access works
+
+**Tools not appearing**: Verify client config syntax, command path, server starts without errors
+
+**Deployment Job fails**: Check `kubectl logs job/<installer-name>-deploy`, Job status, RBAC permissions

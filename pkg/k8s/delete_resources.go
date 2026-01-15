@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/annotations"
+	"github.com/redhat-appstudio/helmet/pkg/annotations"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

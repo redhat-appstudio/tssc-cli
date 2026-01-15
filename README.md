@@ -1,199 +1,286 @@
 <p align="center">
-    <a alt="Project quality report" href="https://goreportcard.com/report/github.com/redhat-appstudio/tssc-cli">
-        <img src="https://goreportcard.com/badge/github.com/redhat-appstudio/tssc-cli">
+    <a alt="Project quality report" href="https://goreportcard.com/report/github.com/redhat-appstudio/helmet">
+        <img src="https://goreportcard.com/badge/github.com/redhat-appstudio/helmet">
     </a>
-    <a alt="Release workflow status" href="https://github.com/redhat-appstudio/tssc-cli/actions">
-        <img src="https://github.com/redhat-appstudio/tssc-cli/actions/workflows/release.yaml/badge.svg">
+    <a alt="Release workflow status" href="https://github.com/redhat-appstudio/helmet/actions">
+        <img src="https://github.com/redhat-appstudio/helmet/actions/workflows/release.yaml/badge.svg">
     </a>
-    <a alt="Latest project release" href="https://github.com/redhat-appstudio/tssc-cli/releases/latest">
-        <img src="https://img.shields.io/github/v/release/redhat-appstudio/tssc-cli">
+    <a alt="Latest project release" href="https://github.com/redhat-appstudio/helmet/releases/latest">
+        <img src="https://img.shields.io/github/v/release/redhat-appstudio/helmet">
     </a>
 </p>
 
-Red Hat Trusted Software Supply Chain CLI (`tssc`)
---------------------------------------------------
+# Helmet
 
-# Abstract
+**A framework for building Kubernetes installers with Helm**
 
-The `tssc` binary is designed as a sophisticated installer via Kubernetes [Helm Charts][helm], addressing the complexity of managing interdependent resources in Kubernetes environments. Unlike Kubernetes, which orchestrates resources individually without acknowledging their interdependencies, `tssc` enhances the deployment process by considering these relationships, thereby improving the user experience.
+Helmet provides a reusable, batteries-included framework for creating intelligent Kubernetes installers that understand dependency relationships, manage configuration, and orchestrate complex deployments.
 
-This CLI leverages a [`config.yaml`](installer/config.yaml) file to sequence Helm Chart deployments meticulously. It ensures the integrity of each deployment phase by executing a comprehensive test suite before proceeding to the next Chart installation. This methodical approach guarantees that each phase is successfully completed, enhancing reliability and stability.
+## Overview
 
-Helm, serving as the foundation of `tssc`, provides a detailed blueprint of resources within Kubernetes. This allows for thorough inspection and troubleshooting of deployment issues, offering users detailed documentation and tips for resolution. By integrating with Helm Charts, `tssc` not only adheres to industry standards but also opens the door to more sophisticated features, further enriching the deployment experience.
+Helmet is designed to be imported as a Go library to build custom installers for Kubernetes-based product suites. It handles the complexity of dependency resolution, configuration management, and deployment orchestration, allowing you to focus on defining your products and their relationships.
 
-The `tssc` is designed to be user-friendly, providing a seamless installation process for users of all skill levels. 
+### Key Capabilities
 
-# Deploy TSSC
+- **Automatic Dependency Resolution**: Declares dependencies via Helm chart annotations and automatically determines installation order
+- **Configuration Management**: YAML-based configuration with Kubernetes ConfigMap persistence
+- **Template Engine**: Go templates for dynamic Helm values with cluster introspection
+- **Integration System**: Pluggable integrations for external services (Git providers, registries, etc.)
+- **Hook Scripts**: Execute custom logic before and after chart installations
+- **CLI Generation**: Automatically generates a complete CLI with config, deploy, and integration commands
+- **MCP Support**: Built-in Model Context Protocol server for AI assistant integration
+- **Monitoring**: Resource readiness checks and Helm test execution
 
-Install the `tssc` binary on your local machine following [these instructions](#installing-tssc).
+## Quick Start
 
-Follow the below steps to deploy TSSC on Openshift cluster. 
+```go
+package main
 
-1. Create the installer's cluster configuration. You can use a local configuration file, or default settings. To use the default settings, run the command bellow, and see the [configuration](#configuration) section for more details.
+import (
+    _ "embed"
+    "github.com/redhat-appstudio/helmet/pkg/framework"
+)
 
-```bash
-# Shows the options to manage cluster's configuration.
-tssc config --help
+//go:embed installer.tar
+var installerAssets []byte
 
-# Creates a new default configuration in the cluster, showing the result.
-tssc config --create --get
+func main() {
+    // Create filesystem from embedded assets
+    filesystem, _ := framework.NewTarFS(installerAssets)
 
-# Creates a new default configuration in the cluster in a specific namespace.
-tssc config --create --namespace tssc
+    // Create and run the installer
+    app := framework.NewApp("myapp", filesystem,
+        framework.WithVersion("1.0.0"),
+    )
+
+    app.Run()
+}
 ```
 
-2. Run the command `tssc` to display help text that shows all the supported commands and options. 
+This generates a complete CLI with commands for configuration, deployment, topology inspection, and more.
 
-3. Run the command `tssc integration` to provide integrations to external components. The command below lists the options supported: 
-  
-```bash
-tssc integration --help
+## Architecture
+
+Helmet uses a convention-based approach where your installer assets are organized in a predictable structure:
+
+```
+installer/
+├── config.yaml         # Configuration schema
+├── values.yaml.tpl     # Go template for Helm values
+├── charts/             # Helm charts directory
+│   ├── database/
+│   ├── api-server/
+│   └── frontend/
+└── instructions.md     # MCP server instructions (optional)
 ```
 
-4. Optionally, inspect the dependency topology before deploying TSSC by running:
-
-```bash
-tssc topology
-```
-  
-5. Finally, run the below command to proceed with TSSC deployment. 
-
-```bash
-tssc deploy
-```
-
-## Model Context Protocol Server (MCP)
-
-The TSSC features are also available via the Model Context Protocol server (MCP), please consider the [MCP documentation](docs/mcp.md) for more details.
-
-# Configuration
-
-The [`config.yaml`](installer/config.yaml) file is structured to outline key components essential for the setup, for instance:
+Charts declare dependencies and metadata via annotations:
 
 ```yaml
----
-tssc:
-  settings: {}
-  products: {}
+# charts/api-server/Chart.yaml
+annotations:
+  helmet.redhat-appstudio.github.com/product-name: "api"
+  helmet.redhat-appstudio.github.com/depends-on: "database"
+  helmet.redhat-appstudio.github.com/weight: "100"
 ```
 
-The attributes of the `tssc` object are as follows:
+The framework resolves dependencies, builds an installation topology, and orchestrates deployment in the correct order.
 
-- `.settings`: Defines the settings of the deployment. This can control a wide set of properties.
-- `.products`: Defines the features to be deployed by the installer. Each feature is identified by a unique name and a set of properties.
+## Features
 
-## `tssc.settings`
+### Dependency Resolution
 
-Defines the settings of the deployment. This can control a wide set of properties. For example the following snippet flags the deployment as a CRC deployment, so that the configuration can be tuned to that particular usecase.
+Automatically resolves and orders chart installations based on:
+- Declared dependencies (`depends-on` annotation)
+- Weight-based prioritization (`weight` annotation)
+- Product associations (`product-name` annotation)
+- Integration requirements (`integrations-required` CEL expressions)
+
+See [Topology Documentation](docs/topology.md) for details.
+
+### Configuration System
+
+Product-based configuration with dynamic updates:
 
 ```yaml
----
-tssc:
+myapp:
   settings:
-    crc: true
-```
-
-## `tssc.products`
-
-Defines the products the installer will deploy. Each product is defined by a unique name and a set of properties. For instance, the following snippet defines a `productName` block:
-
-```yaml
----
-tssc:
+    crc: false
   products:
-    productName:
+    - name: test-product-name
       enabled: true
-      namespace: namespace
+      namespace: test-product-namespace
       properties:
-        key: value
+        manageSubscription: true
 ```
 
-With the following attributes:
-- `enabled`: A boolean value to toggle the unique product
-- `namespace`: The namespace in which the product will be deployed
-- `properties`: A set of key-value pairs to define the product's properties
+Configuration is stored as Kubernetes ConfigMaps and can be updated programmatically.
 
-This data can be leveraged for templating using the [`values.yaml.tpl`](#template-functions) file.
+### Template Engine
 
-### Hook Scripts
-
-The installer supports hook scripts to execute custom logic before and after the installation of a Helm Chart. The hook scripts are stored in the `hooks` directory and are executed in the following order:
-
-1. `pre-install.sh`: Executed before the installation of the dependency.
-2. `post-install.sh`: Executed after the installation of the dependency.
-
-Windows users must be aware that the hook scripts are written in Bash and may not be compatible with the Windows shell. To execute the hook scripts, consider using WSL or a similar tool.
-
-## Template Functions
-
-The following functions are available for use in the [`values.yaml.tpl`](./installer/values.yaml.tpl) file:
-
-### `{{ .Installer.Settings.* }}`
-
-A dictionary of key-value pairs for the installer's settings.
-
-This is currently mainly a placeholder for future configuration settings that would impact more than a single product.
-
-### `{{ .Installer.Products.* }}`
-
-The product name, `.name` attribute, is sanitized to work as a template variable. For example, if the product name is `Developer Hub` it will be converted to `Developer_Hub`.
-
-- `{{ .Installer.Products.*.Enabled }}`: Returns the boolean value of the product's `enabled` field.
-- `{{ .Installer.Products.*.Namespace }}`: Returns the namespace in which the product will be deployed.
-- `{{ .Installer.Products.*.Properties.*}}`: Returns a dictionary of key-value pairs for the product's properties.
-
-### `{{ .OpenShift.Ingress }}`
-
-Helper function to inspect the target cluster's Ingress configuration.
+Render Helm values dynamically based on configuration and cluster state:
 
 ```yaml
-{{- $ingressDomain := required "OpenShift ingress domain" .OpenShift.Ingress.Domain -}}
+{{- $db := .Installer.Products.Database -}}
+{{- if $db.Enabled }}
+database:
+  replicas: {{ $db.Properties.replicas | default 1 }}
+  host: db.{{ .OpenShift.Ingress.Domain }}
+{{- end }}
+```
+
+### Generated CLI
+
+The framework automatically generates a complete CLI:
+
+```bash
+myapp config --create                    # Create configuration
+myapp integration github --token=<token> # Configure integrations
+myapp topology                           # View installation order
+myapp deploy                            # Deploy all products
+myapp mcp                               # Start MCP server
+```
+
+### Extensibility
+
+Extend the framework with custom integrations, commands, and MCP tools:
+
+```go
+app := framework.NewApp("myapp", filesystem,
+    framework.WithIntegrations(customIntegrations...),
+    framework.WithMCPToolsBuilder(customMCPTools),
+)
+
+// Add custom commands
+rootCmd := app.Command()
+rootCmd.AddCommand(myCustomCommand)
+
+app.Run()
+```
+
+## Installation
+
+### As a Library
+
+Import Helmet into your Go project:
+
+```bash
+go get github.com/redhat-appstudio/helmet/pkg/framework
+```
+
+## Documentation
+
+- [Dependency Topology](docs/topology.md) - Chart dependency resolution and installation ordering
+- [MCP Server](docs/mcp.md) - AI assistant integration via Model Context Protocol
+- [Contributing Guide](CONTRIBUTING.md) - Development guidelines and best practices
+
+## Examples
+
+### Basic Installer
+
+```go
+package main
+
+import (
+    _ "embed"
+    "github.com/redhat-appstudio/helmet/pkg/framework"
+)
+
+//go:embed installer.tar
+var assets []byte
+
+func main() {
+    fs, _ := framework.NewTarFS(assets)
+    app := framework.NewApp("myinstaller", fs)
+    app.Run()
+}
+```
+
+### With Custom Integrations
+
+```go
+import (
+    "github.com/redhat-appstudio/helmet/pkg/api"
+    "github.com/redhat-appstudio/helmet/pkg/framework"
+)
+
+type CustomIntegration struct{}
+
+func (i *CustomIntegration) Name() string { return "custom" }
+func (i *CustomIntegration) Init(ctx context.Context, logger logr.Logger, k8s *kubernetes.Clientset) (api.Integration, error) {
+    // Implementation
+    return &CustomIntegrationImpl{}, nil
+}
+func (i *CustomIntegration) Command(logger logr.Logger) (*cobra.Command, error) {
+    // CLI command definition
+    return &cobra.Command{Use: "custom"}, nil
+}
+
+func main() {
+    fs, _ := framework.NewTarFS(assets)
+    app := framework.NewApp("myinstaller", fs,
+        framework.WithIntegrations(&CustomIntegration{}),
+    )
+    app.Run()
+}
+```
+
+### With Custom MCP Tools
+
+```go
+import "github.com/redhat-appstudio/helmet/pkg/framework/mcpserver"
+
+func customTools(ctx api.AppContext, s *mcpserver.Server) error {
+    s.AddTool(mcpserver.Tool{
+        Name:        "myapp_status",
+        Description: "Get deployment status",
+        Handler: func(args map[string]interface{}) (interface{}, error) {
+            // Implementation
+            return map[string]string{"status": "healthy"}, nil
+        },
+    })
+    return nil
+}
+
+func main() {
+    fs, _ := framework.NewTarFS(assets)
+    app := framework.NewApp("myinstaller", fs,
+        framework.WithMCPToolsBuilder(customTools),
+    )
+    app.Run()
+}
+```
+
+## Design Principles
+
+- **Convention over Configuration**: Predictable structure with sensible defaults
+- **Interface-Driven**: Extensibility through well-defined interfaces
+- **API Stability**: Functional options pattern for backward compatibility
+- **Kubernetes-Native**: First-class support for namespaces, RBAC, and cluster introspection
+- **Helm-Centric**: Leverages Helm's ecosystem and tooling
+
+## Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for:
+
+- Development environment setup
+- Code style guidelines
+- Testing requirements
+- Pull request process
+
+When contributing, please consider:
+- API stability and backward compatibility
+- Documentation for framework consumers
+- Test coverage for new features
+- Impact on existing consumers
+
+## Resources
+
+- [Project Homepage](https://github.com/redhat-appstudio/helmet)
+- [Documentation](docs/)
+- [Issue Tracker](https://github.com/redhat-appstudio/helmet/issues)
+- [Releases](https://github.com/redhat-appstudio/helmet/releases)
+
 ---
-developerHub:
-  ingressDomain: {{ $ingressDomain }}
-```
 
-# Dependency Topology
-
-The dependency order and namespace is based on the products enabled in the cluster configuration, please consider the [topology](docs/topology.md) document for more details.
-
-# Installing `tssc`
-
-## Pre-Compiled Binaries
-
-Check the lastest release from the [releases page][releases] and download the binary for your operating system and executable architecture. Then, either use the binary directly or move it to a directory in your `PATH`, for instance:
-
-```bash
-install --mode=755 bin/tssc /usr/local/bin
-```
-
-## From Source
-
-Please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) for more information on building the project from source requirements. Then, follow the steps below to install the `tssc` binary from source:
-
-1. Clone [the repository](https://github.com/redhat-appstudio/tssc-cli.git), and navigate to the `tssc-cli` directory.
-
-```bash
-git clone --depth=1 https://github.com/redhat-appstudio/tssc-cli.git && \
-  cd tssc-cli
-```
-
-2. Run the command `make` from the `tssc-cli` directory, this will create a `bin` folder
-
-```bash
-make
-```
-
-3. Move the `tssc` to the desired location, for instance `/usr/local/bin`.
-
-```bash
-install --mode=755 bin/tssc /usr/local/bin
-```
-
-# Contributing
-
-Please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) file for more information on contributing to this project.
- 
-[helm]: https://helm.sh/
-[releases]: https://github.com/redhat-appstudio/tssc-cli/releases
-[tsscCLI]: https://github.com/redhat-appstudio/tssc-cli
+**Note**: This is a framework for building installers. For specific product installers built with Helmet, please refer to their respective repositories.

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/api"
+	"github.com/redhat-appstudio/helmet/pkg/api"
 	"helm.sh/helm/v3/pkg/chart"
 )
 

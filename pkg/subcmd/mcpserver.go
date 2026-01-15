@@ -3,14 +3,14 @@ package subcmd
 import (
 	"fmt"
 
-	"github.com/redhat-appstudio/tssc-cli/pkg/api"
-	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
-	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
-	"github.com/redhat-appstudio/tssc-cli/pkg/flags"
-	"github.com/redhat-appstudio/tssc-cli/pkg/framework/mcpserver"
-	"github.com/redhat-appstudio/tssc-cli/pkg/integrations"
-	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
-	"github.com/redhat-appstudio/tssc-cli/pkg/mcptools"
+	"github.com/redhat-appstudio/helmet/pkg/api"
+	"github.com/redhat-appstudio/helmet/pkg/chartfs"
+	"github.com/redhat-appstudio/helmet/pkg/constants"
+	"github.com/redhat-appstudio/helmet/pkg/flags"
+	"github.com/redhat-appstudio/helmet/pkg/framework/mcpserver"
+	"github.com/redhat-appstudio/helmet/pkg/integrations"
+	"github.com/redhat-appstudio/helmet/pkg/k8s"
+	"github.com/redhat-appstudio/helmet/pkg/mcptools"
 
 	"github.com/spf13/cobra"
 )

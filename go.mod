@@ -1,4 +1,4 @@
-module github.com/redhat-appstudio/tssc-cli
+module github.com/redhat-appstudio/helmet
 
 go 1.25.3
 
