@@ -1,0 +1,28 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: patch-console-enable-odf
+  namespace: {{ .Values.openShiftDataFoundation.namespace }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      serviceAccountName: patch-console-sa
+      restartPolicy: OnFailure
+      containers:
+        - name: patch-console
+          image: registry.redhat.io/openshift4/ose-cli:latest
+          command:
+            - /bin/bash
+            - -c
+            - |
+              echo "Patching Console resource to enable odf-console plugin..."
+              if oc get console.operator.openshift.io cluster -o json | grep -q '"odf-console"'; then
+                echo "odf-console plugin already enabled. Skipping patch."
+              else
+                oc patch console.operator.openshift.io cluster --type=json -p '[{"op":"add","path":"/spec/plugins/-","value":"odf-console"}]'
+                echo "Console plugin enabled"
+              fi

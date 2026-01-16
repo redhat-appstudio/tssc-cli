@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: patch-console-sa
+  namespace: {{ .Values.openShiftDataFoundation.namespace }}
+  labels: {{- include "common.postDeployDeleteLabels" . | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: patch-console-role
+  labels: {{- include "common.postDeployDeleteLabels" . | nindent 4 }}
+rules:
+  - apiGroups: ["operator.openshift.io"]
+    resources: ["consoles"]
+    verbs: ["get", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: patch-console-rolebinding
+  labels: {{- include "common.postDeployDeleteLabels" . | nindent 4 }}
+subjects:
+  - kind: ServiceAccount
+    name: patch-console-sa
+    namespace: {{ .Values.openShiftDataFoundation.namespace }}
+roleRef:
+  kind: ClusterRole
+  name: patch-console-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: patch-bucketclass-sa
+  namespace: {{ .Values.openShiftDataFoundation.namespace }}
+  labels: {{- include "common.postDeployDeleteLabels" . | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: patch-bucketclass-role
+  namespace: {{ .Values.openShiftDataFoundation.namespace }}
+  labels: {{- include "common.postDeployDeleteLabels" . | nindent 4 }}
+rules:
+  - apiGroups: ["noobaa.io"]
+    resources: ["bucketclasses"]
+    verbs: ["get", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: patch-bucketclass-rolebinding
+  namespace: {{ .Values.openShiftDataFoundation.namespace }}
+  labels: {{- include "common.postDeployDeleteLabels" . | nindent 4 }}
+subjects:
+  - kind: ServiceAccount
+    name: patch-bucketclass-sa
+    namespace: {{ .Values.openShiftDataFoundation.namespace }}
+roleRef:
+  kind: Role
+  name: patch-bucketclass-role
+  apiGroup: rbac.authorization.k8s.io

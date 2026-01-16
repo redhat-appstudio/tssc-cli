@@ -1,0 +1,21 @@
+apiVersion: noobaa.io/v1alpha1
+kind: BackingStore
+metadata:
+  finalizers:
+  - noobaa.io/finalizer
+  labels:
+    app: noobaa
+  name: {{ .Values.openShiftDataFoundation.backingStoreName }}
+  namespace: {{ .Values.openShiftDataFoundation.namespace }}
+spec:
+  pvPool:
+    numVolumes: 1
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 4000Mi
+      requests:
+        cpu: 800m
+        memory: 800Mi
+        storage: {{ .Values.openShiftDataFoundation.backingStorageSize }}
+  type: pv-pool
