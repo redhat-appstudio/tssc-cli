@@ -1,0 +1,1 @@
+../../../scripts/quay-helper.sh

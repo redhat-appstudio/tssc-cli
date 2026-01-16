@@ -1,0 +1,64 @@
+{{- $quay := .Values.quay -}}
+{{- $hpaEnabled := $quay.horizontalPodAutoScaler | default false -}}
+---
+apiVersion: quay.redhat.com/v1
+kind: QuayRegistry
+metadata:
+  labels:
+    app: quay
+  namespace: {{ $quay.namespace }}
+  name: {{ $quay.name }} 
+spec:
+  configBundleSecret: {{ include "quay.configSecretName" . }} 
+  components:
+    - kind: quay
+      managed: true
+  {{- with $quay.componentOverrides.quay }}
+      overrides:
+    {{- if not $hpaEnabled }}
+        replicas: {{ .replicas }}
+    {{- end }}
+        resources:
+          {{- .resources | toYaml | nindent 10 }}
+  {{- end }}
+    - kind: postgres
+      managed: true
+  {{- with $quay.componentOverrides.postgres }}
+      overrides:
+        resources:
+          {{- .resources | toYaml | nindent 10 }}
+  {{- end }}
+    - kind: clair
+      managed: true
+  {{- with $quay.componentOverrides.clair }}
+      overrides:
+    {{- if not $hpaEnabled }}
+        replicas: {{ .replicas }}
+    {{- end }}
+        resources:
+          {{- .resources | toYaml | nindent 10 }}
+  {{- end }}
+    - kind: clairpostgres
+      managed: true
+  {{- with $quay.componentOverrides.clairpostgres }}
+      overrides:
+        resources:
+          {{- .resources | toYaml | nindent 10 }}
+  {{- end }}
+    - kind: mirror
+      managed: false
+    - kind: monitoring
+      managed: true
+    - kind: tls
+      managed: true
+    # When enabled, the component's `overrides.replicas` should not be defined,
+    # given the HPA will manage it.
+    - kind: horizontalpodautoscaler
+      managed: {{ $hpaEnabled }}
+    - kind: redis
+      managed: true
+    - kind: route
+      managed: true
+    # Enable to allow for managed storage via ODF.
+    - kind: objectstorage
+      managed: true

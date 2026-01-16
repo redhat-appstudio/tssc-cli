@@ -16,6 +16,13 @@ tssc:
       # Uses the installer's namespace.
       properties:
         manageSubscription: true
+    # Red Hat Quay is a container registry that provides a secure and scalable
+    # way to store, share, and manage container images.
+    - name: Quay
+      enabled: true
+      namespace: tssc-quay
+      properties:
+        manageSubscription: true
     # Red Hat Trusted Artifact Signer (TAS) enhances software supply chain
     # security by simplifying cryptographic signing and verification of software
     # artifacts like container images, binaries, and documents, leveraging an

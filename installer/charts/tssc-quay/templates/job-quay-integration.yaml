@@ -1,0 +1,92 @@
+{{- $quay := .Values.quay }}
+{{- $name := printf "%s-post-deploy" $quay.name }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+  namespace: {{ $quay.namespace }}
+  name: {{ $name }}
+spec:
+  template:
+    spec:
+      serviceAccountName: {{ .Release.Name }}
+      restartPolicy: Never
+      initContainers:
+        #
+        # Copying the scripts that will be used on the subsequent containers, the
+        # scripts are shared via the "/scripts" volume.
+        #
+  {{- include "common.copyScripts" . | nindent 8 }}
+      containers:
+        #
+        # Initializing the Quay integration.
+        #
+        - name: quay-integration
+          image: registry.redhat.io/openshift4/ose-tools-rhel9
+          env:
+            - name: QUAY_HOSTNAME
+              value: {{ include "quay.registryHostname" . }}
+            - name: QUAY_USERNAME
+              value: {{
+                required ".quay.config.superUser.name is required"
+                  $quay.config.superUser.name
+              }}
+            - name: QUAY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "quay.superUserSecretName" . }}
+                  key: password
+            - name: QUAY_EMAIL
+              value: {{
+                required ".quay.config.superUser.email is required"
+                  $quay.config.superUser.email
+              }}
+            - name: QUAY_ORGANIZATION
+              value: {{
+                required ".quay.organization.name is required"
+                  $quay.organization.name
+              }}
+            - name: QUAY_ORGANIZATION_EMAIL
+              value: {{
+                required ".quay.organization.email is required"
+                  $quay.organization.email
+              }}
+            - name: NAMESPACE
+              value: {{
+                required ".quay.secret.namespace is required"
+                  $quay.secret.namespace
+              }}
+            - name: SECRET_NAME
+              value: {{
+                required ".quay.secret.name is required"
+                  $quay.secret.name
+              }}
+            - name: QUAY_ROBOT_SHORT_NAME
+              value: {{
+                required ".quay.robot.name is required"
+                  $quay.robot.name
+              }}
+            - name: QUAY_ROBOT_SHORT_NAME_READONLY
+              value: {{
+                required ".quay.robotReadonly.name is required"
+                  $quay.robotReadonly.name
+              }}
+            - name: QUAY_REPOSITORY
+              value: {{
+                required ".quay.repository.name is required"
+                  $quay.repository.name
+              }}
+          command:
+            - /scripts/quay-helper.sh
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+          securityContext:
+            allowPrivilegeEscalation: false
+      volumes:
+        - name: scripts
+          emptyDir: {}
