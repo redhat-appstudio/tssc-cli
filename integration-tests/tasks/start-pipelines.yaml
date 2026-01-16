@@ -127,6 +127,8 @@ spec:
         echo "GIT_REVISION: $GIT_REVISION"
         PR_NUMBER=$(jq -r '.git.pull_request_number // empty' <<< $JOB_SPEC)
         echo "PR_NUMBER: $PR_NUMBER"
+        EVENT_TYPE=$(jq -r '.event_type // .git.event_type // empty' <<< $JOB_SPEC)
+        echo "EVENT_TYPE: $EVENT_TYPE"
 
         PIPELINERUNS_ARRAY=()
 
@@ -169,6 +171,7 @@ spec:
             "--labels" "pac.test.appstudio.openshift.io/url-repository=${URL_REPOSITORY}"
             "--labels" "pac.test.appstudio.openshift.io/git-revision=${GIT_REVISION}"
             "--labels" "pac.test.appstudio.openshift.io/pull-request=${PR_NUMBER}"
+            "--labels" "pac.test.appstudio.openshift.io/event-type=${EVENT_TYPE}"
             "--labels" "custom.appstudio.openshift.io/main-pipeline-run=${CONTEXT_PIPELINE_RUN_NAME}"
             "--prefix-name" "e2e-$ocp_version$config_suffix"
             "-o" "name"
