@@ -3,6 +3,7 @@ package subcmd
 import (
 	"log/slog"
 
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integrations"
@@ -13,17 +14,17 @@ import (
 )
 
 func NewIntegration(
+	appCtx *api.AppContext,
 	logger *slog.Logger,
 	kube *k8s.Kube,
 	cfs *chartfs.ChartFS,
+	manager *integrations.Manager,
 ) *cobra.Command {
-	manager := integrations.NewManager(logger, kube)
-
 	cmd := &cobra.Command{
 		Use:   "integration <type>",
 		Short: "Configures an external service provider for TSSC",
 		PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
-			cfg, err := bootstrapConfig(cmd.Context(), kube)
+			cfg, err := bootstrapConfig(cmd.Context(), appCtx, kube)
 			if err != nil {
 				return err
 			}
@@ -33,7 +34,7 @@ func NewIntegration(
 				return err
 			}
 
-			collection, err := resolver.NewCollection(charts)
+			collection, err := resolver.NewCollection(appCtx, charts)
 			if err != nil {
 				return err
 			}
@@ -65,38 +66,18 @@ func NewIntegration(
 			}
 
 			if updated {
-				return config.NewConfigMapManager(kube).Update(cmd.Context(), cfg)
+				return config.NewConfigMapManager(kube, appCtx.Name).
+					Update(cmd.Context(), cfg)
 			}
 
 			return nil
 		},
 	}
 
-	for _, integration := range []Interface{
-		NewIntegrationACS(
-			logger, kube, manager.Integration(integrations.ACS)),
-		NewIntegrationArtifactory(
-			logger, kube, manager.Integration(integrations.Artifactory)),
-		NewIntegrationAzure(
-			logger, kube, manager.Integration(integrations.Azure)),
-		NewIntegrationBitBucket(
-			logger, kube, manager.Integration(integrations.BitBucket)),
-		NewIntegrationGitHub(
-			logger, kube, manager.Integration(integrations.GitHub)),
-		NewIntegrationGitLab(
-			logger, kube, manager.Integration(integrations.GitLab)),
-		NewIntegrationJenkins(
-			logger, kube, manager.Integration(integrations.Jenkins)),
-		NewIntegrationNexus(
-			logger, kube, manager.Integration(integrations.Nexus)),
-		NewIntegrationQuay(
-			logger, kube, manager.Integration(integrations.Quay)),
-		NewIntegrationTrustedArtifactSigner(
-			logger, kube, manager.Integration(integrations.TrustedArtifactSigner)),
-		NewIntegrationTrustification(
-			logger, kube, manager.Integration(integrations.Trustification)),
-	} {
-		cmd.AddCommand(NewRunner(integration).Cmd())
+	for _, mod := range manager.GetModules() {
+		wrapper := manager.Integration(integrations.IntegrationName(mod.Name))
+		sub := mod.Command(appCtx, logger, kube, wrapper)
+		cmd.AddCommand(api.NewRunner(sub).Cmd())
 	}
 
 	return cmd

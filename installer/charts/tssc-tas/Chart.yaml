@@ -6,6 +6,6 @@ type: application
 version: "1.8.0"
 appVersion: "1.3"
 annotations:
-  tssc.redhat-appstudio.github.com/product-name: Trusted Artifact Signer
-  tssc.redhat-appstudio.github.com/depends-on: tssc-openshift, tssc-subscriptions, tssc-infrastructure, tssc-iam
-  tssc.redhat-appstudio.github.com/integrations-provided: tas
+  helmet.redhat-appstudio.github.com/product-name: Trusted Artifact Signer
+  helmet.redhat-appstudio.github.com/depends-on: tssc-openshift, tssc-subscriptions, tssc-infrastructure, tssc-iam
+  helmet.redhat-appstudio.github.com/integrations-provided: tas

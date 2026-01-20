@@ -108,7 +108,7 @@ func (i *Installer) Install(ctx context.Context) error {
 	// Performing the installation, or upgrade, of the Helm chart dependency,
 	// using the values rendered before hand.
 	i.logger.Debug("Installing the Helm chart")
-	if err = hc.Deploy(i.values); err != nil {
+	if err = hc.Deploy(ctx, i.values); err != nil {
 		return err
 	}
 	// Verifying if the installation was successful, by running the Helm chart

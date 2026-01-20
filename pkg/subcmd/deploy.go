@@ -6,9 +6,9 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
-	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
 	"github.com/redhat-appstudio/tssc-cli/pkg/flags"
 	"github.com/redhat-appstudio/tssc-cli/pkg/installer"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integrations"
@@ -24,16 +24,18 @@ type Deploy struct {
 	cmd    *cobra.Command   // cobra command
 	logger *slog.Logger     // application logger
 	flags  *flags.Flags     // global flags
+	appCtx *api.AppContext  // application context
 	cfg    *config.Config   // installer configuration
 	cfs    *chartfs.ChartFS // embedded filesystem
 	kube   *k8s.Kube        // kubernetes client
 
+	manager            *integrations.Manager     // integration manager
 	topologyBuilder    *resolver.TopologyBuilder // topology builder
 	chartPath          string                    // single chart path
 	valuesTemplatePath string                    // values template file path
 }
 
-var _ Interface = &Deploy{}
+var _ api.SubCommand = &Deploy{}
 
 const deployDesc = `
 Deploys the TSSC platform components.
@@ -74,12 +76,13 @@ func (d *Deploy) log() *slog.Logger {
 func (d *Deploy) Complete(args []string) error {
 	var err error
 	d.topologyBuilder, err = resolver.NewTopologyBuilder(
-		d.logger, d.cfs, integrations.NewManager(d.logger, d.kube))
+		d.appCtx, d.logger, d.cfs, d.manager)
 	if err != nil {
 		return err
 	}
 	// Load the installer configuration from the cluster.
-	if d.cfg, err = bootstrapConfig(d.cmd.Context(), d.kube); err != nil {
+	d.cfg, err = bootstrapConfig(d.cmd.Context(), d.appCtx, d.kube)
+	if err != nil {
 		return err
 	}
 	if len(args) == 1 {
@@ -118,7 +121,7 @@ subcommand to configure them. For example:
 	$ %s integration --help
 	$ %s integration <name> --help
 	`,
-				err, constants.AppName, constants.AppName, constants.AppName)
+				err, d.appCtx.Name, d.appCtx.Name, d.appCtx.Name)
 
 		}
 		return err
@@ -189,11 +192,13 @@ subcommand to configure them. For example:
 
 // NewDeploy instantiates the deploy subcommand.
 func NewDeploy(
+	appCtx *api.AppContext,
 	logger *slog.Logger,
 	f *flags.Flags,
 	cfs *chartfs.ChartFS,
 	kube *k8s.Kube,
-) Interface {
+	manager *integrations.Manager,
+) api.SubCommand {
 	d := &Deploy{
 		cmd: &cobra.Command{
 			Use:          "deploy [chart]",
@@ -203,8 +208,10 @@ func NewDeploy(
 		},
 		logger:    logger.WithGroup("deploy"),
 		flags:     f,
+		appCtx:    appCtx,
 		cfs:       cfs,
 		kube:      kube,
+		manager:   manager,
 		chartPath: "",
 	}
 	flags.SetValuesTmplFlag(d.cmd.PersistentFlags(), &d.valuesTemplatePath)

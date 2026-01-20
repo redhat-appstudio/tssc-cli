@@ -46,7 +46,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 Need deleted labels
 */}}
 {{- define "common.postDeployDeleteLabels" -}}
-tssc.redhat-appstudio.github.com/post-deploy: delete
+helmet.redhat-appstudio.github.com/post-deploy: delete
 {{- end }}
 
 {{/*

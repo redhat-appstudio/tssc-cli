@@ -59,7 +59,10 @@ func (h *Helm) printRelease(rel *release.Release) {
 }
 
 // helmInstall equivalent to "helm install" command.
-func (h *Helm) helmInstall(vals chartutil.Values) (*release.Release, error) {
+func (h *Helm) helmInstall(
+	ctx context.Context,
+	vals chartutil.Values,
+) (*release.Release, error) {
 	c := action.NewInstall(h.actionCfg)
 	c.GenerateName = false
 	c.Namespace = h.namespace
@@ -72,10 +75,6 @@ func (h *Helm) helmInstall(vals chartutil.Values) (*release.Release, error) {
 		c.DryRunOption = "server"
 	}
 
-	ctx := backgroundContext(func() {
-		h.logger.Warn("Release installation has been cancelled.")
-	})
-
 	rel, err := c.RunWithContext(ctx, h.chart, vals)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrInstallFailed, err.Error())
@@ -84,7 +83,10 @@ func (h *Helm) helmInstall(vals chartutil.Values) (*release.Release, error) {
 }
 
 // helmUpgrade equivalent to "helm upgrade" command.
-func (h *Helm) helmUpgrade(vals chartutil.Values) (*release.Release, error) {
+func (h *Helm) helmUpgrade(
+	ctx context.Context,
+	vals chartutil.Values,
+) (*release.Release, error) {
 	c := action.NewUpgrade(h.actionCfg)
 	c.Namespace = h.namespace
 	c.Timeout = h.flags.Timeout
@@ -93,10 +95,6 @@ func (h *Helm) helmUpgrade(vals chartutil.Values) (*release.Release, error) {
 	if h.flags.DryRun {
 		c.DryRunOption = "server"
 	}
-
-	ctx := backgroundContext(func() {
-		h.logger.Warn("Release upgrade has been cancelled.")
-	})
 
 	rel, err := c.RunWithContext(ctx, h.chart.Name(), h.chart, vals)
 	if err != nil {
@@ -107,7 +105,7 @@ func (h *Helm) helmUpgrade(vals chartutil.Values) (*release.Release, error) {
 
 // Deploy deploys the Helm chart (Dependency) on the cluster. It checks if the
 // release is already installed in order to use the proper helm-client (action).
-func (h *Helm) Deploy(vals chartutil.Values) error {
+func (h *Helm) Deploy(ctx context.Context, vals chartutil.Values) error {
 	c := action.NewHistory(h.actionCfg)
 	c.Max = 1
 
@@ -115,10 +113,10 @@ func (h *Helm) Deploy(vals chartutil.Values) error {
 	var err error
 	if _, err = c.Run(h.chart.Name()); errors.Is(err, driver.ErrReleaseNotFound) {
 		h.logger.Info("Installing Helm Chart...")
-		h.release, err = h.helmInstall(vals)
+		h.release, err = h.helmInstall(ctx, vals)
 	} else {
 		h.logger.Info("Upgrading Helm Chart...")
-		h.release, err = h.helmUpgrade(vals)
+		h.release, err = h.helmUpgrade(ctx, vals)
 	}
 	if err != nil {
 		return err

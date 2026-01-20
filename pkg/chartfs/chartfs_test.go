@@ -1,6 +1,7 @@
 package chartfs
 
 import (
+	"os"
 	"testing"
 
 	o "github.com/onsi/gomega"
@@ -9,12 +10,11 @@ import (
 func TestNewChartFS(t *testing.T) {
 	g := o.NewWithT(t)
 
-	c, err := NewChartFS("../../installer")
-	g.Expect(err).To(o.Succeed())
+	c := New(os.DirFS("../../installer"))
 	g.Expect(c).ToNot(o.BeNil())
 
 	t.Run("ReadFile", func(t *testing.T) {
-		valuesTmplBytes, err := c.ReadFile("charts/values.yaml.tpl")
+		valuesTmplBytes, err := c.ReadFile("values.yaml.tpl")
 		g.Expect(err).To(o.Succeed())
 		g.Expect(valuesTmplBytes).ToNot(o.BeEmpty())
 	})

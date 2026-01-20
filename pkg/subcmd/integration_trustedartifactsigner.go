@@ -3,6 +3,8 @@ package subcmd
 import (
 	"log/slog"
 
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
+
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integration"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
@@ -14,13 +16,14 @@ import (
 // responsible for creating and updating the TrustedArtifactSigner integration secret.
 type IntegrationTrustedArtifactSigner struct {
 	cmd         *cobra.Command           // cobra command
+	appCtx      *api.AppContext          // application context
 	logger      *slog.Logger             // application logger
 	cfg         *config.Config           // installer configuration
 	kube        *k8s.Kube                // kubernetes client
 	integration *integration.Integration // integration instance
 }
 
-var _ Interface = &IntegrationTrustedArtifactSigner{}
+var _ api.SubCommand = &IntegrationTrustedArtifactSigner{}
 
 const trustedArtifactSignerIntegrationLongDesc = `
 Manages the TrustedArtifactSigner integration with TSSC, by storing the required
@@ -36,7 +39,7 @@ func (t *IntegrationTrustedArtifactSigner) Cmd() *cobra.Command {
 // Complete is a no-op in this case.
 func (t *IntegrationTrustedArtifactSigner) Complete(args []string) error {
 	var err error
-	t.cfg, err = bootstrapConfig(t.cmd.Context(), t.kube)
+	t.cfg, err = bootstrapConfig(t.cmd.Context(), t.appCtx, t.kube)
 	return err
 }
 
@@ -54,6 +57,7 @@ func (t *IntegrationTrustedArtifactSigner) Run() error {
 // trusted-artifact-signer" responsible to manage the TSSC integrations with the
 // Trusted Artifact Signer services.
 func NewIntegrationTrustedArtifactSigner(
+	appCtx *api.AppContext,
 	logger *slog.Logger,
 	kube *k8s.Kube,
 	i *integration.Integration,
@@ -66,6 +70,7 @@ func NewIntegrationTrustedArtifactSigner(
 			SilenceUsage: true,
 		},
 
+		appCtx:      appCtx,
 		logger:      logger,
 		kube:        kube,
 		integration: i,

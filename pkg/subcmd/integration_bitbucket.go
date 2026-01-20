@@ -3,6 +3,8 @@ package subcmd
 import (
 	"log/slog"
 
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
+
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integration"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
@@ -14,13 +16,14 @@ import (
 // responsible for creating and updating the BitBucket integration secret.
 type IntegrationBitBucket struct {
 	cmd         *cobra.Command           // cobra command
+	appCtx      *api.AppContext          // application context
 	logger      *slog.Logger             // application logger
 	cfg         *config.Config           // installer configuration
 	kube        *k8s.Kube                // kubernetes client
 	integration *integration.Integration // integration instance
 }
 
-var _ Interface = &IntegrationBitBucket{}
+var _ api.SubCommand = &IntegrationBitBucket{}
 
 const bitbucketIntegrationLongDesc = `
 Manages the BitBucket integration with TSSC, by storing the required
@@ -38,7 +41,7 @@ func (b *IntegrationBitBucket) Cmd() *cobra.Command {
 // Complete is a no-op in this case.
 func (b *IntegrationBitBucket) Complete(args []string) error {
 	var err error
-	b.cfg, err = bootstrapConfig(b.cmd.Context(), b.kube)
+	b.cfg, err = bootstrapConfig(b.cmd.Context(), b.appCtx, b.kube)
 	return err
 }
 
@@ -55,6 +58,7 @@ func (b *IntegrationBitBucket) Run() error {
 // NewIntegrationBitBucket creates the sub-command for the "integration bitbucket"
 // responsible to manage the TSSC integrations with the BitBucket service.
 func NewIntegrationBitBucket(
+	appCtx *api.AppContext,
 	logger *slog.Logger,
 	kube *k8s.Kube,
 	i *integration.Integration,
@@ -67,6 +71,7 @@ func NewIntegrationBitBucket(
 			SilenceUsage: true,
 		},
 
+		appCtx:      appCtx,
 		logger:      logger,
 		kube:        kube,
 		integration: i,

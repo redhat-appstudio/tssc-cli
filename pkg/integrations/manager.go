@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
-	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integration"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
 )
@@ -14,11 +14,12 @@ import (
 // IntegrationName name of a integration.
 type IntegrationName string
 
-// Manager represents the actor responsible for all integrations. It centralizes
-// the management of integration instances, keeping a consistent set of
-// integration names.
+// Manager represents the actor responsible for all integrations.
+// It centralizes the management of integration instances, keeping a consistent
+// set of integration names.
 type Manager struct {
-	integrations map[IntegrationName]*integration.Integration // integrations
+	integrations map[IntegrationName]*integration.Integration    // integrations
+	modules      map[IntegrationName]api.IntegrationModule // modules
 }
 
 const (
@@ -53,6 +54,18 @@ func (m *Manager) IntegrationNames() []string {
 	return names
 }
 
+// GetModules returns the list of registered integration modules.
+func (m *Manager) GetModules() []api.IntegrationModule {
+	modules := []api.IntegrationModule{}
+	for _, mod := range m.modules {
+		modules = append(modules, mod)
+	}
+	return modules
+}
+
+// ConfiguredIntegrations returns a slice of integration names configured in the
+// cluster, it uses the "Exists" method in the integration instance to assert it's
+// secret is present in the cluster.
 func (m *Manager) ConfiguredIntegrations(
 	ctx context.Context,
 	cfg *config.Config,
@@ -70,35 +83,35 @@ func (m *Manager) ConfiguredIntegrations(
 	return configured, nil
 }
 
-// NewManager instantiates a new Manager.
-func NewManager(logger *slog.Logger, kube *k8s.Kube) *Manager {
-	m := &Manager{integrations: map[IntegrationName]*integration.Integration{}}
+// Register adds a integration instance to the manager.
+func (m *Manager) Register(mod api.IntegrationModule, i *integration.Integration) {
+	name := IntegrationName(mod.Name)
+	m.integrations[name] = i
+	m.modules[name] = mod
+}
 
-	// Instantiating all integrations making sure the set of integrations is
-	// complete and unique. The application must panic on duplicated integrations.
-	for name, data := range map[IntegrationName]integration.Interface{
-		ACS:                   integration.NewACS(),
-		Artifactory:           integration.NewContainerRegistry(""),
-		Azure:                 integration.NewAzure(),
-		BitBucket:             integration.NewBitBucket(),
-		GitHub:                integration.NewGitHub(logger, kube),
-		GitLab:                integration.NewGitLab(logger),
-		Jenkins:               integration.NewJenkins(),
-		Nexus:                 integration.NewContainerRegistry(""),
-		Quay:                  integration.NewContainerRegistry(integration.QuayURL),
-		TrustedArtifactSigner: integration.NewTrustedArtifactSigner(),
-		Trustification:        integration.NewTrustification(),
-	} {
-		// Ensure unique integration names.
-		if _, exists := m.integrations[name]; exists {
-			panic(fmt.Sprintf("integration instance already exists: %q", name))
-		}
-		// Generating the secret name for each integration.
-		secretName := fmt.Sprintf("%s-%s-integration", constants.AppName, name)
-		// Creating a new instance of the integration.
-		m.integrations[name] = integration.NewSecret(
-			logger, kube, secretName, data)
+// LoadModules initializes and registers the provided integration modules.
+func (m *Manager) LoadModules(
+	appName string,
+	logger *slog.Logger,
+	kube *k8s.Kube,
+	modules []api.IntegrationModule,
+) error {
+	for _, mod := range modules {
+		impl := mod.Init(logger, kube)
+
+		secretName := fmt.Sprintf("%s-%s-integration", appName, mod.Name)
+		wrapper := integration.NewSecret(logger, kube, secretName, impl)
+
+		m.Register(mod, wrapper)
 	}
+	return nil
+}
 
-	return m
+// NewManager instantiates a new Manager.
+func NewManager() *Manager {
+	return &Manager{
+		integrations: map[IntegrationName]*integration.Integration{},
+		modules:      map[IntegrationName]api.IntegrationModule{},
+	}
 }

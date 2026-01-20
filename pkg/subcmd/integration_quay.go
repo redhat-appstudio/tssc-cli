@@ -3,6 +3,8 @@ package subcmd
 import (
 	"log/slog"
 
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
+
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integration"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
@@ -14,13 +16,14 @@ import (
 // responsible for creating and updating the Quay integration secret.
 type IntegrationQuay struct {
 	cmd         *cobra.Command           // cobra command
+	appCtx      *api.AppContext          // application context
 	logger      *slog.Logger             // application logger
 	cfg         *config.Config           // installer configuration
 	kube        *k8s.Kube                // kubernetes client
 	integration *integration.Integration // integration instance
 }
 
-var _ Interface = &IntegrationQuay{}
+var _ api.SubCommand = &IntegrationQuay{}
 
 const quayIntegrationLongDesc = `
 Manages the Quay integration with TSSC, by storing the required
@@ -50,7 +53,7 @@ func (q *IntegrationQuay) Cmd() *cobra.Command {
 // Complete is a no-op in this case.
 func (q *IntegrationQuay) Complete(args []string) error {
 	var err error
-	q.cfg, err = bootstrapConfig(q.cmd.Context(), q.kube)
+	q.cfg, err = bootstrapConfig(q.cmd.Context(), q.appCtx, q.kube)
 	return err
 }
 
@@ -67,6 +70,7 @@ func (q *IntegrationQuay) Run() error {
 // NewIntegrationQuay creates the sub-command for the "integration quay"
 // responsible to manage the TSSC integrations with a Quay image registry.
 func NewIntegrationQuay(
+	appCtx *api.AppContext,
 	logger *slog.Logger,
 	kube *k8s.Kube,
 	i *integration.Integration,
@@ -79,6 +83,7 @@ func NewIntegrationQuay(
 			SilenceUsage: true,
 		},
 
+		appCtx:      appCtx,
 		logger:      logger,
 		kube:        kube,
 		integration: i,

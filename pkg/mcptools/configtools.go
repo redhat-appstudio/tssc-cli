@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
+	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
-	"github.com/redhat-appstudio/tssc-cli/pkg/constants"
 	"github.com/redhat-appstudio/tssc-cli/pkg/k8s"
 
 	"dario.cat/mergo"
@@ -15,32 +16,34 @@ import (
 	"github.com/mark3labs/mcp-go/server"
 )
 
-// ConfigTools represents a set of tools for managing the TSSC configuration in a
+// ConfigTools represents a set of tools for managing the configuration in a
 // Kubernetes cluster via MCP tools. Each tool is a function that handles a
-// specific role in the TSSC configuration lifecycle. Analogous to the "tssc
-// config" subcommand it uses the ConfigManager to manage the TSSC configuration
-// in the cluster.
+// specific role in the configuration lifecycle. Analogous to the "config"
+// subcommand it uses the ConfigManager to manage the configuration in the
+// cluster.
 type ConfigTools struct {
-	logger *slog.Logger             // application logger
-	cm     *config.ConfigMapManager // cluster config manager
-	kube   *k8s.Kube                // kubernetes client
+	appName string                   // application name for dynamic naming
+	logger  *slog.Logger             // application logger
+	cfs     *chartfs.ChartFS         // embedded filesystem
+	cm      *config.ConfigMapManager // cluster config manager
+	kube    *k8s.Kube                // kubernetes client
 
 	defaultCfg *config.Config // default config (embedded)
 }
 
 const (
-	// ConfigGetTool MCP config get tool name.
-	ConfigGetTool = constants.AppName + "_config_get"
-	// ConfigInitTool initializes the cluster configuration.
-	ConfigInitTool = constants.AppName + "_config_init"
-	// ConfigSettings manipulates global settings.
-	ConfigSettings = constants.AppName + "_config_settings"
-	// ConfigProductEnabled manipulates the status of a product.
-	ConfigProductEnabled = constants.AppName + "_config_product_enabled"
-	// ConfigProductNamespace manipulates the namespace of a product.
-	ConfigProductNamespace = constants.AppName + "_config_product_namespace"
-	// ConfigProductProperties manipulates the properties of a product.
-	ConfigProductProperties = constants.AppName + "_config_product_properties"
+	// configGetSuffix MCP config get tool name suffix.
+	configGetSuffix = "_config_get"
+	// configInitSuffix initializes the cluster configuration suffix.
+	configInitSuffix = "_config_init"
+	// configSettingsSuffix manipulates global settings suffix.
+	configSettingsSuffix = "_config_settings"
+	// configProductEnabledSuffix manipulates the status of a product suffix.
+	configProductEnabledSuffix = "_config_product_enabled"
+	// configProductNamespaceSuffix manipulates the namespace of a product suffix.
+	configProductNamespaceSuffix = "_config_product_namespace"
+	// configProductPropertiesSuffix manipulates the properties of a product suffix.
+	configProductPropertiesSuffix = "_config_product_properties"
 )
 
 // Arguments for the config tools.
@@ -53,7 +56,7 @@ const (
 	PropertiesArg = "properties"
 )
 
-// getHandler similar to "tssc config --get" subcommand it returns a existing TSSC
+// getHandler similar to "config --get" subcommand it returns a existing
 // cluster configuration. If no such configuration exists it returns the
 // installer's default.
 func (c *ConfigTools) getHandler(
@@ -65,7 +68,7 @@ func (c *ConfigTools) getHandler(
 	// configuration as text.
 	if err == nil {
 		return mcp.NewToolResultText(
-			fmt.Sprintf("Current TSSC configuration:\n%s", cfg.String()),
+			fmt.Sprintf("Current %s configuration:\n%s", c.appName, cfg.String()),
 		), nil
 	}
 
@@ -76,7 +79,7 @@ func (c *ConfigTools) getHandler(
 
 	// The cluster is not configured yet, showing the user a default configuration
 	// and hints on how to proceed.
-	if cfg, err = config.NewConfigDefault(""); err != nil {
+	if cfg, err = config.NewConfigDefault(c.cfs, ""); err != nil {
 		return nil, err
 	}
 
@@ -88,11 +91,12 @@ func (c *ConfigTools) getHandler(
 	}
 
 	return mcp.NewToolResultText(fmt.Sprintf(`
-There's no TSSC configuration in the cluster yet. As the platform engineer,
+There's no %s configuration in the cluster yet. As the platform engineer,
 carefully consider the default YAML configuration below.
 
 ---
 %s`,
+		c.appName,
 		payload,
 	)), nil
 }
@@ -105,9 +109,10 @@ func (c *ConfigTools) initHandler(
 	// Checking whether the configuration already exists in the cluster.
 	if _, err := c.cm.GetConfig(ctx); err == nil {
 		return mcp.NewToolResultErrorf(`
-The TSSC configuration already exists in the cluster! Use the %q tool to inspect
+The %s configuration already exists in the cluster! Use the %q tool to inspect
 the current configuration.`,
-			ConfigGetTool,
+			c.appName,
+			c.appName+configGetSuffix,
 		), nil
 	} else if !errors.Is(err, config.ErrConfigMapNotFound) {
 		return mcp.NewToolResultErrorFromErr(`
@@ -155,7 +160,8 @@ Unable to retrieve the configuration from the cluster!`,
 	}
 
 	return mcp.NewToolResultText(fmt.Sprintf(`
-TSSC default configuration is successfully applied in %q namespace`,
+%s default configuration is successfully applied in %q namespace`,
+		c.appName,
 		cfg.Namespace(),
 	)), nil
 }
@@ -439,41 +445,44 @@ cluster.
 func (c *ConfigTools) Init(s *server.MCPServer) {
 	s.AddTools([]server.ServerTool{{
 		Tool: mcp.NewTool(
-			ConfigGetTool,
-			mcp.WithDescription(`
-Get the existing TSSC configuration in the cluster, or return the default if none
-exists yet. Use the default configuration as the reference to create a new TSSC
+			c.appName+configGetSuffix,
+			mcp.WithDescription(fmt.Sprintf(`
+Get the existing %s configuration in the cluster, or return the default if none
+exists yet. Use the default configuration as the reference to create a new %s
 configuration for the cluster.`,
-			),
+				c.appName, c.appName,
+			)),
 		),
 		Handler: c.getHandler,
 	}, {
 		Tool: mcp.NewTool(
-			ConfigInitTool,
-			mcp.WithDescription(`
-Initializes the TSSC default configuration in the informed namespace, in case none
+			c.appName+configInitSuffix,
+			mcp.WithDescription(fmt.Sprintf(`
+Initializes the %s default configuration in the informed namespace, in case none
 exists yet.`,
-			),
+				c.appName,
+			)),
 			mcp.WithString(
 				NamespaceArg,
-				mcp.Description(`
-The main namespace for TSSC ('.tssc.namespace'), where Red Hat Developer Hub (DH)
+				mcp.Description(fmt.Sprintf(`
+The main namespace for %s ('.tssc.namespace'), where Red Hat Developer Hub (DH)
 and other fundamental services will be deployed.`,
-				),
+					c.appName,
+				)),
 				mcp.DefaultString(c.defaultCfg.Namespace()),
 			),
 		),
 		Handler: c.initHandler,
 	}, {
 		Tool: mcp.NewTool(
-			ConfigSettings,
+			c.appName+configSettingsSuffix,
 			mcp.WithDescription(fmt.Sprintf(`
 Modifies the top level settings, '.tssc.settings' in the configuration. It defines
 the global settings for the installer applied to all products. Use the tool %q to
 inspect the configuration's '.tssc.settings' attributes and their current values,
 pay attention to the data type of the values, and make sure they are compatible
 with the expected types.`,
-				ConfigGetTool,
+				c.appName+configGetSuffix,
 			)),
 			mcp.WithString(
 				KeyArg,
@@ -491,12 +500,13 @@ The value for the informed key in '.tssc.settings' object.`,
 		Handler: c.configSettingsHandler,
 	}, {
 		Tool: mcp.NewTool(
-			ConfigProductEnabled,
-			mcp.WithDescription(`
-Toggles a product status, enable or disable it a product for the TSSC installer
+			c.appName+configProductEnabledSuffix,
+			mcp.WithDescription(fmt.Sprintf(`
+Toggles a product status, enable or disable it a product for the %s installer
 scope. The installer will adequate the deployment topology to the enabled
 products.`,
-			),
+				c.appName,
+			)),
 			mcp.WithString(
 				NameArg,
 				mcp.Description(`
@@ -514,7 +524,7 @@ Boolean value indicating whether the product should be enabled or not.`,
 		Handler: c.configProductEnableHandler,
 	}, {
 		Tool: mcp.NewTool(
-			ConfigProductNamespace,
+			c.appName+configProductNamespaceSuffix,
 			mcp.WithDescription(`
 Updates the namespace for a given product, which means the primary product
 components will take place on the specified Kubernetes namespace.`,
@@ -536,7 +546,7 @@ The namespace where the product components will take place.`,
 		Handler: c.configProductNamespaceHandler,
 	}, {
 		Tool: mcp.NewTool(
-			ConfigProductProperties,
+			c.appName+configProductPropertiesSuffix,
 			mcp.WithDescription(`
 Updates the properties of a given product, the product '.properties' attributes
 will be updated using the informed object.`,
@@ -560,18 +570,22 @@ The properties object with the attributes for the informed product name.`,
 
 // NewConfigTools instantiates a new ConfigTools.
 func NewConfigTools(
+	appCtx *api.AppContext,
 	logger *slog.Logger,
+	cfs *chartfs.ChartFS,
 	kube *k8s.Kube,
 	cm *config.ConfigMapManager,
 ) (*ConfigTools, error) {
 	// Loading the default configuration to serve as a reference for MCP tools.
-	defaultCfg, err := config.NewConfigDefault(constants.Namespace)
+	defaultCfg, err := config.NewConfigDefault(cfs, appCtx.Namespace)
 	if err != nil {
 		return nil, err
 	}
 
 	c := &ConfigTools{
+		appName:    appCtx.Name,
 		logger:     logger.With("component", "mcp-config-tools"),
+		cfs:        cfs,
 		kube:       kube,
 		cm:         cm,
 		defaultCfg: defaultCfg,

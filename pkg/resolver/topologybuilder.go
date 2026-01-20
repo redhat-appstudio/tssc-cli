@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
 	"github.com/redhat-appstudio/tssc-cli/pkg/config"
 	"github.com/redhat-appstudio/tssc-cli/pkg/integrations"
@@ -54,6 +55,7 @@ func (t *TopologyBuilder) Build(
 
 // NewTopologyBuilder creates a new TopologyBuilder instance.
 func NewTopologyBuilder(
+	appCtx *api.AppContext,
 	logger *slog.Logger,
 	cfs *chartfs.ChartFS,
 	integrationsManager *integrations.Manager,
@@ -68,7 +70,7 @@ func NewTopologyBuilder(
 		return nil, err
 	}
 	// Creating a collection with the charts found.
-	if t.collection, err = NewCollection(charts); err != nil {
+	if t.collection, err = NewCollection(appCtx, charts); err != nil {
 		return nil, err
 	}
 	return t, nil
