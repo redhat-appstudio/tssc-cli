@@ -480,7 +480,7 @@ spec:
             value: tasks/sprayproxy/sprayproxy-deprovision/0.1/sprayproxy-deprovision.yaml
       params:
         - name: ocp-login-command
-          value: "$(tasks.provision-rosa.results.ocp-login-command)"
+          value: "$(tasks.provision-cluster.results.ocp-login-command)"
     - name: pull-request-status-message
       taskRef:
         resolver: git
