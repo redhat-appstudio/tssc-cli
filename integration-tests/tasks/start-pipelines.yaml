@@ -153,10 +153,16 @@ spec:
             "--param" "konflux-test-infra-secret=$KONFLUX_TEST_INFRA_SECRET"
             "--param" "rhads-config=$config"
             "--param" "testplan=${testplan_b64:-}"
-            "--param" "cloud-credential-key=$CLOUD_CREDENTIAL_KEY"
-            "--param" "machine-type=$OCP_INSTANCE_TYPE"
-            "--param" "replicas=$OCP_REPLICAS"
           )
+
+          # Add ROSA-specific parameters only when using ROSA
+          if [[ "$CLUSTER_PROVIDER" == "rosa" ]]; then
+            tkn_params+=(
+              "--param" "cloud-credential-key=$CLOUD_CREDENTIAL_KEY"
+              "--param" "machine-type=$OCP_INSTANCE_TYPE"
+              "--param" "replicas=$OCP_REPLICAS"
+            )
+          fi
 
           # Add optional image parameters
           if [[ "${tssc_image}" != "" ]]; then

@@ -14,6 +14,10 @@ spec:
       description: 'The name of the test corresponding to a defined Konflux integration test.'
       default: ''
       type: string
+    - name: ocp-version
+      description: 'The OpenShift version to use for the ephemeral cluster deployment (for future use).'
+      type: string
+      default: ""
     - name: job-spec
       type: string
     - name: konflux-test-infra-secret
