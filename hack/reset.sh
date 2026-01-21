@@ -12,6 +12,12 @@ SCRIPT_DIR="$(
     pwd
 )"
 
+if [ "$(uname -s)" == "Darwin" ]; then
+    READLINK="greadlink"
+else
+    READLINK="readlink"
+fi
+
 usage() {
     echo "
 Usage:
@@ -55,7 +61,7 @@ parse_args() {
             CLUSTER=1
             ;;
         -e | --env-file)
-            ENVFILE="$(readlink -e "$2")"
+            ENVFILE="$($READLINK -e "$2")"
             shift
             ;;
         -i|--integration)
