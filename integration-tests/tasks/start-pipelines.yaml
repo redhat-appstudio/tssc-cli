@@ -44,6 +44,10 @@ spec:
       description: "Additional parameters for installation testing (e.g., PRE_RELEASE=TAS TAS_VERSION=1.3.2). When empty, does not alter normal installation."
       type: string
       default: ""
+    - name: cluster-provider
+      description: 'Cluster provider to use for testing. Valid values: "rosa" or "hive"'
+      type: string
+      default: "hive"
     - name: context-pipeline-run-name
       description: "Context pipeline run name for labeling"
       type: string
@@ -75,6 +79,8 @@ spec:
           value: $(params.ocp-replicas)
         - name: INSTALL_PARAMS
           value: $(params.install-params)
+        - name: CLUSTER_PROVIDER
+          value: $(params.cluster-provider)
         - name: KONFLUX_NAMESPACE
           valueFrom:
             fieldRef:
@@ -195,11 +201,22 @@ spec:
           )
 
           echo "Starting pipeline with testplan (${#testplan_b64} chars): ${testplan_b64:0:50}..."
+<<<<<<< HEAD
 
           pipeline_run=$(tkn pipeline start -f https://raw.githubusercontent.com/$REPO_ORG/$REPO/refs/heads/$BRANCH/integration-tests/pipelines/tssc-cli-e2e.yaml "${tkn_params[@]}")
           #Verifying Timeout
           pipeline_timeout=$(oc get pipelinerun "${pipeline_run}" -n "${KONFLUX_NAMESPACE}" -o jsonpath='{.spec.timeouts.pipeline}')
           echo "Pipeline run timeout set to ${pipeline_timeout}"
+=======
+          # Choose pipeline file based on cluster provider
+          if [[ "$CLUSTER_PROVIDER" == "rosa" ]]; then
+            PIPELINE_FILE="tssc-cli-e2e-rosa.yaml"
+          else
+            PIPELINE_FILE="tssc-cli-e2e.yaml"
+          fi
+          echo "Using pipeline file: $PIPELINE_FILE for cluster provider: $CLUSTER_PROVIDER"
+          pipeline_run=$(tkn pipeline start -f https://raw.githubusercontent.com/rhopp/tssc-cli/refs/heads/hive-try3/integration-tests/pipelines/$PIPELINE_FILE "${tkn_params[@]}")
+>>>>>>> 7bfd452c (Add cluster-provider parameter for Hive/ROSA selection)
           # Construct console URL for the new PipelineRun
           CONSOLE_URL="${KONFLUX_URL}/ns/${KONFLUX_NAMESPACE}/applications/${KONFLUX_APPLICATION_NAME}/pipelineruns/${pipeline_run}"
           echo "Started new pipelinerun: ${CONSOLE_URL}"
