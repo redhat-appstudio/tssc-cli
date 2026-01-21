@@ -1,5 +1,5 @@
 ---
-apiVersion: tekton.dev/v1beta1
+apiVersion: tekton.dev/v1
 kind: Pipeline
 metadata:
   name: tssc-install-e2e
@@ -118,9 +118,10 @@ spec:
         - name: cluster-name
           value: "$(context.pipelineRun.name)"
     - name: tssc-install
-      runAfter:
-        - provision-hive
-        - provision-rosa
+      when:
+        - input: "$(tasks.status)"
+          operator: in
+          values: ["Succeeded", "Completed"]
       taskRef:
         resolver: git
         params:
@@ -132,7 +133,7 @@ spec:
             value: integration-tests/tasks/tssc-install.yaml
       params:
         - name: ocp-login-command
-          value: "$(tasks.provision-rosa.results.ocp-login-command)$(tasks.provision-hive.results.ocp-login-command)"
+          value: "$(params.cluster-provider == 'rosa' ? tasks.provision-rosa.results.ocp-login-command : tasks.provision-hive.results.ocp-login-command)"
         - name: job-spec
           value: "$(params.job-spec)"
         - name: rhads-config
@@ -153,7 +154,7 @@ spec:
             value: tasks/sprayproxy/sprayproxy-provision/0.1/sprayproxy-provision.yaml
       params:
         - name: ocp-login-command
-          value: "$(tasks.provision-rosa.results.ocp-login-command)$(tasks.provision-hive.results.ocp-login-command)"
+          value: "$(params.cluster-provider == 'rosa' ? tasks.provision-rosa.results.ocp-login-command : tasks.provision-hive.results.ocp-login-command)"
     - name: tssc-e2e-tests
       runAfter:
         - sprayproxy-provision
@@ -170,7 +171,7 @@ spec:
         - name: job-spec
           value: $(params.job-spec)
         - name: ocp-login-command
-          value: "$(tasks.provision-rosa.results.ocp-login-command)$(tasks.provision-hive.results.ocp-login-command)"
+          value: "$(params.cluster-provider == 'rosa' ? tasks.provision-rosa.results.ocp-login-command : tasks.provision-hive.results.ocp-login-command)"
         - name: oci-container
           value: "quay.io/konflux-test-storage/rhtap-team/rhtap-cli:$(context.pipelineRun.name)"
         - name: tssc-test-image
@@ -194,7 +195,7 @@ spec:
         - name: job-spec
           value: $(params.job-spec)
         - name: ocp-login-command
-          value: "$(tasks.provision-rosa.results.ocp-login-command)$(tasks.provision-hive.results.ocp-login-command)"
+          value: "$(params.cluster-provider == 'rosa' ? tasks.provision-rosa.results.ocp-login-command : tasks.provision-hive.results.ocp-login-command)"
         - name: oci-container
           value: "quay.io/konflux-test-storage/rhtap-team/rhtap-cli:$(context.pipelineRun.name)"
         - name: tssc-test-image
@@ -279,7 +280,7 @@ spec:
             value: tasks/sprayproxy/sprayproxy-deprovision/0.1/sprayproxy-deprovision.yaml
       params:
         - name: ocp-login-command
-          value: "$(tasks.provision-rosa.results.ocp-login-command)$(tasks.provision-hive.results.ocp-login-command)"
+          value: "$(params.cluster-provider == 'rosa' ? tasks.provision-rosa.results.ocp-login-command : tasks.provision-hive.results.ocp-login-command)"
     - name: pull-request-status-message
       taskRef:
         resolver: git
