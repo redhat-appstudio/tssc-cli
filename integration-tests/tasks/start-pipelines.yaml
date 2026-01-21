@@ -159,14 +159,20 @@ spec:
             "--param" "konflux-test-infra-secret=$KONFLUX_TEST_INFRA_SECRET"
             "--param" "rhads-config=$config"
             "--param" "testplan=${testplan_b64:-}"
-            "--param" "cloud-credential-key=$CLOUD_CREDENTIAL_KEY"
-            "--param" "machine-type=$OCP_INSTANCE_TYPE"
-            "--param" "replicas=$OCP_REPLICAS"
           )
 
           # Add install params if provided
           if [[ -n "${INSTALL_PARAMS:-}" ]]; then
             tkn_params+=("--param" "install-params=$INSTALL_PARAMS")
+          fi
+
+          # Add ROSA-specific parameters only when using ROSA
+          if [[ "$CLUSTER_PROVIDER" == "rosa" ]]; then
+            tkn_params+=(
+              "--param" "cloud-credential-key=$CLOUD_CREDENTIAL_KEY"
+              "--param" "machine-type=$OCP_INSTANCE_TYPE"
+              "--param" "replicas=$OCP_REPLICAS"
+            )
           fi
 
           # Add optional image parameters
@@ -201,13 +207,7 @@ spec:
           )
 
           echo "Starting pipeline with testplan (${#testplan_b64} chars): ${testplan_b64:0:50}..."
-<<<<<<< HEAD
 
-          pipeline_run=$(tkn pipeline start -f https://raw.githubusercontent.com/$REPO_ORG/$REPO/refs/heads/$BRANCH/integration-tests/pipelines/tssc-cli-e2e.yaml "${tkn_params[@]}")
-          #Verifying Timeout
-          pipeline_timeout=$(oc get pipelinerun "${pipeline_run}" -n "${KONFLUX_NAMESPACE}" -o jsonpath='{.spec.timeouts.pipeline}')
-          echo "Pipeline run timeout set to ${pipeline_timeout}"
-=======
           # Choose pipeline file based on cluster provider
           if [[ "$CLUSTER_PROVIDER" == "rosa" ]]; then
             PIPELINE_FILE="tssc-cli-e2e-rosa.yaml"
@@ -215,8 +215,10 @@ spec:
             PIPELINE_FILE="tssc-cli-e2e.yaml"
           fi
           echo "Using pipeline file: $PIPELINE_FILE for cluster provider: $CLUSTER_PROVIDER"
-          pipeline_run=$(tkn pipeline start -f https://raw.githubusercontent.com/rhopp/tssc-cli/refs/heads/hive-try3/integration-tests/pipelines/$PIPELINE_FILE "${tkn_params[@]}")
->>>>>>> 7bfd452c (Add cluster-provider parameter for Hive/ROSA selection)
+          pipeline_run=$(tkn pipeline start -f https://raw.githubusercontent.com/$REPO_ORG/$REPO/refs/heads/$BRANCH/integration-tests/pipelines/$PIPELINE_FILE "${tkn_params[@]}")
+          #Verifying Timeout
+          pipeline_timeout=$(oc get pipelinerun "${pipeline_run}" -n "${KONFLUX_NAMESPACE}" -o jsonpath='{.spec.timeouts.pipeline}')
+          echo "Pipeline run timeout set to ${pipeline_timeout}"
           # Construct console URL for the new PipelineRun
           CONSOLE_URL="${KONFLUX_URL}/ns/${KONFLUX_NAMESPACE}/applications/${KONFLUX_APPLICATION_NAME}/pipelineruns/${pipeline_run}"
           echo "Started new pipelinerun: ${CONSOLE_URL}"
