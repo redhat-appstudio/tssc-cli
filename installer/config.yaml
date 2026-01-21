@@ -16,6 +16,13 @@ tssc:
       # Uses the installer's namespace.
       properties:
         manageSubscription: true
+    # Community Konflux Operator  provides the CRDs for the Trusted Software Factory
+    # platform.
+    - name: Konflux
+      enabled: true
+      namespace: konflux-ui
+      properties:
+        manageSubscription: true
     # Red Hat Quay is a container registry that provides a secure and scalable
     # way to store, share, and manage container images.
     - name: Quay

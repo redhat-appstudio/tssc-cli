@@ -70,6 +70,14 @@ getNamespace() {
     return $?
 }
 
+konflux() {
+    if ! getNamespace "Konflux"; then
+        return
+    fi
+    h1 "Konflux"
+    echo "  - URL: $(oc get route -n "$NAMESPACE" --selector="konflux.konflux-ci.dev/component=ui" -o jsonpath="https://{.items[0].spec.host}")"
+}
+
 tas() {
     if ! getNamespace "Trusted Artifact Signer"; then
         return
@@ -96,6 +104,7 @@ tssc() {
 }
 
 action() {
+    konflux
     tas
     tpa
     tssc

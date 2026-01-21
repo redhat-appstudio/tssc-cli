@@ -1,0 +1,23 @@
+---
+{{- include "common.test" . }}
+  containers:
+  {{- $konflux := .Values.konflux }}
+    #
+    # Test the Quay Registry components rollout status.
+    #
+    - name: "konflux-test"
+      image: registry.redhat.io/openshift4/ose-tools-rhel9
+      env:
+        - name: NAMESPACE
+          value: {{ $konflux.namespace }}
+        - name: RESOURCE_TYPE
+          value: "deployment"
+      command:
+        - /scripts/test-rollout-status.sh
+      args:
+        - konflux.konflux-ci.dev/owner=konflux-ui
+      volumeMounts:
+        - name: scripts
+          mountPath: /scripts
+      securityContext:
+        allowPrivilegeEscalation: false

@@ -1,5 +1,17 @@
 ---
 subscriptions:
+  konflux:
+    enabled: false
+    description: Community Konflux Operator
+    apiResource: konfluxes.konflux.konflux-ci.dev
+    namespace: konflux-operator
+    name: konflux-operator
+    channel: stable-v0
+    source: community-operators
+    sourceNamespace: openshift-marketplace
+    operatorGroup:
+      upgradeStrategy: Default
+      targetNamespaces: []
   openshiftCertManager:
     enabled: false
     description: Red Hat Cert-Manager Operator

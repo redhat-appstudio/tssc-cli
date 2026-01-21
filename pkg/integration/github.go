@@ -116,7 +116,7 @@ func (g *GitHub) setClusterURLs(
 	}
 	if g.homepageURL == "" {
 		g.homepageURL = fmt.Sprintf(
-			"https://console-openshift-console.%s/dashboards",
+			"https://konflux-ui-konflux-ui.%s",
 			ingressDomain,
 		)
 	}
