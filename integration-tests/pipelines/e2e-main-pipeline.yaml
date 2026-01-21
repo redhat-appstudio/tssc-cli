@@ -27,6 +27,10 @@ spec:
       description: 'The number of replicas for the cluster nodes.'
       default: "3"
       type: string
+    - name: cluster-provider
+      description: 'Cluster provider to use for testing. Valid values: "rosa" or "hive"'
+      type: string
+      default: "hive"
   tasks:
     - name: test-metadata
       taskRef:
@@ -86,5 +90,7 @@ spec:
           value: $(params.ocp-instance-type)
         - name: ocp-replicas
           value: $(params.ocp-replicas)
+        - name: cluster-provider
+          value: $(params.cluster-provider)
         - name: context-pipeline-run-name
           value: $(context.pipelineRun.name)
