@@ -10,22 +10,30 @@ spec:
     the ROSA cluster, installs TSSC using the installer, runs the tests, collects artifacts,
     and finally deprovisions the ROSA cluster.
   params:
+    - name: cluster-provider
+      description: 'Cluster provider to use for testing. Valid values: "rosa" or "hive"'
+      type: string
+      default: "hive"
     - name: test-name
       description: 'The name of the test corresponding to a defined Konflux integration test.'
       default: ''
       type: string
     - name: ocp-version
-      description: 'The OpenShift version to use for the ephemeral cluster deployment.'
+      description: 'The OpenShift version to use for the ephemeral cluster deployment (ROSA only).'
       type: string
+      default: ""
     - name: cloud-credential-key
       type: string
-      description: The key secret from konflux-test-infra-secret where all AWS ROSA configurations are stored.
+      description: The key secret from konflux-test-infra-secret where all AWS ROSA configurations are stored (ROSA only).
+      default: ""
     - name: replicas
-      description: 'The number of replicas for the cluster nodes.'
+      description: 'The number of replicas for the cluster nodes (ROSA only).'
       type: string
+      default: ""
     - name: machine-type
-      description: 'The type of machine to use for the cluster nodes.'
+      description: 'The type of machine to use for the cluster nodes (ROSA only).'
       type: string
+      default: ""
     - name: job-spec
       type: string
     - name: konflux-test-infra-secret
@@ -47,7 +55,56 @@ spec:
       description: 'Optional testplan.json content encoded in base64 format. If not provided, testplan will be downloaded from the repository.'
       default: ""
   tasks:
+    - name: rosa-hcp-metadata
+      when:
+        - input: "$(params.cluster-provider)"
+          operator: in
+          values: ["rosa"]
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/konflux-ci/tekton-integration-catalog.git
+          - name: revision
+            value: main
+          - name: pathInRepo
+            value: tasks/rosa/hosted-cp/rosa-hcp-metadata/0.1/rosa-hcp-metadata.yaml
+    - name: provision-rosa
+      when:
+        - input: "$(params.cluster-provider)"
+          operator: in
+          values: ["rosa"]
+      runAfter:
+        - rosa-hcp-metadata
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/konflux-ci/tekton-integration-catalog.git
+          - name: revision
+            value: main
+          - name: pathInRepo
+            value: tasks/rosa/hosted-cp/rosa-hcp-provision/0.2/rosa-hcp-provision.yaml
+      params:
+        - name: cluster-name
+          value: "$(tasks.rosa-hcp-metadata.results.cluster-name)"
+        - name: ocp-version
+          value: "$(params.ocp-version)"
+        - name: replicas
+          value: "$(params.replicas)"
+        - name: machine-type
+          value: "$(params.machine-type)"
+        - name: konflux-test-infra-secret
+          value: "$(params.konflux-test-infra-secret)"
+        - name: cloud-credential-key
+          value: "$(params.cloud-credential-key)"
+        - name: oci-container
+          value: "quay.io/konflux-test-storage/rhtap-team/rhtap-cli:$(context.pipelineRun.name)"
     - name: provision-cluster
+      when:
+        - input: "$(params.cluster-provider)"
+          operator: in
+          values: ["hive"]
       taskRef:
         resolver: git
         params:
@@ -60,6 +117,7 @@ spec:
     - name: tssc-install
       runAfter:
         - provision-cluster
+        - provision-rosa
       taskRef:
         resolver: git
         params:
@@ -71,7 +129,7 @@ spec:
             value: integration-tests/tasks/tssc-install.yaml
       params:
         - name: ocp-login-command
-          value: "$(tasks.provision-cluster.results.ocp-login-command)"
+          value: "$(tasks.provision-rosa.results.ocp-login-command)$(tasks.provision-cluster.results.ocp-login-command)"
         - name: job-spec
           value: "$(params.job-spec)"
         - name: rhads-config
@@ -92,7 +150,7 @@ spec:
             value: tasks/sprayproxy/sprayproxy-provision/0.1/sprayproxy-provision.yaml
       params:
         - name: ocp-login-command
-          value: "$(tasks.provision-cluster.results.ocp-login-command)"
+          value: "$(tasks.provision-rosa.results.ocp-login-command)$(tasks.provision-cluster.results.ocp-login-command)"
     - name: tssc-e2e-tests
       runAfter:
         - sprayproxy-provision
@@ -109,7 +167,7 @@ spec:
         - name: job-spec
           value: $(params.job-spec)
         - name: ocp-login-command
-          value: "$(tasks.provision-cluster.results.ocp-login-command)"
+          value: "$(tasks.provision-rosa.results.ocp-login-command)$(tasks.provision-cluster.results.ocp-login-command)"
         - name: oci-container
           value: "quay.io/konflux-test-storage/rhtap-team/rhtap-cli:$(context.pipelineRun.name)"
         - name: tssc-test-image
@@ -133,7 +191,7 @@ spec:
         - name: job-spec
           value: $(params.job-spec)
         - name: ocp-login-command
-          value: "$(tasks.provision-cluster.results.ocp-login-command)"
+          value: "$(tasks.provision-rosa.results.ocp-login-command)$(tasks.provision-cluster.results.ocp-login-command)"
         - name: oci-container
           value: "quay.io/konflux-test-storage/rhtap-team/rhtap-cli:$(context.pipelineRun.name)"
         - name: tssc-test-image
@@ -141,7 +199,40 @@ spec:
         - name: testplan
           value: $(params.testplan)
   finally:
+    - name: deprovision-rosa-collect-artifacts
+      when:
+        - input: "$(params.cluster-provider)"
+          operator: in
+          values: ["rosa"]
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/konflux-ci/tekton-integration-catalog.git
+          - name: revision
+            value: main
+          - name: pathInRepo
+            value: tasks/rosa/hosted-cp/rosa-hcp-deprovision/0.2/rosa-hcp-deprovision.yaml
+      params:
+        - name: test-name
+          value: $(context.pipelineRun.name)
+        - name: ocp-login-command
+          value: "$(tasks.provision-rosa.results.ocp-login-command)"
+        - name: oci-container
+          value: "quay.io/konflux-test-storage/rhtap-team/rhtap-cli:$(context.pipelineRun.name)"
+        - name: cluster-name
+          value: "$(tasks.rosa-hcp-metadata.results.cluster-name)"
+        - name: konflux-test-infra-secret
+          value: "$(params.konflux-test-infra-secret)"
+        - name: cloud-credential-key
+          value: "$(params.cloud-credential-key)"
+        - name: pipeline-aggregate-status
+          value: "$(tasks.status)"
     - name: deprovision-cluster
+      when:
+        - input: "$(params.cluster-provider)"
+          operator: in
+          values: ["hive"]
       taskSpec:
         volumes:
           - name: hive-creds-volume
@@ -179,7 +270,7 @@ spec:
             value: tasks/sprayproxy/sprayproxy-deprovision/0.1/sprayproxy-deprovision.yaml
       params:
         - name: ocp-login-command
-          value: "$(tasks.provision-cluster.results.ocp-login-command)"
+          value: "$(tasks.provision-rosa.results.ocp-login-command)$(tasks.provision-cluster.results.ocp-login-command)"
     - name: pull-request-status-message
       taskRef:
         resolver: git
@@ -219,6 +310,10 @@ spec:
         - name: pipelinerun-name
           value: $(context.pipelineRun.name)
     - name: collect-cluster-artifacts
+      when:
+        - input: "$(params.cluster-provider)"
+          operator: in
+          values: ["hive"]
       taskSpec:
         volumes:
           - name: konflux-test-infra-volume
