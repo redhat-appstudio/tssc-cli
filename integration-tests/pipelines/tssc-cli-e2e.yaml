@@ -100,7 +100,7 @@ spec:
           value: "$(params.cloud-credential-key)"
         - name: oci-container
           value: "quay.io/konflux-test-storage/rhtap-team/rhtap-cli:$(context.pipelineRun.name)"
-    - name: provision-cluster
+    - name: provision-hive
       when:
         - input: "$(params.cluster-provider)"
           operator: in
@@ -113,10 +113,10 @@ spec:
           - name: revision
             value: hive-try3
           - name: pathInRepo
-            value: integration-tests/tasks/provision-cluster.yaml
+            value: integration-tests/tasks/provision-hive.yaml
     - name: tssc-install
       runAfter:
-        - provision-cluster
+        - provision-hive
         - provision-rosa
       taskRef:
         resolver: git
@@ -129,7 +129,7 @@ spec:
             value: integration-tests/tasks/tssc-install.yaml
       params:
         - name: ocp-login-command
-          value: "$(tasks.provision-rosa.results.ocp-login-command)$(tasks.provision-cluster.results.ocp-login-command)"
+          value: "$(tasks.provision-rosa.results.ocp-login-command)$(tasks.provision-hive.results.ocp-login-command)"
         - name: job-spec
           value: "$(params.job-spec)"
         - name: rhads-config
@@ -150,7 +150,7 @@ spec:
             value: tasks/sprayproxy/sprayproxy-provision/0.1/sprayproxy-provision.yaml
       params:
         - name: ocp-login-command
-          value: "$(tasks.provision-rosa.results.ocp-login-command)$(tasks.provision-cluster.results.ocp-login-command)"
+          value: "$(tasks.provision-rosa.results.ocp-login-command)$(tasks.provision-hive.results.ocp-login-command)"
     - name: tssc-e2e-tests
       runAfter:
         - sprayproxy-provision
@@ -167,7 +167,7 @@ spec:
         - name: job-spec
           value: $(params.job-spec)
         - name: ocp-login-command
-          value: "$(tasks.provision-rosa.results.ocp-login-command)$(tasks.provision-cluster.results.ocp-login-command)"
+          value: "$(tasks.provision-rosa.results.ocp-login-command)$(tasks.provision-hive.results.ocp-login-command)"
         - name: oci-container
           value: "quay.io/konflux-test-storage/rhtap-team/rhtap-cli:$(context.pipelineRun.name)"
         - name: tssc-test-image
@@ -191,7 +191,7 @@ spec:
         - name: job-spec
           value: $(params.job-spec)
         - name: ocp-login-command
-          value: "$(tasks.provision-rosa.results.ocp-login-command)$(tasks.provision-cluster.results.ocp-login-command)"
+          value: "$(tasks.provision-rosa.results.ocp-login-command)$(tasks.provision-hive.results.ocp-login-command)"
         - name: oci-container
           value: "quay.io/konflux-test-storage/rhtap-team/rhtap-cli:$(context.pipelineRun.name)"
         - name: tssc-test-image
@@ -228,7 +228,7 @@ spec:
           value: "$(params.cloud-credential-key)"
         - name: pipeline-aggregate-status
           value: "$(tasks.status)"
-    - name: deprovision-cluster
+    - name: deprovision-hive
       when:
         - input: "$(params.cluster-provider)"
           operator: in
@@ -241,7 +241,7 @@ spec:
           - name: credentials
             emptyDir: {}
         steps:
-          - name: deprovision-cluster
+          - name: deprovision-hive
             image: registry.redhat.io/openshift4/ose-cli@sha256:15da03b04318bcc842060b71e9dd6d6c2595edb4e8fdd11b0c6781eeb03ca182
             volumeMounts:
               - name: hive-creds-volume
@@ -270,7 +270,7 @@ spec:
             value: tasks/sprayproxy/sprayproxy-deprovision/0.1/sprayproxy-deprovision.yaml
       params:
         - name: ocp-login-command
-          value: "$(tasks.provision-rosa.results.ocp-login-command)$(tasks.provision-cluster.results.ocp-login-command)"
+          value: "$(tasks.provision-rosa.results.ocp-login-command)$(tasks.provision-hive.results.ocp-login-command)"
     - name: pull-request-status-message
       taskRef:
         resolver: git
@@ -309,7 +309,7 @@ spec:
           value: $(tasks.status)
         - name: pipelinerun-name
           value: $(context.pipelineRun.name)
-    - name: collect-cluster-artifacts
+    - name: collect-hive-artifacts
       when:
         - input: "$(params.cluster-provider)"
           operator: in
@@ -320,13 +320,13 @@ spec:
             secret:
               secretName: "$(params.konflux-test-infra-secret)"
         steps:
-          - name: collect-artifacts
+          - name: collect-hive-artifacts
             workingDir: /workspace/cluster-artifacts
             onError: continue
             image: quay.io/konflux-qe-incubator/konflux-qe-tools:latest
             script: |
               #!/bin/sh
-              $(tasks.provision-cluster.results.ocp-login-command)
+              $(tasks.provision-hive.results.ocp-login-command)
 
               curl -sSL https://raw.githubusercontent.com/konflux-ci/konflux-qe-definitions/main/scripts/gather-extra.sh | bash
             when:
