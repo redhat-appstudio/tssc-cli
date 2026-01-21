@@ -114,6 +114,9 @@ spec:
             value: hive-try3
           - name: pathInRepo
             value: integration-tests/tasks/provision-hive.yaml
+      params:
+        - name: cluster-name
+          value: "$(context.pipelineRun.name)"
     - name: tssc-install
       runAfter:
         - provision-hive
@@ -233,7 +236,13 @@ spec:
         - input: "$(params.cluster-provider)"
           operator: in
           values: ["hive"]
+      params:
+        - name: cluster-name
+          value: "$(context.pipelineRun.name)"
       taskSpec:
+        params:
+          - name: cluster-name
+            type: string
         volumes:
           - name: hive-creds-volume
             secret:
@@ -252,7 +261,7 @@ spec:
               oc login $(cat /usr/local/hive-creds/kube_api_url) -u cluster-admin -p $(cat /usr/local/hive-creds/password)
               oc whoami
               echo "/me Acting like I'm deleting a clusterclaim. tehehe"
-              oc delete clusterclaims.hive.openshift.io $(context.pipelineRun.name) -n hive
+              oc delete clusterclaims.hive.openshift.io $(params.cluster-name) -n hive
     - name: sprayproxy-deprovision
       when:
         - input: "$(tasks.sprayproxy-provision.status)"
