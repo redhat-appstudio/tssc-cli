@@ -1,0 +1,251 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: tssc-install-e2e
+spec:
+  description: |-
+    This pipeline automates the process of running end-to-end tests for TSSC
+    using a ROSA (Red Hat OpenShift Service on AWS) cluster. The pipeline provisions
+    the ROSA cluster, installs TSSC using the installer, runs the tests, collects artifacts,
+    and finally deprovisions the ROSA cluster.
+  params:
+    - name: test-name
+      description: 'The name of the test corresponding to a defined Konflux integration test.'
+      default: ''
+      type: string
+    - name: ocp-version
+      description: 'The OpenShift version to use for the ephemeral cluster deployment.'
+      type: string
+    - name: cloud-credential-key
+      type: string
+      description: The key secret from konflux-test-infra-secret where all AWS ROSA configurations are stored.
+    - name: replicas
+      description: 'The number of replicas for the cluster nodes.'
+      type: string
+    - name: machine-type
+      description: 'The type of machine to use for the cluster nodes.'
+      type: string
+    - name: job-spec
+      type: string
+    - name: konflux-test-infra-secret
+      description: The name of secret where testing infrastructures credentials are stored.
+      type: string
+    - name: rhads-config
+      type: string
+      description: "The rhads-config file in string format."
+    - name: tssc-image
+      type: string
+      description: "Image from where the `tssc` binary will be extracted (from path /usr/local/bin)."
+      default: "quay.io/redhat-user-workloads/rhtap-shared-team-tenant/tssc-cli:latest"
+    - name: tssc-test-image
+      type: string
+      description: "Image from where the `tssc-test` binary will be extracted (from path /usr/local/bin)."
+      default: "quay.io/redhat-user-workloads/rhtap-shared-team-tenant/tssc-test:latest"
+    - name: testplan
+      type: string
+      description: 'Optional testplan.json content encoded in base64 format. If not provided, testplan will be downloaded from the repository.'
+      default: ""
+  tasks:
+    - name: rosa-hcp-metadata
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/konflux-ci/tekton-integration-catalog.git
+          - name: revision
+            value: main
+          - name: pathInRepo
+            value: tasks/rosa/hosted-cp/rosa-hcp-metadata/0.1/rosa-hcp-metadata.yaml
+    - name: provision-rosa
+      runAfter:
+        - rosa-hcp-metadata
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/konflux-ci/tekton-integration-catalog.git
+          - name: revision
+            value: main
+          - name: pathInRepo
+            value: tasks/rosa/hosted-cp/rosa-hcp-provision/0.2/rosa-hcp-provision.yaml
+      params:
+        - name: cluster-name
+          value: "$(tasks.rosa-hcp-metadata.results.cluster-name)"
+        - name: ocp-version
+          value: "$(params.ocp-version)"
+        - name: replicas
+          value: "$(params.replicas)"
+        - name: machine-type
+          value: "$(params.machine-type)"
+        - name: konflux-test-infra-secret
+          value: "$(params.konflux-test-infra-secret)"
+        - name: cloud-credential-key
+          value: "$(params.cloud-credential-key)"
+        - name: oci-container
+          value: "quay.io/konflux-test-storage/rhtap-team/rhtap-cli:$(context.pipelineRun.name)"
+    - name: tssc-install
+      runAfter:
+        - provision-rosa
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/redhat-appstudio/tssc-cli.git
+          - name: revision
+            value: main
+          - name: pathInRepo
+            value: integration-tests/tasks/tssc-install.yaml
+      params:
+        - name: ocp-login-command
+          value: "$(tasks.provision-rosa.results.ocp-login-command)"
+        - name: job-spec
+          value: "$(params.job-spec)"
+        - name: rhads-config
+          value: $(params.rhads-config)
+        - name: tssc-image
+          value: $(params.tssc-image)
+    - name: sprayproxy-provision
+      runAfter:
+        - tssc-install
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/konflux-ci/tekton-integration-catalog.git
+          - name: revision
+            value: main
+          - name: pathInRepo
+            value: tasks/sprayproxy/sprayproxy-provision/0.1/sprayproxy-provision.yaml
+      params:
+        - name: ocp-login-command
+          value: "$(tasks.provision-rosa.results.ocp-login-command)"
+    - name: tssc-e2e-tests
+      runAfter:
+        - sprayproxy-provision
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/redhat-appstudio/tssc-test.git
+          - name: revision
+            value: main
+          - name: pathInRepo
+            value: integration-tests/tasks/tssc-e2e.yaml
+      params:
+        - name: job-spec
+          value: $(params.job-spec)
+        - name: ocp-login-command
+          value: "$(tasks.provision-rosa.results.ocp-login-command)"
+        - name: oci-container
+          value: "quay.io/konflux-test-storage/rhtap-team/rhtap-cli:$(context.pipelineRun.name)"
+        - name: tssc-test-image
+          value: $(params.tssc-test-image)
+        - name: testplan
+          value: $(params.testplan)
+    - name: rhtap-ui-tests
+      runAfter:
+        - tssc-e2e-tests
+      onError: continue
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/redhat-appstudio/tssc-test.git
+          - name: revision
+            value: main
+          - name: pathInRepo
+            value: integration-tests/tasks/tssc-ui.yaml
+      params:
+        - name: job-spec
+          value: $(params.job-spec)
+        - name: ocp-login-command
+          value: "$(tasks.provision-rosa.results.ocp-login-command)"
+        - name: oci-container
+          value: "quay.io/konflux-test-storage/rhtap-team/rhtap-cli:$(context.pipelineRun.name)"
+        - name: tssc-test-image
+          value: $(params.tssc-test-image)
+        - name: testplan
+          value: $(params.testplan)
+  finally:
+    - name: deprovision-rosa-collect-artifacts
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/konflux-ci/tekton-integration-catalog.git
+          - name: revision
+            value: main
+          - name: pathInRepo
+            value: tasks/rosa/hosted-cp/rosa-hcp-deprovision/0.2/rosa-hcp-deprovision.yaml
+      params:
+        - name: test-name
+          value: $(context.pipelineRun.name)
+        - name: ocp-login-command
+          value: "$(tasks.provision-rosa.results.ocp-login-command)"
+        - name: oci-container
+          value: "quay.io/konflux-test-storage/rhtap-team/rhtap-cli:$(context.pipelineRun.name)"
+        - name: cluster-name
+          value: "$(tasks.rosa-hcp-metadata.results.cluster-name)"
+        - name: konflux-test-infra-secret
+          value: "$(params.konflux-test-infra-secret)"
+        - name: cloud-credential-key
+          value: "$(params.cloud-credential-key)"
+        - name: pipeline-aggregate-status
+          value: "$(tasks.status)"
+    - name: sprayproxy-deprovision
+      when:
+        - input: "$(tasks.sprayproxy-provision.status)"
+          operator: in
+          values:
+            - "Succeeded"
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/konflux-ci/tekton-integration-catalog.git
+          - name: revision
+            value: main
+          - name: pathInRepo
+            value: tasks/sprayproxy/sprayproxy-deprovision/0.1/sprayproxy-deprovision.yaml
+      params:
+        - name: ocp-login-command
+          value: "$(tasks.provision-rosa.results.ocp-login-command)"
+    - name: pull-request-status-message
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/konflux-ci/tekton-integration-catalog.git
+          - name: revision
+            value: main
+          - name: pathInRepo
+            value: tasks/pull-request-comment/0.2/pull-request-comment.yaml
+      params:
+        - name: test-name
+          value: "$(context.pipelineRun.name)"
+        - name: oci-container
+          value: "quay.io/konflux-test-storage/rhtap-team/rhtap-cli:$(context.pipelineRun.name)"
+        - name: pipeline-aggregate-status
+          value: "$(tasks.status)"
+        - name: job-spec
+          value: "$(params.job-spec)"
+    - name: store-pipeline-status
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/konflux-ci/tekton-integration-catalog.git
+          - name: revision
+            value: main
+          - name: pathInRepo
+            value: tasks/store-pipeline-status/0.1/store-pipeline-status.yaml
+      params:
+        - name: oci-ref
+          value: "quay.io/konflux-test-storage/rhtap-team/rhtap-cli:$(context.pipelineRun.name)"
+        - name: credentials-secret-name
+          value: "$(params.konflux-test-infra-secret)"
+        - name: pipeline-aggregate-status
+          value: $(tasks.status)
+        - name: pipelinerun-name
+          value: $(context.pipelineRun.name)
