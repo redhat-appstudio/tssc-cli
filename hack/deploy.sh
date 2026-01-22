@@ -14,6 +14,12 @@ SCRIPT_DIR="$(
     pwd
 )"
 
+if [ "$(uname -s)" == "Darwin" ]; then
+    READLINK="greadlink"
+else
+    READLINK="readlink"
+fi
+
 usage() {
     echo "
 Usage:
@@ -56,7 +62,7 @@ parse_args() {
             shift
             ;;
         -e | --env-file)
-            ENVFILE="$(readlink -e "$2")"
+            ENVFILE="$($READLINK -e "$2")"
             shift
             ;;
         -i|--integration)
@@ -168,7 +174,9 @@ run_container() {
 }
 
 unshare() {
-    podman unshare chown -R 0:0 "$CONFIG_DIR"
+    if [ "$(uname -s)" != "Darwin" ]; then
+        podman unshare chown -R 0:0 "$CONFIG_DIR"
+    fi
 }
 
 configure() {
