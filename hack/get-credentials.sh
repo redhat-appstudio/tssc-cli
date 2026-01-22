@@ -53,11 +53,6 @@ parse_args() {
     done
 }
 
-init() {
-    cd "$PROJECT_DIR"
-    CONFIG="$PROJECT_DIR/hack/config/config.yaml"
-}
-
 h1() {
     echo
     echo "# $1 ##########################################################################" | cut -c -80
@@ -65,7 +60,10 @@ h1() {
 
 getNamespace() {
     export PRODUCT="$1"
-    NAMESPACE="$(yq '.tssc.products[] | select(.name == strenv(PRODUCT)) | .namespace' "$CONFIG")"
+    NAMESPACE="$(
+        oc get configmap -n tssc tssc-config -o jsonpath="{.data.config\.yaml}" \
+        | yq '.tssc.products[] | select(.name == strenv(PRODUCT)) | .namespace'
+    )"
     oc get namespace "$NAMESPACE" > /dev/null 2>&1
     return $?
 }
@@ -112,7 +110,6 @@ action() {
 
 main() {
     parse_args "$@"
-    init
     action
 }
 
