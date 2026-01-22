@@ -194,7 +194,7 @@ spec:
           if [[ "$CLUSTER_PROVIDER" == "rosa" ]]; then
             PIPELINE_FILE="tssc-cli-e2e-rosa.yaml"
           elif [[ "$CLUSTER_PROVIDER" == "hive" ]]; then
-            PIPELINE_FILE="tssc-cli-e2e.yaml"
+            PIPELINE_FILE="tssc-cli-e2e-hive.yaml"
           else
             echo "ERROR: Invalid cluster-provider value: '$CLUSTER_PROVIDER'. Valid values are 'rosa' or 'hive'."
             exit 1
