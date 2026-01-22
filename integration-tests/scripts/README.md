@@ -73,7 +73,7 @@ export PRE_RELEASE="RHDH"
 # Example: Configure pre-release subscription for TAS (requires TAS_RELEASE_PATH)
 export PRE_RELEASE="TAS"
 export TAS_RELEASE_PATH="https://github.com/securesign/releases/blob/release-1.3.1/1.3.1/stable"
-# For private repositories, also set GITHUB_TOKEN (or it will use GITOPS__GIT_TOKEN if available)
+# For private repositories, also set GITHUB_TOKEN (or it will use GITOPS_GIT_TOKEN if available)
 export GITHUB_TOKEN="ghp_xxxxx"
 ```
 
@@ -83,7 +83,7 @@ export GITHUB_TOKEN="ghp_xxxxx"
 - `TAS`: Configures pre-release subscription for Trusted Artifact Signer
   - **Required**: When using `TAS`, you must also set `TAS_RELEASE_PATH` to the GitHub release path containing the TAS installation files
   - Example: `export TAS_RELEASE_PATH="https://github.com/securesign/releases/blob/release-1.3.1/1.3.1/stable"`
-  - **For private repositories**: Set `GITHUB_TOKEN` environment variable with a GitHub personal access token. If not set, it will try to use `GITOPS__GIT_TOKEN` as a fallback.
+  - **For private repositories**: Set `GITHUB_TOKEN` environment variable with a GitHub personal access token. If not set, it will try to use `GITOPS_GIT_TOKEN` as a fallback.
 
 **Note**: This parameter is optional. If not set, the pre-release configuration step will be skipped. When set, the script will run `hack/pre-release.sh` to configure the subscription channels and sources for the specified product before creating the cluster configuration.
 
