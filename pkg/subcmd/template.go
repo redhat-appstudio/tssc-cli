@@ -33,6 +33,7 @@ type Template struct {
 	showManifests      bool                // show rendered manifests
 	namespace          string              // dependency namespace
 	dep                resolver.Dependency // chart to render
+	installerTarball   []byte              // embedded installer tarball
 }
 
 var _ api.SubCommand = &Template{}
@@ -113,7 +114,7 @@ func (t *Template) Run() error {
 		return fmt.Errorf("failed to read values template file: %w", err)
 	}
 
-	i := installer.NewInstaller(t.logger, t.flags, t.kube, &t.dep)
+	i := installer.NewInstaller(t.logger, t.flags, t.kube, &t.dep, t.installerTarball)
 
 	// Setting values and loading cluster's information.
 	if err = i.SetValues(
@@ -153,6 +154,7 @@ func NewTemplate(
 	f *flags.Flags,
 	cfs *chartfs.ChartFS,
 	kube *k8s.Kube,
+	installerTarball []byte,
 ) *Template {
 	t := &Template{
 		cmd: &cobra.Command{
@@ -161,14 +163,15 @@ func NewTemplate(
 			Long:         templateDesc,
 			SilenceUsage: true,
 		},
-		logger:        logger.WithGroup("template"),
-		flags:         f,
-		appCtx:        appCtx,
-		cfs:           cfs,
-		kube:          kube,
-		showValues:    true,
-		showManifests: true,
-		namespace:     "default",
+		logger:           logger.WithGroup("template"),
+		flags:            f,
+		appCtx:           appCtx,
+		cfs:              cfs,
+		kube:             kube,
+		showValues:       true,
+		showManifests:    true,
+		namespace:        "default",
+		installerTarball: installerTarball,
 	}
 
 	p := t.cmd.PersistentFlags()

@@ -27,8 +27,9 @@ type Installer struct {
 	kube   *k8s.Kube            // kubernetes client
 	dep    *resolver.Dependency // dependency to install
 
-	valuesBytes []byte           // rendered values
-	values      chartutil.Values // helm chart values
+	valuesBytes      []byte           // rendered values
+	values           chartutil.Values // helm chart values
+	installerTarball []byte           // embedded installer tarball
 }
 
 // SetValues prepares the values template for the Helm chart installation.
@@ -148,11 +149,13 @@ func NewInstaller(
 	f *flags.Flags,
 	kube *k8s.Kube,
 	dep *resolver.Dependency,
+	installerTarball []byte,
 ) *Installer {
 	return &Installer{
-		logger: dep.LoggerWith(logger),
-		flags:  f,
-		kube:   kube,
-		dep:    dep,
+		logger:           dep.LoggerWith(logger),
+		flags:            f,
+		kube:             kube,
+		dep:              dep,
+		installerTarball: installerTarball,
 	}
 }

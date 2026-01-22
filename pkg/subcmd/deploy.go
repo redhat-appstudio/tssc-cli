@@ -33,6 +33,7 @@ type Deploy struct {
 	topologyBuilder    *resolver.TopologyBuilder // topology builder
 	chartPath          string                    // single chart path
 	valuesTemplatePath string                    // values template file path
+	installerTarball   []byte                    // embedded installer tarball
 }
 
 var _ api.SubCommand = &Deploy{}
@@ -155,7 +156,7 @@ subcommand to configure them. For example:
 		)
 		fmt.Printf("%s\n", strings.Repeat("#", 60))
 
-		i := installer.NewInstaller(d.log(), d.flags, d.kube, &dep)
+		i := installer.NewInstaller(d.log(), d.flags, d.kube, &dep, d.installerTarball)
 
 		err := i.SetValues(d.cmd.Context(), d.cfg, string(valuesTmpl))
 		if err != nil {
@@ -198,6 +199,7 @@ func NewDeploy(
 	cfs *chartfs.ChartFS,
 	kube *k8s.Kube,
 	manager *integrations.Manager,
+	installerTarball []byte,
 ) api.SubCommand {
 	d := &Deploy{
 		cmd: &cobra.Command{

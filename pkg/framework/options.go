@@ -30,3 +30,10 @@ func WithMCPToolsBuilder(builder mcptools.MCPToolsBuilder) Option {
 		a.mcpToolsBuilder = builder
 	}
 }
+
+// WithInstallerTarball sets the embedded installer tarball for the application.
+func WithInstallerTarball(tarball []byte) Option {
+	return func(a *App) {
+		a.installerTarball = tarball
+	}
+}
