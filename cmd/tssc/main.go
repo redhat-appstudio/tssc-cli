@@ -56,6 +56,7 @@ func main() {
 		cfs,
 		framework.WithIntegrations(subcmd.StandardModules()...),
 		framework.WithMCPImage(mcpImage),
+		framework.WithInstallerTarball(installer.InstallerTarball),
 	)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to create application: %v\n", err)

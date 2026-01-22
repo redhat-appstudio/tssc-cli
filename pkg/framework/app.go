@@ -28,8 +28,9 @@ type App struct {
 	flags              *flags.Flags            // global flags
 	kube               *k8s.Kube               // kubernetes client
 
-	mcpToolsBuilder mcptools.MCPToolsBuilder // tools builder
-	mcpImage        string                   // installer image
+	mcpToolsBuilder  mcptools.MCPToolsBuilder // tools builder
+	mcpImage         string                   // installer image
+	installerTarball []byte                   // embedded installer tarball
 }
 
 // Command exposes the Cobra command.
@@ -113,10 +114,12 @@ func (a *App) setupRootCmd() error {
 			a.ChartFS,
 			a.kube,
 			a.integrationManager,
+			a.installerTarball,
 		),
 		subcmd.NewInstaller(
 			a.AppCtx,
 			a.flags,
+			a.installerTarball,
 		),
 		subcmd.NewMCPServer(
 			a.AppCtx,
@@ -133,6 +136,7 @@ func (a *App) setupRootCmd() error {
 			a.flags,
 			a.ChartFS,
 			a.kube,
+			a.installerTarball,
 		),
 		subcmd.NewTopology(
 			a.AppCtx,

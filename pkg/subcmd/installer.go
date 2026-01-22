@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/redhat-appstudio/tssc-cli/installer"
 	"github.com/redhat-appstudio/tssc-cli/pkg/api"
 	"github.com/redhat-appstudio/tssc-cli/pkg/flags"
 
@@ -22,8 +21,9 @@ type Installer struct {
 	cmd   *cobra.Command // cobra command
 	flags *flags.Flags   // global flags
 
-	list    bool   // list the embedded resources
-	extract string // extract into a directory
+	list             bool   // list the embedded resources
+	extract          string // extract into a directory
+	installerTarball []byte // embedded installer tarball
 }
 
 var _ api.SubCommand = &Installer{}
@@ -84,7 +84,7 @@ func (i *Installer) Validate() error {
 
 // listResources lists the embedded resources.
 func (i *Installer) listResources() error {
-	tr := tar.NewReader(bytes.NewReader(installer.InstallerTarball))
+	tr := tar.NewReader(bytes.NewReader(i.installerTarball))
 
 	for {
 		header, err := tr.Next()
@@ -104,7 +104,7 @@ func (i *Installer) listResources() error {
 
 // extractResources extracts the embedded resources into the base directory.
 func (i *Installer) extractResources() error {
-	tr := tar.NewReader(bytes.NewReader(installer.InstallerTarball))
+	tr := tar.NewReader(bytes.NewReader(i.installerTarball))
 
 	for {
 		header, err := tr.Next()
@@ -214,14 +214,15 @@ func (i *Installer) Run() error {
 }
 
 // NewInstaller creates a new installer subcommand.
-func NewInstaller(appCtx *api.AppContext, f *flags.Flags) *Installer {
+func NewInstaller(appCtx *api.AppContext, f *flags.Flags, installerTarball []byte) *Installer {
 	i := &Installer{
 		cmd: &cobra.Command{
 			Use:   "installer",
 			Short: "Lists or extract the embedded installer resources",
 			Long:  installerDesc,
 		},
-		flags: f,
+		flags:            f,
+		installerTarball: installerTarball,
 	}
 
 	p := i.cmd.PersistentFlags()
