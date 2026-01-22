@@ -193,8 +193,11 @@ spec:
           # Choose pipeline file based on cluster provider
           if [[ "$CLUSTER_PROVIDER" == "rosa" ]]; then
             PIPELINE_FILE="tssc-cli-e2e-rosa.yaml"
-          else
+          elif [[ "$CLUSTER_PROVIDER" == "hive" ]]; then
             PIPELINE_FILE="tssc-cli-e2e.yaml"
+          else
+            echo "ERROR: Invalid cluster-provider value: '$CLUSTER_PROVIDER'. Valid values are 'rosa' or 'hive'."
+            exit 1
           fi
           echo "Using pipeline file: $PIPELINE_FILE for cluster provider: $CLUSTER_PROVIDER"
           pipeline_run=$(tkn pipeline start -f https://raw.githubusercontent.com/rhopp/tssc-cli/refs/heads/hive-try3/integration-tests/pipelines/$PIPELINE_FILE "${tkn_params[@]}")
