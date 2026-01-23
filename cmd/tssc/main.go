@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/redhat-appstudio/helmet/pkg/api"
+	"github.com/redhat-appstudio/helmet/pkg/chartfs"
+	"github.com/redhat-appstudio/helmet/pkg/framework"
+	"github.com/redhat-appstudio/helmet/pkg/subcmd"
 	"github.com/redhat-appstudio/tssc-cli/installer"
-	"github.com/redhat-appstudio/tssc-cli/pkg/api"
-	"github.com/redhat-appstudio/tssc-cli/pkg/chartfs"
-	"github.com/redhat-appstudio/tssc-cli/pkg/framework"
-	"github.com/redhat-appstudio/tssc-cli/pkg/subcmd"
 )
 
 var (
