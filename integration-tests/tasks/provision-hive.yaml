@@ -8,6 +8,9 @@ spec:
     - name: cluster-name
       type: string
       description: "Name to use for the cluster claim"
+    - name: ocp-version
+      type: string
+      description: "OpenShift version in format 4.xx (e.g., 4.18)"
   results:
     - name: ocp-login-command
       description: "OCP login command for accessing the provisioned cluster"
@@ -25,9 +28,13 @@ spec:
           mountPath: /usr/local/hive-creds
       script: |
         #!/usr/bin/bash
+        # Convert ocp-version format (4.xx) to clusterpool name (clusterpool4xx)
+        CLUSTERPOOL_NAME="clusterpool$(echo $(params.ocp-version) | tr -d '.')"
+        echo "Using cluster pool: $CLUSTERPOOL_NAME"
+
         oc login $(cat /usr/local/hive-creds/kube_api_url) -u cluster-admin -p $(cat /usr/local/hive-creds/password)
         oc whoami
-        oc get rhopp-test-clusterpool -n hive
+        oc get clusterpool "$CLUSTERPOOL_NAME" -n hive
         oc create -f - <<EOF
         apiVersion: hive.openshift.io/v1
         kind: ClusterClaim
@@ -35,7 +42,7 @@ spec:
           name: $(params.cluster-name)
           namespace: hive
         spec:
-          clusterPoolName: rhopp-test-clusterpool
+          clusterPoolName: $CLUSTERPOOL_NAME
           lifetime: 6h
         EOF
         ## wait for cluster for up to 60 minutes
