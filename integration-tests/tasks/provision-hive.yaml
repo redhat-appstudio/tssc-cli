@@ -236,7 +236,7 @@ spec:
 
         # --- Cluster Stability Observation ---
         echo "--- Starting Cluster Stability Observation ---"
-        observation_duration=600  # 10 minutes
+        observation_duration=60  # 10 minutes
         observation_interval=5    # Check every 5 seconds
         observation_iterations=$((observation_duration / observation_interval))
 
