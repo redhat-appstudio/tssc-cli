@@ -1,0 +1,7 @@
+{{- range (list "build-service" "integration-service") }}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ . }}
+{{- end }}
