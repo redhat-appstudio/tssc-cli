@@ -2,12 +2,13 @@
 
 ## Quickstart
 
-1. Clone this repository/branch.
-2. Copy `hack/private.env.template` to `konflux.env`.
-3. Edit `konflux.env` and set the variables.
+1. Clone this repository/branch with `git clone https://github.com/redhat-appstudio/tssc-cli --branch tsf tsf`.
+2. `cd tsf`.
+2. Copy `hack/private.env.template` to `tsf.env`.
+3. Edit `tsf.env` and set the variables.
 4. Get a clean OCP cluster (4.18 to 4.20).
 5. From the terminal, log on that cluster.
-6. Run `./hack/deploy.sh -e konflux.env -i github` and wait for the cluster to be configured.
+6. Run `./hack/deploy.sh -e tsf.env -i github` and wait for the cluster to be configured. Add `-i cert-manager` to the command if the Cert Manager operator is already installed on the cluster.
 7. Optionally, run `./hack/get-credentials.sh` to get the login information for the various services.
 
 ## Troubleshooting
