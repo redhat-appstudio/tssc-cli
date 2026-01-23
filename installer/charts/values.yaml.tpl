@@ -167,7 +167,9 @@ iam:
 # tssc-konflux
 #
 
-# konflux: null
+konflux:
+  tssc:
+    namespace: {{ .Installer.Namespace }}
 
 #
 # tssc-pipelines

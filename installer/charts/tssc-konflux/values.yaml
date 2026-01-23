@@ -1,3 +1,5 @@
 ---
 konflux:
   namespace: konflux-ui
+  tssc:
+    namespace: __OVERWRITE_ME__
