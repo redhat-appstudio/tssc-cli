@@ -66,15 +66,6 @@ subscriptions:
     channel: stable-v1.3
     source: redhat-operators
     sourceNamespace: openshift-marketplace
-  quay:
-    enabled: false
-    description: Red Hat Quay Operator
-    apiResource: quayregistries.quay.redhat.com
-    namespace: openshift-operators
-    name: quay-operator
-    channel: stable-3.14
-    source: redhat-operators
-    sourceNamespace: openshift-marketplace
   trustedProfileAnalyzer:
     enabled: false
     description: Red Hat Trusted Profile Analyzer

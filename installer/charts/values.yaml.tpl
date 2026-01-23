@@ -7,13 +7,12 @@
 {{- $konflux := required "Konflux settings" .Installer.Products.Konflux -}}
 {{- $pipelines := required "Pipelines settings" .Installer.Products.OpenShift_Pipelines -}}
 {{- $pipelinesNamespace := "openshift-pipelines" -}}
-{{- $quay := required "Quay settings" .Installer.Products.Quay -}}
 {{- $tas := required "TAS settings" .Installer.Products.Trusted_Artifact_Signer -}}
 {{- $tpa := required "TPA settings" .Installer.Products.Trusted_Profile_Analyzer -}}
 
 {{- $keycloakEnabled := or $tpa.Enabled $tas.Enabled -}}
 {{- $keycloakNamespace := "tssc-keycloak" -}}
-{{- $odfEnabled := $quay.Enabled -}}
+{{- $odfEnabled := false -}}
 {{- $odfNamespace := "openshift-storage" -}}
 
 # Cluster settings
@@ -46,9 +45,6 @@ openshift:
 {{- end }}
 {{- if $odfEnabled }}
     - {{ $odfNamespace }}
-{{- end }}
-{{- if $quay.Enabled }}
-    - {{ $quay.Namespace }}
 {{- end }}
 {{- if $tpa.Enabled }}
     - {{ $tpa.Namespace }}
@@ -93,9 +89,6 @@ subscriptions:
   openshiftPipelines:
     enabled: {{ $pipelines.Enabled }}
     managed: {{ and $pipelines.Enabled $pipelines.Properties.manageSubscription }}
-  quay:
-    enabled: {{ $quay.Enabled }}
-    managed: {{ and $quay.Enabled $quay.Properties.manageSubscription }}
   openshiftTrustedArtifactSigner:
     enabled: {{ $tas.Enabled }}
     managed: {{ and $tas.Enabled $tas.Properties.manageSubscription }}
@@ -206,29 +199,6 @@ openShiftDataFoundation:
 
 pipelines:
   namespace: {{ $pipelinesNamespace }}
-  tssc:
-    namespace: {{ .Installer.Namespace }}
-
-#
-# tssc-quay
-#
-
-quay:
-  enabled: {{ $quay.Enabled }}
-  namespace: {{ $quay.Namespace }}
-  ingressDomain: {{ $ingressDomain }}
-  ingressRouterCA: {{ $ingressRouterCA }}
-  organization:
-    email: {{ printf "tssc@%s" $ingressDomain }}
-  secret:
-    namespace: {{ .Installer.Namespace }}
-    name: tssc-quay-integration
-  config:
-    superUser:
-      email: {{ printf "admin@%s" $ingressDomain }}
-  replicas:
-    quay: 1
-    clair: 1
   tssc:
     namespace: {{ .Installer.Namespace }}
 
