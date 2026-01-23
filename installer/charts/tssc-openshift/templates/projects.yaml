@@ -18,11 +18,4 @@ displayName: {{ $p }}
 metadata:
   name: {{ $p }}
   {{- end }}
-  {{- if hasPrefix "openshift-" $p }}
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: {{ $p }}
-  {{- end }}
 {{- end }}

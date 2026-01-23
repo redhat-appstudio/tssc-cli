@@ -1,6 +1,0 @@
----
-openshiftDataFoundation:
-  enabled: false
-  backingStorageSize: 100Gi
-  backingStoreName: noobaa-pv-backing-store
-  namespace: openshift-storage

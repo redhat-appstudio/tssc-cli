@@ -12,8 +12,6 @@
 
 {{- $keycloakEnabled := or $tpa.Enabled $tas.Enabled -}}
 {{- $keycloakNamespace := "tssc-keycloak" -}}
-{{- $odfEnabled := false -}}
-{{- $odfNamespace := "openshift-storage" -}}
 
 # Cluster settings
 {{- $ingressDomain := required "OpenShift ingress domain" .OpenShift.Ingress.Domain -}}
@@ -43,9 +41,6 @@ openshift:
     - {{ $konflux.Namespace }}
     - konflux-operator
 {{- end }}
-{{- if $odfEnabled }}
-    - {{ $odfNamespace }}
-{{- end }}
 {{- if $tpa.Enabled }}
     - {{ $tpa.Namespace }}
     {{- if $tpa.Properties.manageSubscription }}
@@ -63,7 +58,6 @@ openshift:
 # tssc-subscriptions
 #
 
-{{- $odfChannel := printf "stable-%s" $openshiftMinorVersion }}
 
 subscriptions:
   konflux:
@@ -72,14 +66,6 @@ subscriptions:
   openshiftCertManager:
     enabled: {{ $certManager.Enabled }}
     managed: {{ and $certManager.Enabled $certManager.Properties.manageSubscription }}
-  openShiftDataFoundation:
-    enabled: {{ $odfEnabled }}
-    managed: {{ $odfEnabled }}
-    namespace: {{ $odfNamespace }}
-    channel: {{ $odfChannel }}
-    operatorGroup:
-      targetNamespaces:
-        - {{ $odfNamespace }}
   openshiftKeycloak:
     enabled: {{ $keycloakEnabled }}
     managed: {{ $keycloakEnabled }}
@@ -182,16 +168,6 @@ iam:
 #
 
 # konflux: null
-
-#
-# tssc-odf
-#
-
-openShiftDataFoundation:
-  enabled: {{ $odfEnabled }}
-  backingStorageSize: 100Gi
-  backingStoreName: noobaa-pv-backing-store
-  namespace: {{ $odfNamespace }}
 
 #
 # tssc-pipelines

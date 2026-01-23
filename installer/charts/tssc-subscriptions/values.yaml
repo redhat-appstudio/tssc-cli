@@ -24,19 +24,6 @@ subscriptions:
     operatorGroup:
       upgradeStrategy: Default
       targetNamespaces: []
-  openShiftDataFoundation:
-    enabled: false
-    description: Red Hat OpenShift Data Foundation (ODF)
-    apiResource: noobaas.noobaa.io
-    namespace: __OVERWRITE_ME__
-    name: odf-operator
-    channel: __OVERWRITE_ME__
-    source: redhat-operators
-    sourceNamespace: openshift-marketplace
-    operatorGroup:
-      upgradeStrategy: Default
-      targetNamespaces:
-        - __OVERWRITE_ME__
   openshiftKeycloak:
     enabled: false
     description: Red Hat Keycloak Operator

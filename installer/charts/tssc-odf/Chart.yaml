@@ -1,9 +1,0 @@
----
-apiVersion: v2
-name: tssc-odf
-description: TSSC OpenShift Data Foundation
-type: application
-version: "1.6.0"
-annotations:
-  # tssc.redhat-appstudio.github.com/product-name: OpenShift Data Foundation
-  tssc.redhat-appstudio.github.com/depends-on: tssc-subscriptions
