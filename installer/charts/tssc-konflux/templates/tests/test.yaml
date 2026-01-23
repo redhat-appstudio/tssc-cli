@@ -7,15 +7,11 @@
     #
     - name: "konflux-test"
       image: registry.redhat.io/openshift4/ose-tools-rhel9
-      env:
-        - name: NAMESPACE
-          value: {{ $konflux.namespace }}
-        - name: RESOURCE_TYPE
-          value: "deployment"
       command:
-        - /scripts/test-rollout-status.sh
+        - /scripts/test-wait-for.sh
       args:
-        - konflux.konflux-ci.dev/owner=konflux-ui
+        - --for=condition=Ready=True
+        - konflux/konflux
       volumeMounts:
         - name: scripts
           mountPath: /scripts
