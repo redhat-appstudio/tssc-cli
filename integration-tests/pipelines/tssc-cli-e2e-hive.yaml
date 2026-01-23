@@ -52,6 +52,8 @@ spec:
       params:
         - name: cluster-name
           value: "$(context.pipelineRun.name)"
+        - name: ocp-version
+          value: "$(params.ocp-version)"
     - name: tssc-install
       runAfter:
         - provision-hive
