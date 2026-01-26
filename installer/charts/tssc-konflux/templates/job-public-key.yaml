@@ -1,0 +1,64 @@
+{{- $pipelinesNamespace := .Values.pipelines.namespace }}
+{{- $signingSecretName := "signing-secrets" -}}
+{{- $publicKeySecretName := "public-key" -}}
+{{- $signingSecretObj := (
+      lookup "v1" "Secret" $pipelinesNamespace $signingSecretName
+    ) | default dict
+-}}
+{{- $signingSecretData := (get $signingSecretObj "data") | default dict -}}
+{{- $signingCosignPubB64 := (get $signingSecretData "cosign.pub") | default "" -}}
+{{- $signingCosignPub := ternary ($signingCosignPubB64 | b64dec) "" (ne $signingCosignPubB64 "") -}}
+{{- $publicKeySecretObj := (
+      lookup "v1" "Secret" $pipelinesNamespace $publicKeySecretName
+    ) | default dict
+-}}
+{{- $publicKeySecretData := (get $publicKeySecretObj "data") | default dict -}}
+{{- $publicKeyCosignPubB64 := (get $publicKeySecretData "cosign.pub") | default "" -}}
+{{- $publicKeyCosignPub := ternary ($publicKeyCosignPubB64 | b64dec) "" (ne $publicKeyCosignPubB64 "") -}}
+{{- if and (ne $signingCosignPub "") (ne $signingCosignPub $publicKeyCosignPub) }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+  name: tssc-konflux-public-key
+spec:
+  template:
+    spec:
+      serviceAccountName: {{ .Release.Name }}
+      restartPolicy: Never
+      containers:
+        - name: copy-public-key
+          image: quay.io/codeready-toolchain/oc-client-base:latest
+          command:
+          - /bin/bash
+          - -c
+          - |
+            set -o errexit
+            set -o nounset
+            set -o pipefail
+
+            PUBLIC_KEY=${0:?Public key is required}
+            PIPELINES_NAMESPACE=${1:?Pipelines namespace is required}
+            PUBLIC_KEY_SECRET_NAME="public-key"
+
+            echo "Deleting existing public-key secret if it exists"
+            oc delete secret -n "$PIPELINES_NAMESPACE" "$PUBLIC_KEY_SECRET_NAME" || :
+
+            echo "Creating public-key secret in $PIPELINES_NAMESPACE namespace"
+            oc create secret generic \
+              "$PUBLIC_KEY_SECRET_NAME" \
+              --from-literal=cosign.pub="$PUBLIC_KEY" \
+              --namespace="$PIPELINES_NAMESPACE"
+
+            echo "Public key secret created successfully in $PIPELINES_NAMESPACE namespace"
+
+          args:
+            - {{ $signingCosignPub | quote }}
+            - {{ $pipelinesNamespace }}
+          securityContext:
+            allowPrivilegeEscalation: false
+{{- end }}
