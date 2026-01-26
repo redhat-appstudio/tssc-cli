@@ -219,7 +219,7 @@ appNamespaces:
 #
 
 argoCD:
-  enabled: {{ $rhdh.Enabled }}
+  enabled: {{ $gitops.Enabled }}
   name: {{ $argoCDName }}
   namespace: {{ $gitops.Namespace }}
   integrationSecret:
