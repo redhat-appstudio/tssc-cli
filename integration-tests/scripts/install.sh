@@ -34,6 +34,12 @@ else
     tpa_config=(local)
 fi
 
+if [[ -n "${tas_config:-}" ]]; then
+    IFS=',' read -ra tas_config <<< "${tas_config}"
+else
+    tas_config=(local)
+fi
+
 if [[ -n "${registry_config:-}" ]]; then
     IFS=',' read -ra registry_config <<< "${registry_config}"
 else
@@ -59,10 +65,11 @@ else
 fi
 
 # Export after setting
-export acs_config tpa_config registry_config scm_config pipeline_config auth_config
+export acs_config tpa_config tas_config registry_config scm_config pipeline_config auth_config
 
 echo "[INFO] acs_config=(${acs_config[*]})"
 echo "[INFO] tpa_config=(${tpa_config[*]})"
+echo "[INFO] tas_config=(${tas_config[*]})"
 echo "[INFO] registry_config=(${registry_config[*]})"
 echo "[INFO] scm_config=(${scm_config[*]})"
 echo "[INFO] pipeline_config=(${pipeline_config[*]})"
@@ -269,6 +276,30 @@ tpa_integration() {
   fi
 }
 
+# Workaround: This function has to be called before tssc import "installer/config.yaml" into cluster.
+# Currently, the tssc `config` subcommand lacks the ability to modify property values stored in cluster
+disable_tas() {
+  # if "remote" is in tas_config array, then disable TAS installation
+  # Update the enabled flag from true to false
+  if [[ " ${tas_config[*]} " =~ " remote " ]]; then
+    echo "[INFO] Disable TAS installation in TSSC configuration"
+    yq -i '.tssc.products[] |= select(.name == "Trusted Artifact Signer").enabled = false' "${config_file}"
+  else
+    echo "[INFO] TAS is set to local, keeping enabled flag as true"
+  fi
+}
+
+tas_integration() {
+  if [[ " ${tas_config[*]} " =~ " remote " ]]; then
+    echo "[INFO] Configure a remote TAS integration into TSSC"
+
+    TAS__REKOR__URL="${TAS__REKOR__URL:-$(cat /usr/local/rhtap-cli-install/tas-rekor-url)}"
+    TAS__TUF__URL="${TAS__TUF__URL:-$(cat /usr/local/rhtap-cli-install/tas-tuf-url)}"
+
+    "${TSSC_BINARY}" integration --kube-config "$KUBECONFIG" trusted-artifact-signer --rekor-url="${TAS__REKOR__URL}" --tuf-url="${TAS__TUF__URL}" --force
+  fi
+}
+
 artifactory_integration() {
   if [[ " ${registry_config[*]} " =~ " artifactory " ]]; then
     echo "[INFO] Configure Artifactory integration into TSSC"
@@ -290,6 +321,80 @@ nexus_integration() {
   fi
 }
 
+run_pre_release() {
+  if [[ -n "${PRE_RELEASE:-}" ]]; then
+    echo "[INFO] Running pre-release configuration for product: $PRE_RELEASE"
+    
+    # Get the script directory to find pre-release.sh
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    PRE_RELEASE_SCRIPT="$SCRIPT_DIR/../../hack/pre-release.sh"
+    
+    # Check if pre-release.sh exists
+    if [[ ! -f "$PRE_RELEASE_SCRIPT" ]]; then
+      echo "[ERROR] pre-release.sh not found at $PRE_RELEASE_SCRIPT"
+      exit 1
+    fi
+    
+    # Map product names to what pre-release.sh expects
+    case "${PRE_RELEASE^^}" in
+      RHDH)
+        PRODUCT_ARG="rhdh"
+        PRE_RELEASE_CMD=("$PRE_RELEASE_SCRIPT" --product "$PRODUCT_ARG")
+        ;;
+      TPA)
+        echo "[WARNING] TPA pre-release configuration is not yet supported in pre-release.sh"
+        echo "[WARNING] Skipping pre-release configuration for TPA"
+        return 0
+        ;;
+      TAS)
+        PRODUCT_ARG="rhtas"
+        # TAS requires --tas-release-path only if neither GITHUB_TOKEN nor TAS_VERSION is provided
+        # Use GITHUB_TOKEN if set, otherwise fall back to GITOPS_GIT_TOKEN
+        GITHUB_TOKEN_VALUE="${GITHUB_TOKEN:-${GITOPS_GIT_TOKEN:-}}"
+        if [[ -z "${TAS_RELEASE_PATH:-}" ]] && [[ -z "${GITHUB_TOKEN_VALUE:-}" ]] && [[ -z "${TAS_VERSION:-}" ]]; then
+          echo "[ERROR] TAS_RELEASE_PATH environment variable is required when PRE_RELEASE=TAS"
+          echo "[ERROR] unless GITHUB_TOKEN (or GITOPS_GIT_TOKEN) or TAS_VERSION is provided"
+          echo "[ERROR] Example: export TAS_RELEASE_PATH='https://github.com/securesign/releases/blob/release-1.3.1/1.3.1/stable'"
+          echo "[ERROR] Or: export GITHUB_TOKEN='ghp_xxxxx' (for auto-detection)"
+          echo "[ERROR] Or: export TAS_VERSION='1.3.1' (with GITHUB_TOKEN for private repos)"
+          exit 1
+        fi
+        PRE_RELEASE_CMD=("$PRE_RELEASE_SCRIPT" --product "$PRODUCT_ARG")
+        # Add --tas-release-path if provided
+        if [[ -n "${TAS_RELEASE_PATH:-}" ]]; then
+          PRE_RELEASE_CMD+=("--tas-release-path" "$TAS_RELEASE_PATH")
+        fi
+        # Add --tas-release-version if provided
+        if [[ -n "${TAS_VERSION:-}" ]]; then
+          PRE_RELEASE_CMD+=("--tas-release-version" "$TAS_VERSION")
+        fi
+        # Add GitHub token if available (needed for private repos and auto-detection)
+        if [[ -n "$GITHUB_TOKEN_VALUE" ]]; then
+          # Export as environment variable for pre-release.sh to use
+          export GITHUB_TOKEN="$GITHUB_TOKEN_VALUE"
+          PRE_RELEASE_CMD+=("--github-token" "$GITHUB_TOKEN_VALUE")
+        fi
+        ;;
+      *)
+        echo "[ERROR] Unknown product for pre-release: $PRE_RELEASE. Supported values: RHDH, TPA, TAS"
+        exit 1
+        ;;
+    esac
+    
+    echo "[INFO] Executing pre-release.sh with product: $PRODUCT_ARG"
+    if [[ "${PRE_RELEASE^^}" == "TAS" ]]; then
+      if [[ -n "${TAS_RELEASE_PATH:-}" ]]; then
+        echo "[INFO] Using TAS release path: $TAS_RELEASE_PATH"
+      else
+        echo "[INFO] TAS release path will be auto-detected"
+      fi
+    fi
+    bash "${PRE_RELEASE_CMD[@]}"
+  else
+    echo "[INFO] pre-release parameter not set, skipping pre-release configuration"
+  fi
+}
+
 create_cluster_config() {
   echo "[INFO] Creating the installer's cluster configuration"
   update_dh_catalog_url
@@ -297,6 +402,7 @@ create_cluster_config() {
   update_dh_namespace_prefixes
   disable_acs
   disable_tpa
+  disable_tas
   
   set -x
   cat "$config_file"
@@ -308,8 +414,41 @@ create_cluster_config() {
   set +x
   
   echo "[INFO] Cluster configuration created successfully"
+  
+  # Ensure the installer namespace exists for integrations
+  echo "[INFO] Ensuring installer namespace exists for integrations"
+  INSTALLER_NAMESPACE=$(yq '.tssc.namespace' "${config_file}" 2>/dev/null || echo "tssc")
+  kubectl get namespace "${INSTALLER_NAMESPACE}" >/dev/null 2>&1 || kubectl create namespace "${INSTALLER_NAMESPACE}"
 }
 
+configure_integrations() {
+  echo "[INFO] Configuring required integrations before deployment"
+  
+  # Configure integrations in the order that ensures dependencies are met
+  # SCM integrations first (required by tssc-app-namespaces)
+  github_integration
+  gitlab_integration
+  bitbucket_integration
+  
+  # Registry integrations
+  quay_integration
+  artifactory_integration
+  nexus_integration
+  
+  # Pipeline integrations
+  jenkins_integration
+  azure_integration
+  
+  # Security integrations (required by tssc-app-namespaces when remote)
+  # These functions check internally if acs_config, tpa_config, or tas_config is "remote"
+  acs_integration
+  tpa_integration
+  tas_integration
+  
+  echo "[INFO] Verifying required integrations are configured"
+  echo "[INFO] Integration secrets in 'tssc' namespace:"
+  kubectl -n tssc get secret 2>/dev/null | grep -E "(github|gitlab|bitbucket|acs|trustification)" || echo "  (some secrets may not exist yet)"
+}
 
 install_tssc() {
   echo "[INFO] Start installing TSSC"
@@ -318,17 +457,6 @@ install_tssc() {
   set -x
   cat "$tpl_file"
   set +x
-
-  jenkins_integration
-  azure_integration
-  tpa_integration
-  acs_integration
-  github_integration
-  gitlab_integration
-  bitbucket_integration
-  quay_integration
-  artifactory_integration
-  nexus_integration
 
   echo "[INFO] Running 'tssc deploy' command..."
   set -x
@@ -344,5 +472,7 @@ install_tssc() {
 }
 
 ci_enabled
+run_pre_release
 create_cluster_config
+configure_integrations
 install_tssc
