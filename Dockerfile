@@ -14,9 +14,7 @@ WORKDIR /workdir/tssc
 COPY installer/ ./installer/
 
 COPY cmd/ ./cmd/
-COPY pkg/ ./pkg/
 COPY scripts/ ./scripts/
-COPY test/ ./test/
 COPY image/ ./image/
 COPY vendor/ ./vendor/
 

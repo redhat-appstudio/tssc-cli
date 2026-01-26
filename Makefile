@@ -5,7 +5,6 @@ BIN ?= $(BIN_DIR)/$(APP)
 
 # Primary source code directories.
 CMD ?= ./cmd/...
-PKG ?= ./pkg/...
 
 # Golang general flags for build and testing.
 GOFLAGS ?= -v
@@ -180,7 +179,7 @@ test: test-unit
 # Runs the unit tests.
 .PHONY: test-unit
 test-unit: installer-tarball
-	go test $(GOFLAGS_TEST) $(CMD) $(PKG) $(ARGS)
+	go test $(GOFLAGS_TEST) $(CMD) $(ARGS)
 
 # Uses golangci-lint to inspect the code base.
 .PHONY: lint
