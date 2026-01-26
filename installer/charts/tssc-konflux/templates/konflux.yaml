@@ -11,6 +11,8 @@ metadata:
   name: konflux
   namespace: {{ .Values.konflux.namespace }}
 spec:
+  imageController:
+    enabled: true
   info:
     spec:
       publicInfo:

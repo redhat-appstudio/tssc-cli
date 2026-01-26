@@ -1,4 +1,4 @@
-{{- range (list "build-service" "integration-service") }}
+{{- range (list "build-service" "integration-service" "image-controller") }}
 ---
 apiVersion: v1
 kind: Namespace
