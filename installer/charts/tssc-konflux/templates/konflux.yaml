@@ -1,7 +1,19 @@
+{{- $ghSecretObj := (lookup "v1" "Secret" .Values.konflux.tssc.namespace "tssc-github-integration") | default dict -}}
+{{- $secretData := (get $ghSecretObj "data") | default dict -}}
+{{- $applicationURL := "" -}}
+{{- if $secretData }}
+  {{- $applicationURL = (get $secretData "htmlURL") | b64dec | toString -}}
+{{- end }}
 ---
 apiVersion: konflux.konflux-ci.dev/v1alpha1
 kind: Konflux
 metadata:
   name: konflux
   namespace: {{ .Values.konflux.namespace }}
-spec: {}
+spec:
+  info:
+    spec:
+      publicInfo:
+        integrations:
+          github:
+            application_url: {{ $applicationURL | quote }}
