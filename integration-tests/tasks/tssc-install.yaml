@@ -17,6 +17,10 @@ spec:
     - name: tssc-image
       type: string
       description: "The tssc image containing the tssc binary."
+    - name: install-params
+      type: string
+      description: "Additional parameters for installation testing (e.g., PRE_RELEASE=TAS TAS_VERSION=1.3.2). When empty, does not alter normal installation."
+      default: ""
   volumes:
     - name: tssc-cli-volume
       secret:
@@ -32,7 +36,9 @@ spec:
         - name: tssc-bin
           mountPath: /tssc-bin
     - name: install
-      image: quay.io/konflux-qe-incubator/konflux-qe-tools:latest
+      image: quay.io/konflux-ci/appstudio-utils:latest
+      securityContext:
+        runAsUser: 0
       env:
         - name: JOB_SPEC
           value: "$(params.job-spec)"
@@ -49,6 +55,28 @@ spec:
         set -o nounset
         set -o pipefail
 
+        # # go-toolset image has make and go but not oc/kubectl; install cluster tools if missing
+        # if ! command -v oc &>/dev/null; then
+        #   command -v curl &>/dev/null || dnf install -y curl
+        #   ARCH=$(uname -m)
+        #   echo "Installing oc and kubectl for $ARCH..."
+        #   curl -sL "https://mirror.openshift.com/pub/openshift-v4/${ARCH}/clients/ocp/stable/openshift-client-linux.tar.gz" | tar xz -C /tmp
+        #   mv /tmp/oc /tmp/kubectl /usr/local/bin/
+        # fi
+        # for cmd in jq git; do
+        #   if ! command -v $cmd &>/dev/null; then
+        #     dnf install -y $cmd
+        #   fi
+        # done
+        # if ! command -v yq &>/dev/null; then
+        #   YQ_ARCH=$(uname -m)
+        #   [[ "$YQ_ARCH" == "x86_64" ]] && YQ_ARCH="amd64" || true
+        #   [[ "$YQ_ARCH" == "aarch64" ]] && YQ_ARCH="arm64" || true
+        #   echo "Installing yq for $YQ_ARCH..."
+        #   curl -sL "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_${YQ_ARCH}" -o /usr/local/bin/yq
+        #   chmod +x /usr/local/bin/yq
+        # fi
+
         GIT_REPO="${GIT_REPO:-$(echo "$JOB_SPEC" | jq -r '.git.repo // empty')}"
         if [ -z "$GIT_REPO" ]; then
           echo "[ERROR] GIT_REPO is not set in JOB_SPEC"
@@ -59,14 +87,20 @@ spec:
         cd "$(mktemp -d)"
 
         if [[ "${GIT_REPO}" = "tssc-cli" ]]; then
-            GIT_URL="${GIT_URL:-$(echo "$JOB_SPEC" | jq -r '.git.source_repo_url')}"
-            GIT_REVISION="${GIT_REVISION:-$(echo "$JOB_SPEC" | jq -r '.git.commit_sha')}"
+            #GIT_URL="${GIT_URL:-$(echo "$JOB_SPEC" | jq -r '.git.source_repo_url')}"
+            #GIT_REVISION="${GIT_REVISION:-$(echo "$JOB_SPEC" | jq -r '.git.commit_sha')}"
+            GIT_URL="https://github.com/jkopriva/tssc-cli.git"
+            GIT_REVISION="RHTAP-6123"
             echo -e "INFO: Cloning repository '$GIT_REPO' with revision '$GIT_REVISION' from URL '$GIT_URL'"
             git clone "${GIT_URL}" .
             git checkout "${GIT_REVISION}"
         else
-            echo -e "INFO: Cloning repository 'redhat-appstudio/tssc-cli' with revision 'main'"
-            git clone https://github.com/redhat-appstudio/tssc-cli.git .
+            #echo -e "INFO: Cloning repository 'redhat-appstudio/tssc-cli' with revision 'main'"
+            #git clone https://github.com/redhat-appstudio/tssc-cli.git .
+            GIT_URL="https://github.com/jkopriva/tssc-cli.git"
+            GIT_REVISION="RHTAP-6123"
+            git clone "${GIT_URL}" .
+            git checkout "${GIT_REVISION}"
         fi
 
         # Generate the .env file for tssc installation based on the configuration given in the rhads-config
@@ -115,5 +149,10 @@ spec:
         cat ${env_file}
         # Deploy tssc
         source ${env_file}
+        # Source install params if provided
+        if [[ -n "$(params.install-params)" ]]; then
+          echo "INFO: Sourcing install parameters: $(params.install-params)"
+          eval "export $(params.install-params)"
+        fi
         ./integration-tests/scripts/ci-oc-login.sh
         ./integration-tests/scripts/install.sh
