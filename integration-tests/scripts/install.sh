@@ -449,7 +449,6 @@ configure_integrations() {
   echo "[INFO] Integration secrets in 'tssc' namespace:"
   kubectl -n tssc get secret 2>/dev/null | grep -E "(github|gitlab|bitbucket|acs|trustification)" || echo "  (some secrets may not exist yet)"
 }
-}
 
 wait_for() {
     local command="${1}"
