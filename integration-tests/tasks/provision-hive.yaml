@@ -1,0 +1,323 @@
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: provision-hive
+spec:
+  params:
+    - name: cluster-name
+      type: string
+      description: "Name to use for the cluster claim"
+    - name: ocp-version
+      type: string
+      description: "OpenShift version in format 4.xx (e.g., 4.18)"
+  results:
+    - name: ocp-login-command
+      description: "OCP login command for accessing the provisioned cluster"
+  volumes:
+    - name: hive-creds-volume
+      secret:
+        secretName: rhopp-test
+    - name: credentials
+      emptyDir: {}
+  steps:
+    - name: claim-cluster
+      image: registry.redhat.io/openshift4/ose-cli@sha256:15da03b04318bcc842060b71e9dd6d6c2595edb4e8fdd11b0c6781eeb03ca182
+      volumeMounts:
+        - name: hive-creds-volume
+          mountPath: /usr/local/hive-creds
+      script: |
+        #!/usr/bin/bash
+        # Convert ocp-version format (4.xx) to clusterpool name (clusterpool4xx)
+        CLUSTERPOOL_NAME="clusterpool$(echo $(params.ocp-version) | tr -d '.')"
+        echo "Using cluster pool: $CLUSTERPOOL_NAME"
+
+        oc login $(cat /usr/local/hive-creds/kube_api_url) -u cluster-admin -p $(cat /usr/local/hive-creds/password)
+        oc whoami
+        oc get clusterpool "$CLUSTERPOOL_NAME" -n hive
+        oc create -f - <<EOF
+        apiVersion: hive.openshift.io/v1
+        kind: ClusterClaim
+        metadata:
+          name: $(params.cluster-name)
+          namespace: hive
+        spec:
+          clusterPoolName: $CLUSTERPOOL_NAME
+          lifetime: 6h
+        EOF
+        ## wait for cluster for up to 60 minutes
+        if ! kubectl wait --for=condition=ClusterRunning clusterclaims.hive.openshift.io/$(params.cluster-name) -n hive --timeout 60m; then
+          echo "Cluster failed to start in 60 minutes. Deleting clusterClaim"
+          oc delete clusterclaims.hive.openshift.io/$(params.cluster-name) -n hive
+          exit 1
+        fi
+        cp_namespace=$(oc get clusterclaims.hive.openshift.io -n hive $(params.cluster-name) -o jsonpath={.spec.namespace})
+        api_url=$(oc get clusterdeployment -n $cp_namespace  $cp_namespace -o jsonpath={.status.apiURL})
+        admin_pass_secret=$(oc get clusterdeployment -n $cp_namespace  $cp_namespace -o jsonpath={.spec.clusterMetadata.adminPasswordSecretRef.name})
+        kubeadminpass=$(oc get secret $admin_pass_secret -n $cp_namespace -o jsonpath={.data.password} |base64 -d)
+        echo "oc login --insecure-skip-tls-verify=true $api_url -u kubeadmin -p $kubeadminpass" > $(results.ocp-login-command.path)
+
+        kubeconfig_secret=$(oc get clusterdeployment -n $cp_namespace  $cp_namespace -o jsonpath={.spec.clusterMetadata.adminKubeconfigSecretRef.name})
+
+        oc get secret -n $cp_namespace $kubeconfig_secret -o jsonpath={.data.kubeconfig} |base64 -d > /tmp/ephemereal.config
+        export KUBECONFIG=/tmp/ephemereal.config
+
+        # --- Cluster Provisioning Retry Loop ---
+        provisioning_max_retries=3
+        provisioning_successful=false
+
+        for ((provisioning_attempt=1; provisioning_attempt<=provisioning_max_retries; provisioning_attempt++)); do
+          echo "=== Cluster Provisioning Attempt $provisioning_attempt of $provisioning_max_retries ==="
+
+          # Reset flags for this attempt
+          csr_max_retries=5
+          csr_sleep_duration=10
+          approved_csrs=false
+
+          console_max_retries=30
+          console_sleep_duration=10
+          console_connect_timeout=10
+          console_accessible=false
+
+          echo "--- Starting CSR Approval Process ---"
+          for ((i=1; i<=csr_max_retries; i++)); do
+            echo "CSR Attempt $i of $csr_max_retries: Checking for pending CSRs..."
+            if ! oc get csr 2>/dev/null | grep -i Pending; then
+              echo "No pending CSRs found. Continuing"
+              approved_csrs=true
+              break
+            else
+              echo "There are pending CSRs. That probably means cluster was hibernated for more than 24 hours. Need to approve them (until OCPBUGS-55339 is resolved)"
+              if oc get csr -oname | xargs oc adm certificate approve; then
+                echo "Successfully submitted approval for CSRs on attempt $i."
+                sleep 60 # Small delay for changes to propagate
+                if ! oc get csr 2>/dev/null | grep -i Pending; then
+                  echo "Confirmed no pending CSRs after approval."
+                  approved_csrs=true
+                  break
+                else
+                  echo "Pending CSRs still exist after approval attempt $i."
+                fi
+              else
+                echo "Failed to run approval command for CSRs on attempt $i."
+              fi
+            fi
+
+            if [[ "$i" -lt "$csr_max_retries" ]]; then
+              echo "Sleeping for $csr_sleep_duration seconds before next CSR retry..."
+              sleep "$csr_sleep_duration"
+            fi
+          done
+
+          if [[ "$approved_csrs" == "false" ]]; then
+            echo "Failed to ensure all pending CSRs were approved after $csr_max_retries attempts."
+            if [[ "$provisioning_attempt" -lt "$provisioning_max_retries" ]]; then
+              echo "Will retry entire provisioning process..."
+              continue
+            else
+              echo "All provisioning attempts exhausted. Exiting."
+              exit 1
+            fi
+          fi
+          echo "CSR check and approval process completed successfully."
+          echo "--- CSR Approval Process Finished ---"
+
+          # --- Console URL Accessibility Check ---
+          echo "--- Starting Console Accessibility Check ---"
+
+          oc whoami
+          console_url=$(oc whoami --show-console)
+          echo "Console URL: $console_url"
+
+          if [[ -z "$console_url" ]]; then
+            echo "Error: Could not retrieve OpenShift console URL."
+            if [[ "$provisioning_attempt" -lt "$provisioning_max_retries" ]]; then
+              echo "Will retry entire provisioning process..."
+              continue
+            else
+              echo "All provisioning attempts exhausted. Exiting."
+              exit 1
+            fi
+          else
+            echo "Console URL found: $console_url"
+            for ((j=1; j<=console_max_retries; j++)); do
+              echo "Console Check Attempt $j of $console_max_retries: Checking console URL accessibility..."
+              if curl -k --silent --output /dev/null --head --fail --connect-timeout "$console_connect_timeout" "$console_url"; then
+                echo "Console URL $console_url is accessible (HTTP 2xx)."
+                console_accessible=true
+                break
+              else
+                curl_exit_code=$?
+                echo "Console URL $console_url not accessible on attempt $j (curl exit code: $curl_exit_code)."
+              fi
+
+              if [[ "$j" -lt "$console_max_retries" ]]; then
+                echo "Sleeping for $console_sleep_duration seconds before next console check retry..."
+                sleep "$console_sleep_duration"
+              fi
+            done
+
+            if [[ "$console_accessible" == "false" ]]; then
+              echo "Failed to access console URL $console_url after $console_max_retries attempts."
+              if [[ "$provisioning_attempt" -lt "$provisioning_max_retries" ]]; then
+                echo "Will retry entire provisioning process..."
+                continue
+              else
+                echo "All provisioning attempts exhausted. Exiting."
+                exit 1
+              fi
+            fi
+          fi
+          echo "Console is ready. Continuing."
+          echo "--- Console Accessibility Check Finished ---"
+
+          # --- OC Login Retry Loop ---
+          echo "--- Starting OC Login Process ---"
+          login_max_retries=30  # 5 minutes with 10-second intervals
+          login_sleep_duration=10
+          login_successful=false
+
+          for ((k=1; k<=login_max_retries; k++)); do
+            echo "OC Login Attempt $k of $login_max_retries: Attempting to login with kubeadmin..."
+            if oc login --insecure-skip-tls-verify=true "$api_url" -u kubeadmin -p "$kubeadminpass" 2>&1; then
+              echo "Successfully logged in as kubeadmin on attempt $k."
+              # Wait a moment for the authentication to fully propagate
+              sleep 2
+              # Verify login with whoami and capture the output
+              whoami_output=$(oc whoami 2>&1)
+              whoami_exit_code=$?
+              if [[ "$whoami_exit_code" -eq 0 ]] && [[ -n "$whoami_output" ]]; then
+                echo "Confirmed login - current user: $whoami_output"
+                # Additional verification: try a simple cluster command that requires authentication
+                if oc get namespaces >/dev/null 2>&1; then
+                  echo "Login verification successful - can execute cluster commands."
+                  login_successful=true
+                  break
+                else
+                  echo "Login succeeded but cannot execute cluster commands on attempt $k."
+                fi
+              else
+                echo "Login succeeded but 'oc whoami' failed on attempt $k (exit code: $whoami_exit_code, output: '$whoami_output')."
+              fi
+            else
+              oc_login_exit_code=$?
+              echo "OC login failed on attempt $k (exit code: $oc_login_exit_code)."
+            fi
+
+            if [[ "$k" -lt "$login_max_retries" ]]; then
+              echo "Sleeping for $login_sleep_duration seconds before next login retry..."
+              sleep "$login_sleep_duration"
+            fi
+          done
+
+          if [[ "$login_successful" == "false" ]]; then
+            echo "Failed to login with kubeadmin after $login_max_retries attempts."
+            if [[ "$provisioning_attempt" -lt "$provisioning_max_retries" ]]; then
+              echo "Will retry entire provisioning process..."
+              continue
+            else
+              echo "All provisioning attempts exhausted. Exiting."
+              exit 1
+            fi
+          fi
+          echo "OC login completed successfully."
+          echo "--- OC Login Process Finished ---"
+
+          # If we reach here, CSR approval, console accessibility, and OC login all succeeded
+          provisioning_successful=true
+          echo "=== Cluster Provisioning Completed Successfully on Attempt $provisioning_attempt ==="
+          break
+        done
+
+        if [[ "$provisioning_successful" == "false" ]]; then
+          echo "Cluster provisioning failed after $provisioning_max_retries attempts."
+          exit 1
+        fi
+
+        # --- Cluster Stability Observation ---
+        echo "--- Starting Cluster Stability Observation ---"
+        observation_duration=60  # 10 minutes
+        observation_interval=5    # Check every 5 seconds
+        observation_iterations=$((observation_duration / observation_interval))
+
+        co_success=0
+        co_failure=0
+        console_success=0
+        console_failure=0
+        api_success=0
+        api_failure=0
+
+        co_pattern=""
+        console_pattern=""
+        api_pattern=""
+
+        echo "Will perform $observation_iterations observations over $observation_duration seconds"
+        echo "Observation interval: ${observation_interval}s"
+        echo ""
+
+        for ((obs=1; obs<=observation_iterations; obs++)); do
+          timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+
+          # Test 1: Cluster Operators
+          if oc get co >/dev/null 2>&1; then
+            ((co_success++))
+            co_pattern="${co_pattern}S"
+          else
+            ((co_failure++))
+            co_pattern="${co_pattern}F"
+            echo "[$timestamp] Observation $obs: FAILURE - oc get co failed"
+          fi
+
+          # Test 2: Console URL accessibility
+          if curl -k --silent --output /dev/null --head --fail --connect-timeout 5 "$console_url"; then
+            ((console_success++))
+            console_pattern="${console_pattern}S"
+          else
+            ((console_failure++))
+            console_pattern="${console_pattern}F"
+            echo "[$timestamp] Observation $obs: FAILURE - console URL not accessible"
+          fi
+
+          # Test 3: API server (namespaces)
+          if oc get namespaces >/dev/null 2>&1; then
+            ((api_success++))
+            api_pattern="${api_pattern}S"
+          else
+            ((api_failure++))
+            api_pattern="${api_pattern}F"
+            echo "[$timestamp] Observation $obs: FAILURE - oc get namespaces failed"
+          fi
+
+          # Print progress every 20 observations (approximately every 100 seconds)
+          if (( obs % 20 == 0 )); then
+            echo "[$timestamp] Progress: $obs/$observation_iterations observations completed"
+          fi
+
+          # Sleep between observations (except on the last iteration)
+          if [[ "$obs" -lt "$observation_iterations" ]]; then
+            sleep "$observation_interval"
+          fi
+        done
+
+        echo ""
+        echo "=== Cluster Stability Observation Results ==="
+        echo "Total observations: $observation_iterations"
+        echo ""
+        echo "Cluster Operators (oc get co):"
+        echo "  Success: $co_success, Failures: $co_failure"
+        echo "  Pattern: $co_pattern"
+        echo ""
+        echo "Console URL accessibility:"
+        echo "  Success: $console_success, Failures: $console_failure"
+        echo "  Pattern: $console_pattern"
+        echo ""
+        echo "API Server (oc get namespaces):"
+        echo "  Success: $api_success, Failures: $api_failure"
+        echo "  Pattern: $api_pattern"
+        echo ""
+        echo "--- Cluster Stability Observation Finished ---"
+
+        # Show current cluster operator status for reference
+        echo ""
+        echo "Final cluster operator status:"
+        oc get co

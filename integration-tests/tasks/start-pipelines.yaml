@@ -40,6 +40,10 @@ spec:
       description: "The number of replicas for the cluster nodes"
       type: string
       default: "3"
+    - name: cluster-provider
+      description: 'Cluster provider to use for testing. Valid values: "rosa" or "hive"'
+      type: string
+      default: "hive"
     - name: context-pipeline-run-name
       description: "Context pipeline run name for labeling"
       type: string
@@ -69,6 +73,8 @@ spec:
           value: $(params.ocp-instance-type)
         - name: OCP_REPLICAS
           value: $(params.ocp-replicas)
+        - name: CLUSTER_PROVIDER
+          value: $(params.cluster-provider)
         - name: KONFLUX_NAMESPACE
           valueFrom:
             fieldRef:
@@ -147,10 +153,16 @@ spec:
             "--param" "konflux-test-infra-secret=$KONFLUX_TEST_INFRA_SECRET"
             "--param" "rhads-config=$config"
             "--param" "testplan=${testplan_b64:-}"
-            "--param" "cloud-credential-key=$CLOUD_CREDENTIAL_KEY"
-            "--param" "machine-type=$OCP_INSTANCE_TYPE"
-            "--param" "replicas=$OCP_REPLICAS"
           )
+
+          # Add ROSA-specific parameters only when using ROSA
+          if [[ "$CLUSTER_PROVIDER" == "rosa" ]]; then
+            tkn_params+=(
+              "--param" "cloud-credential-key=$CLOUD_CREDENTIAL_KEY"
+              "--param" "machine-type=$OCP_INSTANCE_TYPE"
+              "--param" "replicas=$OCP_REPLICAS"
+            )
+          fi
 
           # Add optional image parameters
           if [[ "${tssc_image}" != "" ]]; then
@@ -178,7 +190,17 @@ spec:
             "--serviceaccount" "konflux-integration-runner"
           )
           echo "Starting pipeline with testplan (${#testplan_b64} chars): ${testplan_b64:0:50}..."
-          pipeline_run=$(tkn pipeline start -f https://raw.githubusercontent.com/$REPO_ORG/$REPO/refs/heads/$BRANCH/integration-tests/pipelines/tssc-cli-e2e.yaml "${tkn_params[@]}")
+          # Choose pipeline file based on cluster provider
+          if [[ "$CLUSTER_PROVIDER" == "rosa" ]]; then
+            PIPELINE_FILE="tssc-cli-e2e-rosa.yaml"
+          elif [[ "$CLUSTER_PROVIDER" == "hive" ]]; then
+            PIPELINE_FILE="tssc-cli-e2e-hive.yaml"
+          else
+            echo "ERROR: Invalid cluster-provider value: '$CLUSTER_PROVIDER'. Valid values are 'rosa' or 'hive'."
+            exit 1
+          fi
+          echo "Using pipeline file: $PIPELINE_FILE for cluster provider: $CLUSTER_PROVIDER"
+          pipeline_run=$(tkn pipeline start -f https://raw.githubusercontent.com/rhopp/tssc-cli/refs/heads/hive-try3/integration-tests/pipelines/$PIPELINE_FILE "${tkn_params[@]}")
           # Construct console URL for the new PipelineRun
           CONSOLE_URL="${KONFLUX_URL}/ns/${KONFLUX_NAMESPACE}/applications/${KONFLUX_APPLICATION_NAME}/pipelineruns/${pipeline_run}"
           echo "Started new pipelinerun: ${CONSOLE_URL}"

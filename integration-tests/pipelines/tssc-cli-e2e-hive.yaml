@@ -1,0 +1,265 @@
+---
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: tssc-install-e2e
+spec:
+  description: |-
+    This pipeline automates the process of running end-to-end tests for TSSC
+    using Hive cluster provisioning. The pipeline provisions the cluster,
+    installs TSSC using the installer, runs the tests, collects artifacts,
+    and finally deprovisions the cluster.
+  params:
+    - name: test-name
+      description: 'The name of the test corresponding to a defined Konflux integration test.'
+      default: ''
+      type: string
+    - name: ocp-version
+      description: 'The OpenShift version to use for the ephemeral cluster deployment (for future use).'
+      type: string
+      default: ""
+    - name: job-spec
+      type: string
+    - name: konflux-test-infra-secret
+      description: The name of secret where testing infrastructures credentials are stored.
+      type: string
+    - name: rhads-config
+      type: string
+      description: "The rhads-config file in string format."
+    - name: tssc-image
+      type: string
+      description: "Image from where the `tssc` binary will be extracted (from path /usr/local/bin)."
+      default: "quay.io/redhat-user-workloads/rhtap-shared-team-tenant/tssc-cli:latest"
+    - name: tssc-test-image
+      type: string
+      description: "Image from where the `tssc-test` binary will be extracted (from path /usr/local/bin)."
+      default: "quay.io/redhat-user-workloads/rhtap-shared-team-tenant/tssc-test:latest"
+    - name: testplan
+      type: string
+      description: 'Optional testplan.json content encoded in base64 format. If not provided, testplan will be downloaded from the repository.'
+      default: ""
+  tasks:
+    - name: provision-hive
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/rhopp/tssc-cli.git
+          - name: revision
+            value: hive-try3
+          - name: pathInRepo
+            value: integration-tests/tasks/provision-hive.yaml
+      params:
+        - name: cluster-name
+          value: "$(context.pipelineRun.name)"
+        - name: ocp-version
+          value: "$(params.ocp-version)"
+    - name: tssc-install
+      runAfter:
+        - provision-hive
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/rhopp/tssc-cli.git
+          - name: revision
+            value: hive-try3
+          - name: pathInRepo
+            value: integration-tests/tasks/tssc-install.yaml
+      params:
+        - name: ocp-login-command
+          value: "$(tasks.provision-hive.results.ocp-login-command)"
+        - name: job-spec
+          value: "$(params.job-spec)"
+        - name: rhads-config
+          value: $(params.rhads-config)
+        - name: tssc-image
+          value: $(params.tssc-image)
+    - name: sprayproxy-provision
+      runAfter:
+        - tssc-install
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/konflux-ci/tekton-integration-catalog.git
+          - name: revision
+            value: main
+          - name: pathInRepo
+            value: tasks/sprayproxy/sprayproxy-provision/0.1/sprayproxy-provision.yaml
+      params:
+        - name: ocp-login-command
+          value: "$(tasks.provision-hive.results.ocp-login-command)"
+    - name: tssc-e2e-tests
+      runAfter:
+        - sprayproxy-provision
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/redhat-appstudio/tssc-test.git
+          - name: revision
+            value: main
+          - name: pathInRepo
+            value: integration-tests/tasks/tssc-e2e.yaml
+      params:
+        - name: job-spec
+          value: $(params.job-spec)
+        - name: ocp-login-command
+          value: "$(tasks.provision-hive.results.ocp-login-command)"
+        - name: oci-container
+          value: "quay.io/konflux-test-storage/rhtap-team/rhtap-cli:$(context.pipelineRun.name)"
+        - name: tssc-test-image
+          value: $(params.tssc-test-image)
+        - name: testplan
+          value: $(params.testplan)
+    - name: rhtap-ui-tests
+      runAfter:
+        - tssc-e2e-tests
+      onError: continue
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/redhat-appstudio/tssc-test.git
+          - name: revision
+            value: main
+          - name: pathInRepo
+            value: integration-tests/tasks/tssc-ui.yaml
+      params:
+        - name: job-spec
+          value: $(params.job-spec)
+        - name: ocp-login-command
+          value: "$(tasks.provision-hive.results.ocp-login-command)"
+        - name: oci-container
+          value: "quay.io/konflux-test-storage/rhtap-team/rhtap-cli:$(context.pipelineRun.name)"
+        - name: tssc-test-image
+          value: "$(params.tssc-test-image)"
+        - name: testplan
+          value: $(params.testplan)
+  finally:
+    - name: deprovision-hive
+      taskSpec:
+        params:
+          - name: cluster-name
+            type: string
+            description: "Name of the cluster claim to delete"
+        volumes:
+          - name: hive-creds-volume
+            secret:
+              secretName: rhopp-test
+          - name: credentials
+            emptyDir: {}
+        steps:
+          - name: deprovision-hive
+            image: registry.redhat.io/openshift4/ose-cli@sha256:15da03b04318bcc842060b71e9dd6d6c2595edb4e8fdd11b0c6781eeb03ca182
+            volumeMounts:
+              - name: hive-creds-volume
+                mountPath: /usr/local/hive-creds
+            script: |
+              #!/usr/bin/bash
+              set -x
+              oc login $(cat /usr/local/hive-creds/kube_api_url) -u cluster-admin -p $(cat /usr/local/hive-creds/password)
+              oc whoami
+              echo "/me Acting like I'm deleting a clusterclaim. tehehe"
+              oc delete clusterclaims.hive.openshift.io $(params.cluster-name) -n hive
+      params:
+        - name: cluster-name
+          value: "$(context.pipelineRun.name)"
+    - name: sprayproxy-deprovision
+      when:
+        - input: "$(tasks.sprayproxy-provision.status)"
+          operator: in
+          values:
+            - "Succeeded"
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/konflux-ci/tekton-integration-catalog.git
+          - name: revision
+            value: main
+          - name: pathInRepo
+            value: tasks/sprayproxy/sprayproxy-deprovision/0.1/sprayproxy-deprovision.yaml
+      params:
+        - name: ocp-login-command
+          value: "$(tasks.provision-hive.results.ocp-login-command)"
+    - name: pull-request-status-message
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/konflux-ci/tekton-integration-catalog.git
+          - name: revision
+            value: main
+          - name: pathInRepo
+            value: tasks/pull-request-comment/0.2/pull-request-comment.yaml
+      params:
+        - name: test-name
+          value: "$(context.pipelineRun.name)"
+        - name: oci-container
+          value: "quay.io/konflux-test-storage/rhtap-team/rhtap-cli:$(context.pipelineRun.name)"
+        - name: pipeline-aggregate-status
+          value: "$(tasks.status)"
+        - name: job-spec
+          value: "$(params.job-spec)"
+    - name: store-pipeline-status
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/konflux-ci/tekton-integration-catalog.git
+          - name: revision
+            value: main
+          - name: pathInRepo
+            value: tasks/store-pipeline-status/0.1/store-pipeline-status.yaml
+      params:
+        - name: oci-ref
+          value: "quay.io/konflux-test-storage/rhtap-team/rhtap-cli:$(context.pipelineRun.name)"
+        - name: credentials-secret-name
+          value: "$(params.konflux-test-infra-secret)"
+        - name: pipeline-aggregate-status
+          value: $(tasks.status)
+        - name: pipelinerun-name
+          value: $(context.pipelineRun.name)
+    - name: collect-hive-artifacts
+      taskSpec:
+        volumes:
+          - name: konflux-test-infra-volume
+            secret:
+              secretName: "$(params.konflux-test-infra-secret)"
+        steps:
+          - name: collect-hive-artifacts
+            workingDir: /workspace/cluster-artifacts
+            onError: continue
+            image: quay.io/konflux-qe-incubator/konflux-qe-tools:latest
+            script: |
+              #!/bin/sh
+              $(tasks.provision-hive.results.ocp-login-command)
+
+              curl -sSL https://raw.githubusercontent.com/konflux-ci/konflux-qe-definitions/main/scripts/gather-extra.sh | bash
+            when:
+              - input: $(tasks.status)
+                operator: notin
+                values: ["Succeeded"]
+          - name: secure-push-oci
+            ref:
+              resolver: git
+              params:
+                - name: url
+                  value: https://github.com/konflux-ci/tekton-integration-catalog.git
+                - name: revision
+                  value: main
+                - name: pathInRepo
+                  value: stepactions/secure-push-oci/0.1/secure-push-oci.yaml
+            params:
+              - name: workdir-path
+                value: /workspace
+              - name: oci-ref
+                value: "quay.io/konflux-test-storage/rhtap-team/rhtap-cli:$(context.pipelineRun.name)"
+              - name: credentials-volume-name
+                value: konflux-test-infra-volume
+            when:
+              - input: $(tasks.status)
+                operator: notin
+                values: ["Succeeded"]

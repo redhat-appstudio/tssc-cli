@@ -450,6 +450,43 @@ configure_integrations() {
   kubectl -n tssc get secret 2>/dev/null | grep -E "(github|gitlab|bitbucket|acs|trustification)" || echo "  (some secrets may not exist yet)"
 }
 
+wait_for() {
+    local command="${1}"
+    local description="${2}"
+    local timeout="${3}"
+    local interval="${4}"
+    printf "Waiting for %s for %s...\n" "${description}" "${timeout}"
+    timeout --foreground "${timeout}" bash -c "
+    set -x
+    until ${command}
+    do
+        printf \"Waiting for %s... Trying again in ${interval}s\n\" \"${description}\"
+        sleep ${interval}
+    done
+    set +x
+    " || return 1
+    printf "%s finished!\n" "${description}"
+}
+
+updateCert() {
+  set -x
+  kubectl create configmap root-ca -n openshift-config --from-literal=ca-bundle.crt="$(kubectl get configmap "kube-root-ca.crt" -o=json |jq -r '.data["ca.crt"]')"
+  BASE_DOMAIN=$(oc get ingress.config.openshift.io cluster -o jsonpath='{.spec.domain}')
+  REGISTRY_URL="rhtap-quay-quay-rhtap-quay.$BASE_DOMAIN"
+  # REGISTRY=$(oc get routes/rhtap-quay-quay -n rhtap-quay -o jsonpath="{.spec.host}")
+  kubectl create configmap root-ca-image -n openshift-config --from-literal="$REGISTRY_URL"="$(kubectl get configmap "kube-root-ca.crt" -o=json |jq -r '.data["ca.crt"]')"
+  kubectl get cm root-ca -n openshift-config
+  oc patch proxy/cluster --type=merge --patch='{"spec":{"trustedCA":{"name":"root-ca"}}}'
+  oc patch image.config/cluster --type=merge --patch='{"spec":{"additionalTrustedCA":{"name":"root-ca-image"}}}'
+
+  sleep 5
+  oc get co
+  wait_for "kubectl get clusteroperators -A" "cluster operators to be accessible" "10m" "30"
+  echo "[INFO] Cluster operators were updated."
+  set +x
+}
+
+
 install_tssc() {
   echo "[INFO] Start installing TSSC"
 
@@ -457,6 +494,19 @@ install_tssc() {
   set -x
   cat "$tpl_file"
   set +x
+
+  updateCert
+
+  jenkins_integration
+  azure_integration
+  tpa_integration
+  acs_integration
+  github_integration
+  gitlab_integration
+  bitbucket_integration
+  quay_integration
+  artifactory_integration
+  nexus_integration
 
   echo "[INFO] Running 'tssc deploy' command..."
   set -x
