@@ -181,8 +181,25 @@ EOF
     
     # Step 4: Create OperatorGroup for SingleNamespace mode
     echo "[INFO] Step 4: Creating OperatorGroup for SingleNamespace installation..." >&2
-    OPERATORGROUP_FILE="$(mktemp)"
-    cat > "$OPERATORGROUP_FILE" <<EOF
+    # Check if an OperatorGroup already exists in the namespace
+    EXISTING_OG=$(oc get operatorgroup -n "$NAMESPACE" -o name 2>/dev/null | head -n1 || echo "")
+    if [[ -n "$EXISTING_OG" ]]; then
+        echo "[WARNING] OperatorGroup already exists in namespace $NAMESPACE: $EXISTING_OG" >&2
+        echo "[INFO] Checking if existing OperatorGroup is compatible..." >&2
+        # Check if the existing OperatorGroup targets the same namespace
+        OG_TARGETS=$(oc get "$EXISTING_OG" -n "$NAMESPACE" -o jsonpath='{.spec.targetNamespaces[*]}' 2>/dev/null || echo "")
+        if [[ "$OG_TARGETS" == "$NAMESPACE" ]] || [[ "$OG_TARGETS" == "" ]]; then
+            echo "[INFO] Existing OperatorGroup is compatible, reusing it" >&2
+        else
+            echo "[ERROR] Existing OperatorGroup targets different namespace(s): $OG_TARGETS" >&2
+            echo "[ERROR] Multiple OperatorGroups in the same namespace cause CSV installation conflicts" >&2
+            echo "[ERROR] Please remove the existing OperatorGroup or use a different namespace" >&2
+            exit 1
+        fi
+    else
+        # No existing OperatorGroup, create one
+        OPERATORGROUP_FILE="$(mktemp)"
+        cat > "$OPERATORGROUP_FILE" <<EOF
 apiVersion: operators.coreos.com/v1
 kind: OperatorGroup
 metadata:
@@ -192,15 +209,16 @@ spec:
   targetNamespaces:
     - ${NAMESPACE}
 EOF
-    
-    echo "[INFO] Applying OperatorGroup..." >&2
-    if ! oc apply -f "$OPERATORGROUP_FILE"; then
-        echo "[ERROR] Failed to apply OperatorGroup" >&2
+        
+        echo "[INFO] Applying OperatorGroup..." >&2
+        if ! oc apply -f "$OPERATORGROUP_FILE"; then
+            echo "[ERROR] Failed to apply OperatorGroup" >&2
+            rm -f "$OPERATORGROUP_FILE"
+            exit 1
+        fi
         rm -f "$OPERATORGROUP_FILE"
-        exit 1
+        echo "[INFO] ✓ OperatorGroup applied successfully" >&2
     fi
-    rm -f "$OPERATORGROUP_FILE"
-    echo "[INFO] ✓ OperatorGroup applied successfully" >&2
     
     # Step 5: Create Subscription
     echo "[INFO] Step 5: Creating Subscription..." >&2
