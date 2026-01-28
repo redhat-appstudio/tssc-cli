@@ -16,13 +16,6 @@ tssc:
       # Uses the installer's namespace.
       properties:
         manageSubscription: true
-    # Community Konflux Operator  provides the CRDs for the Trusted Software Factory
-    # platform.
-    - name: Konflux
-      enabled: true
-      namespace: konflux-ui
-      properties:
-        manageSubscription: true
     # Red Hat Trusted Artifact Signer (TAS) enhances software supply chain
     # security by simplifying cryptographic signing and verification of software
     # artifacts like container images, binaries, and documents, leveraging an
@@ -38,6 +31,13 @@ tssc:
     - name: OpenShift Pipelines
       enabled: true
       # Uses the installer's namespace.
+      properties:
+        manageSubscription: true
+    # Community Konflux Operator  provides the CRDs for the Trusted Software Factory
+    # platform.
+    - name: Konflux
+      enabled: true
+      namespace: konflux-ui
       properties:
         manageSubscription: true
     # Red Hat Trusted Profile Analyzer (TPA), which leverages the community-driven

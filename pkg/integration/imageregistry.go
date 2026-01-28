@@ -18,6 +18,7 @@ type ImageRegistry struct {
 	dockerConfigRO string // registry read-only credentials (JSON)
 	url            string // API endpoint
 	token          string // API token
+	organization   string // optional: Quay organization name for additional token secret
 }
 
 var _ Interface = &ImageRegistry{}
@@ -43,8 +44,10 @@ func (i *ImageRegistry) PersistentFlags(cmd *cobra.Command) {
 			dockerConfigEx))
 	p.StringVar(&i.url, "url", i.url, "Container registry API endpoint.")
 	p.StringVar(&i.token, "token", i.token, "Container registry API token.")
+	p.StringVar(&i.organization, "organization", i.organization,
+		"Quay organization name.")
 
-	for _, f := range []string{"dockerconfigjson", "url"} {
+	for _, f := range []string{"url"} {
 		if err := cmd.MarkPersistentFlagRequired(f); err != nil {
 			panic(err)
 		}
@@ -63,29 +66,31 @@ func (i *ImageRegistry) LoggerWith(logger *slog.Logger) *slog.Logger {
 		"dockerconfigjsonreadonly-len", len(i.dockerConfigRO),
 		"url", i.url,
 		"token-len", len(i.token),
+		"organization", i.organization,
 	)
 }
 
 // Validate validates the integration configuration.
 func (i *ImageRegistry) Validate() error {
-	err := ValidateJSON("dockerconfigjson", i.dockerConfig)
-	if err != nil {
-		return err
-	}
-
-	if i.dockerConfigRO != "" {
-		err = ValidateJSON("dockerconfigjsonreadonly", i.dockerConfigRO)
-		if err != nil {
+	if i.dockerConfig != "" {
+		if err := ValidateJSON("dockerconfigjson", i.dockerConfig); err != nil {
 			return err
 		}
 	}
-
+	if i.dockerConfigRO != "" {
+		if err := ValidateJSON("dockerconfigjsonreadonly", i.dockerConfigRO); err != nil {
+			return err
+		}
+	}
 	return ValidateURL(i.url)
 }
 
 // Type returns the type of the integration.
 func (i *ImageRegistry) Type() corev1.SecretType {
-	return corev1.SecretTypeDockerConfigJson
+	if i.dockerConfig != "" {
+		return corev1.SecretTypeDockerConfigJson
+	}
+	return corev1.SecretTypeOpaque
 }
 
 // Data returns the integration data.
@@ -98,6 +103,7 @@ func (i *ImageRegistry) Data(
 		".dockerconfigjsonreadonly": []byte(i.dockerConfigRO),
 		"url":                       []byte(i.url),
 		"token":                     []byte(i.token),
+		"organization":              []byte(i.organization),
 	}, nil
 }
 
