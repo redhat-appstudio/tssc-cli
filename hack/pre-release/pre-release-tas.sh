@@ -26,6 +26,10 @@ Optional arguments:
         TAS release version to use (e.g., 1.3.1).
         Defaults to \"latest\" which will fetch the most recent release.
         Requires --github-token for private repositories.
+    -o, --operator-version VERSION
+        Exact TAS operator CSV version to install (e.g., rhtas-operator.v1.3.2).
+        If specified, this will override the startingCSV in the subscription.yaml.
+        Optional. If not provided, uses the startingCSV from the release subscription.yaml.
     -t, --github-token TOKEN
         GitHub personal access token for accessing private repositories.
         Required for auto-detecting latest TAS release or accessing private repos.
@@ -42,6 +46,9 @@ Examples:
     # Specify release version (requires GitHub token)
     ${0##*/} --release-version 1.3.1 --github-token ghp_xxxxx
     
+    # Specify exact operator version
+    ${0##*/} --release-version 1.3.2 --operator-version rhtas-operator.v1.3.2 --github-token ghp_xxxxx
+    
     # Use full path (backward compatible)
     ${0##*/} --release-path https://github.com/securesign/releases/blob/release-1.3.1/1.3.1/stable --github-token ghp_xxxxx
 " >&2
@@ -50,6 +57,7 @@ Examples:
 parse_args() {
     TAS_RELEASE_PATH=""
     TAS_RELEASE_VERSION="latest"
+    TAS_OPERATOR_VERSION=""
     init_github_token
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -69,6 +77,15 @@ parse_args() {
                 exit 1
             fi
             TAS_RELEASE_VERSION="$2"
+            shift
+            ;;
+        -o|--operator-version)
+            if [[ -z "${2:-}" ]]; then
+                echo "[ERROR] Operator version needs to be specified after '--operator-version'." >&2
+                usage
+                exit 1
+            fi
+            TAS_OPERATOR_VERSION="$2"
             shift
             ;;
         -t|--github-token)
@@ -110,8 +127,6 @@ cleanup() {
     rm -rf "$SHARED_DIR"
 }
 
-# get_cluster_version is now in pre-release-common.sh
-
 format_version_for_filename() {
     # Convert version format from 4.19 to 4-19 (for catalogSource filename)
     local version=$1
@@ -140,18 +155,12 @@ fetch_latest_tas_release() {
     curl_args+=(-H "Accept: application/vnd.github.v3+json")
     
     local response
-    local curl_status
-    response=$(curl "${curl_args[@]}" "$api_url" 2>&1)
-    curl_status=$?
-    
-    if [[ $curl_status -ne 0 ]]; then
+    if ! response=$(curl "${curl_args[@]}" "$api_url" 2>&1); then
         echo "[ERROR] Failed to fetch latest release from GitHub API" >&2
         # Fallback: try listing all releases and get the first one
         echo "[INFO] Attempting fallback: fetching all releases..." >&2
         api_url="https://api.github.com/repos/${owner}/${repo}/releases"
-        response=$(curl "${curl_args[@]}" "$api_url" 2>&1)
-        curl_status=$?
-        if [[ $curl_status -ne 0 ]]; then
+        if ! response=$(curl "${curl_args[@]}" "$api_url" 2>&1); then
             echo "[ERROR] Failed to fetch releases from GitHub API" >&2
             return 1
         fi
@@ -210,11 +219,7 @@ fetch_tas_release_by_version() {
     curl_args+=(-H "Accept: application/vnd.github.v3+json")
     
     local response
-    local curl_status
-    response=$(curl "${curl_args[@]}" "$api_url" 2>&1)
-    curl_status=$?
-    
-    if [[ $curl_status -ne 0 ]]; then
+    if ! response=$(curl "${curl_args[@]}" "$api_url" 2>&1); then
         echo "[ERROR] Failed to fetch releases from GitHub API" >&2
         return 1
     fi
@@ -263,19 +268,21 @@ download_release_file() {
     local release_path=$2
     local output_file=$3
     
-    # Convert GitHub blob URL to raw.githubusercontent.com URL
+    # Convert GitHub blob/tree URL to raw.githubusercontent.com URL
     # From: https://github.com/{owner}/{repo}/blob/{branch}/{path}
+    #   or: https://github.com/{owner}/{repo}/tree/{branch}/{path}
     # To:   https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{path}
     local raw_url="$release_path"
     
-    if [[ "$raw_url" == *"github.com"* ]] && [[ "$raw_url" == *"/blob/"* ]]; then
-        # Extract owner, repo, branch, and path from blob URL
+    if [[ "$raw_url" == *"github.com"* ]] && ([[ "$raw_url" == *"/blob/"* ]] || [[ "$raw_url" == *"/tree/"* ]]); then
+        # Extract owner, repo, branch, and path from blob/tree URL
         # Example: https://github.com/securesign/releases/blob/main/1.3.1/stable
         # or: https://github.com/securesign/releases/blob/release-1.3.1/1.3.1/stable
-        if [[ "$raw_url" =~ github\.com/([^/]+)/([^/]+)/blob/(.+) ]]; then
+        # or: https://github.com/securesign/releases/tree/release-1.3.2/1.3.2/stable
+        if [[ "$raw_url" =~ github\.com/([^/]+)/([^/]+)/(blob|tree)/(.+) ]]; then
             local owner="${BASH_REMATCH[1]}"
             local repo="${BASH_REMATCH[2]}"
-            local branch_and_path="${BASH_REMATCH[3]}"
+            local branch_and_path="${BASH_REMATCH[4]}"
             
             # Check if branch is "main" and convert to refs/heads/main format
             # GitHub raw URLs use refs/heads/main instead of just main
@@ -354,42 +361,6 @@ download_release_file() {
         return 1
     fi
     echo "[INFO] Successfully downloaded ${file_name}" >&2
-}
-
-verify_tas_operator() {
-    echo "[INFO] Verifying TAS Operator installation..." >&2
-    
-    # Check Cluster Service Versions (CSV)
-    echo "[INFO] Checking Cluster Service Versions (CSV)..." >&2
-    if oc get csv -n openshift-operators 2>/dev/null | grep -q "trusted-artifact-signer"; then
-        CSV_NAME=$(oc get csv -n openshift-operators -o name | grep "trusted-artifact-signer" | head -n1 | cut -d/ -f2)
-        CSV_PHASE=$(oc get csv "$CSV_NAME" -n openshift-operators -o jsonpath='{.status.phase}' 2>/dev/null || echo "Unknown")
-        echo "[INFO] Found TAS CSV: $CSV_NAME (Phase: $CSV_PHASE)" >&2
-        
-        if [[ "$CSV_PHASE" == "Succeeded" ]]; then
-            echo "[INFO] ✓ TAS Operator CSV is in Succeeded phase" >&2
-        else
-            echo "[WARNING] TAS Operator CSV is in phase: $CSV_PHASE (expected: Succeeded)" >&2
-        fi
-    else
-        echo "[WARNING] TAS Operator CSV not found yet. It may still be installing..." >&2
-    fi
-    
-    # Check Pod Status
-    echo "[INFO] Checking TAS Operator pods..." >&2
-    if oc get pods -n openshift-operators 2>/dev/null | grep -q "trusted-artifact-signer"; then
-        echo "[INFO] TAS Operator pods:" >&2
-        oc get pods -n openshift-operators | grep "trusted-artifact-signer" || true
-        
-        READY_PODS=$(oc get pods -n openshift-operators -l app.kubernetes.io/instance=trusted-artifact-signer --no-headers 2>/dev/null | grep -c "Running" || echo "0")
-        if [[ "$READY_PODS" -gt 0 ]]; then
-            echo "[INFO] ✓ Found $READY_PODS running TAS Operator pod(s)" >&2
-        else
-            echo "[WARNING] TAS Operator pods are not yet in Running state" >&2
-        fi
-    else
-        echo "[WARNING] TAS Operator pods not found yet. They may still be starting..." >&2
-    fi
 }
 
 configure_tas() {
@@ -491,7 +462,51 @@ configure_tas() {
     fi
     echo "[INFO] ✓ CatalogSource applied successfully" >&2
     
+    # Get the catalog source name from the CatalogSource file
+    CATALOG_SOURCE_NAME=$(yq '.metadata.name' "$CATALOG_FILE" 2>/dev/null || echo "")
+    if [[ -z "$CATALOG_SOURCE_NAME" ]]; then
+        echo "[ERROR] Could not determine catalog source name from $CATALOG_FILE" >&2
+        exit 1
+    fi
+    echo "[INFO] Pre-release catalog source name: $CATALOG_SOURCE_NAME" >&2
+    
     # Apply Subscription
+    # Ensure the subscription has the correct name and namespace that the installer expects
+    # The installer expects: name: rhtas-operator, namespace: openshift-operators
+    echo "[INFO] Ensuring subscription matches installer expectations..." >&2
+    SUBSCRIPTION_NAME=$(yq '.metadata.name' "$SUBSCRIPTION_FILE" 2>/dev/null || echo "")
+    SUBSCRIPTION_NAMESPACE=$(yq '.metadata.namespace' "$SUBSCRIPTION_FILE" 2>/dev/null || echo "")
+    
+    # Update subscription to match installer expectations if needed
+    if [[ "$SUBSCRIPTION_NAME" != "rhtas-operator" ]] || [[ "$SUBSCRIPTION_NAMESPACE" != "openshift-operators" ]]; then
+        echo "[INFO] Updating subscription name/namespace to match installer expectations..." >&2
+        yq -i '.metadata.name = "rhtas-operator"' "$SUBSCRIPTION_FILE"
+        yq -i '.metadata.namespace = "openshift-operators"' "$SUBSCRIPTION_FILE"
+        echo "[INFO] Updated subscription: name=rhtas-operator, namespace=openshift-operators" >&2
+    fi
+    
+    # CRITICAL: Ensure subscription uses the pre-release catalog source, not the default "rhtas-operator" or "redhat-operators"
+    CURRENT_SUB_SOURCE=$(yq '.spec.source' "$SUBSCRIPTION_FILE" 2>/dev/null || echo "")
+    if [[ "$CURRENT_SUB_SOURCE" == "rhtas-operator" ]] || [[ "$CURRENT_SUB_SOURCE" == "redhat-operators" ]]; then
+        echo "[INFO] Updating subscription source from '$CURRENT_SUB_SOURCE' to pre-release catalog source '$CATALOG_SOURCE_NAME'..." >&2
+        yq -i ".spec.source = \"$CATALOG_SOURCE_NAME\"" "$SUBSCRIPTION_FILE"
+        echo "[INFO] ✓ Subscription source updated to use pre-release catalog source" >&2
+    elif [[ "$CURRENT_SUB_SOURCE" != "$CATALOG_SOURCE_NAME" ]]; then
+        echo "[WARNING] Subscription source ($CURRENT_SUB_SOURCE) does not match catalog source name ($CATALOG_SOURCE_NAME)" >&2
+        echo "[INFO] Updating subscription source to use pre-release catalog source..." >&2
+        yq -i ".spec.source = \"$CATALOG_SOURCE_NAME\"" "$SUBSCRIPTION_FILE"
+        echo "[INFO] ✓ Subscription source updated to: $CATALOG_SOURCE_NAME" >&2
+    else
+        echo "[INFO] ✓ Subscription is already using correct catalog source: $CATALOG_SOURCE_NAME" >&2
+    fi
+    
+    # Override startingCSV if operator version is specified
+    if [[ -n "${TAS_OPERATOR_VERSION:-}" ]]; then
+        echo "[INFO] Setting operator version to: $TAS_OPERATOR_VERSION" >&2
+        yq -i ".spec.startingCSV = \"$TAS_OPERATOR_VERSION\"" "$SUBSCRIPTION_FILE"
+        echo "[INFO] Updated subscription startingCSV to: $TAS_OPERATOR_VERSION" >&2
+    fi
+    
     echo "[INFO] Applying Subscription..." >&2
     if ! oc apply -f "$SUBSCRIPTION_FILE"; then
         echo "[ERROR] Failed to apply Subscription" >&2
@@ -499,21 +514,12 @@ configure_tas() {
     fi
     echo "[INFO] ✓ Subscription applied successfully" >&2
     
-    echo "[INFO] Operator Lifecycle Manager (OLM) is initiating TAS Operator deployment..." >&2
+    echo "[INFO] Subscription applied - OLM will install the TAS Operator asynchronously" >&2
     
-    # Step 3: Verify Operator Installation
-    echo "[INFO] Step 3: Verifying Operator Installation..." >&2
-    verify_tas_operator
-    
-    # Extract subscription information for configure_subscription
+    # Extract subscription information for config updates
     # Try to get channel and source from the subscription file
-    CHANNEL=$(yq '.spec.channel' "$SUBSCRIPTION_FILE" 2>/dev/null || echo "stable-v1.2")
+    CHANNEL=$(yq '.spec.channel' "$SUBSCRIPTION_FILE" 2>/dev/null || echo "stable-v1.3")
     SOURCE=$(yq '.spec.source' "$SUBSCRIPTION_FILE" 2>/dev/null || echo "rhtas-operator")
-    
-    SUBSCRIPTION="openshiftTrustedArtifactSigner"
-    export SUBSCRIPTION
-    export CHANNEL
-    export SOURCE
     
     # Update config.yaml to disable subscription management for TAS
     # This prevents Helm from trying to manage the subscription that was already created via oc apply
@@ -525,9 +531,20 @@ configure_tas() {
     else
         echo "[WARNING] config.yaml not found at $config_file, skipping subscription management update" >&2
     fi
+    
+    # Update values.yaml to use the correct source and channel from the pre-release subscription
+    # This ensures the installer references match what was actually installed
+    values_file="$PROJECT_DIR/installer/charts/tssc-subscriptions/values.yaml"
+    if [[ -f "$values_file" ]]; then
+        echo "[INFO] Updating values.yaml to use pre-release TAS catalog source and channel" >&2
+        echo "[INFO] Setting source to: $SOURCE, channel to: $CHANNEL" >&2
+        yq -i ".subscriptions.openshiftTrustedArtifactSigner.source = \"$SOURCE\"" "$values_file"
+        yq -i ".subscriptions.openshiftTrustedArtifactSigner.channel = \"$CHANNEL\"" "$values_file"
+        echo "[INFO] ✓ TAS subscription source and channel updated in values.yaml" >&2
+    else
+        echo "[WARNING] values.yaml not found at $values_file, skipping subscription source/channel update" >&2
+    fi
 }
-
-# configure_subscription is now in pre-release-common.sh (handles TAS special case)
 
 main() {
     parse_args "$@"
@@ -544,10 +561,6 @@ main() {
     
     init
     configure_tas
-    # Only configure subscription if SUBSCRIPTION variable is set
-    if [[ -n "${SUBSCRIPTION:-}" ]]; then
-        configure_subscription
-    fi
     echo "Done" >&2
 }
 
