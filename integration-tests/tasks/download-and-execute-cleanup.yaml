@@ -1,0 +1,58 @@
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: download-and-execute-cleanup
+spec:
+  description: >-
+    This task downloads a shell script from a URL from script-url and executes it.
+  params:
+    - name: script-path
+      type: string
+      description: The script path in the source git repo where script is located
+    - name: source-git-repo
+      type: string
+      default: "redhat-appstudio/tssc-cli"
+      description: Git repository in format owner/repo where script is located
+    - name: source-git-revision
+      type: string
+      default: "main"
+      description: Git branch or revision where script is located
+  volumes:
+    - name: tssc-cli-volume
+      secret:
+        secretName: rhtap-cli-install
+  steps:
+    - name: download-and-execute-cleanup
+      image: quay.io/konflux-ci/tekton-integration-catalog/utils:latest
+      volumeMounts:
+        - name: tssc-cli-volume
+          mountPath: /usr/local/rhtap-cli-install
+      script: |
+        #!/bin/bash
+        set -euo pipefail
+
+        # Get Script name
+        SCRIPT_NAME="$(basename $(params.script-path))"
+
+        # Build Script URL from parameters
+        SCRIPT_URL="https://raw.githubusercontent.com/$(params.source-git-repo)/$(params.source-git-revision)/$(params.script-path)"
+
+        # Function to prefix logs
+        log_prefix() {
+          while read -r line; do
+            echo "[$SCRIPT_NAME] $line"
+          done
+        }
+
+        # Redirect all script output through the log prefix function
+        exec > >(log_prefix) 2>&1
+
+        echo "Downloading script from: $SCRIPT_URL"
+        curl -sSL "$SCRIPT_URL" -o /tmp/script.sh
+
+        echo "Making script executable..."
+        chmod +x /tmp/script.sh
+
+        echo "Executing script..."
+        /tmp/script.sh
