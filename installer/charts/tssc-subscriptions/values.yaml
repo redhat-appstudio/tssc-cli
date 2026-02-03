@@ -44,7 +44,7 @@ subscriptions:
     enabled: false
     description: Red Hat Advanced Cluster Security Operator
     apiResource: centrals.platform.stackrox.io
-    channel: rhacs-4.8
+    channel: rhacs-4.9
     namespace: rhacs-operator
     name: rhacs-operator
     source: redhat-operators
