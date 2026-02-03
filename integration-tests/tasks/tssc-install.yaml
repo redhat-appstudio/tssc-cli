@@ -17,6 +17,9 @@ spec:
     - name: tssc-image
       type: string
       description: "The tssc image containing the tssc binary."
+    - name: tssc-test-image
+      type: string
+      description: 'The tssc test image containing the tssc test binary.'
   volumes:
     - name: tssc-cli-volume
       secret:
@@ -24,15 +27,8 @@ spec:
     - name: tssc-bin
       emptyDir: {}
   steps:
-    - name: copy-tssc
-      image: $(params.tssc-image)
-      command: ["/bin/sh", "-c"]
-      args: ["cp /usr/local/bin/tssc /tssc-bin/ && chmod +x /tssc-bin/tssc"]
-      volumeMounts:
-        - name: tssc-bin
-          mountPath: /tssc-bin
     - name: install
-      image: quay.io/konflux-qe-incubator/konflux-qe-tools:latest
+      image: $(params.tssc-test-image)
       env:
         - name: JOB_SPEC
           value: "$(params.job-spec)"
