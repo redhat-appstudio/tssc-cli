@@ -176,9 +176,14 @@ spec:
             "--prefix-name" "e2e-$ocp_version$config_suffix"
             "-o" "name"
             "--serviceaccount" "konflux-integration-runner"
+            "--pipeline-timeout" "2h0m"
           )
+
           echo "Starting pipeline with testplan (${#testplan_b64} chars): ${testplan_b64:0:50}..."
           pipeline_run=$(tkn pipeline start -f https://raw.githubusercontent.com/$REPO_ORG/$REPO/refs/heads/$BRANCH/integration-tests/pipelines/tssc-cli-e2e.yaml "${tkn_params[@]}")
+          #Verifying Timeout
+          pipeline_timeout=$(oc get pipelinerun "${pipeline_run}" -n "${KONFLUX_NAMESPACE}" -o jsonpath='{.spec.timeouts.pipeline}')
+          echo "Pipeline run timeout set to ${pipeline_timeout}"
           # Construct console URL for the new PipelineRun
           CONSOLE_URL="${KONFLUX_URL}/ns/${KONFLUX_NAMESPACE}/applications/${KONFLUX_APPLICATION_NAME}/pipelineruns/${pipeline_run}"
           echo "Started new pipelinerun: ${CONSOLE_URL}"

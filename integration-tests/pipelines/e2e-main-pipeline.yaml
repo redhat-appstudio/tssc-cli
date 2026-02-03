@@ -57,6 +57,7 @@ spec:
         - name: job-spec
           value: $(tasks.test-metadata.results.job-spec)
     - name: start-nested-pipelines
+      timeout: "2h30m"
       runAfter:
         - test-metadata
         - process-rhads-config
