@@ -1,0 +1,24 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  generateName: e2e-periodic-pipelinerun-
+spec:
+  pipelineRef:
+    resolver: git
+    params:
+      - name: url
+        value: https://github.com/redhat-appstudio/tssc-cli
+      - name: revision
+        value: main
+      - name: pathInRepo
+        value: integration-tests/pipelines/e2e-periodic-pipeline.yaml
+  workspaces:
+    - name: rhads-config
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Gi

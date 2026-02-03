@@ -15,9 +15,10 @@ spec:
     - name: job-spec
       description: "Job specification metadata"
       type: string
-  results:
+  workspaces:
     - name: rhads-config
-      description: "JSON formatted configuration data (array of configs from PICT, base64 encoded)"
+      description: "Workspace for storing RHADS configuration data"
+  results:
     - name: periodic-pict
       description: "Periodic PICT file content for sharing between steps"
     - name: pict-output
@@ -55,6 +56,7 @@ spec:
 
     - name: process-config
       image: quay.io/konflux-ci/appstudio-utils:ab6b0b8e40e440158e7288c73aff1cf83a2cc8a9@sha256:24179f0efd06c65d16868c2d7eb82573cce8e43533de6cea14fec3b7446e0b14
+      workingDir: $(workspaces.rhads-config.path)
       script: |
         #!/usr/bin/env bash
         set -euo pipefail
@@ -63,7 +65,7 @@ spec:
         # Get the PICT output from the previous step
         cat $(results.pict-output.path) > pict_output.txt
         # Set local variable for maximum configurations (0 = all configurations)
-        MAX_CONFIGS=1  # Change this value to limit configurations (e.g., 5, 10, etc.)
+        MAX_CONFIGS=0  # Change this value to limit configurations (e.g., 5, 10, etc.)
         echo "Maximum configurations requested: $MAX_CONFIGS (0 = all configurations)"
         # Debug: Check if pict_output.txt exists and show its content
         if [[ ! -f pict_output.txt ]]; then
@@ -136,10 +138,10 @@ spec:
         else
           echo "No limit applied - processed all available configurations"
         fi
-        # Copy output to result path
+        # Copy output to workspace
         echo "Final output:"
         cat "$OUTPUT_FILE"
 
-        echo "Encoding rhads-config to base64:"
-        cat "$OUTPUT_FILE" | base64 -w 0 | tee $(results.rhads-config.path)
+        echo "Writing rhads-config to workspace:"
+        cp "$OUTPUT_FILE" rhads-config
         echo "Configuration count: $CONFIG_COUNT"

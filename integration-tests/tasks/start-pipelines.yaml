@@ -19,9 +19,6 @@ spec:
     - name: job-spec
       description: "Job specification metadata"
       type: string
-    - name: rhads-config
-      description: "RHADS configuration data (single config or array of configs with separators, base64 encoded)"
-      type: string
     - name: mode
       description: "Pipeline mode: 'single' for single config, 'periodic' for multiple configs with separators"
       type: string
@@ -44,19 +41,21 @@ spec:
       description: "Context pipeline run name for labeling"
       type: string
       default: ""
+  workspaces:
+    - name: rhads-config
+      description: "Workspace containing RHADS configuration data"
   results:
     - name: pipeline-runs
       description: "Array of started pipeline run names"
   steps:
     - name: start-pipelines
       image: quay.io/openshift-pipeline/ci
+      workingDir: $(workspaces.rhads-config.path)
       env:
         - name: SNAPSHOT
           value: $(params.snapshot)
         - name: JOB_SPEC
           value: $(params.job-spec)
-        - name: RHADS_CONFIG
-          value: $(params.rhads-config)
         - name: MODE
           value: $(params.mode)
         - name: CONTEXT_PIPELINE_RUN_NAME
@@ -87,10 +86,10 @@ spec:
 
         echo "Starting pipelines in mode: $MODE"
         echo "Using Konflux metadata: namespace=$KONFLUX_NAMESPACE, app=$KONFLUX_APPLICATION_NAME, component=$KONFLUX_COMPONENT_NAME"
-        # Decode base64 encoded rhads-config
-        echo "Decoding base64 encoded rhads-config..."
-        DECODED_RHADS_CONFIG=$(echo "$RHADS_CONFIG" | base64 -d)
-        echo "Decoded rhads-config content:"
+        # Read rhads-config from workspace
+        echo "Reading rhads-config from workspace..."
+        DECODED_RHADS_CONFIG=$(cat rhads-config)
+        echo "rhads-config content:"
         echo "$DECODED_RHADS_CONFIG"
         # Extract images from snapshot
         tssc_image=$(echo "${SNAPSHOT}" | jq -r '.components[] |select(.name=="tssc-cli").containerImage')

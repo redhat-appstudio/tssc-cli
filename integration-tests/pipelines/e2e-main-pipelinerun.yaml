@@ -1,0 +1,28 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: e2e-main-pipelinerun
+  namespace: rhtap-shared-team-tenant
+  labels:
+    appstudio.openshift.io/component: tssc-cli
+    appstudio.openshift.io/application: tssc-cli
+spec:
+  pipelineRef:
+    resolver: git
+    params:
+      - name: url
+        value: https://github.com/redhat-appstudio/tssc-cli
+      - name: revision
+        value: main
+      - name: pathInRepo
+        value: integration-tests/pipelines/e2e-main-pipeline.yaml
+  workspaces:
+    - name: rhads-config
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Gi
