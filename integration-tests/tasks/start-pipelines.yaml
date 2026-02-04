@@ -344,6 +344,10 @@ spec:
         # Store results
         printf '%s\n' "${PIPELINERUNS_ARRAY[@]}" | jq -R . | jq -s . > $(results.pipeline-runs.path)
 
+        RESULTS_CACHE="/tmp/pipeline_status_cache"
+        touch "$RESULTS_CACHE"
+        export RESULTS_CACHE
+
         # Wait for completion function
         waitFor() {
           local CONDITION="$1"
@@ -365,6 +369,11 @@ spec:
                 else
                   # Pipeline is finished, remove it from the array
                   echo "Pipeline $PIPELINE_RUN has finished"
+                  if [[ "$MESSAGE_DONE" == "All nested pipelines finished" ]]; then
+                    STATUS=$(oc get pipelinerun/$PIPELINE_RUN -n ${KONFLUX_NAMESPACE} -o jsonpath="{.status.conditions[?(@.type==\"Succeeded\")].status}" 2>/dev/null)
+                    echo "${PIPELINE_RUN}=${STATUS}" >> "$RESULTS_CACHE"
+                    echo "Succeeded: $STATUS"
+                  fi
                 fi
               done
               # Update the array with only running pipelines
@@ -391,14 +400,17 @@ spec:
         SOME_PIPELINE_FAILED=false
         SOME_PIPELINE_SUCCEEDED=false
         for PIPELINE_RUN in "${PIPELINERUNS_ARRAY[@]}"; do
-          if [[ $(oc get pipelinerun/$PIPELINE_RUN -n ${KONFLUX_NAMESPACE} -o jsonpath="{.status.conditions[?(@.type==\"Succeeded\")].status}") == "False" ]]; then
+          STATUS=$(grep "^${PIPELINE_RUN}=" "$RESULTS_CACHE" | cut -d'=' -f2)
+          if [[ "$STATUS" == "False" ]]; then
             if ! $SOME_PIPELINE_FAILED ; then
               echo "List of failed PLRs:"
             fi
             echo "${KONFLUX_URL}/ns/${KONFLUX_NAMESPACE}/applications/${KONFLUX_APPLICATION_NAME}/pipelineruns/${PIPELINE_RUN}"
             SOME_PIPELINE_FAILED=true
-          elif [[ $(oc get pipelinerun/$PIPELINE_RUN -n ${KONFLUX_NAMESPACE} -o jsonpath="{.status.conditions[?(@.type==\"Succeeded\")].status}") == "True" ]]; then
+          elif [[ "$STATUS" == "True" ]]; then
             SOME_PIPELINE_SUCCEEDED=true
+          else
+            echo "Could not determine status for pipeline run ${PIPELINE_RUN}"
           fi
         done
         if $SOME_PIPELINE_SUCCEEDED ; then
