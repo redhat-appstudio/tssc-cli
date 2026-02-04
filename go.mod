@@ -2,7 +2,7 @@ module github.com/redhat-appstudio/tssc-cli
 
 go 1.25.3
 
-require github.com/redhat-appstudio/helmet v0.0.0-20260123015100-52b103dc79ad
+require github.com/redhat-appstudio/helmet v0.0.0-20260203123530-8222d3804adb
 
 require (
 	cel.dev/expr v0.25.1 // indirect

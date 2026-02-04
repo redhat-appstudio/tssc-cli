@@ -387,29 +387,29 @@ github.com/pmezard/go-difflib/difflib
 # github.com/quay/claircore v1.5.48
 ## explicit; go 1.24.0
 github.com/quay/claircore/pkg/tarfs
-# github.com/redhat-appstudio/helmet v0.0.0-20260123015100-52b103dc79ad
+# github.com/redhat-appstudio/helmet v0.0.0-20260203123530-8222d3804adb
 ## explicit; go 1.25.3
-github.com/redhat-appstudio/helmet/pkg/annotations
-github.com/redhat-appstudio/helmet/pkg/api
-github.com/redhat-appstudio/helmet/pkg/chartfs
-github.com/redhat-appstudio/helmet/pkg/config
-github.com/redhat-appstudio/helmet/pkg/constants
-github.com/redhat-appstudio/helmet/pkg/deployer
-github.com/redhat-appstudio/helmet/pkg/engine
-github.com/redhat-appstudio/helmet/pkg/flags
-github.com/redhat-appstudio/helmet/pkg/framework
-github.com/redhat-appstudio/helmet/pkg/framework/mcpserver
-github.com/redhat-appstudio/helmet/pkg/githubapp
-github.com/redhat-appstudio/helmet/pkg/hooks
-github.com/redhat-appstudio/helmet/pkg/installer
-github.com/redhat-appstudio/helmet/pkg/integration
-github.com/redhat-appstudio/helmet/pkg/integrations
-github.com/redhat-appstudio/helmet/pkg/k8s
-github.com/redhat-appstudio/helmet/pkg/mcptools
-github.com/redhat-appstudio/helmet/pkg/monitor
-github.com/redhat-appstudio/helmet/pkg/printer
-github.com/redhat-appstudio/helmet/pkg/resolver
-github.com/redhat-appstudio/helmet/pkg/subcmd
+github.com/redhat-appstudio/helmet/api
+github.com/redhat-appstudio/helmet/framework
+github.com/redhat-appstudio/helmet/framework/mcpserver
+github.com/redhat-appstudio/helmet/internal/annotations
+github.com/redhat-appstudio/helmet/internal/chartfs
+github.com/redhat-appstudio/helmet/internal/config
+github.com/redhat-appstudio/helmet/internal/constants
+github.com/redhat-appstudio/helmet/internal/deployer
+github.com/redhat-appstudio/helmet/internal/engine
+github.com/redhat-appstudio/helmet/internal/flags
+github.com/redhat-appstudio/helmet/internal/githubapp
+github.com/redhat-appstudio/helmet/internal/hooks
+github.com/redhat-appstudio/helmet/internal/installer
+github.com/redhat-appstudio/helmet/internal/integration
+github.com/redhat-appstudio/helmet/internal/integrations
+github.com/redhat-appstudio/helmet/internal/k8s
+github.com/redhat-appstudio/helmet/internal/mcptools
+github.com/redhat-appstudio/helmet/internal/monitor
+github.com/redhat-appstudio/helmet/internal/printer
+github.com/redhat-appstudio/helmet/internal/resolver
+github.com/redhat-appstudio/helmet/internal/subcmd
 # github.com/rubenv/sql-migrate v1.8.1
 ## explicit; go 1.24.0
 github.com/rubenv/sql-migrate

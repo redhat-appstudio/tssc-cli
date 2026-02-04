@@ -4,10 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/redhat-appstudio/helmet/pkg/api"
-	"github.com/redhat-appstudio/helmet/pkg/chartfs"
-	"github.com/redhat-appstudio/helmet/pkg/framework"
-	"github.com/redhat-appstudio/helmet/pkg/subcmd"
+	"github.com/redhat-appstudio/helmet/api"
+	"github.com/redhat-appstudio/helmet/framework"
 	"github.com/redhat-appstudio/tssc-cli/installer"
 )
 
@@ -18,21 +16,11 @@ var (
 )
 
 func main() {
-	tfs, err := framework.NewTarFS(installer.InstallerTarball)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to read embedded files: %v\n", err)
-		os.Exit(1)
-	}
 	cwd, err := os.Getwd()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to get the working directory: %v\n", err)
 		os.Exit(1)
 	}
-
-	// Create overlay filesystem with embedded tarball (already contains installer
-	// directory contents at root) and local filesystem rooted at cwd.
-	ofs := chartfs.NewOverlayFS(tfs, os.DirFS(cwd))
-	cfs := chartfs.New(ofs)
 
 	// Create TSSC-specific application context (metadata/configuration).
 	appCtx := api.NewAppContext(
@@ -50,13 +38,13 @@ func main() {
 		mcpImage = fmt.Sprintf("%s:%s", mcpImage, commitID)
 	}
 
-	// Create application runtime with context and dependencies.
-	app, err := framework.NewApp(
+	// Create application runtime from embedded tarball.
+	app, err := framework.NewAppFromTarball(
 		appCtx,
-		cfs,
-		framework.WithIntegrations(subcmd.StandardModules()...),
+		installer.InstallerTarball,
+		cwd,
+		framework.WithIntegrations(framework.StandardIntegrations()...),
 		framework.WithMCPImage(mcpImage),
-		framework.WithInstallerTarball(installer.InstallerTarball),
 	)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to create application: %v\n", err)
