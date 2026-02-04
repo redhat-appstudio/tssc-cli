@@ -188,7 +188,6 @@ integrations:
 {{- if $githubSecretObj }}
   github:
     - host: ${GITHUB__HOST}
-      token: ${GITHUB__TOKEN}
       apps:
         - appId: ${GITHUB__APP__ID}
           clientId: ${GITHUB__APP__CLIENT__ID}
