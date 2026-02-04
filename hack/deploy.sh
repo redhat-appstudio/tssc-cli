@@ -32,7 +32,7 @@ Optional arguments:
         Environment variables definitions (default: $SCRIPT_DIR/private.env)
     -i, --integration INTEGRATION
         Use an external service [bitbucket, cert-manager, ci, github, gitlab,
-        jenkins, tas].
+        jenkins, quay, tas].
     -d, --debug
         Activate tracing/debug mode.
     -h, --help
@@ -84,6 +84,9 @@ parse_args() {
                 ;;
             jenkins)
                 JENKINS=1
+                ;;
+            quay)
+                QUAY=1
                 ;;
             tas)
                 TAS=1
@@ -209,7 +212,7 @@ integrations() {
             tssc_cli integration github-app \
                 --create \
                 --org='"$GITHUB__ORG"' \
-                "tssc-$GITHUB__ORG-$(date +%m%d-%H%M)"
+                "tsf-$GITHUB__ORG-$(date +%m%d-%H%M)"
         fi
     fi
     if [[ -n "${GITLAB:-}" ]]; then
@@ -235,7 +238,7 @@ integrations() {
     fi
     if [[ -n "${QUAY:-}" ]]; then
         tssc_cli integration quay --force \
-            --dockerconfigjson='"$QUAY__DOCKERCONFIGJSON"' \
+            --organization='"$QUAY__ORG"' \
             --token='"$QUAY__API_TOKEN"' --url='"$QUAY__URL"'
     fi
     if [[ -n "${TAS:-}" ]]; then
