@@ -208,7 +208,6 @@ integrations() {
         if ! kubectl get secret -n "$NAMESPACE" tssc-github-integration >/dev/null 2>&1; then
             tssc_cli integration github-app \
                 --create \
-                --token='"$GITHUB__ORG_TOKEN"' \
                 --org='"$GITHUB__ORG"' \
                 "tssc-$GITHUB__ORG-$(date +%m%d-%H%M)"
         fi
