@@ -76,11 +76,9 @@ data:
     {{- if $pacRoute }}
     GITHUB__APP__WEBHOOK__URL: {{ print "https://" $pacRoute.spec.host | b64enc }}
     GITHUB__HOST: {{ $ghSecretData.host }}
-    GITHUB__TOKEN: {{ $ghSecretData.token }}
     {{- end }}
     {{- if .Values.developerHub.RBAC.enabled }}
     GITHUB__ORG: {{ $ghSecretData.ownerLogin }}
-    GITHUB__USERNAME: {{ $ghSecretData.username | b64dec | lower | b64enc }}
     {{- end }}
 {{- end }}
 {{- $glSecretObj := (lookup "v1" "Secret" $integrationNamespace "tssc-gitlab-integration") -}}
