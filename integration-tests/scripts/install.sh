@@ -232,10 +232,10 @@ acs_integration() {
   if [[ " ${acs_config[*]} " =~ " remote " ]]; then
     echo "[INFO] Configure an existing intance of ACS integration into TSSC"
 
-    ACS__CENTRAL_ENDPOINT="${ACS__CENTRAL_ENDPOINT:-$(cat /usr/local/rhtap-cli-install/acs-central-endpoint)}"
-    ACS__API_TOKEN="${ACS__API_TOKEN:-$(cat /usr/local/rhtap-cli-install/acs-api-token)}"
+    ACS_CENTRAL_ENDPOINT="${ACS_CENTRAL_ENDPOINT:-$(cat /usr/local/rhtap-cli-install/acs-central-endpoint)}"
+    ACS_API_TOKEN="${ACS_API_TOKEN:-$(cat /usr/local/rhtap-cli-install/acs-api-token)}"
 
-    "${TSSC_BINARY}" integration --kube-config "$KUBECONFIG" acs --endpoint="${ACS__CENTRAL_ENDPOINT}" --token="${ACS__API_TOKEN}" --force 
+    "${TSSC_BINARY}" integration --kube-config "$KUBECONFIG" acs --endpoint="${ACS_CENTRAL_ENDPOINT}" --token="${ACS_API_TOKEN}" --force 
   fi
 }
 
@@ -327,7 +327,7 @@ run_pre_release() {
     
     # Get the script directory to find pre-release.sh
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    PRE_RELEASE_SCRIPT="$SCRIPT_DIR/../../hack/pre-release.sh"
+    PRE_RELEASE_SCRIPT="$SCRIPT_DIR/../../hack/pre-release/pre-release.sh"
     
     # Check if pre-release.sh exists
     if [[ ! -f "$PRE_RELEASE_SCRIPT" ]]; then
@@ -342,9 +342,16 @@ run_pre_release() {
         PRE_RELEASE_CMD=("$PRE_RELEASE_SCRIPT" --product "$PRODUCT_ARG")
         ;;
       TPA)
-        echo "[WARNING] TPA pre-release configuration is not yet supported in pre-release.sh"
-        echo "[WARNING] Skipping pre-release configuration for TPA"
-        return 0
+        PRODUCT_ARG="rhtpa"
+        PRE_RELEASE_CMD=("$PRE_RELEASE_SCRIPT" --product "$PRODUCT_ARG")
+        # Add GitHub token if available (needed for private repos)
+        # Use GITHUB_TOKEN if set, otherwise fall back to GITOPS_GIT_TOKEN
+        GITHUB_TOKEN_VALUE="${GITHUB_TOKEN:-${GITOPS_GIT_TOKEN:-}}"
+        if [[ -n "$GITHUB_TOKEN_VALUE" ]]; then
+          # Export as environment variable for pre-release.sh to use
+          export GITHUB_TOKEN="$GITHUB_TOKEN_VALUE"
+          PRE_RELEASE_CMD+=("--github-token" "$GITHUB_TOKEN_VALUE")
+        fi
         ;;
       TAS)
         PRODUCT_ARG="rhtas"
