@@ -252,22 +252,12 @@ deploy() {
     time tssc_cli deploy "${DEBUG:-}"
 }
 
-configure_ci() {
-    if [[ -n "${GITHUB:-}" ]]; then
-        "$CI_VAR_DIR/ci-set-org-vars.sh" --backend github
-    fi
-    if [[ -n "${GITLAB:-}" ]]; then
-        "$CI_VAR_DIR/ci-set-org-vars.sh" --backend gitlab
-    fi
-}
-
 action() {
     build
     init_config
     configure
     integrations
     deploy
-    configure_ci
 }
 
 main() {
