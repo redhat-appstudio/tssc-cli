@@ -12,6 +12,11 @@ type (
 		//
 		// GitLab API docs:
 		// https://docs.gitlab.com/api/audit_events/#retrieve-all-instance-audit-events
+		// ListInstanceAuditEvents gets a list of audit events for instance.
+		// Authentication as Administrator is required.
+		//
+		// GitLab API docs:
+		// https://docs.gitlab.com/api/audit_events/#retrieve-all-instance-audit-events
 		ListInstanceAuditEvents(opt *ListAuditEventsOptions, options ...RequestOptionFunc) ([]*AuditEvent, *Response, error)
 
 		// GetInstanceAuditEvent gets a specific instance audit event.
@@ -19,7 +24,7 @@ type (
 		//
 		// GitLab API docs:
 		// https://docs.gitlab.com/api/audit_events/#retrieve-single-instance-audit-event
-		GetInstanceAuditEvent(event int, options ...RequestOptionFunc) (*AuditEvent, *Response, error)
+		GetInstanceAuditEvent(event int64, options ...RequestOptionFunc) (*AuditEvent, *Response, error)
 
 		// ListGroupAuditEvents gets a list of audit events for the specified group
 		// viewable by the authenticated user.
@@ -31,7 +36,7 @@ type (
 		// GetGroupAuditEvent gets a specific group audit event.
 		//
 		// GitLab API docs: https://docs.gitlab.com/api/audit_events/#retrieve-a-specific-group-audit-event
-		GetGroupAuditEvent(gid any, event int, options ...RequestOptionFunc) (*AuditEvent, *Response, error)
+		GetGroupAuditEvent(gid any, event int64, options ...RequestOptionFunc) (*AuditEvent, *Response, error)
 
 		// ListProjectAuditEvents gets a list of audit events for the specified project
 		// viewable by the authenticated user.
@@ -42,7 +47,7 @@ type (
 		// GetProjectAuditEvent gets a specific project audit event.
 		//
 		// GitLab API docs: https://docs.gitlab.com/api/audit_events/#retrieve-a-specific-project-audit-event
-		GetProjectAuditEvent(pid any, event int, options ...RequestOptionFunc) (*AuditEvent, *Response, error)
+		GetProjectAuditEvent(pid any, event int64, options ...RequestOptionFunc) (*AuditEvent, *Response, error)
 	}
 
 	// AuditEventsService handles communication with the project/group/instance
@@ -60,9 +65,9 @@ var _ AuditEventsServiceInterface = (*AuditEventsService)(nil)
 //
 // GitLab API docs: https://docs.gitlab.com/api/audit_events/
 type AuditEvent struct {
-	ID         int               `json:"id"`
-	AuthorID   int               `json:"author_id"`
-	EntityID   int               `json:"entity_id"`
+	ID         int64             `json:"id"`
+	AuthorID   int64             `json:"author_id"`
+	EntityID   int64             `json:"entity_id"`
 	EntityType string            `json:"entity_type"`
 	EventName  string            `json:"event_name"`
 	Details    AuditEventDetails `json:"details"`
@@ -115,7 +120,7 @@ func (s *AuditEventsService) ListInstanceAuditEvents(opt *ListAuditEventsOptions
 	)
 }
 
-func (s *AuditEventsService) GetInstanceAuditEvent(event int, options ...RequestOptionFunc) (*AuditEvent, *Response, error) {
+func (s *AuditEventsService) GetInstanceAuditEvent(event int64, options ...RequestOptionFunc) (*AuditEvent, *Response, error) {
 	return do[*AuditEvent](s.client,
 		withMethod(http.MethodGet),
 		withPath("audit_events/%d", event),
@@ -132,7 +137,7 @@ func (s *AuditEventsService) ListGroupAuditEvents(gid any, opt *ListAuditEventsO
 	)
 }
 
-func (s *AuditEventsService) GetGroupAuditEvent(gid any, event int, options ...RequestOptionFunc) (*AuditEvent, *Response, error) {
+func (s *AuditEventsService) GetGroupAuditEvent(gid any, event int64, options ...RequestOptionFunc) (*AuditEvent, *Response, error) {
 	return do[*AuditEvent](s.client,
 		withMethod(http.MethodGet),
 		withPath("groups/%s/audit_events/%d", GroupID{gid}, event),
@@ -149,7 +154,7 @@ func (s *AuditEventsService) ListProjectAuditEvents(pid any, opt *ListAuditEvent
 	)
 }
 
-func (s *AuditEventsService) GetProjectAuditEvent(pid any, event int, options ...RequestOptionFunc) (*AuditEvent, *Response, error) {
+func (s *AuditEventsService) GetProjectAuditEvent(pid any, event int64, options ...RequestOptionFunc) (*AuditEvent, *Response, error) {
 	return do[*AuditEvent](s.client,
 		withMethod(http.MethodGet),
 		withPath("projects/%s/audit_events/%d", ProjectID{pid}, event),
