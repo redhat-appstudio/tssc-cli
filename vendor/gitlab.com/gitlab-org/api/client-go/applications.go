@@ -38,7 +38,7 @@ type (
 		//
 		// GitLab API docs:
 		// https://docs.gitlab.com/api/applications/#delete-an-application
-		DeleteApplication(application int, options ...RequestOptionFunc) (*Response, error)
+		DeleteApplication(application int64, options ...RequestOptionFunc) (*Response, error)
 	}
 
 	// ApplicationsService handles communication with administrables applications
@@ -54,7 +54,7 @@ var _ ApplicationsServiceInterface = (*ApplicationsService)(nil)
 
 // Application represents a GitLab application
 type Application struct {
-	ID              int    `json:"id"`
+	ID              int64  `json:"id"`
 	ApplicationID   string `json:"application_id"`
 	ApplicationName string `json:"application_name"`
 	Secret          string `json:"secret"`
@@ -84,7 +84,9 @@ func (s *ApplicationsService) CreateApplication(opt *CreateApplicationOptions, o
 
 // ListApplicationsOptions represents the available
 // ListApplications() options.
-type ListApplicationsOptions ListOptions
+type ListApplicationsOptions struct {
+	ListOptions
+}
 
 func (s *ApplicationsService) ListApplications(opt *ListApplicationsOptions, options ...RequestOptionFunc) ([]*Application, *Response, error) {
 	return do[[]*Application](s.client,
@@ -95,7 +97,7 @@ func (s *ApplicationsService) ListApplications(opt *ListApplicationsOptions, opt
 	)
 }
 
-func (s *ApplicationsService) DeleteApplication(application int, options ...RequestOptionFunc) (*Response, error) {
+func (s *ApplicationsService) DeleteApplication(application int64, options ...RequestOptionFunc) (*Response, error) {
 	_, resp, err := do[none](s.client,
 		withMethod(http.MethodDelete),
 		withPath("applications/%d", application),

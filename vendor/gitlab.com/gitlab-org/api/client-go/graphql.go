@@ -87,7 +87,7 @@ func (g *GraphQL) Do(query GraphQLQuery, response any, options ...RequestOptionF
 	resp, err := g.client.Do(request, response)
 	if err != nil {
 		// return error, details can be read from Response
-		if errResp, ok := err.(*ErrorResponse); ok { //nolint: errorlint
+		if errResp, ok := err.(*ErrorResponse); ok { //nolint:errorlint
 			var v GenericGraphQLErrors
 			if json.Unmarshal(errResp.Body, &v) == nil {
 				return resp, &GraphQLResponseError{
