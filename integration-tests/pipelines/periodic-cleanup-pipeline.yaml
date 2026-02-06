@@ -1,0 +1,27 @@
+---
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: periodic-cleanup-pipeline
+spec:
+  description: >-
+    This pipeline executes multiple cleanup scripts in parallel using a matrix,
+    allowing all cleanup to complete regardless of individual failures.
+  tasks:
+    - name: cleanup-resources
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/redhat-appstudio/tssc-cli.git
+          - name: revision
+            value: main
+          - name: pathInRepo
+            value: integration-tests/tasks/download-and-execute-cleanup.yaml
+      matrix:
+        params:
+          - name: script-path
+            value:
+              - hack/ci/git-org-cleanup/github-repos-cleanup.sh
+              - hack/ci/git-org-cleanup/gitlab-repos-cleanup.sh
+              - hack/ci/git-org-cleanup/bitbucket-repos-cleanup.sh
