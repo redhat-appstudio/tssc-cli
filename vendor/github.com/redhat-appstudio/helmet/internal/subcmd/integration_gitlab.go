@@ -1,13 +1,10 @@
 package subcmd
 
 import (
-	"log/slog"
-
 	"github.com/redhat-appstudio/helmet/api"
-
 	"github.com/redhat-appstudio/helmet/internal/config"
 	"github.com/redhat-appstudio/helmet/internal/integration"
-	"github.com/redhat-appstudio/helmet/internal/k8s"
+	"github.com/redhat-appstudio/helmet/internal/runcontext"
 
 	"github.com/spf13/cobra"
 )
@@ -17,9 +14,8 @@ import (
 type IntegrationGitLab struct {
 	cmd         *cobra.Command           // cobra command
 	appCtx      *api.AppContext          // application context
-	logger      *slog.Logger             // application logger
+	runCtx      *runcontext.RunContext   // run context (kube, logger, chartfs)
 	cfg         *config.Config           // installer configuration
-	kube        *k8s.Kube                // kubernetes client
 	integration *integration.Integration // integration instance
 }
 
@@ -39,9 +35,9 @@ func (g *IntegrationGitLab) Cmd() *cobra.Command {
 }
 
 // Complete is a no-op in this case.
-func (g *IntegrationGitLab) Complete(args []string) error {
+func (g *IntegrationGitLab) Complete(_ []string) error {
 	var err error
-	g.cfg, err = bootstrapConfig(g.cmd.Context(), g.appCtx, g.kube)
+	g.cfg, err = bootstrapConfig(g.cmd.Context(), g.appCtx, g.runCtx)
 	return err
 }
 
@@ -59,8 +55,7 @@ func (g *IntegrationGitLab) Run() error {
 // responsible to manage the TSSC integrations with the GitLab service.
 func NewIntegrationGitLab(
 	appCtx *api.AppContext,
-	logger *slog.Logger,
-	kube *k8s.Kube,
+	runCtx *runcontext.RunContext,
 	i *integration.Integration,
 ) *IntegrationGitLab {
 	g := &IntegrationGitLab{
@@ -72,8 +67,7 @@ func NewIntegrationGitLab(
 		},
 
 		appCtx:      appCtx,
-		logger:      logger,
-		kube:        kube,
+		runCtx:      runCtx,
 		integration: i,
 	}
 	i.PersistentFlags(g.cmd)

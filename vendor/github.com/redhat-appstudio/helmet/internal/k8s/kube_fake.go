@@ -11,6 +11,7 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	rbacv1client "k8s.io/client-go/kubernetes/typed/rbac/v1"
+	"k8s.io/client-go/testing"
 	cmdtesting "k8s.io/kubectl/pkg/cmd/testing"
 )
 
@@ -22,6 +23,20 @@ var _ Interface = &FakeKube{}
 
 func (f *FakeKube) ClientSet(string) (kubernetes.Interface, error) {
 	cs := fake.NewSimpleClientset(f.objects...)
+
+	// Add reactor to automatically set namespace status to Active when created
+	cs.PrependReactor(
+		"create",
+		"namespaces",
+		func(action testing.Action) (handled bool, ret runtime.Object, err error) {
+			createAction := action.(testing.CreateAction)
+			obj := createAction.GetObject()
+			if ns, ok := obj.(*corev1.Namespace); ok {
+				ns.Status.Phase = corev1.NamespaceActive
+			}
+			return false, obj, nil
+		})
+
 	return cs, nil
 }
 
@@ -104,6 +119,15 @@ func (f *FakeKube) RESTClientGetter(_ string) genericclioptions.RESTClientGetter
 }
 
 func NewFakeKube(objects ...runtime.Object) *FakeKube {
+	// Set Status.Phase to Active for any Namespace objects that don't have it set
+	for i, obj := range objects {
+		if ns, ok := obj.(*corev1.Namespace); ok {
+			if ns.Status.Phase == "" {
+				ns.Status.Phase = corev1.NamespaceActive
+				objects[i] = ns
+			}
+		}
+	}
 	return &FakeKube{
 		objects: objects,
 	}

@@ -85,13 +85,13 @@ func (t *Trustification) Validate() error {
 	}
 	var err error
 	if err = ValidateURL(t.bombasticURL); err != nil {
-		return fmt.Errorf("%s: %q", err, t.bombasticURL)
+		return fmt.Errorf("%w: %q", err, t.bombasticURL)
 	}
 	if t.oidcIssuerURL == "" {
 		return fmt.Errorf("oidc-issuer-url is required")
 	}
 	if err = ValidateURL(t.oidcIssuerURL); err != nil {
-		return fmt.Errorf("%s: %q", err, t.oidcIssuerURL)
+		return fmt.Errorf("%w: %q", err, t.oidcIssuerURL)
 	}
 	if t.oidcClientID == "" {
 		return fmt.Errorf("oidc-client-id is required")

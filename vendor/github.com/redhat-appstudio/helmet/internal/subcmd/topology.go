@@ -1,14 +1,12 @@
 package subcmd
 
 import (
-	"log/slog"
 	"os"
 
 	"github.com/redhat-appstudio/helmet/api"
-	"github.com/redhat-appstudio/helmet/internal/chartfs"
 	"github.com/redhat-appstudio/helmet/internal/config"
-	"github.com/redhat-appstudio/helmet/internal/k8s"
 	"github.com/redhat-appstudio/helmet/internal/resolver"
+	"github.com/redhat-appstudio/helmet/internal/runcontext"
 
 	"github.com/spf13/cobra"
 )
@@ -16,17 +14,15 @@ import (
 // Topology represents the topology subcommand, it reports the installer
 // dependency topology based on the cluster configuration and Helm charts.
 type Topology struct {
-	cmd    *cobra.Command   // cobra command
-	logger *slog.Logger     // application logger
-	appCtx *api.AppContext  // application context
-	cfs    *chartfs.ChartFS // embedded filesystem
-	kube   *k8s.Kube        // kubernetes client
+	cmd    *cobra.Command // cobra command
+	appCtx *api.AppContext
+	runCtx *runcontext.RunContext
 
 	collection *resolver.Collection // chart collection
 	cfg        *config.Config       // installer configuration
 }
 
-var _ api.SubCommand = &Topology{}
+var _ api.SubCommand = (*Topology)(nil)
 
 const topologyDesc = `
 Report the dependency topology of the installer based on the cluster configuration
@@ -48,17 +44,14 @@ func (t *Topology) Cmd() *cobra.Command {
 
 // Complete instantiates the cluster configuration and charts.
 func (t *Topology) Complete(_ []string) error {
-	// Load all charts from the embedded filesystem, or from a local directory.
-	charts, err := t.cfs.GetAllCharts()
+	charts, err := t.runCtx.ChartFS.GetAllCharts()
 	if err != nil {
 		return err
 	}
-	// Create a new chart collection from the loaded charts.
 	if t.collection, err = resolver.NewCollection(t.appCtx, charts); err != nil {
 		return err
 	}
-	// Load the installer configuration from the cluster.
-	if t.cfg, err = bootstrapConfig(t.cmd.Context(), t.appCtx, t.kube); err != nil {
+	if t.cfg, err = bootstrapConfig(t.cmd.Context(), t.appCtx, t.runCtx); err != nil {
 		return err
 	}
 	return nil
@@ -84,10 +77,8 @@ func (t *Topology) Run() error {
 
 // NewTopology instantiates a new Topology subcommand.
 func NewTopology(
-	appCtx *api.AppContext, // application context
-	logger *slog.Logger, // application logger
-	cfs *chartfs.ChartFS, // chart filesystem
-	kube *k8s.Kube, // Kubernetes client
+	appCtx *api.AppContext,
+	runCtx *runcontext.RunContext,
 ) *Topology {
 	t := &Topology{
 		cmd: &cobra.Command{
@@ -96,10 +87,8 @@ func NewTopology(
 			Long:         topologyDesc,
 			SilenceUsage: true,
 		},
-		logger: logger.WithGroup("topology"),
 		appCtx: appCtx,
-		cfs:    cfs,
-		kube:   kube,
+		runCtx: runCtx,
 	}
 	return t
 }

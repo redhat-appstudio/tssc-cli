@@ -18,11 +18,11 @@ func StandardMCPToolsBuilder() mcptools.MCPToolsBuilder {
 func standardMCPTools(
 	toolsCtx mcptools.MCPToolsContext,
 ) ([]mcptools.Interface, error) {
-	cm := config.NewConfigMapManager(toolsCtx.Kube, toolsCtx.AppCtx.Name)
+	cm := config.NewConfigMapManager(toolsCtx.Kube, toolsCtx.AppContext.Name)
 
 	// Config tools.
 	configTools, err := mcptools.NewConfigTools(
-		toolsCtx.AppCtx,
+		toolsCtx.AppContext,
 		toolsCtx.Logger,
 		toolsCtx.ChartFS,
 		toolsCtx.Kube,
@@ -34,7 +34,7 @@ func standardMCPTools(
 
 	// Topology builder (shared dependency).
 	tb, err := resolver.NewTopologyBuilder(
-		toolsCtx.AppCtx,
+		toolsCtx.AppContext,
 		toolsCtx.Logger,
 		toolsCtx.ChartFS,
 		toolsCtx.IntegrationManager,
@@ -44,30 +44,28 @@ func standardMCPTools(
 	}
 
 	// Job manager (shared dependency).
-	job := installer.NewJob(toolsCtx.AppCtx, toolsCtx.Kube)
+	job := installer.NewJob(toolsCtx.AppContext, toolsCtx.Kube)
 
 	// Status tool.
-	statusTool := mcptools.NewStatusTool(toolsCtx.AppCtx.Name, cm, tb, job)
+	statusTool := mcptools.NewStatusTool(toolsCtx.AppContext.Name, cm, tb, job)
 
 	// Integration tools, creates its own instance for metadata introspection.
 	integrationCmd := NewIntegration(
-		toolsCtx.AppCtx,
-		toolsCtx.Logger,
-		toolsCtx.Kube,
-		toolsCtx.ChartFS,
+		toolsCtx.AppContext,
+		toolsCtx.RunContext,
 		toolsCtx.IntegrationManager,
 	)
 	integrationTools := mcptools.NewIntegrationTools(
-		toolsCtx.AppCtx.Name, integrationCmd, cm, toolsCtx.IntegrationManager,
+		toolsCtx.AppContext.Name, integrationCmd, cm, toolsCtx.IntegrationManager,
 	)
 
 	// Deploy tools.
 	deployTools := mcptools.NewDeployTools(
-		toolsCtx.AppCtx.Name, cm, tb, job, toolsCtx.Image)
+		toolsCtx.AppContext.Name, cm, tb, job, toolsCtx.Image)
 
 	// Notes tool.
 	notesTool := mcptools.NewNotesTool(
-		toolsCtx.AppCtx.Name,
+		toolsCtx.AppContext.Name,
 		toolsCtx.Logger,
 		toolsCtx.Flags,
 		toolsCtx.Kube,
@@ -78,7 +76,7 @@ func standardMCPTools(
 
 	// Topology tool
 	topologyTool := mcptools.NewTopologyTool(
-		toolsCtx.AppCtx.Name, toolsCtx.ChartFS, cm, tb)
+		toolsCtx.AppContext.Name, toolsCtx.ChartFS, cm, tb)
 
 	return []mcptools.Interface{
 		configTools,

@@ -105,7 +105,7 @@ func (g *GitLab) getCurrentGitLabUser() (string, error) {
 
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: g.insecure,
+			InsecureSkipVerify: g.insecure, //nolint:gosec
 			MinVersion:         tls.VersionTLS12,
 		},
 	}

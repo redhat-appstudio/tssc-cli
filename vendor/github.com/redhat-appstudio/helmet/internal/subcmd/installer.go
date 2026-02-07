@@ -3,14 +3,17 @@ package subcmd
 import (
 	"archive/tar"
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/redhat-appstudio/helmet/api"
 	"github.com/redhat-appstudio/helmet/internal/flags"
+	"github.com/redhat-appstudio/helmet/internal/runcontext"
 
 	"github.com/spf13/cobra"
 )
@@ -18,8 +21,10 @@ import (
 // Installer represents the installer subcommand to list and extract the embedded
 // resources used for the installation process.
 type Installer struct {
-	cmd   *cobra.Command // cobra command
-	flags *flags.Flags   // global flags
+	cmd    *cobra.Command // cobra command
+	appCtx *api.AppContext
+	runCtx *runcontext.RunContext
+	flags  *flags.Flags
 
 	installerTarball []byte // embedded installer tarball
 	list             bool   // list the embedded resources
@@ -50,7 +55,7 @@ For instance:
 `
 
 // dirMode is the default directory permissions.
-const dirMode os.FileMode = 0755
+const dirMode os.FileMode = 0o755
 
 // Cmd exposes the cobra instance.
 func (i *Installer) Cmd() *cobra.Command {
@@ -108,12 +113,18 @@ func (i *Installer) extractResources() error {
 
 	for {
 		header, err := tr.Next()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		} else if err != nil {
 			return err
 		}
 
+		// Validate path to prevent directory traversal (zip slip)
+		if err := validateTarPath(header.Name); err != nil {
+			return fmt.Errorf("invalid path in tarball: %w", err)
+		}
+
+		//nolint:gosec // G305: path is validated above by validateTarPath
 		target := filepath.Join(i.extract, header.Name)
 
 		err = i.extractResource(target, header, tr)
@@ -124,9 +135,19 @@ func (i *Installer) extractResources() error {
 	return nil
 }
 
+// validateTarPath validates that a tar entry path doesn't contain directory traversal.
+func validateTarPath(name string) error {
+	if strings.Contains(name, "..") {
+		return fmt.Errorf("path contains '..': %s", name)
+	}
+	if filepath.IsAbs(name) {
+		return fmt.Errorf("path is absolute: %s", name)
+	}
+	return nil
+}
+
 // extractResource extracts an embedded resource into the base directory.
 func (i *Installer) extractResource(target string, header *tar.Header, tr *tar.Reader) error {
-
 	// Creating the base directory if it does not exist.
 	baseDir := filepath.Dir(target)
 	if _, err := os.Stat(baseDir); os.IsNotExist(err) {
@@ -162,7 +183,7 @@ func (i *Installer) extractFile(target string, header *tar.Header, tr *tar.Reade
 	f, err := os.OpenFile(
 		target,
 		os.O_CREATE|os.O_WRONLY|os.O_TRUNC,
-		os.FileMode(header.Mode),
+		os.FileMode(header.Mode), //nolint:gosec // G115: tar header mode is safe for file permissions
 	)
 	if err != nil {
 		return err
@@ -187,12 +208,10 @@ func (i *Installer) extractSymlink(target string, header *tar.Header) error {
 				header.Linkname,
 			)
 			return nil
-		} else {
-			// Removing the existing symlink if it points to a different
-			// target.
-			if err := os.Remove(target); err != nil {
-				return err
-			}
+		}
+		// Removing the existing symlink if it points to a different target.
+		if err := os.Remove(target); err != nil {
+			return err
 		}
 	} else if !os.IsNotExist(err) {
 		return err
@@ -214,13 +233,20 @@ func (i *Installer) Run() error {
 }
 
 // NewInstaller creates a new installer subcommand.
-func NewInstaller(appCtx *api.AppContext, f *flags.Flags, installerTarball []byte) *Installer {
+func NewInstaller(
+	appCtx *api.AppContext,
+	runCtx *runcontext.RunContext,
+	f *flags.Flags,
+	installerTarball []byte,
+) *Installer {
 	i := &Installer{
 		cmd: &cobra.Command{
 			Use:   "installer",
 			Short: "Lists or extract the embedded installer resources",
 			Long:  installerDesc,
 		},
+		appCtx:           appCtx,
+		runCtx:           runCtx,
 		flags:            f,
 		installerTarball: installerTarball,
 	}

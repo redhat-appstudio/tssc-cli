@@ -149,7 +149,7 @@ func (h *Helm) Verify() error {
 // delay between retries.
 func (h *Helm) VerifyWithRetry() error {
 	var err error
-	var retries = 3
+	retries := 3
 	for i := 1; i <= retries; i++ {
 		err = h.Verify()
 		if err == nil || i == retries {

@@ -44,23 +44,32 @@ func getMinorVersion(version string) (string, error) {
 }
 
 // SetOpenShift sets the OpenShift context variables.
+// On vanilla Kubernetes clusters, empty defaults are used.
 func (v *Variables) SetOpenShift(ctx context.Context, kube *k8s.Kube) error {
-	ingressDomain, err := k8s.GetOpenShiftIngressDomain(ctx, kube)
-	if err != nil {
-		return err
+	// Try to get OpenShift-specific values, but don't fail if unavailable
+	ingressDomain, domainErr := k8s.GetOpenShiftIngressDomain(ctx, kube)
+	ingressRouterCA, caErr := k8s.GetOpenShiftIngressRouteCA(ctx, kube)
+	clusterVersion, versionErr := k8s.GetOpenShiftVersion(ctx, kube)
+
+	// If any OpenShift APIs are unavailable, use empty defaults
+	if domainErr != nil {
+		ingressDomain = ""
 	}
-	ingressRouterCA, err := k8s.GetOpenShiftIngressRouteCA(ctx, kube)
-	if err != nil {
-		return err
+	if caErr != nil {
+		ingressRouterCA = ""
 	}
-	clusterVersion, err := k8s.GetOpenShiftVersion(ctx, kube)
-	if err != nil {
-		return err
+
+	minorVersion := ""
+	if versionErr == nil && clusterVersion != "" {
+		var err error
+		minorVersion, err = getMinorVersion(clusterVersion)
+		if err != nil {
+			minorVersion = ""
+		}
+	} else {
+		clusterVersion = ""
 	}
-	minorVersion, err := getMinorVersion(clusterVersion)
-	if err != nil {
-		return err
-	}
+
 	v.OpenShift = chartutil.Values{
 		"Ingress": chartutil.Values{
 			"Domain":   ingressDomain,

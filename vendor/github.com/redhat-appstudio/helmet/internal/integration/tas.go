@@ -25,11 +25,9 @@ func (t *TrustedArtifactSigner) PersistentFlags(c *cobra.Command) {
 	p := c.PersistentFlags()
 
 	p.StringVar(&t.rekorURL, "rekor-url", t.rekorURL,
-		"URL of the rekor server "+
-			"(e.g. https://rekor.sigstore.dev)")
+		"URL of the Rekor server (e.g. https://rekor.sigstore.dev)")
 	p.StringVar(&t.tufURL, "tuf-url", t.tufURL,
-		"URL of the TUF server "+
-			"(e.g. https://tuf.trustification.dev)")
+		"URL of the TUF server (e.g. https://tuf.trustification.dev)")
 
 	for _, f := range []string{
 		"rekor-url",
@@ -66,13 +64,13 @@ func (t *TrustedArtifactSigner) Validate() error {
 	}
 	var err error
 	if err = ValidateURL(t.rekorURL); err != nil {
-		return fmt.Errorf("%s: %q", err, t.rekorURL)
+		return fmt.Errorf("%w: %q", err, t.rekorURL)
 	}
 	if t.tufURL == "" {
 		return fmt.Errorf("tuf-url is required")
 	}
 	if err = ValidateURL(t.tufURL); err != nil {
-		return fmt.Errorf("%s: %q", err, t.tufURL)
+		return fmt.Errorf("%w: %q", err, t.tufURL)
 	}
 	return nil
 }

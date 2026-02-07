@@ -5,6 +5,7 @@ import (
 
 	"github.com/redhat-appstudio/helmet/internal/integration"
 	"github.com/redhat-appstudio/helmet/internal/k8s"
+	"github.com/redhat-appstudio/helmet/internal/runcontext"
 )
 
 // IntegrationModule defines the contract for a pluggable integration.
@@ -18,11 +19,10 @@ type IntegrationModule struct {
 	Init func(*slog.Logger, *k8s.Kube) integration.Interface
 
 	// Command creates the CLI subcommand for this integration.
-	// It receives the application context and initialized integration wrapper.
+	// It receives the application context, run context, and initialized integration wrapper.
 	Command func(
 		*AppContext,
-		*slog.Logger,
-		*k8s.Kube,
+		*runcontext.RunContext,
 		*integration.Integration,
 	) SubCommand
 }

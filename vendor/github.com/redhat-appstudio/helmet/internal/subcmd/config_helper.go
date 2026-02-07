@@ -7,16 +7,12 @@ import (
 
 	"github.com/redhat-appstudio/helmet/api"
 	"github.com/redhat-appstudio/helmet/internal/config"
-	"github.com/redhat-appstudio/helmet/internal/k8s"
+	"github.com/redhat-appstudio/helmet/internal/runcontext"
 )
 
-// bootstrapConfig helper to retrieve the cluster configuration.
-func bootstrapConfig(
-	ctx context.Context,
-	appCtx *api.AppContext,
-	kube *k8s.Kube,
-) (*config.Config, error) {
-	mgr := config.NewConfigMapManager(kube, appCtx.Name)
+// bootstrapConfig retrieves the cluster configuration.
+func bootstrapConfig(ctx context.Context, appCtx *api.AppContext, runCtx *runcontext.RunContext) (*config.Config, error) {
+	mgr := config.NewConfigMapManager(runCtx.Kube, appCtx.Name)
 	cfg, err := mgr.GetConfig(ctx)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, `

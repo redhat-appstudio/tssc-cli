@@ -26,6 +26,8 @@ const envPrefix = "INSTALLER"
 
 // exec executes the script with the given environment variables.
 func (h *Hooks) exec(scriptPath string, vals map[string]interface{}) error {
+	// Hook script execution without context.
+	//nolint:noctx
 	cmd := exec.Command(scriptPath)
 	cmd.Env = os.Environ()
 	// Transforming the given values into environment variables.

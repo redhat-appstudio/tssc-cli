@@ -2,13 +2,11 @@ package subcmd
 
 import (
 	"fmt"
-	"log/slog"
 
 	"github.com/redhat-appstudio/helmet/api"
-
 	"github.com/redhat-appstudio/helmet/internal/config"
 	"github.com/redhat-appstudio/helmet/internal/integration"
-	"github.com/redhat-appstudio/helmet/internal/k8s"
+	"github.com/redhat-appstudio/helmet/internal/runcontext"
 
 	"github.com/spf13/cobra"
 )
@@ -18,9 +16,8 @@ import (
 type IntegrationGitHub struct {
 	cmd         *cobra.Command           // cobra command
 	appCtx      *api.AppContext          // application context
-	logger      *slog.Logger             // application logger
+	runCtx      *runcontext.RunContext   // run context (kube, logger, chartfs)
 	cfg         *config.Config           // installer configuration
-	kube        *k8s.Kube                // kubernetes client
 	integration *integration.Integration // integration instance
 
 	create bool // create a new github app
@@ -50,7 +47,7 @@ func (g *IntegrationGitHub) Cmd() *cobra.Command {
 // Complete captures the application name, and ensures it's ready to run.
 func (g *IntegrationGitHub) Complete(args []string) error {
 	var err error
-	g.cfg, err = bootstrapConfig(g.cmd.Context(), g.appCtx, g.kube)
+	g.cfg, err = bootstrapConfig(g.cmd.Context(), g.appCtx, g.runCtx)
 	if err != nil {
 		return err
 	}
@@ -64,7 +61,7 @@ func (g *IntegrationGitHub) Complete(args []string) error {
 
 	if len(args) != 1 {
 		return fmt.Errorf(
-			"expected 1, got %d arguments. The GitHub App name is required.",
+			"expected 1, got %d arguments; the GitHub App name is required",
 			len(args),
 		)
 	}
@@ -94,8 +91,7 @@ func (g *IntegrationGitHub) Run() error {
 // which manages the TSSC integration with a GitHub App.
 func NewIntegrationGitHub(
 	appCtx *api.AppContext,
-	logger *slog.Logger,
-	kube *k8s.Kube,
+	runCtx *runcontext.RunContext,
 	i *integration.Integration,
 ) *IntegrationGitHub {
 	g := &IntegrationGitHub{
@@ -108,8 +104,7 @@ func NewIntegrationGitHub(
 		},
 
 		appCtx:      appCtx,
-		logger:      logger,
-		kube:        kube,
+		runCtx:      runCtx,
 		integration: i,
 
 		create: false,

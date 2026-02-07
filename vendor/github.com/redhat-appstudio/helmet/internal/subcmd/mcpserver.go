@@ -5,30 +5,28 @@ import (
 
 	"github.com/redhat-appstudio/helmet/api"
 	"github.com/redhat-appstudio/helmet/framework/mcpserver"
-	"github.com/redhat-appstudio/helmet/internal/chartfs"
 	"github.com/redhat-appstudio/helmet/internal/constants"
 	"github.com/redhat-appstudio/helmet/internal/flags"
 	"github.com/redhat-appstudio/helmet/internal/integrations"
-	"github.com/redhat-appstudio/helmet/internal/k8s"
 	"github.com/redhat-appstudio/helmet/internal/mcptools"
+	"github.com/redhat-appstudio/helmet/internal/runcontext"
 
 	"github.com/spf13/cobra"
 )
 
 // MCPServer is a subcommand for starting the MCP server.
 type MCPServer struct {
-	cmd    *cobra.Command   // cobra command
-	appCtx *api.AppContext  // application context
-	flags  *flags.Flags     // global flags
-	cfs    *chartfs.ChartFS // embedded filesystem
-	kube   *k8s.Kube        // kubernetes client
+	cmd    *cobra.Command // cobra command
+	appCtx *api.AppContext
+	runCtx *runcontext.RunContext
 
+	flags           *flags.Flags
 	manager         *integrations.Manager    // integrations manager
 	mcpToolsBuilder mcptools.MCPToolsBuilder // builder function
 	image           string                   // installer's container image
 }
 
-var _ api.SubCommand = &MCPServer{}
+var _ api.SubCommand = (*MCPServer)(nil)
 
 const mcpServerDesc = ` 
 Starts the MCP server for the TSSC installer, using STDIO communication.
@@ -57,12 +55,10 @@ func (m *MCPServer) Validate() error {
 
 // Run starts the MCP server.
 func (m *MCPServer) Run() error {
-	// Create context using constructor - this ensures logger uses io.Discard
 	toolsCtx := mcptools.NewMCPToolsContext(
 		m.appCtx,
+		m.runCtx,
 		m.flags,
-		m.cfs,
-		m.kube,
 		m.manager,
 		m.image,
 	)
@@ -73,7 +69,7 @@ func (m *MCPServer) Run() error {
 		return fmt.Errorf("failed to create MCP tools: %w", err)
 	}
 
-	instructions, err := m.cfs.ReadFile(constants.InstructionsFilename)
+	instructions, err := m.runCtx.ChartFS.ReadFile(constants.InstructionsFilename)
 	if err != nil {
 		return fmt.Errorf("failed to read %s: %w",
 			constants.InstructionsFilename, err)
@@ -85,12 +81,13 @@ func (m *MCPServer) Run() error {
 	return s.Start()
 }
 
-// NewMCPServer creates a new MCPServer instance.
+// NewMCPServer creates a new MCPServer instance. It accepts the same runCtx as
+// other subcommands. NewMCPToolsContext overrides the logger to io.Discard for
+// MCP tools so that output does not corrupt the STDIO protocol.
 func NewMCPServer(
 	appCtx *api.AppContext,
+	runCtx *runcontext.RunContext,
 	f *flags.Flags,
-	cfs *chartfs.ChartFS,
-	kube *k8s.Kube,
 	manager *integrations.Manager,
 	builder mcptools.MCPToolsBuilder,
 	image string,
@@ -103,9 +100,8 @@ func NewMCPServer(
 		},
 
 		appCtx:          appCtx,
+		runCtx:          runCtx,
 		flags:           f,
-		cfs:             cfs,
-		kube:            kube,
 		manager:         manager,
 		mcpToolsBuilder: builder,
 		image:           image,

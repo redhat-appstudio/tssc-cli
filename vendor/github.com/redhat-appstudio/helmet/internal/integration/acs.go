@@ -75,7 +75,7 @@ func (a *ACS) Data(
 	}, nil
 }
 
-// NewACS creates a new instance of the ACS integration.l
+// NewACS creates a new instance of the ACS integration.
 func NewACS() *ACS {
 	return &ACS{}
 }

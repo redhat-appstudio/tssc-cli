@@ -61,7 +61,7 @@ const (
 // installer's default.
 func (c *ConfigTools) getHandler(
 	ctx context.Context,
-	ctr mcp.CallToolRequest,
+	_ mcp.CallToolRequest,
 ) (*mcp.CallToolResult, error) {
 	cfg, err := c.cm.GetConfig(ctx)
 	// The cluster is already configured, showing the user the existing
@@ -79,7 +79,7 @@ func (c *ConfigTools) getHandler(
 
 	// The cluster is not configured yet, showing the user a default configuration
 	// and hints on how to proceed.
-	if cfg, err = config.NewConfigDefault(c.cfs, ""); err != nil {
+	if _, err = config.NewConfigDefault(c.cfs, ""); err != nil {
 		return nil, err
 	}
 
@@ -144,8 +144,8 @@ Unable to retrieve the configuration from the cluster!`,
 	}
 
 	// Before creating the cluster configuration, it needs to ensure the OpenShift
-	// project exists.
-	if err := k8s.EnsureOpenShiftProject(
+	// project or Kubernetes namespace exists.
+	if err := k8s.EnsureNamespace(
 		ctx,
 		c.logger,
 		c.kube,

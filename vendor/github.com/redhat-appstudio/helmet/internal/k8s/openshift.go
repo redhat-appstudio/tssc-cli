@@ -80,7 +80,7 @@ func getConfigVersionCR(ctx context.Context, kube *Kube) (*configv1.ClusterVersi
 	return version, nil
 }
 
-// Returns name of the defaultCertificate as specified in default IngressController
+// getIngressControllerDefaultCertificate returns name of the defaultCertificate as specified in default IngressController.
 func getIngressControllerDefaultCertificate(ctx context.Context, kube *Kube) (string, error) {
 	ingressController, err := getIngressControllerCR(ctx, kube)
 	if err != nil {

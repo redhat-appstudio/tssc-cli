@@ -49,7 +49,7 @@ func (c *CEL) Evaluate(configured map[string]bool, expression string) error {
 	// based on the configured integrations.
 	prg, err := c.env.Program(ast)
 	if err != nil {
-		return fmt.Errorf("%w: %q fails to compile: %s",
+		return fmt.Errorf("%w: %q fails to compile: %w",
 			ErrInvalidExpression, expression, err)
 	}
 	evalContext := make(map[string]any, len(configured))
@@ -84,7 +84,7 @@ func (c *CEL) Evaluate(configured map[string]bool, expression string) error {
 // expression to only valid integrations.
 func NewCEL(integrationNames ...string) (*CEL, error) {
 	// Registering all integration names as options, boolean variables.
-	options := []cel.EnvOption{}
+	options := make([]cel.EnvOption, 0, len(integrationNames))
 	for _, option := range integrationNames {
 		options = append(options, cel.Variable(option, cel.BoolType))
 	}

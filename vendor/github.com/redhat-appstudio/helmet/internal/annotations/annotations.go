@@ -4,7 +4,7 @@ package annotations
 // annotations and labels managed by this application.
 const RepoURI = "helmet.redhat-appstudio.github.com"
 
-// Annotation keys for Helm chart metadata
+// Annotation keys for Helm chart metadata.
 const (
 	ProductName          = RepoURI + "/product-name"
 	DependsOn            = RepoURI + "/depends-on"

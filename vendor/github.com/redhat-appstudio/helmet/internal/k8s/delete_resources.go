@@ -42,7 +42,7 @@ func DeleteClusterRoles(
 			metav1.ListOptions{LabelSelector: labelSelector})
 }
 
-// DeleteRoleBindings deletes Kuberbetes RoleBindings by label.
+// DeleteRoleBindings deletes Kubernetes RoleBindings by label.
 func DeleteRoleBindings(
 	ctx context.Context,
 	kube *Kube,
@@ -54,6 +54,9 @@ func DeleteRoleBindings(
 	}
 	RoleBindingsList, err := rbacClient.RoleBindings("").
 		List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
+	if err != nil {
+		return err
+	}
 	for _, rb := range RoleBindingsList.Items {
 		err := rbacClient.RoleBindings(rb.Namespace).
 			Delete(ctx, rb.Name, metav1.DeleteOptions{})
@@ -76,6 +79,9 @@ func DeleteRoles(
 	}
 	RolesList, err := rbacClient.Roles("").
 		List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
+	if err != nil {
+		return err
+	}
 	for _, role := range RolesList.Items {
 		err := rbacClient.Roles(role.Namespace).
 			Delete(ctx, role.Name, metav1.DeleteOptions{})
@@ -98,6 +104,9 @@ func DeleteServiceAccounts(
 	}
 	ServiceAccountList, err := coreClient.ServiceAccounts("").
 		List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
+	if err != nil {
+		return err
+	}
 	for _, sa := range ServiceAccountList.Items {
 		err := coreClient.ServiceAccounts(sa.Namespace).
 			Delete(ctx, sa.Name, metav1.DeleteOptions{})

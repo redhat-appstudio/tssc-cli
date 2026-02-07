@@ -1,35 +1,31 @@
 package subcmd
 
 import (
-	"log/slog"
-
 	"github.com/redhat-appstudio/helmet/api"
-	"github.com/redhat-appstudio/helmet/internal/chartfs"
 	"github.com/redhat-appstudio/helmet/internal/config"
 	"github.com/redhat-appstudio/helmet/internal/integrations"
-	"github.com/redhat-appstudio/helmet/internal/k8s"
 	"github.com/redhat-appstudio/helmet/internal/resolver"
+	"github.com/redhat-appstudio/helmet/internal/runcontext"
 
 	"github.com/spf13/cobra"
 )
 
 func NewIntegration(
 	appCtx *api.AppContext,
-	logger *slog.Logger,
-	kube *k8s.Kube,
-	cfs *chartfs.ChartFS,
+	runCtx *runcontext.RunContext,
 	manager *integrations.Manager,
 ) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "integration <type>",
 		Short: "Configures an external service provider for TSSC",
-		PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
-			cfg, err := bootstrapConfig(cmd.Context(), appCtx, kube)
+		PersistentPostRunE: func(cmd *cobra.Command, _ []string) error {
+			ctx := cmd.Context()
+			cfg, err := bootstrapConfig(ctx, appCtx, runCtx)
 			if err != nil {
 				return err
 			}
 
-			charts, err := cfs.GetAllCharts()
+			charts, err := runCtx.ChartFS.GetAllCharts()
 			if err != nil {
 				return err
 			}
@@ -39,7 +35,7 @@ func NewIntegration(
 				return err
 			}
 
-			configuredIntegrations, err := manager.ConfiguredIntegrations(cmd.Context(), cfg)
+			configuredIntegrations, err := manager.ConfiguredIntegrations(ctx, cfg)
 			if err != nil {
 				return err
 			}
@@ -66,8 +62,8 @@ func NewIntegration(
 			}
 
 			if updated {
-				return config.NewConfigMapManager(kube, appCtx.Name).
-					Update(cmd.Context(), cfg)
+				return config.NewConfigMapManager(runCtx.Kube, appCtx.Name).
+					Update(ctx, cfg)
 			}
 
 			return nil
@@ -76,7 +72,7 @@ func NewIntegration(
 
 	for _, mod := range manager.GetModules() {
 		wrapper := manager.Integration(integrations.IntegrationName(mod.Name))
-		sub := mod.Command(appCtx, logger, kube, wrapper)
+		sub := mod.Command(appCtx, runCtx, wrapper)
 		cmd.AddCommand(api.NewRunner(sub).Cmd())
 	}
 

@@ -78,7 +78,9 @@ func (g *GitHubApp) getGitHubClient() (*github.Client, error) {
 		return github.NewClient(nil), nil
 	}
 	g.log().Debug("using GitHub Enterprise API")
-	return github.NewEnterpriseClient(g.gitHubURL, "", nil)
+	client := github.NewClient(nil)
+	client, err := client.WithEnterpriseURLs(g.gitHubURL, g.gitHubURL)
+	return client, err
 }
 
 // oAuth2Workflow starts the oAuth2 workflow to create a new GitHub App. The user
@@ -142,8 +144,9 @@ func (g *GitHubApp) oAuth2Workflow(
 	})
 
 	webServer := &http.Server{
-		Addr:    fmt.Sprintf("%s:%d", g.webServerAddr, g.webServerPort),
-		Handler: serveMux,
+		Addr:              fmt.Sprintf("%s:%d", g.webServerAddr, g.webServerPort),
+		Handler:           serveMux,
+		ReadHeaderTimeout: 10 * time.Second,
 	}
 	// Opening the web browser while listening for the GitHub callback URL in the
 	// background, this process should obtain the oAuth code.
@@ -160,7 +163,11 @@ func (g *GitHubApp) oAuth2Workflow(
 			}
 		}()
 		g.log().Debug("opening browser", "url", localhostURL)
-		go OpenInBrowser(localhostURL)
+		go func() {
+			if err := OpenInBrowser(localhostURL); err != nil {
+				g.logger.Error("failed to open browser", "error", err)
+			}
+		}()
 	}()
 
 	// Waiting for the code, then shutting down the callback webserver.
@@ -187,7 +194,7 @@ func (g *GitHubApp) Create(
 	manifest scrape.AppManifest,
 ) (*github.AppConfig, error) {
 	redirectURL := fmt.Sprintf("http://localhost:%d", g.webServerPort)
-	manifest.RedirectURL = github.String(redirectURL)
+	manifest.RedirectURL = github.Ptr(redirectURL)
 
 	// Starting the oAuth workflow to interact with the GitHub web UI and create
 	// the new GitHub App.

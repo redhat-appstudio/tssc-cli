@@ -102,7 +102,7 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-// DecodeNode returns a struct converted from *yaml.Node
+// DecodeNode returns a struct converted from *yaml.Node.
 func (c *Config) DecodeNode() error {
 	if len(c.root.Content) == 0 {
 		return fmt.Errorf("invalid configuration: content is empty")
@@ -127,7 +127,7 @@ func (c *Config) DecodeNode() error {
 	return nil
 }
 
-// Set returns new configuration with updates
+// Set returns new configuration with updates.
 func (c *Config) Set(key string, configData any) error {
 	keyPaths, err := FlattenMap(configData, key)
 	if err != nil {

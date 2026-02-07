@@ -2,6 +2,7 @@ package installer
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 
@@ -16,6 +17,8 @@ import (
 	applymetav1 "k8s.io/client-go/applyconfigurations/meta/v1"
 	applyrbacv1 "k8s.io/client-go/applyconfigurations/rbac/v1"
 )
+
+var ErrJobNotFound = errors.New("job not found")
 
 // Job represents the asynchronous actor that runs a Job in the cluster to run
 // this installer container image on a pod. The idea is to allow a non-blocking
@@ -60,9 +63,9 @@ func (j *Job) getJob(ctx context.Context) (*batchv1.Job, error) {
 		return nil, err
 	}
 
-	// When the job list is empty, it returns a nil job as well.
+	// When the job list is empty, it returns a sentinel error.
 	if len(jobList.Items) == 0 {
-		return nil, nil
+		return nil, ErrJobNotFound
 	}
 
 	// Returns error when multiple installer jobs are found in the cluster, with
@@ -288,10 +291,10 @@ func (j *Job) Run(
 	// Issuing the service account and cluster role binding first, the job needs
 	// to run as cluster admin.
 	if err = j.applyServiceAccount(ctx, namespace); err != nil {
-		return fmt.Errorf("unable to apply the service account: %s", err)
+		return fmt.Errorf("unable to apply the service account: %w", err)
 	}
 	if err = j.applyClusterRoleBinding(ctx, namespace); err != nil {
-		return fmt.Errorf("unable to apply the cluster role binding: %s", err)
+		return fmt.Errorf("unable to apply the cluster role binding: %w", err)
 	}
 	// Creating the job itself.
 	return j.createJob(ctx, debug, dryRun, namespace, image)

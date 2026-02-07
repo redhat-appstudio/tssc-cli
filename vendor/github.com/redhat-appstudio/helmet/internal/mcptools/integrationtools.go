@@ -39,8 +39,8 @@ const (
 // command and appends their names and short descriptions to a string builder,
 // which is then returned as a text tool result.
 func (i *IntegrationTools) listHandler(
-	ctx context.Context,
-	ctr mcp.CallToolRequest,
+	_ context.Context,
+	_ mcp.CallToolRequest,
 ) (*mcp.CallToolResult, error) {
 	var output strings.Builder
 	output.WriteString(fmt.Sprintf("# `%s` Integrations\n\n", i.appName))
@@ -58,7 +58,7 @@ func (i *IntegrationTools) listHandler(
 // that these handle sensitive information and must be manually executed by users,
 // not automated agents.
 func (i *IntegrationTools) scaffoldHandler(
-	ctx context.Context,
+	_ context.Context,
 	ctr mcp.CallToolRequest,
 ) (*mcp.CallToolResult, error) {
 	var output strings.Builder

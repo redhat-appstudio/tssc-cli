@@ -10,6 +10,7 @@ import (
 	"github.com/redhat-appstudio/helmet/internal/integrations"
 	"github.com/redhat-appstudio/helmet/internal/k8s"
 	"github.com/redhat-appstudio/helmet/internal/mcptools"
+	"github.com/redhat-appstudio/helmet/internal/runcontext"
 	"github.com/redhat-appstudio/helmet/internal/subcmd"
 
 	"github.com/spf13/cobra"
@@ -62,7 +63,7 @@ func (a *App) setupRootCmd() error {
 	a.flags.PersistentFlags(a.rootCmd.PersistentFlags())
 
 	// Handle version flag and help.
-	a.rootCmd.RunE = func(cmd *cobra.Command, args []string) error {
+	a.rootCmd.RunE = func(cmd *cobra.Command, _ []string) error {
 		if a.flags.Version {
 			a.flags.ShowVersion(
 				a.AppCtx.Name, a.AppCtx.Version, a.AppCtx.CommitID)
@@ -72,18 +73,19 @@ func (a *App) setupRootCmd() error {
 	}
 
 	logger := a.flags.GetLogger(os.Stdout)
+	runCtx := runcontext.NewRunContext(a.kube, a.ChartFS, logger)
 
 	// Loading informed integrations into the manager.
 	a.integrationManager = integrations.NewManager()
 	if err := a.integrationManager.LoadModules(
-		a.AppCtx.Name, logger, a.kube, a.integrations,
+		a.AppCtx.Name, runCtx, a.integrations,
 	); err != nil {
 		return fmt.Errorf("failed to load modules: %w", err)
 	}
 
 	// Register standard subcommands.
 	a.rootCmd.AddCommand(subcmd.NewIntegration(
-		a.AppCtx, logger, a.kube, a.ChartFS, a.integrationManager,
+		a.AppCtx, runCtx, a.integrationManager,
 	))
 
 	// Use default builder if none provided.
@@ -100,50 +102,12 @@ func (a *App) setupRootCmd() error {
 
 	// Other subcommands via api.Runner.
 	subs := []api.SubCommand{
-		subcmd.NewConfig(
-			a.AppCtx,
-			logger,
-			a.flags,
-			a.ChartFS,
-			a.kube,
-		),
-		subcmd.NewDeploy(
-			a.AppCtx,
-			logger,
-			a.flags,
-			a.ChartFS,
-			a.kube,
-			a.integrationManager,
-			a.installerTarball,
-		),
-		subcmd.NewInstaller(
-			a.AppCtx,
-			a.flags,
-			a.installerTarball,
-		),
-		subcmd.NewMCPServer(
-			a.AppCtx,
-			a.flags,
-			a.ChartFS,
-			a.kube,
-			a.integrationManager,
-			mcpBuilder,
-			a.mcpImage,
-		),
-		subcmd.NewTemplate(
-			a.AppCtx,
-			logger,
-			a.flags,
-			a.ChartFS,
-			a.kube,
-			a.installerTarball,
-		),
-		subcmd.NewTopology(
-			a.AppCtx,
-			logger,
-			a.ChartFS,
-			a.kube,
-		),
+		subcmd.NewConfig(a.AppCtx, runCtx, a.flags),
+		subcmd.NewDeploy(a.AppCtx, runCtx, a.flags, a.integrationManager, a.installerTarball),
+		subcmd.NewInstaller(a.AppCtx, runCtx, a.flags, a.installerTarball),
+		subcmd.NewMCPServer(a.AppCtx, runCtx, a.flags, a.integrationManager, mcpBuilder, a.mcpImage),
+		subcmd.NewTemplate(a.AppCtx, runCtx, a.flags, a.installerTarball),
+		subcmd.NewTopology(a.AppCtx, runCtx),
 	}
 	for _, sub := range subs {
 		a.rootCmd.AddCommand(api.NewRunner(sub).Cmd())
