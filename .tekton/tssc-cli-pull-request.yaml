@@ -29,6 +29,10 @@ spec:
     value: quay.io/redhat-user-workloads/rhtap-shared-team-tenant/tssc-cli:on-pr-{{revision}}
   - name: image-expires-after
     value: 5d
+  - name: build-platforms
+    value:
+    - linux/arm64
+    - linux/x86_64
   - name: dockerfile
     value: Dockerfile
   - name: prefetch-input
@@ -98,7 +102,7 @@ spec:
       description: Build a source image.
       name: build-source-image
       type: string
-    - default: "false"
+    - default: "true"
       description: Add built image into an OCI image index
       name: build-image-index
       type: string
@@ -122,6 +126,11 @@ spec:
       default: 'false'
       description: Enable cache proxy configuration
       type: string
+    - default:
+      - linux/x86_64
+      description: List of platforms to build the container images on. The available set of values is determined by the configuration of the multi-platform-controller.
+      name: build-platforms
+      type: array
     results:
     - description: ""
       name: IMAGE_URL
@@ -269,7 +278,12 @@ spec:
         workspace: git-auth
       - name: netrc
         workspace: netrc
-    - name: build-container
+    - matrix:
+        params:
+        - name: PLATFORM
+          value:
+          - $(params.build-platforms)
+      name: build-images
       params:
       - name: IMAGE
         value: $(params.output-image)
@@ -287,17 +301,23 @@ spec:
         value: $(tasks.clone-repository.results.commit)
       - name: BUILD_ARGS
         value:
-        - COMMIT_ID=$(params.revision)
-        - VERSION_ID=$(tasks.get-version.results.version)
         - $(params.build-args[*])
       - name: BUILD_ARGS_FILE
         value: $(params.build-args-file)
-      - name: PRIVILEGED_NESTED
-        value: $(params.privileged-nested)
       - name: SOURCE_ARTIFACT
         value: $(tasks.prefetch-dependencies.results.SOURCE_ARTIFACT)
       - name: CACHI2_ARTIFACT
         value: $(tasks.prefetch-dependencies.results.CACHI2_ARTIFACT)
+      - name: IMAGE_APPEND_PLATFORM
+        value: 'true'
+      - name: LABELS
+        value:
+        - io.openshift.build.commit.id=$(tasks.clone-repository.results.commit)
+        - io.openshift.build.commit.ref=$(params.revision)
+        - io.openshift.build.commit.date=$(tasks.clone-repository.results.commit-timestamp)
+        - io.openshift.build.source-location=$(params.git-url)
+        - vcs-ref=$(tasks.clone-repository.results.short-commit)
+        - vcs-url=$(tasks.clone-repository.results.url)
       - name: BUILDAH_FORMAT
         value: $(params.buildah-format)
       - name: HTTP_PROXY
@@ -306,13 +326,12 @@ spec:
         value: $(tasks.init.results.no-proxy)
       runAfter:
       - prefetch-dependencies
-      - get-version
       taskRef:
         params:
         - name: name
-          value: buildah-oci-ta
+          value: buildah-remote-oci-ta
         - name: bundle
-          value: quay.io/konflux-ci/tekton-catalog/task-buildah-oci-ta:0.7@sha256:7d5818e082e5534cf63946c1a1d380c0ee6b10b5c915340368c9ca081b97c02a
+          value: quay.io/konflux-ci/tekton-catalog/task-buildah-remote-oci-ta:0.7@sha256:d8b2cd0bd3f8e3fdcafe4aebfee59f3f2fcbca78ef31f9c5dd8ecd781cd02636
         - name: kind
           value: task
         resolver: bundles
@@ -333,11 +352,11 @@ spec:
         value: $(params.build-image-index)
       - name: IMAGES
         value:
-        - $(tasks.build-container.results.IMAGE_URL)@$(tasks.build-container.results.IMAGE_DIGEST)
+        - $(tasks.build-images.results.IMAGE_REF[*])
       - name: BUILDAH_FORMAT
         value: $(params.buildah-format)
       runAfter:
-      - build-container
+      - build-images
       taskRef:
         params:
         - name: name
@@ -404,7 +423,12 @@ spec:
         operator: in
         values:
         - "false"
-    - name: clair-scan
+    - matrix:
+        params:
+        - name: image-platform
+          value:
+          - $(params.build-platforms)
+      name: clair-scan
       params:
       - name: image-digest
         value: $(tasks.build-image-index.results.IMAGE_DIGEST)
@@ -426,7 +450,12 @@ spec:
         operator: in
         values:
         - "false"
-    - name: ecosystem-cert-preflight-checks
+    - matrix:
+        params:
+        - name: platform
+          value:
+          - $(params.build-platforms)
+      name: ecosystem-cert-preflight-checks
       params:
       - name: image-url
         value: $(tasks.build-image-index.results.IMAGE_URL)
@@ -472,7 +501,12 @@ spec:
         operator: in
         values:
         - "false"
-    - name: clamav-scan
+    - matrix:
+        params:
+        - name: image-arch
+          value:
+          - $(params.build-platforms)
+      name: clamav-scan
       params:
       - name: image-digest
         value: $(tasks.build-image-index.results.IMAGE_DIGEST)
