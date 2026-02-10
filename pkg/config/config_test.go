@@ -34,7 +34,7 @@ func TestNewConfigFromFile(t *testing.T) {
 		_, err := cfg.GetProduct("product1")
 		g.Expect(err).NotTo(o.Succeed())
 
-		product, err := cfg.GetProduct("Developer Hub")
+		product, err := cfg.GetProduct("Konflux")
 		g.Expect(err).To(o.Succeed())
 		g.Expect(product).NotTo(o.BeNil())
 		g.Expect(product.GetNamespace()).NotTo(o.BeEmpty())
@@ -82,27 +82,17 @@ func TestNewConfigFromFile(t *testing.T) {
 	})
 
 	t.Run("SetProducts", func(t *testing.T) {
-		// ACS is product 0
-		err := cfg.Set("tssc.products.0.namespace", "acstest")
+		// Trusted Artifact Signer is product 1 and has a namespace in config
+		err := cfg.Set("tssc.products.1.namespace", "tas-test-namespace")
 		g.Expect(err).To(o.Succeed())
 
-		// TPA is product 4
+		// Trusted Profile Analyzer is product 4
 		err = cfg.Set("tssc.products.4.enabled", false)
 		g.Expect(err).To(o.Succeed())
 
-		// DH is product 5
-		dhData := map[string]any{
-			"catalogURL":   "https://someIP.io",
-			"authProvider": "gitlab",
-		}
-		err = cfg.Set("tssc.products.5.properties", dhData)
-		g.Expect(err).To(o.Succeed())
-
 		configString := cfg.String()
-		g.Expect(string(configString)).To(o.ContainSubstring("namespace: acstest"))
+		g.Expect(string(configString)).To(o.ContainSubstring("namespace: tas-test-namespace"))
 		g.Expect(string(configString)).To(o.ContainSubstring("enabled: false"))
-		g.Expect(string(configString)).To(o.ContainSubstring("catalogURL: https://someIP.io"))
-		g.Expect(string(configString)).To(o.ContainSubstring("authProvider: gitlab"))
 	})
 
 	t.Run("FlattenMap", func(t *testing.T) {
@@ -126,26 +116,25 @@ func TestNewConfigFromFile(t *testing.T) {
 
 	t.Run("SetProduct", func(t *testing.T) {
 		// Get an existing product
-		product, err := cfg.GetProduct("Developer Hub")
+		product, err := cfg.GetProduct("Konflux")
 		g.Expect(err).To(o.Succeed())
 		g.Expect(product).NotTo(o.BeNil())
 
-		// Modify it
+		// Modify existing fields and an existing property (UpdateMappingValue only replaces existing keys)
 		product.Enabled = false
-		newNamespace := "new-dh-namespace"
+		newNamespace := "new-konflux-namespace"
 		product.Namespace = &newNamespace
-		product.Properties["catalogURL"] = "http://new.url/catalog.yaml"
+		product.Properties["manageSubscription"] = false
 
 		// Call SetProduct
-		err = cfg.SetProduct("Developer Hub", *product)
+		err = cfg.SetProduct("Konflux", *product)
 		g.Expect(err).To(o.Succeed())
 
 		// Assert changes
 		configString := cfg.String()
 		g.Expect(configString).To(o.ContainSubstring("enabled: false"))
-		g.Expect(configString).To(o.ContainSubstring("namespace: new-dh-namespace"))
-		g.Expect(configString).To(o.ContainSubstring(
-			"catalogURL: http://new.url/catalog.yaml"))
+		g.Expect(configString).To(o.ContainSubstring("namespace: new-konflux-namespace"))
+		g.Expect(configString).To(o.ContainSubstring("manageSubscription: false"))
 
 		// Test non-existent product
 		err = cfg.SetProduct("NonExistentProduct", Product{})
@@ -155,24 +144,24 @@ func TestNewConfigFromFile(t *testing.T) {
 	})
 
 	t.Run("EnableDisableProduct", func(t *testing.T) {
-		acsProductName := "Advanced Cluster Security"
+		productName := "Cert-Manager"
 
 		// Disable the product
-		config, err := cfg.EnableDisableProduct(acsProductName, false)
+		config, err := cfg.EnableDisableProduct(productName, false)
 		g.Expect(err).To(o.Succeed())
 
 		// Verify the product is disabled
-		spec, err := config.GetProduct(acsProductName)
+		spec, err := config.GetProduct(productName)
 		g.Expect(err).To(o.Succeed())
 		g.Expect(spec).NotTo(o.BeNil())
 		g.Expect(spec.Enabled).To(o.BeFalse())
 
 		// Enabled the product
-		config, err = cfg.EnableDisableProduct(acsProductName, true)
+		config, err = cfg.EnableDisableProduct(productName, true)
 		g.Expect(err).To(o.Succeed())
 
 		// Verify the product is enabled
-		spec, err = config.GetProduct(acsProductName)
+		spec, err = config.GetProduct(productName)
 		g.Expect(err).To(o.Succeed())
 		g.Expect(spec).NotTo(o.BeNil())
 		g.Expect(spec.Enabled).To(o.BeTrue())

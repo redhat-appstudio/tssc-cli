@@ -14,17 +14,17 @@ func TestNewDependency(t *testing.T) {
 	cfs, err := chartfs.NewChartFS("../../installer")
 	g.Expect(err).To(o.Succeed())
 
-	developerHub, err := cfs.GetChartFiles("charts/tssc-dh")
+	chartFiles, err := cfs.GetChartFiles("charts/tssc-konflux")
 	g.Expect(err).To(o.Succeed())
 
-	d := NewDependency(developerHub)
+	d := NewDependency(chartFiles)
 
 	t.Run("Chart", func(t *testing.T) {
 		g.Expect(d.Chart()).NotTo(o.BeNil())
 	})
 
 	t.Run("Name", func(t *testing.T) {
-		g.Expect(d.Name()).To(o.Equal("tssc-dh"))
+		g.Expect(d.Name()).To(o.Equal("tssc-konflux"))
 	})
 
 	t.Run("Namespace", func(t *testing.T) {
@@ -38,7 +38,7 @@ func TestNewDependency(t *testing.T) {
 	})
 
 	t.Run("ProductName", func(t *testing.T) {
-		g.Expect(d.ProductName()).To(o.Equal("Developer Hub"))
+		g.Expect(d.ProductName()).To(o.Equal("Konflux"))
 	})
 
 	t.Run("UseProductNamespace", func(t *testing.T) {

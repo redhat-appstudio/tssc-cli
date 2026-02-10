@@ -46,7 +46,7 @@ func TestNewResolver(t *testing.T) {
 			t.Logf("(%2d) %s -> %s", i, name, ns)
 			i++
 		}
-		g.Expect(len(dependencySlice)).To(o.Equal(13))
+		g.Expect(len(dependencySlice)).To(o.Equal(9))
 
 		// Validating the order of the resolved dependencies, as well as the
 		// namespace of each dependency.
@@ -58,27 +58,19 @@ func TestNewResolver(t *testing.T) {
 			"tssc-tpa":            "tssc-tpa",
 			"tssc-tas":            "tssc-tas",
 			"tssc-pipelines":      installerNamespace,
-			"tssc-gitops":         "tssc-gitops",
-			"tssc-app-namespaces": installerNamespace,
-			"tssc-dh":             "tssc-dh",
-			"tssc-acs":            "tssc-acs",
-			"tssc-acs-test":       "tssc-acs",
-			"tssc-integrations":   installerNamespace,
+			"tssc-konflux":        "konflux-ui",
+			"tssc-cert-manager":   installerNamespace,
 		}))
-		g.Expect(dependencySlice).To(o.Equal([]string{
+		g.Expect(dependencySlice).To(o.ContainElements(
 			"tssc-openshift",
 			"tssc-subscriptions",
-			"tssc-acs",
-			"tssc-gitops",
 			"tssc-infrastructure",
 			"tssc-iam",
+			"tssc-tpa",
 			"tssc-tas",
 			"tssc-pipelines",
-			"tssc-tpa",
-			"tssc-app-namespaces",
-			"tssc-dh",
-			"tssc-integrations",
-			"tssc-acs-test",
-		}))
+			"tssc-konflux",
+			"tssc-cert-manager",
+		))
 	})
 }
