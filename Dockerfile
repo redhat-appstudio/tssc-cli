@@ -2,7 +2,7 @@
 # Build
 #
 
-FROM registry.redhat.io/openshift4/ose-tools-rhel9@sha256:c1baccf320b0acaed693a07fd8df76758db0a38767ace30ccc79aed9ba8c4987 AS ose-tools
+FROM registry.redhat.io/openshift4/ose-tools-rhel9@sha256:1538eacbd3708f44ea4cb90bcda2cb45696f46fb53716b87fc2e86fdcc167cc7 AS ose-tools
 FROM registry.access.redhat.com/ubi10/go-toolset:1.25.3-1763633883 AS builder
 
 ARG COMMIT_ID
