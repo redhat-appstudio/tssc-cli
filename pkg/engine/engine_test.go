@@ -23,7 +23,7 @@ root:
   {{- $k | nindent 4 }}:
   {{- $v | toYaml | nindent 6 }}
 {{- end }}
-  catalogURL: {{ .Installer.Products.Developer_Hub.Properties.catalogURL }}
+  manageSubscription: {{ .Installer.Products.Konflux.Properties.manageSubscription }}
 `
 
 func TestEngine_Render(t *testing.T) {
@@ -68,10 +68,10 @@ func TestEngine_Render(t *testing.T) {
 	g.Expect(root).To(o.HaveKey("products"))
 	g.Expect(root["products"]).NotTo(o.BeNil())
 
-	g.Expect(root).To(o.HaveKey("catalogURL"))
-	g.Expect(root["catalogURL"]).NotTo(o.BeNil())
+	g.Expect(root).To(o.HaveKey("manageSubscription"))
+	g.Expect(root["manageSubscription"]).NotTo(o.BeNil())
 
-	product, err := cfg.GetProduct(config.DeveloperHub)
+	product, err := cfg.GetProduct("Konflux")
 	g.Expect(err).To(o.Succeed())
-	g.Expect(root["catalogURL"]).To(o.Equal(product.Properties["catalogURL"]))
+	g.Expect(root["manageSubscription"]).To(o.Equal(product.Properties["manageSubscription"]))
 }
