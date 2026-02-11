@@ -46,6 +46,10 @@ spec:
       type: string
       description: 'Optional testplan.json content encoded in base64 format. If not provided, testplan will be downloaded from the repository.'
       default: ""
+    - name: ui-error-strategy
+      type: string
+      description: 'Error handling strategy for UI tests'
+      default: "continue"
   tasks:
     - name: rosa-hcp-metadata
       taskRef:
@@ -146,7 +150,7 @@ spec:
     - name: rhtap-ui-tests
       runAfter:
         - tssc-e2e-tests
-      onError: continue
+      onError: $(params.ui-error-strategy)
       taskRef:
         resolver: git
         params:

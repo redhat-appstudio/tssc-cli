@@ -159,6 +159,10 @@ spec:
           if [[ "${tssc_test_image}" != "" ]]; then
             tkn_params+=("--param" "tssc-test-image=${tssc_test_image}")
           fi
+          # Set UI test error strategy based on source repo
+          if [[ "${GIT_REPO}" == "tssc-test" ]]; then
+            tkn_params+=("--param" "ui-error-strategy=stopAndFail")
+          fi
 
           # Add labels and other flags
           tkn_params+=(
