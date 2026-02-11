@@ -180,8 +180,9 @@ unshare() {
 }
 
 configure() {
+    echo "[INFO] Configuring TSSC"
     if [[ -n "${CERT_MANAGER:-}" ]]; then
-        yq -i '(.tssc.products[] | select(.name == "Cert-Manager")).enabled = false' "$CONFIG"
+        yq -i '(.tssc.products[] | select(.name == "Cert-Manager")).properties.manageSubscription = false' "$CONFIG"
     fi
     if [[ -n "${CI:-}" ]]; then
         sed -i 's/\( *ci\): .*/\1: true/' "$VALUES"
@@ -202,12 +203,14 @@ configure() {
 
 integrations() {
     if [[ -n "${BITBUCKET:-}" ]]; then
+        echo "[INFO] Configuring Bitbucket integration"
         tssc_cli integration bitbucket --force \
             --app-password='"$BITBUCKET__APP_PASSWORD"' \
             --host='"$BITBUCKET__HOST"' \
             --username='"$BITBUCKET__USERNAME"'
     fi
     if [[ -n "${GITHUB:-}" ]]; then
+        echo "[INFO] Configuring GitHub integration"
         if ! kubectl get secret -n "$NAMESPACE" tssc-github-integration >/dev/null 2>&1; then
             tssc_cli integration github-app \
                 --create \
@@ -216,6 +219,7 @@ integrations() {
         fi
     fi
     if [[ -n "${GITLAB:-}" ]]; then
+        echo "[INFO] Configuring GitLab integration"
         if [[ -n "${GITLAB__APP__CLIENT__ID:-}" && -n "${GITLAB__APP__CLIENT__SECRET:-}" ]]; then
             tssc_cli integration gitlab --force \
                 --app-id='"$GITLAB__APP__CLIENT__ID"' \
@@ -231,17 +235,20 @@ integrations() {
         fi
     fi
     if [[ -n "${JENKINS:-}" ]]; then
+        echo "[INFO] Configuring Jenkins integration"
         tssc_cli integration jenkins --force \
             --token='"$JENKINS__TOKEN"' \
             --url='"$JENKINS__URL"' \
             --username='"$JENKINS__USERNAME"'
     fi
     if [[ -n "${QUAY:-}" ]]; then
+        echo "[INFO] Configuring Quay integration"
         tssc_cli integration quay --force \
             --organization='"$QUAY__ORG"' \
             --token='"$QUAY__API_TOKEN"' --url='"$QUAY__URL"'
     fi
     if [[ -n "${TAS:-}" ]]; then
+        echo "[INFO] Configuring Trusted Artifact Signer integration"
         tssc_cli integration trusted-artifact-signer --force \
             --rekor-url='"$TAS__REKOR_URL"' \
             --tuf-url='"$TAS__TUF_URL"'
@@ -249,6 +256,7 @@ integrations() {
 }
 
 deploy() {
+    echo "[INFO] Deploying TSSC"
     time tssc_cli deploy "${DEBUG:-}"
 }
 

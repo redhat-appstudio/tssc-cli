@@ -41,17 +41,14 @@ openshift:
     - {{ $konflux.Namespace }}
     - konflux-operator
 {{- end }}
-{{- if $tpa.Enabled }}
-    - {{ $tpa.Namespace }}
-    {{- if $tpa.Properties.manageSubscription }}
-    - rhtpa-operator
-    {{- end }}
-{{- end }}
 {{- if $tas.Enabled }}
     - {{ $tas.Namespace }}
 {{- end }}
 {{- if $tpa.Enabled }}
     - {{ $tpa.Namespace }}
+    {{- if $tpa.Properties.manageSubscription }}
+    - rhtpa-operator
+    {{- end }}
 {{- end }}
 
 #
@@ -168,6 +165,7 @@ iam:
 #
 
 konflux:
+  ingressDomain: "{{ $ingressDomain }}"
   tssc:
     namespace: {{ .Installer.Namespace }}
 
