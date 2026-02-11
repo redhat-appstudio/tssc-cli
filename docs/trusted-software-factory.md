@@ -10,7 +10,7 @@
 5. Create the github app integration with `tssc integration github --create --org "$GITHUB__ORG" "tsf-$(date +%m%d-%H%M)"`. Open the link to create the app, follow the instructions, and install the application to your GitHub organization.
 6. Create the quay integration with `tssc integration quay --organization="$QUAY__ORG" --token="$QUAY__API_TOKEN" --url="$QUAY__URL"`. If you need information on how to generate the token, look further in this document.
 7. Deploy all the services with `tssc deploy`.
-8. Cluster users (including the admin user) should now be able to login the Konflux UI. You can get the hostname with `oc get routes -n konflux-ui --output jsonpath="{.items[0].spec.host}"; echo`.
+8. Cluster users (including the admin user) should now be able to login the Konflux UI. You will find the URL in the logs of the deployment. You can also access it through the GitHub App (via the `Website` link on the application public page, or via the link displayed on the application configuration page which was the last page displayed after you installed the application).
 
 ## Getting the information for tsf.env
 

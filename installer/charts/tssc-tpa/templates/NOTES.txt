@@ -1,10 +1,8 @@
 {{- $tpa := .Values.trustedProfileAnalyzer }}
-{{- if $tpa.enabled }}
-  {{- $trustification := .Values.trustification -}}
+{{- $trustification := .Values.trustification -}}
 Trusted Profile Analyzer (TPA):
-  - Keycloak URL:   {{ $trustification.oidc.issuerUrl }}
-    Namespace:      {{ .Release.Namespace }}
+  - UI: {{ printf "https://server%s" $trustification.appDomain }}
+    Keycloak URL:   {{ $trustification.oidc.issuerUrl }}
     Bombastic API:  {{ printf "sbom%s" $trustification.appDomain }}
     Documentation:  {{ printf "docs%s" $trustification.appDomain }}
     SPOG API:       {{ printf "api%s" $trustification.appDomain }}
-{{- end }}

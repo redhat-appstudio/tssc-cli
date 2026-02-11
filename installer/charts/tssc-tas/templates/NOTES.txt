@@ -1,1 +1,8 @@
-Trusted Artifact Signer deployed.
+Fulcio:
+  - URL: https://fulcio-server-{{ .Release.Namespace }}.{{ .Values.trustedArtifactSigner.ingressDomain }}
+
+Rekor:
+  - URL: https://rekor-server-{{ .Release.Namespace }}.{{ .Values.trustedArtifactSigner.ingressDomain }}
+
+TUF:
+  - URL: https://tuf-server-{{ .Release.Namespace }}.{{ .Values.trustedArtifactSigner.ingressDomain }}
