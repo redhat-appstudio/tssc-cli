@@ -4,6 +4,26 @@
 {{- if $secretData }}
   {{- $applicationURL = (get $secretData "htmlURL") | b64dec | toString -}}
 {{- end }}
+
+{{- $tasNamespace := .Values.trustedArtifactSigner.secureSign.namespace -}}
+
+{{- /* Lookup ingresses to get external URLs */ -}}
+{{- $fulcioIngress := required (printf "Ingress 'fulcio-server' not found in namespace '%s'" $tasNamespace) (lookup "networking.k8s.io/v1" "Ingress" $tasNamespace "fulcio-server") -}}
+{{- $rekorIngress := required (printf "Ingress 'rekor-server' not found in namespace '%s'" $tasNamespace) (lookup "networking.k8s.io/v1" "Ingress" $tasNamespace "rekor-server") -}}
+{{- $tufIngress := required (printf "Ingress 'tuf' not found in namespace '%s'" $tasNamespace) (lookup "networking.k8s.io/v1" "Ingress" $tasNamespace "tuf") -}}
+
+{{- $fulcioExternalUrl := printf "https://%s" (index $fulcioIngress.spec.rules 0).host -}}
+{{- $rekorExternalUrl := printf "https://%s" (index $rekorIngress.spec.rules 0).host -}}
+{{- $tufExternalUrl := printf "https://%s" (index $tufIngress.spec.rules 0).host -}}
+
+{{- /* Lookup services to get internal URLs */ -}}
+{{- $fulcioSvc := required (printf "Service 'fulcio-server' not found in namespace '%s'" $tasNamespace) (lookup "v1" "Service" $tasNamespace "fulcio-server") -}}
+{{- $rekorSvc := required (printf "Service 'rekor-server' not found in namespace '%s'" $tasNamespace) (lookup "v1" "Service" $tasNamespace "rekor-server") -}}
+{{- $tufSvc := required (printf "Service 'tuf' not found in namespace '%s'" $tasNamespace) (lookup "v1" "Service" $tasNamespace "tuf") -}}
+
+{{- $fulcioInternalUrl := printf "http://%s.%s.svc" $fulcioSvc.metadata.name $fulcioSvc.metadata.namespace -}}
+{{- $rekorInternalUrl := printf "http://%s.%s.svc" $rekorSvc.metadata.name $rekorSvc.metadata.namespace -}}
+{{- $tufInternalUrl := printf "http://%s.%s.svc" $tufSvc.metadata.name $tufSvc.metadata.namespace -}}
 ---
 apiVersion: konflux.konflux-ci.dev/v1alpha1
 kind: Konflux
@@ -15,6 +35,15 @@ spec:
     enabled: true
   info:
     spec:
+      clusterConfig:
+        data:
+          defaultOIDCIssuer: https://kubernetes.default.svc
+          fulcioInternalUrl: {{ $fulcioInternalUrl | quote }}
+          fulcioExternalUrl: {{ $fulcioExternalUrl | quote }}
+          rekorInternalUrl: {{ $rekorInternalUrl | quote }}
+          rekorExternalUrl: {{ $rekorExternalUrl | quote }}
+          tufInternalUrl: {{ $tufInternalUrl | quote }}
+          tufExternalUrl: {{ $tufExternalUrl | quote }}
       publicInfo:
         integrations:
           github:
