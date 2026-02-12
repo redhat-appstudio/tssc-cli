@@ -117,6 +117,15 @@ parse_args() {
             TAS_RELEASE_VERSION="$2"
             shift
             ;;
+        -o|--tas-operator-version)
+            if [[ -z "${2:-}" ]]; then
+                echo "[ERROR] Operator version needs to be specified after '--tas-operator-version'." >&2
+                usage
+                exit 1
+            fi
+            TAS_OPERATOR_VERSION="$2"
+            shift
+            ;;
         -t|--github-token)
             if [[ -z "${2:-}" ]]; then
                 echo "[ERROR] GitHub token needs to be specified after '--github-token'." >&2
@@ -220,6 +229,9 @@ main() {
             fi
             if [[ -n "$TAS_RELEASE_VERSION" ]]; then
                 SCRIPT_ARGS+=("--release-version" "$TAS_RELEASE_VERSION")
+            fi
+            if [[ -n "${TAS_OPERATOR_VERSION:-}" ]]; then
+                SCRIPT_ARGS+=("--operator-version" "$TAS_OPERATOR_VERSION")
             fi
             if [[ -n "${GITHUB_TOKEN:-}" ]]; then
                 SCRIPT_ARGS+=("--github-token" "$GITHUB_TOKEN")

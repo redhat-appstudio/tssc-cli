@@ -40,6 +40,10 @@ spec:
       description: "The number of replicas for the cluster nodes"
       type: string
       default: "3"
+    - name: install-params
+      description: "Additional parameters for installation testing (e.g., PRE_RELEASE=TAS TAS_VERSION=1.3.2). When empty, does not alter normal installation."
+      type: string
+      default: ""
     - name: context-pipeline-run-name
       description: "Context pipeline run name for labeling"
       type: string
@@ -69,6 +73,8 @@ spec:
           value: $(params.ocp-instance-type)
         - name: OCP_REPLICAS
           value: $(params.ocp-replicas)
+        - name: INSTALL_PARAMS
+          value: $(params.install-params)
         - name: KONFLUX_NAMESPACE
           valueFrom:
             fieldRef:
@@ -151,6 +157,11 @@ spec:
             "--param" "machine-type=$OCP_INSTANCE_TYPE"
             "--param" "replicas=$OCP_REPLICAS"
           )
+
+          # Add install params if provided
+          if [[ -n "${INSTALL_PARAMS:-}" ]]; then
+            tkn_params+=("--param" "install-params=$INSTALL_PARAMS")
+          fi
 
           # Add optional image parameters
           if [[ "${tssc_image}" != "" ]]; then

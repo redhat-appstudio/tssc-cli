@@ -79,6 +79,12 @@ export PRE_RELEASE="TAS"
 export TAS_VERSION="1.3.1"
 export GITHUB_TOKEN="ghp_xxxxx"  # Required for private repos, recommended for public repos to avoid rate limits
 
+# Example: Configure pre-release subscription for TAS (specific operator version)
+export PRE_RELEASE="TAS"
+export TAS_VERSION="1.3.2"
+export TAS_OPERATOR_VERSION="rhtas-operator.v1.3.2"  # Exact CSV version to install
+export GITHUB_TOKEN="ghp_xxxxx"  # Required for private repos, recommended for public repos to avoid rate limits
+
 # Example: Configure pre-release subscription for TAS (specific path - private repo)
 export PRE_RELEASE="TAS"
 export TAS_RELEASE_PATH="https://github.com/securesign/releases/blob/release-1.3.1/1.3.1/stable"
@@ -106,6 +112,11 @@ export GITHUB_TOKEN="ghp_xxxxx"  # Optional, for private repositories
     - `GITHUB_TOKEN` (or `GITOPS_GIT_TOKEN` as fallback) is required for private repositories
     - Recommended for public repositories to avoid GitHub API rate limits
     - The script will fetch the release matching that version
+  - **Option 2b**: Specify exact operator version
+    - Set `TAS_VERSION` (e.g., `1.3.2`) and `TAS_OPERATOR_VERSION` (e.g., `rhtas-operator.v1.3.2`)
+    - `TAS_OPERATOR_VERSION` overrides the `startingCSV` in the subscription to install a specific operator version
+    - `GITHUB_TOKEN` (or `GITOPS_GIT_TOKEN` as fallback) is required for private repositories
+    - Recommended for public repositories to avoid GitHub API rate limits
   - **Option 3**: Use a specific path
     - Set `TAS_RELEASE_PATH` to the GitHub release path
     - Example: `export TAS_RELEASE_PATH="https://github.com/securesign/releases/blob/release-1.3.1/1.3.1/stable"`

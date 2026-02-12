@@ -30,6 +30,10 @@ spec:
       description: 'The number of replicas for the cluster nodes.'
       default: "3"
       type: string
+    - name: install-params
+      description: 'Additional parameters for installation testing (e.g., PRE_RELEASE=TAS TAS_VERSION=1.3.2). When empty, does not alter normal installation.'
+      default: ""
+      type: string
 
   tasks:
     - name: test-metadata
@@ -92,5 +96,7 @@ spec:
           value: $(params.ocp-instance-type)
         - name: ocp-replicas
           value: $(params.ocp-replicas)
+        - name: install-params
+          value: $(params.install-params)
         - name: context-pipeline-run-name
           value: $(context.pipelineRun.name)
