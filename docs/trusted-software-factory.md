@@ -3,7 +3,7 @@
 ## Quickstart
 
 1. Copy [private.env.template](../hack/private.env.template) as `tsf.env` and fill in the blanks.
-2. Start a container with `podman run -it --rm --env-file tmp/tsf.env --entrypoint bash -p 8228:8228 quay.io/roming22-org/tsf:latest`.
+2. Start a container with `podman run -it --rm --env-file tsf.env --entrypoint bash -p 8228:8228 --pull always quay.io/roming22-org/tsf:latest`.
 3. Log on the cluster with `oc login "$OCP__API_ENDPOINT" --username "$OCP__USERNAME" --password "$OCP__PASSWORD"`
 4. Create the TSF config on the cluster with `tssc config --create`.
 5. Check if the `Red Hat Cert-Manager` operator is already installed in the cluster. If it is, edit the `tssc-config` ConfigMap in the `tssc` namespace to set `manageSubscription: false` for that product.
@@ -28,7 +28,6 @@ Use the name of that organization for `GITHUB__ORG`.
 ### Quay
 
 * `QUAY__URL`: full url of the quay instance. Example: `https://quay.io`.
-* `QUAY_RHOST`: hostname of the quay instance. Example: `quay.io`.
 * `QUAY__API_TOKEN`: token giving access to an organization on the quay instance.
 * `QUAY__ORG`: the organization that the token gives access to.
 
