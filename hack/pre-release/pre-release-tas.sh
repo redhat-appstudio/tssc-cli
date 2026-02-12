@@ -274,7 +274,7 @@ download_release_file() {
     # To:   https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{path}
     local raw_url="$release_path"
     
-    if [[ "$raw_url" == *"github.com"* ]] && ([[ "$raw_url" == *"/blob/"* ]] || [[ "$raw_url" == *"/tree/"* ]]); then
+      if [[ "$raw_url" == *"github.com"* ]] && { [[ "$raw_url" == *"/blob/"* ]] || [[ "$raw_url" == *"/tree/"* ]]; }; then
         # Extract owner, repo, branch, and path from blob/tree URL
         # Example: https://github.com/securesign/releases/blob/main/1.3.1/stable
         # or: https://github.com/securesign/releases/blob/release-1.3.1/1.3.1/stable
