@@ -46,11 +46,11 @@ var _ ImportServiceInterface = (*ImportService)(nil)
 // GitLab API docs:
 // https://docs.gitlab.com/api/import/#import-repository-from-github
 type GitHubImport struct {
-	ID                    int    `json:"id"`
+	ID                    int64  `json:"id"`
 	Name                  string `json:"name"`
 	FullPath              string `json:"full_path"`
 	FullName              string `json:"full_name"`
-	RefsUrl               string `json:"refs_url"`
+	RefsURL               string `json:"refs_url"`
 	ImportSource          string `json:"import_source"`
 	ImportStatus          string `json:"import_status"`
 	HumanImportStatusName string `json:"human_import_status_name"`
@@ -69,17 +69,19 @@ func (s GitHubImport) String() string {
 // GitLab API docs:
 // https://docs.gitlab.com/api/import/#import-repository-from-github
 type ImportRepositoryFromGitHubOptions struct {
-	PersonalAccessToken *string `url:"personal_access_token,omitempty" json:"personal_access_token,omitempty"`
-	RepoID              *int    `url:"repo_id,omitempty" json:"repo_id,omitempty"`
-	NewName             *string `url:"new_name,omitempty" json:"new_name,omitempty"`
-	TargetNamespace     *string `url:"target_namespace,omitempty" json:"target_namespace,omitempty"`
-	GitHubHostname      *string `url:"github_hostname,omitempty" json:"github_hostname,omitempty"`
-	OptionalStages      struct {
-		SingleEndpointNotesImport *bool `url:"single_endpoint_notes_import,omitempty" json:"single_endpoint_notes_import,omitempty"`
-		AttachmentsImport         *bool `url:"attachments_import,omitempty" json:"attachments_import,omitempty"`
-		CollaboratorsImport       *bool `url:"collaborators_import,omitempty" json:"collaborators_import,omitempty"`
-	} `url:"optional_stages,omitempty" json:"optional_stages,omitempty"`
-	TimeoutStrategy *string `url:"timeout_strategy,omitempty" json:"timeout_strategy,omitempty"`
+	PersonalAccessToken *string                                         `url:"personal_access_token,omitempty" json:"personal_access_token,omitempty"`
+	RepoID              *int64                                          `url:"repo_id,omitempty" json:"repo_id,omitempty"`
+	NewName             *string                                         `url:"new_name,omitempty" json:"new_name,omitempty"`
+	TargetNamespace     *string                                         `url:"target_namespace,omitempty" json:"target_namespace,omitempty"`
+	GitHubHostname      *string                                         `url:"github_hostname,omitempty" json:"github_hostname,omitempty"`
+	OptionalStages      ImportRepositoryFromGitHubOptionalStagesOptions `url:"optional_stages,omitempty" json:"optional_stages,omitempty"`
+	TimeoutStrategy     *string                                         `url:"timeout_strategy,omitempty" json:"timeout_strategy,omitempty"`
+}
+
+type ImportRepositoryFromGitHubOptionalStagesOptions struct {
+	SingleEndpointNotesImport *bool `url:"single_endpoint_notes_import,omitempty" json:"single_endpoint_notes_import,omitempty"`
+	AttachmentsImport         *bool `url:"attachments_import,omitempty" json:"attachments_import,omitempty"`
+	CollaboratorsImport       *bool `url:"collaborators_import,omitempty" json:"collaborators_import,omitempty"`
 }
 
 // ImportRepositoryFromGitHub imports a repository from GitHub.
@@ -101,7 +103,7 @@ func (s *ImportService) ImportRepositoryFromGitHub(opt *ImportRepositoryFromGitH
 // GitLab API docs:
 // https://docs.gitlab.com/api/import/#cancel-github-project-import
 type CancelledGitHubImport struct {
-	ID                    int    `json:"id"`
+	ID                    int64  `json:"id"`
 	Name                  string `json:"name"`
 	FullPath              string `json:"full_path"`
 	FullName              string `json:"full_name"`
@@ -121,7 +123,7 @@ func (s CancelledGitHubImport) String() string {
 // GitLab API docs:
 // https://docs.gitlab.com/api/import/#cancel-github-project-import
 type CancelGitHubProjectImportOptions struct {
-	ProjectID *int `url:"project_id,omitempty" json:"project_id,omitempty"`
+	ProjectID *int64 `url:"project_id,omitempty" json:"project_id,omitempty"`
 }
 
 // CancelGitHubProjectImport cancels an import of a repository from GitHub.
@@ -166,11 +168,11 @@ func (s *ImportService) ImportGitHubGistsIntoGitLabSnippets(opt *ImportGitHubGis
 // GitLab API docs:
 // https://docs.gitlab.com/api/import/#import-repository-from-bitbucket-server
 type BitbucketServerImport struct {
-	ID       int    `json:"id"`
+	ID       int64  `json:"id"`
 	Name     string `json:"name"`
 	FullPath string `json:"full_path"`
 	FullName string `json:"full_name"`
-	RefsUrl  string `json:"refs_url"`
+	RefsURL  string `json:"refs_url"`
 }
 
 func (s BitbucketServerImport) String() string {
@@ -182,7 +184,7 @@ func (s BitbucketServerImport) String() string {
 // GitLab API docs:
 // https://docs.gitlab.com/api/import/#import-repository-from-bitbucket-server
 type ImportRepositoryFromBitbucketServerOptions struct {
-	BitbucketServerUrl      *string `url:"bitbucket_server_url,omitempty" json:"bitbucket_server_url,omitempty"`
+	BitbucketServerURL      *string `url:"bitbucket_server_url,omitempty" json:"bitbucket_server_url,omitempty"`
 	BitbucketServerUsername *string `url:"bitbucket_server_username,omitempty" json:"bitbucket_server_username,omitempty"`
 	PersonalAccessToken     *string `url:"personal_access_token,omitempty" json:"personal_access_token,omitempty"`
 	BitbucketServerProject  *string `url:"bitbucket_server_project,omitempty" json:"bitbucket_server_project,omitempty"`
@@ -211,11 +213,11 @@ func (s *ImportService) ImportRepositoryFromBitbucketServer(opt *ImportRepositor
 // GitLab API docs:
 // https://docs.gitlab.com/api/import/#import-repository-from-bitbucket-cloud
 type BitbucketCloudImport struct {
-	ID                    int    `json:"id"`
+	ID                    int64  `json:"id"`
 	Name                  string `json:"name"`
 	FullPath              string `json:"full_path"`
 	FullName              string `json:"full_name"`
-	RefsUrl               string `json:"refs_url"`
+	RefsURL               string `json:"refs_url"`
 	ImportSource          string `json:"import_source"`
 	ImportStatus          string `json:"import_status"`
 	HumanImportStatusName string `json:"human_import_status_name"`
