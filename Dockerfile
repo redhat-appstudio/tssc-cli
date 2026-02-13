@@ -46,6 +46,22 @@ LABEL \
   io.k8s.display-name="Red Hat Trusted Software Supply Chain CLI" \
   io.openshift.tags="tssc tas tpa rhdh ec tap openshift"
 
+# Banner
+RUN echo 'cat << "EOF"' >> /etc/profile && \
+    echo '╔═══════════════════════════════════════════════════════╗' >> /etc/profile && \
+    echo '║   Welcome to the Trusted Software Factory Installer   ║' >> /etc/profile && \
+    echo '╚═══════════════════════════════════════════════════════╝' >> /etc/profile && \
+    echo ' ' >> /etc/profile && \
+    echo 'To deploy the Trusted Software Factory:' >> /etc/profile && \
+    echo '  - Login to the cluster' >> /etc/profile && \
+    echo '  - Create the TSF config on the cluster' >> /etc/profile && \
+    echo '  - Create the integrations' >> /etc/profile && \
+    echo '  - Deploy TSF' >> /etc/profile && \
+    echo ' ' >> /etc/profile && \
+    echo 'For more information, please visit https://github.com/redhat-appstudio/tssc-cli/blob/tsf/docs/trusted-software-factory.md' >> /etc/profile && \
+    echo ' ' >> /etc/profile && \
+    echo 'EOF' >> /etc/profile
+
 WORKDIR /licenses
 
 COPY LICENSE.txt .
