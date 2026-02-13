@@ -100,8 +100,8 @@ require (
 	github.com/onsi/ginkgo/v2 v2.25.3 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
-	github.com/openshift/api v0.0.0-20251124165233-999c45c0835a // indirect
-	github.com/openshift/client-go v0.0.0-20251123231646-4685125c2287 // indirect
+	github.com/openshift/api v0.0.0-20260213123447-0246c0ac1a77 // indirect
+	github.com/openshift/client-go v0.0.0-20260213141500-06efc6dce93b // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
