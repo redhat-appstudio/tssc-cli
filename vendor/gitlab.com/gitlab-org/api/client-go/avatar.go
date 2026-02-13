@@ -53,7 +53,7 @@ type Avatar struct {
 // https://docs.gitlab.com/api/avatar/#get-details-on-an-account-avatar
 type GetAvatarOptions struct {
 	Email *string `url:"email,omitempty" json:"email,omitempty"`
-	Size  *int    `url:"size,omitempty" json:"size,omitempty"`
+	Size  *int64  `url:"size,omitempty" json:"size,omitempty"`
 }
 
 func (s *AvatarRequestsService) GetAvatar(opt *GetAvatarOptions, options ...RequestOptionFunc) (*Avatar, *Response, error) {

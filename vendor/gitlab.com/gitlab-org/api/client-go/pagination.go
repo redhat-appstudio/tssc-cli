@@ -1,5 +1,3 @@
-//go:build go1.23
-
 package gitlab
 
 import (
@@ -101,11 +99,11 @@ func Scan[T any](f func(p PaginationOptionFunc) ([]T, *Response, error)) (iter.S
 // Attention: This API is experimental and may be subject to breaking changes to improve the API in the future.
 func Scan2[T any](f func(p PaginationOptionFunc) ([]T, *Response, error)) iter.Seq2[T, error] {
 	return func(yield func(T, error) bool) {
-		var nextOpt PaginationOptionFunc
+		var page PaginationOptionFunc
 
 	Pagination:
 		for {
-			ts, resp, err := f(nextOpt)
+			ts, resp, err := f(page)
 			if err != nil {
 				var t T
 				yield(t, err)
@@ -121,15 +119,13 @@ func Scan2[T any](f func(p PaginationOptionFunc) ([]T, *Response, error)) iter.S
 			// the f request function was either configured for offset- or keyset-based
 			// pagination. We support both here, by checking if the next link is provided (keyset)
 			// or not. If both are provided, keyset-based pagination takes precedence.
-			switch {
-			case resp.NextLink != "":
-				nextOpt = WithKeysetPaginationParameters(resp.NextLink)
-			case resp.NextPage != 0:
-				nextOpt = WithOffsetPaginationParameters(resp.NextPage)
-			default:
+			next, ok := WithNext(resp)
+			if !ok {
 				// no more pages
 				break Pagination
 			}
+
+			page = next
 		}
 	}
 }
