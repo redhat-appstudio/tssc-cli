@@ -2,6 +2,7 @@ package installer
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 
@@ -17,13 +18,15 @@ import (
 	applyrbacv1 "k8s.io/client-go/applyconfigurations/rbac/v1"
 )
 
+var ErrJobNotFound = errors.New("job not found")
+
 // Job represents the asynchronous actor that runs a Job in the cluster to run
 // this installer container image on a pod. The idea is to allow a non-blocking
 // installation process for the MCP server.
 type Job struct {
-	kube    *k8s.Kube // kubernetes client
-	appName string    // common name for resources
-	retries int32     // job retries
+	kube    k8s.Interface // kubernetes client
+	appName string        // common name for resources
+	retries int32         // job retries
 }
 
 // LabelSelector returns the label selector for installer jobs.
@@ -60,9 +63,9 @@ func (j *Job) getJob(ctx context.Context) (*batchv1.Job, error) {
 		return nil, err
 	}
 
-	// When the job list is empty, it returns a nil job as well.
+	// When the job list is empty, it returns a sentinel error.
 	if len(jobList.Items) == 0 {
-		return nil, nil
+		return nil, ErrJobNotFound
 	}
 
 	// Returns error when multiple installer jobs are found in the cluster, with
@@ -84,6 +87,9 @@ func (j *Job) getJob(ctx context.Context) (*batchv1.Job, error) {
 func (j *Job) GetState(ctx context.Context) (JobState, error) {
 	job, err := j.getJob(ctx)
 	if err != nil {
+		if errors.Is(err, ErrJobNotFound) {
+			return NotFound, nil
+		}
 		return -1, err
 	}
 
@@ -288,17 +294,17 @@ func (j *Job) Run(
 	// Issuing the service account and cluster role binding first, the job needs
 	// to run as cluster admin.
 	if err = j.applyServiceAccount(ctx, namespace); err != nil {
-		return fmt.Errorf("unable to apply the service account: %s", err)
+		return fmt.Errorf("unable to apply the service account: %w", err)
 	}
 	if err = j.applyClusterRoleBinding(ctx, namespace); err != nil {
-		return fmt.Errorf("unable to apply the cluster role binding: %s", err)
+		return fmt.Errorf("unable to apply the cluster role binding: %w", err)
 	}
 	// Creating the job itself.
 	return j.createJob(ctx, debug, dryRun, namespace, image)
 }
 
 // NewJob instantiates a new Job object.
-func NewJob(appCtx *api.AppContext, kube *k8s.Kube) *Job {
+func NewJob(appCtx *api.AppContext, kube k8s.Interface) *Job {
 	return &Job{
 		kube:    kube,
 		appName: appCtx.Name,

@@ -24,7 +24,7 @@ import (
 type Installer struct {
 	logger *slog.Logger         // application logger
 	flags  *flags.Flags         // global flags
-	kube   *k8s.Kube            // kubernetes client
+	kube   k8s.Interface        // kubernetes client
 	dep    *resolver.Dependency // dependency to install
 
 	valuesBytes      []byte           // rendered values
@@ -147,7 +147,7 @@ func (i *Installer) Install(ctx context.Context) error {
 func NewInstaller(
 	logger *slog.Logger,
 	f *flags.Flags,
-	kube *k8s.Kube,
+	kube k8s.Interface,
 	dep *resolver.Dependency,
 	installerTarball []byte,
 ) *Installer {

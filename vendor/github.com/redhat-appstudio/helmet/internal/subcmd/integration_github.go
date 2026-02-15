@@ -2,13 +2,11 @@ package subcmd
 
 import (
 	"fmt"
-	"log/slog"
 
 	"github.com/redhat-appstudio/helmet/api"
-
 	"github.com/redhat-appstudio/helmet/internal/config"
 	"github.com/redhat-appstudio/helmet/internal/integration"
-	"github.com/redhat-appstudio/helmet/internal/k8s"
+	"github.com/redhat-appstudio/helmet/internal/runcontext"
 
 	"github.com/spf13/cobra"
 )
@@ -18,13 +16,12 @@ import (
 type IntegrationGitHub struct {
 	cmd         *cobra.Command           // cobra command
 	appCtx      *api.AppContext          // application context
-	logger      *slog.Logger             // application logger
+	runCtx      *runcontext.RunContext   // run context (kube, logger, chartfs)
 	cfg         *config.Config           // installer configuration
-	kube        *k8s.Kube                // kubernetes client
 	integration *integration.Integration // integration instance
 
 	create bool // create a new github app
-	update bool // update a existing github app
+	update bool // update an existing github app
 }
 
 var _ api.SubCommand = &IntegrationGitHub{}
@@ -38,7 +35,7 @@ The App credentials are stored in a Kubernetes Secret in the configured namespac
 for RHDH.
 
 The given personal access token (--token) must have the desired permissions for
-OpenShift GitOps and Openshift Pipelines to interact with the repositores, adding
+OpenShift GitOps and OpenShift Pipelines to interact with the repositories, adding
 "push" permission may be required.
 `
 
@@ -50,7 +47,7 @@ func (g *IntegrationGitHub) Cmd() *cobra.Command {
 // Complete captures the application name, and ensures it's ready to run.
 func (g *IntegrationGitHub) Complete(args []string) error {
 	var err error
-	g.cfg, err = bootstrapConfig(g.cmd.Context(), g.appCtx, g.kube)
+	g.cfg, err = bootstrapConfig(g.cmd.Context(), g.appCtx, g.runCtx)
 	if err != nil {
 		return err
 	}
@@ -64,7 +61,7 @@ func (g *IntegrationGitHub) Complete(args []string) error {
 
 	if len(args) != 1 {
 		return fmt.Errorf(
-			"expected 1, got %d arguments. The GitHub App name is required.",
+			"expected 1, got %d arguments; the GitHub App name is required",
 			len(args),
 		)
 	}
@@ -79,7 +76,7 @@ func (g *IntegrationGitHub) Validate() error {
 // Manages the GitHub App and integration secret.
 func (g *IntegrationGitHub) Run() error {
 	if g.create {
-		return g.integration.Create(g.cmd.Context(), g.cfg)
+		return g.integration.Create(g.cmd.Context(), g.runCtx, g.cfg)
 	}
 	if g.update {
 		// TODO: implement update.
@@ -91,25 +88,23 @@ func (g *IntegrationGitHub) Run() error {
 }
 
 // NewIntegrationGitHub creates the sub-command for the "integration github",
-// which manages the TSSC integration with a GitHub App.
+// which manages the integration with a GitHub App.
 func NewIntegrationGitHub(
 	appCtx *api.AppContext,
-	logger *slog.Logger,
-	kube *k8s.Kube,
+	runCtx *runcontext.RunContext,
 	i *integration.Integration,
 ) *IntegrationGitHub {
 	g := &IntegrationGitHub{
 		cmd: &cobra.Command{
 			Aliases:      []string{"github-app"},
 			Use:          "github <name> [--create|--update] [flags]",
-			Short:        "Prepares a GitHub App for TSSC integration",
+			Short:        "Prepares a GitHub App for integration",
 			Long:         integrationLongDesc,
 			SilenceUsage: true,
 		},
 
 		appCtx:      appCtx,
-		logger:      logger,
-		kube:        kube,
+		runCtx:      runCtx,
 		integration: i,
 
 		create: false,

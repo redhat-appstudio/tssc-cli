@@ -33,7 +33,7 @@ func (e *Engine) Render(variables *Variables) ([]byte, error) {
 }
 
 // NewEngine instantiates the template engine.
-func NewEngine(kube *k8s.Kube, templatePayload string) *Engine {
+func NewEngine(kube k8s.Interface, templatePayload string) *Engine {
 	funcMap := sprig.TxtFuncMap()
 
 	funcMap["toYaml"] = toYAML

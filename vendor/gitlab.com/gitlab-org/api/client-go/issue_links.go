@@ -23,10 +23,10 @@ import (
 
 type (
 	IssueLinksServiceInterface interface {
-		ListIssueRelations(pid any, issue int, options ...RequestOptionFunc) ([]*IssueRelation, *Response, error)
-		GetIssueLink(pid any, issue, issueLink int, options ...RequestOptionFunc) (*IssueLink, *Response, error)
-		CreateIssueLink(pid any, issue int, opt *CreateIssueLinkOptions, options ...RequestOptionFunc) (*IssueLink, *Response, error)
-		DeleteIssueLink(pid any, issue, issueLink int, options ...RequestOptionFunc) (*IssueLink, *Response, error)
+		ListIssueRelations(pid any, issue int64, options ...RequestOptionFunc) ([]*IssueRelation, *Response, error)
+		GetIssueLink(pid any, issue, issueLink int64, options ...RequestOptionFunc) (*IssueLink, *Response, error)
+		CreateIssueLink(pid any, issue int64, opt *CreateIssueLinkOptions, options ...RequestOptionFunc) (*IssueLink, *Response, error)
+		DeleteIssueLink(pid any, issue, issueLink int64, options ...RequestOptionFunc) (*IssueLink, *Response, error)
 	}
 
 	// IssueLinksService handles communication with the issue relations related methods
@@ -54,14 +54,14 @@ type IssueLink struct {
 // GitLab API docs:
 // https://docs.gitlab.com/api/issue_links/#list-issue-relations
 type IssueRelation struct {
-	ID             int              `json:"id"`
-	IID            int              `json:"iid"`
+	ID             int64            `json:"id"`
+	IID            int64            `json:"iid"`
 	State          string           `json:"state"`
 	Description    string           `json:"description"`
 	Confidential   bool             `json:"confidential"`
 	Author         *IssueAuthor     `json:"author"`
 	Milestone      *Milestone       `json:"milestone"`
-	ProjectID      int              `json:"project_id"`
+	ProjectID      int64            `json:"project_id"`
 	Assignees      []*IssueAssignee `json:"assignees"`
 	Assignee       *IssueAssignee   `json:"assignee"`
 	UpdatedAt      *time.Time       `json:"updated_at"`
@@ -71,9 +71,9 @@ type IssueRelation struct {
 	DueDate        *ISOTime         `json:"due_date"`
 	WebURL         string           `json:"web_url"`
 	References     *IssueReferences `json:"references"`
-	Weight         int              `json:"weight"`
-	UserNotesCount int              `json:"user_notes_count"`
-	IssueLinkID    int              `json:"issue_link_id"`
+	Weight         int64            `json:"weight"`
+	UserNotesCount int64            `json:"user_notes_count"`
+	IssueLinkID    int64            `json:"issue_link_id"`
 	LinkType       string           `json:"link_type"`
 	LinkCreatedAt  *time.Time       `json:"link_created_at"`
 	LinkUpdatedAt  *time.Time       `json:"link_updated_at"`
@@ -86,7 +86,7 @@ type IssueRelation struct {
 //
 // GitLab API docs:
 // https://docs.gitlab.com/api/issue_links/#list-issue-relations
-func (s *IssueLinksService) ListIssueRelations(pid any, issue int, options ...RequestOptionFunc) ([]*IssueRelation, *Response, error) {
+func (s *IssueLinksService) ListIssueRelations(pid any, issue int64, options ...RequestOptionFunc) ([]*IssueRelation, *Response, error) {
 	// Use explicit format string for the path
 	return do[[]*IssueRelation](s.client,
 		withPath("projects/%s/issues/%d/links", ProjectID{pid}, issue),
@@ -98,7 +98,7 @@ func (s *IssueLinksService) ListIssueRelations(pid any, issue int, options ...Re
 //
 // GitLab API docs:
 // https://docs.gitlab.com/api/issue_links/#get-an-issue-link
-func (s *IssueLinksService) GetIssueLink(pid any, issue, issueLink int, options ...RequestOptionFunc) (*IssueLink, *Response, error) {
+func (s *IssueLinksService) GetIssueLink(pid any, issue, issueLink int64, options ...RequestOptionFunc) (*IssueLink, *Response, error) {
 	// Use explicit format string for the path
 	return do[*IssueLink](s.client,
 		withPath("projects/%s/issues/%d/links/%d", ProjectID{pid}, issue, issueLink),
@@ -120,7 +120,7 @@ type CreateIssueLinkOptions struct {
 //
 // GitLab API docs:
 // https://docs.gitlab.com/api/issue_links/#create-an-issue-link
-func (s *IssueLinksService) CreateIssueLink(pid any, issue int, opt *CreateIssueLinkOptions, options ...RequestOptionFunc) (*IssueLink, *Response, error) {
+func (s *IssueLinksService) CreateIssueLink(pid any, issue int64, opt *CreateIssueLinkOptions, options ...RequestOptionFunc) (*IssueLink, *Response, error) {
 	return do[*IssueLink](s.client,
 		withMethod(http.MethodPost),
 		withPath("projects/%s/issues/%d/links", ProjectID{pid}, issue),
@@ -133,7 +133,7 @@ func (s *IssueLinksService) CreateIssueLink(pid any, issue int, opt *CreateIssue
 //
 // GitLab API docs:
 // https://docs.gitlab.com/api/issue_links/#delete-an-issue-link
-func (s *IssueLinksService) DeleteIssueLink(pid any, issue, issueLink int, options ...RequestOptionFunc) (*IssueLink, *Response, error) {
+func (s *IssueLinksService) DeleteIssueLink(pid any, issue, issueLink int64, options ...RequestOptionFunc) (*IssueLink, *Response, error) {
 	return do[*IssueLink](s.client,
 		withMethod(http.MethodDelete),
 		withPath("projects/%s/issues/%d/links/%d", ProjectID{pid}, issue, issueLink),

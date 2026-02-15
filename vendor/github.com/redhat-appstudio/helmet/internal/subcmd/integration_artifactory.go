@@ -1,13 +1,10 @@
 package subcmd
 
 import (
-	"log/slog"
-
 	"github.com/redhat-appstudio/helmet/api"
-
 	"github.com/redhat-appstudio/helmet/internal/config"
 	"github.com/redhat-appstudio/helmet/internal/integration"
-	"github.com/redhat-appstudio/helmet/internal/k8s"
+	"github.com/redhat-appstudio/helmet/internal/runcontext"
 
 	"github.com/spf13/cobra"
 )
@@ -17,13 +14,9 @@ import (
 type IntegrationArtifactory struct {
 	cmd         *cobra.Command           // cobra command
 	appCtx      *api.AppContext          // application context
-	logger      *slog.Logger             // application logger
+	runCtx      *runcontext.RunContext   // run context (kube, logger, chartfs)
 	cfg         *config.Config           // installer configuration
-	kube        *k8s.Kube                // kubernetes client
 	integration *integration.Integration // integration instance
-
-	apiToken         string // web API token
-	dockerconfigjson string // credentials to push/pull from the registry
 }
 
 var _ api.SubCommand = &IntegrationArtifactory{}
@@ -42,9 +35,9 @@ func (a *IntegrationArtifactory) Cmd() *cobra.Command {
 }
 
 // Complete is a no-op in this case.
-func (a *IntegrationArtifactory) Complete(args []string) error {
+func (a *IntegrationArtifactory) Complete(_ []string) error {
 	var err error
-	a.cfg, err = bootstrapConfig(a.cmd.Context(), a.appCtx, a.kube)
+	a.cfg, err = bootstrapConfig(a.cmd.Context(), a.appCtx, a.runCtx)
 	return err
 }
 
@@ -55,15 +48,14 @@ func (a *IntegrationArtifactory) Validate() error {
 
 // Run creates or updates the Artifactory integration secret.
 func (a *IntegrationArtifactory) Run() error {
-	return a.integration.Create(a.cmd.Context(), a.cfg)
+	return a.integration.Create(a.cmd.Context(), a.runCtx, a.cfg)
 }
 
 // NewIntegrationArtifactory creates the sub-command for the "integration artifactory"
 // responsible to manage the TSSC integrations with a Artifactory image registry.
 func NewIntegrationArtifactory(
 	appCtx *api.AppContext,
-	logger *slog.Logger,
-	kube *k8s.Kube,
+	runCtx *runcontext.RunContext,
 	i *integration.Integration,
 ) *IntegrationArtifactory {
 	a := &IntegrationArtifactory{
@@ -75,8 +67,7 @@ func NewIntegrationArtifactory(
 		},
 
 		appCtx:      appCtx,
-		logger:      logger,
-		kube:        kube,
+		runCtx:      runCtx,
 		integration: i,
 	}
 	i.PersistentFlags(a.cmd)

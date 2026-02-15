@@ -21,16 +21,16 @@ type DependencyWalkFn func(string, Dependency) error
 
 var (
 	// ErrInvalidCollection the collection is invalid.
-	ErrInvalidCollection error = errors.New("invalid collection")
+	ErrInvalidCollection = errors.New("invalid collection")
 	// ErrDependencyNotFound the dependency is not found in the collection.
-	ErrDependencyNotFound error = errors.New("dependency not found")
+	ErrDependencyNotFound = errors.New("dependency not found")
 )
 
 // Get returns the dependency with the given name.
 func (c *Collection) Get(name string) (*Dependency, error) {
 	d, exists := c.dependencies[name]
 	if !exists {
-		return nil, fmt.Errorf("%s: %s", ErrDependencyNotFound, name)
+		return nil, fmt.Errorf("%w: %s", ErrDependencyNotFound, name)
 	}
 	return d, nil
 }
@@ -75,9 +75,9 @@ func (c *Collection) GetProductDependency(product string) (*Dependency, error) {
 }
 
 // GetProductNameForIntegration searches and returns the product name by integration name.
-// It goes though all charts and search for annotation "integrations-provided"
+// It goes though all charts and search for annotation "integrations-provided".
 // If it matches integration name, then returns product name, which is from
-// annotation "product-name"
+// annotation "product-name".
 func (c *Collection) GetProductNameForIntegration(integrationName string) string {
 	var productName string
 	_ = c.Walk(func(_ string, d Dependency) error {
@@ -97,7 +97,7 @@ func (c *Collection) GetProductNameForIntegration(integrationName string) string
 
 // NewCollection creates a new Collection from the given charts. It returns an
 // error if there are duplicate charts and product names.
-func NewCollection(appCtx *api.AppContext, charts []chart.Chart) (*Collection, error) {
+func NewCollection(_ *api.AppContext, charts []chart.Chart) (*Collection, error) {
 	c := &Collection{dependencies: map[string]*Dependency{}}
 	// Stores the product names found in the slice of Helm charts.
 	productNames := []string{}
@@ -106,7 +106,7 @@ func NewCollection(appCtx *api.AppContext, charts []chart.Chart) (*Collection, e
 		d := NewDependency(&hc)
 		// Asserting the weight annotation is a valid integer.
 		if _, err := d.Weight(); err != nil {
-			return nil, fmt.Errorf("%w:  %s", ErrInvalidCollection, err)
+			return nil, fmt.Errorf("%w:  %w", ErrInvalidCollection, err)
 		}
 		// Dependencies in the collection must have unique names.
 		if _, err := c.Get(d.Name()); err == nil {

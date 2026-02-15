@@ -2,31 +2,24 @@ package subcmd
 
 import (
 	"fmt"
-	"log/slog"
 
 	"github.com/redhat-appstudio/helmet/api"
-	"github.com/redhat-appstudio/helmet/internal/chartfs"
 	"github.com/redhat-appstudio/helmet/internal/config"
 	"github.com/redhat-appstudio/helmet/internal/flags"
 	"github.com/redhat-appstudio/helmet/internal/installer"
-	"github.com/redhat-appstudio/helmet/internal/k8s"
 	"github.com/redhat-appstudio/helmet/internal/resolver"
+	"github.com/redhat-appstudio/helmet/internal/runcontext"
 
 	"github.com/spf13/cobra"
 )
 
 // Template represents the "template" subcommand.
 type Template struct {
-	cmd    *cobra.Command   // cobra command
-	logger *slog.Logger     // application logger
-	flags  *flags.Flags     // global flags
-	appCtx *api.AppContext  // application context
-	cfg    *config.Config   // installer configuration
-	cfs    *chartfs.ChartFS // embedded filesystem
-	kube   *k8s.Kube        // kubernetes client
-
-	// TODO: add support for "--validate", so the rendered resources are validated
-	// against the cluster during templating.
+	cmd    *cobra.Command // cobra command
+	appCtx *api.AppContext
+	runCtx *runcontext.RunContext
+	flags  *flags.Flags
+	cfg    *config.Config // installer configuration
 
 	valuesTemplatePath string              // path to the values template file
 	showValues         bool                // show rendered values
@@ -36,7 +29,7 @@ type Template struct {
 	installerTarball   []byte              // embedded installer tarball
 }
 
-var _ api.SubCommand = &Template{}
+var _ api.SubCommand = (*Template)(nil)
 
 const templateDesc = `
 The Template subcommand is used to render the values template file and,
@@ -81,13 +74,13 @@ func (t *Template) Complete(args []string) error {
 		return fmt.Errorf("expecting one chart, got %d", len(args))
 	}
 
-	hc, err := t.cfs.GetChartFiles(args[0])
+	hc, err := t.runCtx.ChartFS.GetChartFiles(args[0])
 	if err != nil {
 		return err
 	}
 	t.dep = *resolver.NewDependencyWithNamespace(hc, t.namespace)
 
-	if t.cfg, err = bootstrapConfig(t.cmd.Context(), t.appCtx, t.kube); err != nil {
+	if t.cfg, err = bootstrapConfig(t.cmd.Context(), t.appCtx, t.runCtx); err != nil {
 		return err
 	}
 	return nil
@@ -109,14 +102,13 @@ func (t *Template) Validate() error {
 
 // Run Renders the templates.
 func (t *Template) Run() error {
-	valuesTmplPayload, err := t.cfs.ReadFile(t.valuesTemplatePath)
+	valuesTmplPayload, err := t.runCtx.ChartFS.ReadFile(t.valuesTemplatePath)
 	if err != nil {
 		return fmt.Errorf("failed to read values template file: %w", err)
 	}
 
-	i := installer.NewInstaller(t.logger, t.flags, t.kube, &t.dep, t.installerTarball)
+	i := installer.NewInstaller(t.runCtx.Logger, t.flags, t.runCtx.Kube, &t.dep, t.installerTarball)
 
-	// Setting values and loading cluster's information.
 	if err = i.SetValues(
 		t.cmd.Context(),
 		t.cfg,
@@ -133,9 +125,6 @@ func (t *Template) Run() error {
 	if t.showValues {
 		// Displaying the rendered values as properties, where it's easier to
 		// verify settings by inspecting key-value pairs.
-		if t.flags.Debug {
-			// i.PrintValues()
-		}
 		// Show values as YAML.
 		i.PrintRawValues()
 	}
@@ -150,10 +139,8 @@ func (t *Template) Run() error {
 // NewTemplate creates the "template" subcommand with flags.
 func NewTemplate(
 	appCtx *api.AppContext,
-	logger *slog.Logger,
+	runCtx *runcontext.RunContext,
 	f *flags.Flags,
-	cfs *chartfs.ChartFS,
-	kube *k8s.Kube,
 	installerTarball []byte,
 ) *Template {
 	t := &Template{
@@ -163,11 +150,9 @@ func NewTemplate(
 			Long:         templateDesc,
 			SilenceUsage: true,
 		},
-		logger:           logger.WithGroup("template"),
-		flags:            f,
 		appCtx:           appCtx,
-		cfs:              cfs,
-		kube:             kube,
+		runCtx:           runCtx,
+		flags:            f,
 		showValues:       true,
 		showManifests:    true,
 		namespace:        "default",

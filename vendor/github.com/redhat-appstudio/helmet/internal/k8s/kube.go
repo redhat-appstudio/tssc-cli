@@ -44,7 +44,7 @@ func (k *Kube) ClientSet(namespace string) (kubernetes.Interface, error) {
 	return kubernetes.NewForConfig(restConfig)
 }
 
-// BatchV1ClientSet returns a "batchv1" Kubernetes Clientset.l
+// BatchV1ClientSet returns a "batchv1" Kubernetes ClientSet.
 func (k *Kube) BatchV1ClientSet(
 	namespace string,
 ) (batchv1client.BatchV1Interface, error) {
@@ -55,7 +55,7 @@ func (k *Kube) BatchV1ClientSet(
 	return batchv1client.NewForConfig(restConfig)
 }
 
-// CoreV1ClientSet returns a "corev1" Kubernetes Clientset.
+// CoreV1ClientSet returns a "corev1" Kubernetes ClientSet.
 func (k *Kube) CoreV1ClientSet(
 	namespace string,
 ) (corev1client.CoreV1Interface, error) {

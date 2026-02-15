@@ -21,7 +21,7 @@ func (c *ChartFS) ReadFile(name string) ([]byte, error) {
 	return fs.ReadFile(c.fsys, name)
 }
 
-// Open opens the named file. Implements "fs.FS" interface.`
+// Open opens the named file. Implements "fs.FS" interface.
 func (c *ChartFS) Open(name string) (fs.File, error) {
 	return c.fsys.Open(name)
 }

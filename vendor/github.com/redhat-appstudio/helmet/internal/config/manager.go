@@ -15,9 +15,11 @@ import (
 
 // ConfigMapManager the actor responsible for managing installer configuration in
 // the cluster.
+//
+//nolint:revive
 type ConfigMapManager struct {
-	kube *k8s.Kube // kubernetes client
-	name string    // configmap name
+	kube k8s.Interface // kubernetes client
+	name string        // configmap name
 }
 
 // Selector label selector for installer configuration.
@@ -105,9 +107,7 @@ func (m *ConfigMapManager) GetConfig(ctx context.Context) (*Config, error) {
 }
 
 // configMapForConfig generate a ConfigMap resource based on informed Config.
-func (m *ConfigMapManager) configMapForConfig(
-	cfg *Config,
-) (*corev1.ConfigMap, error) {
+func (m *ConfigMapManager) configMapForConfig(cfg *Config) *corev1.ConfigMap {
 	return &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.name,
@@ -119,18 +119,15 @@ func (m *ConfigMapManager) configMapForConfig(
 		Data: map[string]string{
 			constants.ConfigFilename: cfg.String(),
 		},
-	}, nil
+	}
 }
 
 // Create Bootstrap a ConfigMap with the provided configuration.
 func (m *ConfigMapManager) Create(ctx context.Context, cfg *Config) error {
-	cm, err := m.configMapForConfig(cfg)
-	if err != nil {
-		return err
-	}
+	cm := m.configMapForConfig(cfg)
 	coreClient, err := m.kube.CoreV1ClientSet(cfg.Namespace())
 	if err != nil {
-		return nil
+		return err
 	}
 	_, err = coreClient.
 		ConfigMaps(cfg.Namespace()).
@@ -140,13 +137,10 @@ func (m *ConfigMapManager) Create(ctx context.Context, cfg *Config) error {
 
 // Update updates a ConfigMap with informed configuration.
 func (m *ConfigMapManager) Update(ctx context.Context, cfg *Config) error {
-	cm, err := m.configMapForConfig(cfg)
-	if err != nil {
-		return err
-	}
+	cm := m.configMapForConfig(cfg)
 	coreClient, err := m.kube.CoreV1ClientSet(cfg.Namespace())
 	if err != nil {
-		return nil
+		return err
 	}
 	_, err = coreClient.
 		ConfigMaps(cfg.Namespace()).
@@ -163,7 +157,7 @@ func (m *ConfigMapManager) Delete(ctx context.Context) error {
 
 	coreClient, err := m.kube.CoreV1ClientSet(cm.GetNamespace())
 	if err != nil {
-		return nil
+		return err
 	}
 
 	return coreClient.ConfigMaps(cm.GetNamespace()).
@@ -172,7 +166,7 @@ func (m *ConfigMapManager) Delete(ctx context.Context) error {
 
 // NewConfigMapManager instantiates the ConfigMapManager.
 // The appName parameter is used to generate the ConfigMap name as "{appName}-config".
-func NewConfigMapManager(kube *k8s.Kube, appName string) *ConfigMapManager {
+func NewConfigMapManager(kube k8s.Interface, appName string) *ConfigMapManager {
 	return &ConfigMapManager{
 		kube: kube,
 		name: fmt.Sprintf("%s-config", appName),

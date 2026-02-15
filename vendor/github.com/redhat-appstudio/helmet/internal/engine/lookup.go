@@ -13,7 +13,7 @@ import (
 // LookupFuncs represents the template functions that will need to lookup
 // Kubernetes resources.
 type LookupFuncs struct {
-	kube *k8s.Kube
+	kube k8s.Interface
 }
 
 type LookupFn func(string, string, string, string) (map[string]interface{}, error)
@@ -60,6 +60,6 @@ func (l *LookupFuncs) Lookup() LookupFn {
 }
 
 // NewLookupFuncs creates a new LookupFuncs instance.
-func NewLookupFuncs(kube *k8s.Kube) *LookupFuncs {
+func NewLookupFuncs(kube k8s.Interface) *LookupFuncs {
 	return &LookupFuncs{kube: kube}
 }

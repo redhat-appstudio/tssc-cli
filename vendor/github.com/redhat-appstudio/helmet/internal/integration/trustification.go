@@ -6,6 +6,7 @@ import (
 	"log/slog"
 
 	"github.com/redhat-appstudio/helmet/internal/config"
+	"github.com/redhat-appstudio/helmet/internal/runcontext"
 
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
@@ -85,13 +86,13 @@ func (t *Trustification) Validate() error {
 	}
 	var err error
 	if err = ValidateURL(t.bombasticURL); err != nil {
-		return fmt.Errorf("%s: %q", err, t.bombasticURL)
+		return fmt.Errorf("%w: %q", err, t.bombasticURL)
 	}
 	if t.oidcIssuerURL == "" {
 		return fmt.Errorf("oidc-issuer-url is required")
 	}
 	if err = ValidateURL(t.oidcIssuerURL); err != nil {
-		return fmt.Errorf("%s: %q", err, t.oidcIssuerURL)
+		return fmt.Errorf("%w: %q", err, t.oidcIssuerURL)
 	}
 	if t.oidcClientID == "" {
 		return fmt.Errorf("oidc-client-id is required")
@@ -105,6 +106,7 @@ func (t *Trustification) Validate() error {
 // Data returns the Kubernetes secret data for this integration.
 func (t *Trustification) Data(
 	_ context.Context,
+	_ *runcontext.RunContext,
 	_ *config.Config,
 ) (map[string][]byte, error) {
 	return map[string][]byte{

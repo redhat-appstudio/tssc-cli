@@ -24,7 +24,7 @@ func (t *TopologyBuilder) GetCollection() *Collection {
 }
 
 // Build inspects the dependencies, based on the cluster configuration, inspects
-// the integrations and generates a consolidated Topology
+// the integrations and generates a consolidated Topology.
 func (t *TopologyBuilder) Build(
 	ctx context.Context,
 	cfg *config.Config,

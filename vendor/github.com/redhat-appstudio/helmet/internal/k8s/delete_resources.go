@@ -15,7 +15,7 @@ const labelSelector = annotations.PostDeploy + "=delete"
 // DeleteClusterRoleBindings deletes Kubernetes ClusterRoleBindings by label.
 func DeleteClusterRoleBindings(
 	ctx context.Context,
-	kube *Kube,
+	kube Interface,
 	namespace string,
 ) error {
 	rbacClient, err := kube.RBACV1ClientSet(namespace)
@@ -30,7 +30,7 @@ func DeleteClusterRoleBindings(
 // DeleteClusterRoles deletes Kubernetes ClusterRoles by label.
 func DeleteClusterRoles(
 	ctx context.Context,
-	kube *Kube,
+	kube Interface,
 	namespace string,
 ) error {
 	rbacClient, err := kube.RBACV1ClientSet(namespace)
@@ -42,10 +42,10 @@ func DeleteClusterRoles(
 			metav1.ListOptions{LabelSelector: labelSelector})
 }
 
-// DeleteRoleBindings deletes Kuberbetes RoleBindings by label.
+// DeleteRoleBindings deletes Kubernetes RoleBindings by label.
 func DeleteRoleBindings(
 	ctx context.Context,
-	kube *Kube,
+	kube Interface,
 	namespace string,
 ) error {
 	rbacClient, err := kube.RBACV1ClientSet(namespace)
@@ -54,6 +54,9 @@ func DeleteRoleBindings(
 	}
 	RoleBindingsList, err := rbacClient.RoleBindings("").
 		List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
+	if err != nil {
+		return err
+	}
 	for _, rb := range RoleBindingsList.Items {
 		err := rbacClient.RoleBindings(rb.Namespace).
 			Delete(ctx, rb.Name, metav1.DeleteOptions{})
@@ -67,7 +70,7 @@ func DeleteRoleBindings(
 // DeleteRoles deletes Kubernetes Roles by label.
 func DeleteRoles(
 	ctx context.Context,
-	kube *Kube,
+	kube Interface,
 	namespace string,
 ) error {
 	rbacClient, err := kube.RBACV1ClientSet(namespace)
@@ -76,6 +79,9 @@ func DeleteRoles(
 	}
 	RolesList, err := rbacClient.Roles("").
 		List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
+	if err != nil {
+		return err
+	}
 	for _, role := range RolesList.Items {
 		err := rbacClient.Roles(role.Namespace).
 			Delete(ctx, role.Name, metav1.DeleteOptions{})
@@ -89,7 +95,7 @@ func DeleteRoles(
 // DeleteServiceAccounts deletes Kubernetes ServiceAccounts by label.
 func DeleteServiceAccounts(
 	ctx context.Context,
-	kube *Kube,
+	kube Interface,
 	namespace string,
 ) error {
 	coreClient, err := kube.CoreV1ClientSet(namespace)
@@ -98,6 +104,9 @@ func DeleteServiceAccounts(
 	}
 	ServiceAccountList, err := coreClient.ServiceAccounts("").
 		List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
+	if err != nil {
+		return err
+	}
 	for _, sa := range ServiceAccountList.Items {
 		err := coreClient.ServiceAccounts(sa.Namespace).
 			Delete(ctx, sa.Name, metav1.DeleteOptions{})
@@ -111,7 +120,7 @@ func DeleteServiceAccounts(
 // DeleteResources deletes temporary Kubernetes resources created during deployment.
 func DeleteResources(
 	ctx context.Context,
-	kube *Kube,
+	kube Interface,
 	namespace string,
 ) error {
 	// Delete ClusterRoleBindings
@@ -154,7 +163,7 @@ func Retry(attempts int, sleep time.Duration, fn func() error) error {
 // RetryDeleteResources deletes temporary resources with retry 5 times.
 func RetryDeleteResources(
 	ctx context.Context,
-	kube *Kube,
+	kube Interface,
 	namespace string,
 ) error {
 	// Delete temporary resources

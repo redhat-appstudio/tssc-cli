@@ -22,7 +22,7 @@ type NotesTool struct {
 	appName string                    // application name
 	logger  *slog.Logger              // application logger
 	flags   *flags.Flags              // global flags
-	kube    *k8s.Kube                 // kubernetes client
+	kube    k8s.Interface             // kubernetes client
 	cm      *config.ConfigMapManager  // cluster configuration
 	tb      *resolver.TopologyBuilder // topology builder
 	job     *installer.Job            // cluster deployment job
@@ -136,7 +136,7 @@ func NewNotesTool(
 	appName string,
 	logger *slog.Logger,
 	f *flags.Flags,
-	kube *k8s.Kube,
+	kube k8s.Interface,
 	cm *config.ConfigMapManager,
 	tb *resolver.TopologyBuilder,
 	job *installer.Job,

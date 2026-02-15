@@ -1,13 +1,10 @@
 package subcmd
 
 import (
-	"log/slog"
-
 	"github.com/redhat-appstudio/helmet/api"
-
 	"github.com/redhat-appstudio/helmet/internal/config"
 	"github.com/redhat-appstudio/helmet/internal/integration"
-	"github.com/redhat-appstudio/helmet/internal/k8s"
+	"github.com/redhat-appstudio/helmet/internal/runcontext"
 
 	"github.com/spf13/cobra"
 )
@@ -17,9 +14,8 @@ import (
 type IntegrationNexus struct {
 	cmd         *cobra.Command           // cobra command
 	appCtx      *api.AppContext          // application context
-	logger      *slog.Logger             // application logger
+	runCtx      *runcontext.RunContext   // run context (kube, logger, chartfs)
 	cfg         *config.Config           // installer configuration
-	kube        *k8s.Kube                // kubernetes client
 	integration *integration.Integration // integration instance
 }
 
@@ -39,9 +35,9 @@ func (n *IntegrationNexus) Cmd() *cobra.Command {
 }
 
 // Complete is a no-op in this case.
-func (n *IntegrationNexus) Complete(args []string) error {
+func (n *IntegrationNexus) Complete(_ []string) error {
 	var err error
-	n.cfg, err = bootstrapConfig(n.cmd.Context(), n.appCtx, n.kube)
+	n.cfg, err = bootstrapConfig(n.cmd.Context(), n.appCtx, n.runCtx)
 	return err
 }
 
@@ -52,15 +48,14 @@ func (n *IntegrationNexus) Validate() error {
 
 // Run creates or updates the Nexus integration secret.
 func (n *IntegrationNexus) Run() error {
-	return n.integration.Create(n.cmd.Context(), n.cfg)
+	return n.integration.Create(n.cmd.Context(), n.runCtx, n.cfg)
 }
 
 // NewIntegrationNexus creates the sub-command for the "integration nexus"
 // responsible to manage the TSSC integrations with a Nexus image registry.
 func NewIntegrationNexus(
 	appCtx *api.AppContext,
-	logger *slog.Logger,
-	kube *k8s.Kube,
+	runCtx *runcontext.RunContext,
 	i *integration.Integration,
 ) *IntegrationNexus {
 	n := &IntegrationNexus{
@@ -72,8 +67,7 @@ func NewIntegrationNexus(
 		},
 
 		appCtx:      appCtx,
-		logger:      logger,
-		kube:        kube,
+		runCtx:      runCtx,
 		integration: i,
 	}
 	i.PersistentFlags(n.cmd)

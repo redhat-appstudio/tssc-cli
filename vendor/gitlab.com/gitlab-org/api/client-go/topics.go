@@ -27,11 +27,33 @@ import (
 
 type (
 	TopicsServiceInterface interface {
+		// ListTopics returns a list of project topics in the GitLab instance ordered
+		// by number of associated projects.
+		//
+		// GitLab API docs: https://docs.gitlab.com/api/topics/#list-topics
 		ListTopics(opt *ListTopicsOptions, options ...RequestOptionFunc) ([]*Topic, *Response, error)
-		GetTopic(topic int, options ...RequestOptionFunc) (*Topic, *Response, error)
+		// GetTopic gets a project topic by ID.
+		//
+		// GitLab API docs: https://docs.gitlab.com/api/topics/#get-a-topic
+		GetTopic(topic int64, options ...RequestOptionFunc) (*Topic, *Response, error)
+		// CreateTopic creates a new project topic.
+		//
+		// GitLab API docs:
+		// https://docs.gitlab.com/api/topics/#create-a-project-topic
 		CreateTopic(opt *CreateTopicOptions, options ...RequestOptionFunc) (*Topic, *Response, error)
-		UpdateTopic(topic int, opt *UpdateTopicOptions, options ...RequestOptionFunc) (*Topic, *Response, error)
-		DeleteTopic(topic int, options ...RequestOptionFunc) (*Response, error)
+		// UpdateTopic updates a project topic. Only available to administrators.
+		//
+		// To remove a topic avatar set the TopicAvatar.Filename to an empty string
+		// and set TopicAvatar.Image to nil.
+		//
+		// GitLab API docs:
+		// https://docs.gitlab.com/api/topics/#update-a-project-topic
+		UpdateTopic(topic int64, opt *UpdateTopicOptions, options ...RequestOptionFunc) (*Topic, *Response, error)
+		// DeleteTopic deletes a project topic. Only available to administrators.
+		//
+		// GitLab API docs:
+		// https://docs.gitlab.com/api/topics/#delete-a-project-topic
+		DeleteTopic(topic int64, options ...RequestOptionFunc) (*Response, error)
 	}
 
 	// TopicsService handles communication with the topics related methods
@@ -49,7 +71,7 @@ var _ TopicsServiceInterface = (*TopicsService)(nil)
 //
 // GitLab API docs: https://docs.gitlab.com/api/topics/
 type Topic struct {
-	ID                 int    `json:"id"`
+	ID                 int64  `json:"id"`
 	Name               string `json:"name"`
 	Title              string `json:"title"`
 	Description        string `json:"description"`
@@ -69,10 +91,6 @@ type ListTopicsOptions struct {
 	Search *string `url:"search,omitempty" json:"search,omitempty"`
 }
 
-// ListTopics returns a list of project topics in the GitLab instance ordered
-// by number of associated projects.
-//
-// GitLab API docs: https://docs.gitlab.com/api/topics/#list-topics
 func (s *TopicsService) ListTopics(opt *ListTopicsOptions, options ...RequestOptionFunc) ([]*Topic, *Response, error) {
 	res, resp, err := do[[]*Topic](s.client,
 		withMethod(http.MethodGet),
@@ -86,10 +104,7 @@ func (s *TopicsService) ListTopics(opt *ListTopicsOptions, options ...RequestOpt
 	return res, resp, nil
 }
 
-// GetTopic gets a project topic by ID.
-//
-// GitLab API docs: https://docs.gitlab.com/api/topics/#get-a-topic
-func (s *TopicsService) GetTopic(topic int, options ...RequestOptionFunc) (*Topic, *Response, error) {
+func (s *TopicsService) GetTopic(topic int64, options ...RequestOptionFunc) (*Topic, *Response, error) {
 	res, resp, err := do[*Topic](s.client,
 		withMethod(http.MethodGet),
 		withPath("topics/%d", topic),
@@ -128,10 +143,6 @@ func (a *TopicAvatar) MarshalJSON() ([]byte, error) {
 	return json.Marshal((*alias)(a))
 }
 
-// CreateTopic creates a new project topic.
-//
-// GitLab API docs:
-// https://docs.gitlab.com/api/topics/#create-a-project-topic
 func (s *TopicsService) CreateTopic(opt *CreateTopicOptions, options ...RequestOptionFunc) (*Topic, *Response, error) {
 	var err error
 	var req *retryablehttp.Request
@@ -173,14 +184,7 @@ type UpdateTopicOptions struct {
 	Avatar      *TopicAvatar `url:"-" json:"avatar,omitempty"`
 }
 
-// UpdateTopic updates a project topic. Only available to administrators.
-//
-// To remove a topic avatar set the TopicAvatar.Filename to an empty string
-// and set TopicAvatar.Image to nil.
-//
-// GitLab API docs:
-// https://docs.gitlab.com/api/topics/#update-a-project-topic
-func (s *TopicsService) UpdateTopic(topic int, opt *UpdateTopicOptions, options ...RequestOptionFunc) (*Topic, *Response, error) {
+func (s *TopicsService) UpdateTopic(topic int64, opt *UpdateTopicOptions, options ...RequestOptionFunc) (*Topic, *Response, error) {
 	var err error
 	var req *retryablehttp.Request
 
@@ -210,11 +214,7 @@ func (s *TopicsService) UpdateTopic(topic int, opt *UpdateTopicOptions, options 
 	return t, resp, nil
 }
 
-// DeleteTopic deletes a project topic. Only available to administrators.
-//
-// GitLab API docs:
-// https://docs.gitlab.com/api/topics/#delete-a-project-topic
-func (s *TopicsService) DeleteTopic(topic int, options ...RequestOptionFunc) (*Response, error) {
+func (s *TopicsService) DeleteTopic(topic int64, options ...RequestOptionFunc) (*Response, error) {
 	_, resp, err := do[none](s.client,
 		withMethod(http.MethodDelete),
 		withPath("topics/%d", topic),

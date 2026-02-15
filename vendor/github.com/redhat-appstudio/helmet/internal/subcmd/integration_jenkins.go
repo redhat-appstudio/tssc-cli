@@ -1,13 +1,10 @@
 package subcmd
 
 import (
-	"log/slog"
-
 	"github.com/redhat-appstudio/helmet/api"
-
 	"github.com/redhat-appstudio/helmet/internal/config"
 	"github.com/redhat-appstudio/helmet/internal/integration"
-	"github.com/redhat-appstudio/helmet/internal/k8s"
+	"github.com/redhat-appstudio/helmet/internal/runcontext"
 
 	"github.com/spf13/cobra"
 )
@@ -17,9 +14,8 @@ import (
 type IntegrationJenkins struct {
 	cmd         *cobra.Command           // cobra command
 	appCtx      *api.AppContext          // application context
-	logger      *slog.Logger             // application logger
+	runCtx      *runcontext.RunContext   // run context (kube, logger, chartfs)
 	cfg         *config.Config           // installer configuration
-	kube        *k8s.Kube                // kubernetes client
 	integration *integration.Integration // integration instance
 }
 
@@ -39,9 +35,9 @@ func (j *IntegrationJenkins) Cmd() *cobra.Command {
 }
 
 // Complete is a no-op in this case.
-func (j *IntegrationJenkins) Complete(args []string) error {
+func (j *IntegrationJenkins) Complete(_ []string) error {
 	var err error
-	j.cfg, err = bootstrapConfig(j.cmd.Context(), j.appCtx, j.kube)
+	j.cfg, err = bootstrapConfig(j.cmd.Context(), j.appCtx, j.runCtx)
 	return err
 }
 
@@ -52,15 +48,14 @@ func (j *IntegrationJenkins) Validate() error {
 
 // Run creates or updates the Jenkins integration secret.
 func (j *IntegrationJenkins) Run() error {
-	return j.integration.Create(j.cmd.Context(), j.cfg)
+	return j.integration.Create(j.cmd.Context(), j.runCtx, j.cfg)
 }
 
 // NewIntegrationJenkins creates the sub-command for the "integration jenkins"
 // responsible to manage the TSSC integrations with the Jenkins service.
 func NewIntegrationJenkins(
 	appCtx *api.AppContext,
-	logger *slog.Logger,
-	kube *k8s.Kube,
+	runCtx *runcontext.RunContext,
 	i *integration.Integration,
 ) *IntegrationJenkins {
 	j := &IntegrationJenkins{
@@ -72,8 +67,7 @@ func NewIntegrationJenkins(
 		},
 
 		appCtx:      appCtx,
-		logger:      logger,
-		kube:        kube,
+		runCtx:      runCtx,
 		integration: i,
 	}
 	i.PersistentFlags(j.cmd)

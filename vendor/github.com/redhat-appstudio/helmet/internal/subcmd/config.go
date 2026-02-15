@@ -5,12 +5,12 @@ import (
 	"log/slog"
 
 	"github.com/redhat-appstudio/helmet/api"
-	"github.com/redhat-appstudio/helmet/internal/chartfs"
 	"github.com/redhat-appstudio/helmet/internal/config"
 	"github.com/redhat-appstudio/helmet/internal/flags"
 	"github.com/redhat-appstudio/helmet/internal/k8s"
 	"github.com/redhat-appstudio/helmet/internal/printer"
 	"github.com/redhat-appstudio/helmet/internal/resolver"
+	"github.com/redhat-appstudio/helmet/internal/runcontext"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -18,12 +18,10 @@ import (
 )
 
 type Config struct {
-	cmd    *cobra.Command   // cobra command
-	logger *slog.Logger     // application logger
-	flags  *flags.Flags     // global flags
-	cfs    *chartfs.ChartFS // embedded filesystem
-	kube   *k8s.Kube        // kubernetes client
-	appCtx *api.AppContext  // application context
+	cmd    *cobra.Command // cobra command
+	appCtx *api.AppContext
+	runCtx *runcontext.RunContext
+	flags  *flags.Flags
 
 	manager    *config.ConfigMapManager // cluster configuration manager
 	configPath string                   // configuration file relative path
@@ -35,7 +33,7 @@ type Config struct {
 	delete    bool   // delete the current configuration
 }
 
-var _ api.SubCommand = &Config{}
+var _ api.SubCommand = (*Config)(nil)
 
 const configDesc = `
 Manages installer's cluster configuration.
@@ -66,7 +64,7 @@ func (c *Config) Cmd() *cobra.Command {
 
 // log returns a decorated logger.
 func (c *Config) log() *slog.Logger {
-	return c.flags.LoggerWith(c.logger.With("config-path", c.configPath))
+	return c.flags.LoggerWith(c.runCtx.Logger.With("config-path", c.configPath))
 }
 
 // PersistentFlags injects the sub-command flags.
@@ -163,15 +161,15 @@ func (c *Config) runCreate() error {
 	printer.Disclaimer()
 
 	c.log().Debug("Loading configuration from file")
-	cfg, err := config.NewConfigFromFile(c.cfs, c.configPath, c.namespace)
+	cfg, err := config.NewConfigFromFile(c.runCtx.ChartFS, c.configPath, c.namespace)
 	if err != nil {
 		return err
 	}
 
-	// Ensuring the configuration is compabile with the Helm charts available for
+	// Ensuring the configuration is compatible with the Helm charts available for
 	// the installer, product associated charts and dependencies are verified.
 	c.log().Debug("Verifying installer Helm charts")
-	charts, err := c.cfs.GetAllCharts()
+	charts, err := c.runCtx.ChartFS.GetAllCharts()
 	if err != nil {
 		return err
 	}
@@ -192,33 +190,30 @@ func (c *Config) runCreate() error {
 			c.manager.Name(),
 			config.Selector,
 		)
-		if err != nil {
-			return err
-		}
 		fmt.Print(cfg.String())
 		return nil
 	}
 
-	c.log().Debug("Making sure the OpenShift project is created")
-	if err = k8s.EnsureOpenShiftProject(
-		c.cmd.Context(),
+	ctx := c.cmd.Context()
+	c.log().Debug("Making sure the namespace is created")
+	if err = k8s.EnsureNamespace(
+		ctx,
 		c.log(),
-		c.kube,
+		c.runCtx.Kube,
 		cfg.Namespace(),
 	); err != nil {
 		return err
 	}
 
 	c.log().Debug("Applying the new configuration in the cluster")
-	if err = c.manager.Create(c.cmd.Context(), cfg); err != nil {
+	if err = c.manager.Create(ctx, cfg); err != nil {
 		if apierrors.IsAlreadyExists(err) {
 			if c.force {
 				c.log().Debug("Updating the configuration in the cluster")
-				return c.manager.Update(c.cmd.Context(), cfg)
-			} else {
-				return fmt.Errorf(
-					"the configuration already exists, use --force to amend it")
+				return c.manager.Update(ctx, cfg)
 			}
+			return fmt.Errorf(
+				"the configuration already exists, use --force to amend it")
 		}
 	}
 	return err
@@ -283,10 +278,8 @@ func (c *Config) Run() error {
 // NewConfig instantiates the "config" subcommand.
 func NewConfig(
 	appCtx *api.AppContext,
-	logger *slog.Logger,
+	runCtx *runcontext.RunContext,
 	f *flags.Flags,
-	cfs *chartfs.ChartFS,
-	kube *k8s.Kube,
 ) api.SubCommand {
 	c := &Config{
 		cmd: &cobra.Command{
@@ -295,12 +288,10 @@ func NewConfig(
 			Long:         configDesc,
 			SilenceUsage: true,
 		},
-		logger:  logger.WithGroup("config"),
-		flags:   f,
-		cfs:     cfs,
-		kube:    kube,
 		appCtx:  appCtx,
-		manager: config.NewConfigMapManager(kube, appCtx.Name),
+		runCtx:  runCtx,
+		flags:   f,
+		manager: config.NewConfigMapManager(runCtx.Kube, appCtx.Name),
 	}
 
 	c.PersistentFlags(c.cmd.PersistentFlags())

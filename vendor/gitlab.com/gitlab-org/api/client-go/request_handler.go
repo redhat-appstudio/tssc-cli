@@ -62,6 +62,14 @@ func (i UserID) forPath() (string, error) {
 	return PathEscape(id), nil
 }
 
+type NoEscape struct {
+	Value string
+}
+
+func (n NoEscape) forPath() (string, error) {
+	return n.Value, nil
+}
+
 type doConfig struct {
 	method      string
 	path        string
@@ -84,11 +92,11 @@ func withPath(path string, args ...any) doOption {
 		for i, a := range args {
 			switch v := a.(type) {
 			case Pather:
-				project, err := v.forPath()
+				path, err := v.forPath()
 				if err != nil {
 					return err
 				}
-				as[i] = project
+				as[i] = path
 			case string:
 				as[i] = PathEscape(v)
 			default:

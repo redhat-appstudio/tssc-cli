@@ -1,13 +1,10 @@
 package subcmd
 
 import (
-	"log/slog"
-
 	"github.com/redhat-appstudio/helmet/api"
-
 	"github.com/redhat-appstudio/helmet/internal/config"
 	"github.com/redhat-appstudio/helmet/internal/integration"
-	"github.com/redhat-appstudio/helmet/internal/k8s"
+	"github.com/redhat-appstudio/helmet/internal/runcontext"
 
 	"github.com/spf13/cobra"
 )
@@ -17,9 +14,8 @@ import (
 type IntegrationTrustedArtifactSigner struct {
 	cmd         *cobra.Command           // cobra command
 	appCtx      *api.AppContext          // application context
-	logger      *slog.Logger             // application logger
+	runCtx      *runcontext.RunContext   // run context (kube, logger, chartfs)
 	cfg         *config.Config           // installer configuration
-	kube        *k8s.Kube                // kubernetes client
 	integration *integration.Integration // integration instance
 }
 
@@ -37,9 +33,9 @@ func (t *IntegrationTrustedArtifactSigner) Cmd() *cobra.Command {
 }
 
 // Complete is a no-op in this case.
-func (t *IntegrationTrustedArtifactSigner) Complete(args []string) error {
+func (t *IntegrationTrustedArtifactSigner) Complete(_ []string) error {
 	var err error
-	t.cfg, err = bootstrapConfig(t.cmd.Context(), t.appCtx, t.kube)
+	t.cfg, err = bootstrapConfig(t.cmd.Context(), t.appCtx, t.runCtx)
 	return err
 }
 
@@ -50,7 +46,7 @@ func (t *IntegrationTrustedArtifactSigner) Validate() error {
 
 // Run creates or updates the TrustedArtifactSigner integration secret.
 func (t *IntegrationTrustedArtifactSigner) Run() error {
-	return t.integration.Create(t.cmd.Context(), t.cfg)
+	return t.integration.Create(t.cmd.Context(), t.runCtx, t.cfg)
 }
 
 // NewIntegrationTrustedArtifactSigner creates the sub-command for the "integration
@@ -58,8 +54,7 @@ func (t *IntegrationTrustedArtifactSigner) Run() error {
 // Trusted Artifact Signer services.
 func NewIntegrationTrustedArtifactSigner(
 	appCtx *api.AppContext,
-	logger *slog.Logger,
-	kube *k8s.Kube,
+	runCtx *runcontext.RunContext,
 	i *integration.Integration,
 ) *IntegrationTrustedArtifactSigner {
 	t := &IntegrationTrustedArtifactSigner{
@@ -71,8 +66,7 @@ func NewIntegrationTrustedArtifactSigner(
 		},
 
 		appCtx:      appCtx,
-		logger:      logger,
-		kube:        kube,
+		runCtx:      runCtx,
 		integration: i,
 	}
 	i.PersistentFlags(t.cmd)

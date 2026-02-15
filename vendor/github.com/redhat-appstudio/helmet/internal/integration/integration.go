@@ -7,6 +7,7 @@ import (
 
 	"github.com/redhat-appstudio/helmet/internal/config"
 	"github.com/redhat-appstudio/helmet/internal/k8s"
+	"github.com/redhat-appstudio/helmet/internal/runcontext"
 
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
@@ -17,10 +18,10 @@ import (
 // Integration represents a generic Kubernetes Secret manager for integrations, it
 // holds the common actions integrations will perform against secrets.
 type Integration struct {
-	logger *slog.Logger // application logger
-	kube   *k8s.Kube    // kubernetes client
-	name   string       // kubernetes secret name
-	data   Interface    // provides secret data
+	logger *slog.Logger  // application logger
+	kube   k8s.Interface // kubernetes client
+	name   string        // kubernetes secret name
+	data   Interface     // provides secret data
 
 	force bool // overwrite the existing secret
 }
@@ -73,7 +74,7 @@ func (i *Integration) Exists(
 }
 
 // prepare prepares the cluster to receive the integration secret, when the force
-// flag is enabled a existing secret is deleted.
+// flag is enabled an existing secret is deleted.
 func (i *Integration) prepare(ctx context.Context, cfg *config.Config) error {
 	i.log().Debug("Checking whether the integration secret exists")
 	exists, err := i.Exists(ctx, cfg)
@@ -95,7 +96,7 @@ func (i *Integration) prepare(ctx context.Context, cfg *config.Config) error {
 
 // Create creates the integration secret in the cluster. It uses the integration
 // data provider to obtain the secret payload.
-func (i *Integration) Create(ctx context.Context, cfg *config.Config) error {
+func (i *Integration) Create(ctx context.Context, runCtx *runcontext.RunContext, cfg *config.Config) error {
 	err := i.prepare(ctx, cfg)
 	if err != nil {
 		return err
@@ -104,7 +105,7 @@ func (i *Integration) Create(ctx context.Context, cfg *config.Config) error {
 	// The integration provider prepares and returns the payload to create the
 	// Kubernetes secret.
 	i.log().Debug("Preparing the integration secret payload")
-	payload, err := i.data.Data(ctx, cfg)
+	payload, err := i.data.Data(ctx, runCtx, cfg)
 	if err != nil {
 		return err
 	}
@@ -140,7 +141,7 @@ func (i *Integration) Delete(ctx context.Context, cfg *config.Config) error {
 // provider to generate the Kubernetes Secret payload.
 func NewSecret(
 	logger *slog.Logger,
-	kube *k8s.Kube,
+	kube k8s.Interface,
 	name string,
 	data Interface,
 ) *Integration {

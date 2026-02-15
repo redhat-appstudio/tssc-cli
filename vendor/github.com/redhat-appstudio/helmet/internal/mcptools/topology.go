@@ -24,7 +24,7 @@ type TopologyTool struct {
 }
 
 const (
-	// topologySuffix mcp topology tool name suffix
+	// topologySuffix mcp topology tool name suffix.
 	topologySuffix = "_topology"
 )
 

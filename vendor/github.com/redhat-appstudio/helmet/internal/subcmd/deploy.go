@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/redhat-appstudio/helmet/api"
-	"github.com/redhat-appstudio/helmet/internal/chartfs"
 	"github.com/redhat-appstudio/helmet/internal/config"
 	"github.com/redhat-appstudio/helmet/internal/flags"
 	"github.com/redhat-appstudio/helmet/internal/installer"
@@ -15,19 +14,18 @@ import (
 	"github.com/redhat-appstudio/helmet/internal/k8s"
 	"github.com/redhat-appstudio/helmet/internal/printer"
 	"github.com/redhat-appstudio/helmet/internal/resolver"
+	"github.com/redhat-appstudio/helmet/internal/runcontext"
 
 	"github.com/spf13/cobra"
 )
 
 // Deploy is the deploy subcommand.
 type Deploy struct {
-	cmd    *cobra.Command   // cobra command
-	logger *slog.Logger     // application logger
-	flags  *flags.Flags     // global flags
-	appCtx *api.AppContext  // application context
-	cfg    *config.Config   // installer configuration
-	cfs    *chartfs.ChartFS // embedded filesystem
-	kube   *k8s.Kube        // kubernetes client
+	cmd    *cobra.Command // cobra command
+	appCtx *api.AppContext
+	runCtx *runcontext.RunContext
+	flags  *flags.Flags
+	cfg    *config.Config // installer configuration
 
 	manager            *integrations.Manager     // integration manager
 	topologyBuilder    *resolver.TopologyBuilder // topology builder
@@ -36,7 +34,7 @@ type Deploy struct {
 	installerTarball   []byte                    // embedded installer tarball
 }
 
-var _ api.SubCommand = &Deploy{}
+var _ api.SubCommand = (*Deploy)(nil)
 
 const deployDesc = `
 Deploys the TSSC platform components.
@@ -67,7 +65,7 @@ func (d *Deploy) Cmd() *cobra.Command {
 
 // log logger with contextual information.
 func (d *Deploy) log() *slog.Logger {
-	return d.flags.LoggerWith(d.logger.With(
+	return d.flags.LoggerWith(d.runCtx.Logger.With(
 		"chart-path", d.chartPath,
 		flags.ValuesTemplateFlag, d.valuesTemplatePath,
 	))
@@ -77,12 +75,11 @@ func (d *Deploy) log() *slog.Logger {
 func (d *Deploy) Complete(args []string) error {
 	var err error
 	d.topologyBuilder, err = resolver.NewTopologyBuilder(
-		d.appCtx, d.logger, d.cfs, d.manager)
+		d.appCtx, d.runCtx.Logger, d.runCtx.ChartFS, d.manager)
 	if err != nil {
 		return err
 	}
-	// Load the installer configuration from the cluster.
-	d.cfg, err = bootstrapConfig(d.cmd.Context(), d.appCtx, d.kube)
+	d.cfg, err = bootstrapConfig(d.cmd.Context(), d.appCtx, d.runCtx)
 	if err != nil {
 		return err
 	}
@@ -105,7 +102,7 @@ func (d *Deploy) Run() error {
 	printer.Disclaimer()
 
 	d.log().Debug("Reading values template file")
-	valuesTmpl, err := d.cfs.ReadFile(d.valuesTemplatePath)
+	valuesTmpl, err := d.runCtx.ChartFS.ReadFile(d.valuesTemplatePath)
 	if err != nil {
 		return err
 	}
@@ -114,7 +111,7 @@ func (d *Deploy) Run() error {
 	if err != nil {
 		if errors.Is(err, resolver.ErrMissingIntegrations) ||
 			errors.Is(err, resolver.ErrPrerequisiteIntegration) {
-			return fmt.Errorf(`%s
+			return fmt.Errorf(`%w
 
 Required integrations are missing from the cluster, run the "%s integration"
 subcommand to configure them. For example:
@@ -123,7 +120,6 @@ subcommand to configure them. For example:
 	$ %s integration <name> --help
 	`,
 				err, d.appCtx.Name, d.appCtx.Name, d.appCtx.Name)
-
 		}
 		return err
 	}
@@ -134,7 +130,7 @@ subcommand to configure them. For example:
 		deps = topology.Dependencies()
 	} else {
 		d.log().Debug("Installing a single Helm chart...")
-		hc, err := d.cfs.GetChartFiles(d.chartPath)
+		hc, err := d.runCtx.ChartFS.GetChartFiles(d.chartPath)
 		if err != nil {
 			return err
 		}
@@ -156,9 +152,10 @@ subcommand to configure them. For example:
 		)
 		fmt.Printf("%s\n", strings.Repeat("#", 60))
 
-		i := installer.NewInstaller(d.log(), d.flags, d.kube, &dep, d.installerTarball)
+		i := installer.NewInstaller(d.log(), d.flags, d.runCtx.Kube, &dep, d.installerTarball)
 
-		err := i.SetValues(d.cmd.Context(), d.cfg, string(valuesTmpl))
+		ctx := d.cmd.Context()
+		err := i.SetValues(ctx, d.cfg, string(valuesTmpl))
 		if err != nil {
 			return err
 		}
@@ -173,13 +170,13 @@ subcommand to configure them. For example:
 			i.PrintValues()
 		}
 
-		if err = i.Install(d.cmd.Context()); err != nil {
+		if err = i.Install(ctx); err != nil {
 			return err
 		}
 		// Cleaning up temporary resources.
 		if err = k8s.RetryDeleteResources(
-			d.cmd.Context(),
-			d.kube,
+			ctx,
+			d.runCtx.Kube,
 			d.cfg.Namespace(),
 		); err != nil {
 			d.log().Debug(err.Error())
@@ -194,10 +191,8 @@ subcommand to configure them. For example:
 // NewDeploy instantiates the deploy subcommand.
 func NewDeploy(
 	appCtx *api.AppContext,
-	logger *slog.Logger,
+	runCtx *runcontext.RunContext,
 	f *flags.Flags,
-	cfs *chartfs.ChartFS,
-	kube *k8s.Kube,
 	manager *integrations.Manager,
 	installerTarball []byte,
 ) api.SubCommand {
@@ -208,11 +203,9 @@ func NewDeploy(
 			Long:         deployDesc,
 			SilenceUsage: true,
 		},
-		logger:           logger.WithGroup("deploy"),
-		flags:            f,
 		appCtx:           appCtx,
-		cfs:              cfs,
-		kube:             kube,
+		runCtx:           runCtx,
+		flags:            f,
 		manager:          manager,
 		chartPath:        "",
 		installerTarball: installerTarball,

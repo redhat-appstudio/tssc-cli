@@ -6,9 +6,10 @@ import (
 	"log/slog"
 	"net/url"
 
+	"github.com/redhat-appstudio/helmet/api/integrations"
 	"github.com/redhat-appstudio/helmet/internal/config"
 	"github.com/redhat-appstudio/helmet/internal/githubapp"
-	"github.com/redhat-appstudio/helmet/internal/k8s"
+	"github.com/redhat-appstudio/helmet/internal/runcontext"
 
 	"github.com/google/go-github/scrape"
 	"github.com/google/go-github/v80/github"
@@ -16,18 +17,30 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+// URLProvider defines an interface for providing GitHub App URLs.
+// Implementations can use the RunContext, config.Config and context to derive
+// URLs from cluster configuration or other sources.
+type URLProvider interface {
+	// GetCallbackURL returns the GitHub App callback URL.
+	GetCallbackURL(ctx context.Context, runCtx *runcontext.RunContext, cfg *config.Config) (string, error)
+	// GetHomepageURL returns the GitHub App homepage URL.
+	GetHomepageURL(ctx context.Context, runCtx *runcontext.RunContext, cfg *config.Config) (string, error)
+	// GetWebhookURL returns the GitHub App webhook URL.
+	GetWebhookURL(ctx context.Context, runCtx *runcontext.RunContext, cfg *config.Config) (string, error)
+}
+
 // GitHub represents the GitHub App integration attributes. It collects, validates
 // and issues the attributes to the GitHub App API.
 type GitHub struct {
 	logger *slog.Logger         // application logger
-	kube   *k8s.Kube            // kubernetes client
 	client *githubapp.GitHubApp // github API client
 
-	description string // application description
-	callbackURL string // github app callback URL
-	homepageURL string // github app homepage URL
-	webhookURL  string // github app webhook URL
-	token       string // github personal access token
+	urlProvider integrations.URLProvider // optional; when set, adapter is built in setClusterURLs
+	description string                   // application description
+	callbackURL string                   // github app callback URL
+	homepageURL string                   // github app homepage URL
+	webhookURL  string                   // github app webhook URL
+	token       string                   // github personal access token
 
 	name string // application name
 }
@@ -58,6 +71,14 @@ func (g *GitHub) PersistentFlags(c *cobra.Command) {
 
 	// Including GitHub App API client flags.
 	g.client.PersistentFlags(c)
+}
+
+// SetURLProvider sets an optional URLProvider (api/integrations). When set,
+// an adapter is built in setClusterURLs from runCtx and cfg so the provider
+// receives only integrations.IntegrationContext. The provider is consulted for
+// any URL not already set by flags.
+func (g *GitHub) SetURLProvider(provider integrations.URLProvider) {
+	g.urlProvider = provider
 }
 
 // SetArgument sets the GitHub App name.
@@ -95,54 +116,55 @@ func (g *GitHub) Type() corev1.SecretType {
 	return corev1.SecretTypeOpaque
 }
 
-// setClusterURLs sets the cluster URLs for the integration. It uses the TSSC
-// configuration to identify Developer Hub's namespace, and queries the cluster to
-// obtain its ingress domain.
+// setClusterURLs resolves GitHub App URLs from flags first, then from the
+// optional URL provider (via adapter). It validates that required URLs (webhook, homepage) are set.
 func (g *GitHub) setClusterURLs(
 	ctx context.Context,
+	runCtx *runcontext.RunContext,
 	cfg *config.Config,
 ) error {
-	developerHub, err := cfg.GetProduct(config.DeveloperHub)
-	if err != nil {
-		return err
-	}
-	ingressDomain, err := k8s.GetOpenShiftIngressDomain(ctx, g.kube)
-	if err != nil {
-		return err
+	if g.urlProvider != nil {
+		provider := newURLProviderAdapter(g.urlProvider, runCtx, cfg)
+		if g.callbackURL == "" {
+			url, err := provider.GetCallbackURL(ctx, runCtx, cfg)
+			if err != nil {
+				return fmt.Errorf("get callback URL: %w", err)
+			}
+			g.callbackURL = url
+		}
+		if g.webhookURL == "" {
+			url, err := provider.GetWebhookURL(ctx, runCtx, cfg)
+			if err != nil {
+				return fmt.Errorf("get webhook URL: %w", err)
+			}
+			g.webhookURL = url
+		}
+		if g.homepageURL == "" {
+			url, err := provider.GetHomepageURL(ctx, runCtx, cfg)
+			if err != nil {
+				return fmt.Errorf("get homepage URL: %w", err)
+			}
+			g.homepageURL = url
+		}
 	}
 
-	if g.callbackURL == "" {
-		g.callbackURL = fmt.Sprintf(
-			"https://backstage-developer-hub-%s.%s/api/auth/github/handler/frame",
-			developerHub.GetNamespace(),
-			ingressDomain,
-		)
+	if g.webhookURL == "" || g.homepageURL == "" {
+		return fmt.Errorf("GitHub App webhook and homepage URLs must be provided via flags or URLProvider")
 	}
-	if g.webhookURL == "" {
-		g.webhookURL = fmt.Sprintf(
-			"https://pipelines-as-code-controller-%s.%s",
-			"openshift-pipelines",
-			ingressDomain,
-		)
-	}
-	if g.homepageURL == "" {
-		g.homepageURL = fmt.Sprintf(
-			"https://backstage-developer-hub-%s.%s",
-			developerHub.GetNamespace(),
-			ingressDomain,
-		)
-	}
+
 	return nil
 }
 
 // generateAppManifest creates the application manifest for the GitHub-App.
 func (g *GitHub) generateAppManifest() scrape.AppManifest {
+	var callbackURLs []string
+	if g.callbackURL != "" {
+		callbackURLs = []string{g.callbackURL}
+	}
 	return scrape.AppManifest{
-		Name: github.Ptr(g.name),
-		URL:  github.Ptr(g.homepageURL),
-		CallbackURLs: []string{
-			g.callbackURL,
-		},
+		Name:           github.Ptr(g.name),
+		URL:            github.Ptr(g.homepageURL),
+		CallbackURLs:   callbackURLs,
 		Description:    github.Ptr(g.description),
 		HookAttributes: map[string]string{"url": g.webhookURL},
 		Public:         github.Ptr(true),
@@ -198,10 +220,11 @@ func (g *GitHub) getCurrentGitHubUser(
 // service API to create the application, storing the results of this interaction.
 func (g *GitHub) Data(
 	ctx context.Context,
+	runCtx *runcontext.RunContext,
 	cfg *config.Config,
 ) (map[string][]byte, error) {
-	g.log().Info("Configuring GitHub App URLs for Developer Hub")
-	err := g.setClusterURLs(ctx, cfg)
+	g.log().Info("Configuring GitHub App URLs")
+	err := g.setClusterURLs(ctx, runCtx, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -252,10 +275,9 @@ func (g *GitHub) Data(
 }
 
 // NewGitHub instances a new GitHub App integration.
-func NewGitHub(logger *slog.Logger, kube *k8s.Kube) *GitHub {
+func NewGitHub(logger *slog.Logger) *GitHub {
 	return &GitHub{
 		logger: logger,
-		kube:   kube,
 		client: githubapp.NewGitHubApp(logger),
 	}
 }

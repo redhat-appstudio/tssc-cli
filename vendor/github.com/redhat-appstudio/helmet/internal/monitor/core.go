@@ -11,6 +11,8 @@ import (
 
 // AssertNamespaceFn returns a function that asserts if the informed namespace
 // exists, otherwise returns error.
+//
+//nolint:revive // returning unexported type is intentional for encapsulation
 func AssertNamespaceFn(
 	ctx context.Context,
 	logger *slog.Logger,

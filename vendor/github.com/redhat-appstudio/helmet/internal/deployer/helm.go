@@ -149,7 +149,7 @@ func (h *Helm) Verify() error {
 // delay between retries.
 func (h *Helm) VerifyWithRetry() error {
 	var err error
-	var retries = 3
+	retries := 3
 	for i := 1; i <= retries; i++ {
 		err = h.Verify()
 		if err == nil || i == retries {
@@ -197,7 +197,7 @@ func (h *Helm) GetNotes() (string, error) {
 func NewHelm(
 	logger *slog.Logger,
 	f *flags.Flags,
-	kube *k8s.Kube,
+	kube k8s.Interface,
 	namespace string,
 	chart *chart.Chart,
 ) (*Helm, error) {

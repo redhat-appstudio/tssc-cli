@@ -26,7 +26,7 @@ type ConfigTools struct {
 	logger  *slog.Logger             // application logger
 	cfs     *chartfs.ChartFS         // embedded filesystem
 	cm      *config.ConfigMapManager // cluster config manager
-	kube    *k8s.Kube                // kubernetes client
+	kube    k8s.Interface            // kubernetes client
 
 	defaultCfg *config.Config // default config (embedded)
 }
@@ -56,12 +56,12 @@ const (
 	PropertiesArg = "properties"
 )
 
-// getHandler similar to "config --get" subcommand it returns a existing
+// getHandler similar to "config --get" subcommand it returns an existing
 // cluster configuration. If no such configuration exists it returns the
 // installer's default.
 func (c *ConfigTools) getHandler(
 	ctx context.Context,
-	ctr mcp.CallToolRequest,
+	_ mcp.CallToolRequest,
 ) (*mcp.CallToolResult, error) {
 	cfg, err := c.cm.GetConfig(ctx)
 	// The cluster is already configured, showing the user the existing
@@ -79,7 +79,7 @@ func (c *ConfigTools) getHandler(
 
 	// The cluster is not configured yet, showing the user a default configuration
 	// and hints on how to proceed.
-	if cfg, err = config.NewConfigDefault(c.cfs, ""); err != nil {
+	if _, err = config.NewConfigDefault(c.cfs, ""); err != nil {
 		return nil, err
 	}
 
@@ -144,8 +144,8 @@ Unable to retrieve the configuration from the cluster!`,
 	}
 
 	// Before creating the cluster configuration, it needs to ensure the OpenShift
-	// project exists.
-	if err := k8s.EnsureOpenShiftProject(
+	// project or Kubernetes namespace exists.
+	if err := k8s.EnsureNamespace(
 		ctx,
 		c.logger,
 		c.kube,
@@ -465,8 +465,7 @@ exists yet.`,
 			mcp.WithString(
 				NamespaceArg,
 				mcp.Description(fmt.Sprintf(`
-The main namespace for %s ('.tssc.namespace'), where Red Hat Developer Hub (DH)
-and other fundamental services will be deployed.`,
+The main namespace for %s ('.tssc.namespace'), where services will be deployed by default.`,
 					c.appName,
 				)),
 				mcp.DefaultString(c.defaultCfg.Namespace()),
@@ -573,7 +572,7 @@ func NewConfigTools(
 	appCtx *api.AppContext,
 	logger *slog.Logger,
 	cfs *chartfs.ChartFS,
-	kube *k8s.Kube,
+	kube k8s.Interface,
 	cm *config.ConfigMapManager,
 ) (*ConfigTools, error) {
 	// Loading the default configuration to serve as a reference for MCP tools.
@@ -583,7 +582,7 @@ func NewConfigTools(
 	}
 
 	c := &ConfigTools{
-		appName:    appCtx.Name,
+		appName:    appCtx.IdentifierName(),
 		logger:     logger.With("component", "mcp-config-tools"),
 		cfs:        cfs,
 		kube:       kube,

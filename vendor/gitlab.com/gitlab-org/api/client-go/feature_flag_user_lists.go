@@ -23,9 +23,9 @@ type (
 	FeatureFlagUserListsServiceInterface interface {
 		ListFeatureFlagUserLists(pid any, opt *ListFeatureFlagUserListsOptions, options ...RequestOptionFunc) ([]*FeatureFlagUserList, *Response, error)
 		CreateFeatureFlagUserList(pid any, opt *CreateFeatureFlagUserListOptions, options ...RequestOptionFunc) (*FeatureFlagUserList, *Response, error)
-		GetFeatureFlagUserList(pid any, iid int, options ...RequestOptionFunc) (*FeatureFlagUserList, *Response, error)
-		UpdateFeatureFlagUserList(pid any, iid int, opt *UpdateFeatureFlagUserListOptions, options ...RequestOptionFunc) (*FeatureFlagUserList, *Response, error)
-		DeleteFeatureFlagUserList(pid any, iid int, options ...RequestOptionFunc) (*Response, error)
+		GetFeatureFlagUserList(pid any, iid int64, options ...RequestOptionFunc) (*FeatureFlagUserList, *Response, error)
+		UpdateFeatureFlagUserList(pid any, iid int64, opt *UpdateFeatureFlagUserListOptions, options ...RequestOptionFunc) (*FeatureFlagUserList, *Response, error)
+		DeleteFeatureFlagUserList(pid any, iid int64, options ...RequestOptionFunc) (*Response, error)
 	}
 
 	// FeatureFlagUserListsService handles communication with the feature flag
@@ -45,9 +45,9 @@ var _ FeatureFlagUserListsServiceInterface = (*FeatureFlagUserListsService)(nil)
 type FeatureFlagUserList struct {
 	Name      string     `url:"name" json:"name"`
 	UserXIDs  string     `url:"user_xids" json:"user_xids"`
-	ID        int        `url:"id" json:"id"`
-	IID       int        `url:"iid" json:"iid"`
-	ProjectID int        `url:"project_id" json:"project_id"`
+	ID        int64      `url:"id" json:"id"`
+	IID       int64      `url:"iid" json:"iid"`
+	ProjectID int64      `url:"project_id" json:"project_id"`
 	CreatedAt *time.Time `url:"created_at" json:"created_at"`
 	UpdatedAt *time.Time `url:"updated_at" json:"updated_at"`
 }
@@ -102,7 +102,7 @@ func (s *FeatureFlagUserListsService) CreateFeatureFlagUserList(pid any, opt *Cr
 //
 // GitLab API docs:
 // https://docs.gitlab.com/api/feature_flag_user_lists/#get-a-feature-flag-user-list
-func (s *FeatureFlagUserListsService) GetFeatureFlagUserList(pid any, iid int, options ...RequestOptionFunc) (*FeatureFlagUserList, *Response, error) {
+func (s *FeatureFlagUserListsService) GetFeatureFlagUserList(pid any, iid int64, options ...RequestOptionFunc) (*FeatureFlagUserList, *Response, error) {
 	return do[*FeatureFlagUserList](s.client,
 		withPath("projects/%s/feature_flags_user_lists/%d", ProjectID{pid}, iid),
 		withRequestOpts(options...),
@@ -123,7 +123,7 @@ type UpdateFeatureFlagUserListOptions struct {
 //
 // GitLab API docs:
 // https://docs.gitlab.com/api/feature_flag_user_lists/#update-a-feature-flag-user-list
-func (s *FeatureFlagUserListsService) UpdateFeatureFlagUserList(pid any, iid int, opt *UpdateFeatureFlagUserListOptions, options ...RequestOptionFunc) (*FeatureFlagUserList, *Response, error) {
+func (s *FeatureFlagUserListsService) UpdateFeatureFlagUserList(pid any, iid int64, opt *UpdateFeatureFlagUserListOptions, options ...RequestOptionFunc) (*FeatureFlagUserList, *Response, error) {
 	return do[*FeatureFlagUserList](s.client,
 		withMethod(http.MethodPut),
 		withPath("projects/%s/feature_flags_user_lists/%d", ProjectID{pid}, iid),
@@ -136,7 +136,7 @@ func (s *FeatureFlagUserListsService) UpdateFeatureFlagUserList(pid any, iid int
 //
 // GitLab API docs:
 // https://docs.gitlab.com/api/feature_flag_user_lists/#delete-feature-flag-user-list
-func (s *FeatureFlagUserListsService) DeleteFeatureFlagUserList(pid any, iid int, options ...RequestOptionFunc) (*Response, error) {
+func (s *FeatureFlagUserListsService) DeleteFeatureFlagUserList(pid any, iid int64, options ...RequestOptionFunc) (*Response, error) {
 	_, resp, err := do[none](s.client,
 		withMethod(http.MethodDelete),
 		withPath("projects/%s/feature_flags_user_lists/%d", ProjectID{pid}, iid),

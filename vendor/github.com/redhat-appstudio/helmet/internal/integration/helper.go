@@ -21,7 +21,7 @@ var ErrJSONContainsSpaces = errors.New("contains unexpected spaces")
 func ValidateURL(location string) error {
 	u, err := url.Parse(location)
 	if err != nil {
-		return fmt.Errorf("%w: invalid url %q: %s", ErrInvalidURL, location, err)
+		return fmt.Errorf("%w: invalid url %q: %w", ErrInvalidURL, location, err)
 	}
 	if !strings.HasPrefix(u.Scheme, "http") {
 		return fmt.Errorf("%w: invalid scheme %q, expected http or https",
@@ -36,7 +36,7 @@ func ValidateJSON(p string, s string) error {
 	var data interface{}
 
 	if err := json.Unmarshal([]byte(s), &data); err != nil {
-		return fmt.Errorf("%w in --%s: %s", ErrInvalidJSON, p, err)
+		return fmt.Errorf("%w in --%s: %w", ErrInvalidJSON, p, err)
 	}
 
 	return checkJSONSpaces(p, data)

@@ -90,7 +90,7 @@ func (d *Dependency) UseProductNamespace() string {
 	return d.getAnnotation(annotations.UseProductNamespace)
 }
 
-// IntegrationsProvided returns the integrations provided
+// IntegrationsProvided returns the integrations provided.
 func (d *Dependency) IntegrationsProvided() []string {
 	provided := d.getAnnotation(annotations.IntegrationsProvided)
 	return commaSeparatedToSlice(provided)

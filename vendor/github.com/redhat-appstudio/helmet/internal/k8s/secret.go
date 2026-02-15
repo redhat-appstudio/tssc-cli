@@ -12,7 +12,7 @@ import (
 // GetSecret retrieves a Kubernetes secret by full name.
 func GetSecret(
 	ctx context.Context,
-	kube *Kube,
+	kube Interface,
 	name types.NamespacedName,
 ) (*corev1.Secret, error) {
 	coreClient, err := kube.CoreV1ClientSet(name.Namespace)
@@ -26,7 +26,7 @@ func GetSecret(
 // SecretExists checks if a Kubernetes secret exists.
 func SecretExists(
 	ctx context.Context,
-	kube *Kube,
+	kube Interface,
 	name types.NamespacedName,
 ) (bool, error) {
 	_, err := GetSecret(ctx, kube, name)
@@ -42,7 +42,7 @@ func SecretExists(
 // DeleteSecret deletes a Kubernetes secret.
 func DeleteSecret(
 	ctx context.Context,
-	kube *Kube,
+	kube Interface,
 	name types.NamespacedName,
 ) error {
 	coreClient, err := kube.CoreV1ClientSet(name.Namespace)

@@ -15,6 +15,7 @@ import (
 
 type IntegrationTools struct {
 	appName        string                   // application name
+	cliName        string                   // original name for CLI
 	integrationCmd *cobra.Command           // integration subcommand
 	cm             *config.ConfigMapManager // configuration manager
 	im             *integrations.Manager    // integrations manager
@@ -39,8 +40,8 @@ const (
 // command and appends their names and short descriptions to a string builder,
 // which is then returned as a text tool result.
 func (i *IntegrationTools) listHandler(
-	ctx context.Context,
-	ctr mcp.CallToolRequest,
+	_ context.Context,
+	_ mcp.CallToolRequest,
 ) (*mcp.CallToolResult, error) {
 	var output strings.Builder
 	output.WriteString(fmt.Sprintf("# `%s` Integrations\n\n", i.appName))
@@ -58,7 +59,7 @@ func (i *IntegrationTools) listHandler(
 // that these handle sensitive information and must be manually executed by users,
 // not automated agents.
 func (i *IntegrationTools) scaffoldHandler(
-	ctx context.Context,
+	_ context.Context,
 	ctr mcp.CallToolRequest,
 ) (*mcp.CallToolResult, error) {
 	var output strings.Builder
@@ -71,7 +72,7 @@ For security, automated agents **MUST NOT** execute these commands.
 Users **MUST** manually copy and paste the example "%s integration" command, then
 fill in the "OVERWRITE_ME" placeholders on a dedicated terminal session. For more
 details, run "%s integration <name> --help".`,
-		i.appName, i.appName, i.appName,
+		i.cliName, i.cliName, i.cliName,
 	))
 
 	names := ctr.GetStringSlice(NamesArg, []string{})
@@ -90,7 +91,7 @@ You must inform the %q argument, with the integration name(s)!`,
 	for _, name := range names {
 		if sc, ok := byName[name]; ok {
 			output.WriteString("\n\n")
-			output.WriteString(generateIntegrationSubCmdUsage(i.appName, sc))
+			output.WriteString(generateIntegrationSubCmdUsage(i.cliName, sc))
 			output.WriteString("\n\n")
 		} else {
 			unknown = append(unknown, name)
@@ -171,7 +172,7 @@ List and describe the %s integrations available for the user.`,
 Scaffold the configuration required for a specific %s integration. The
 scaffolded configuration can be used as a reference to create the integration
 using the '%s integration <name> ...' command.`,
-				i.appName, i.appName,
+				i.cliName, i.cliName,
 			)),
 			mcp.WithArray(
 				NamesArg,
@@ -202,12 +203,14 @@ The integration names to check the status for.`,
 
 func NewIntegrationTools(
 	appName string,
+	cliName string,
 	integrationCmd *cobra.Command,
 	cm *config.ConfigMapManager,
 	im *integrations.Manager,
 ) *IntegrationTools {
 	return &IntegrationTools{
 		appName:        appName,
+		cliName:        cliName,
 		integrationCmd: integrationCmd,
 		cm:             cm,
 		im:             im,

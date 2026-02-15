@@ -19,7 +19,7 @@ func valuesToProperties(
 		case map[string]interface{}:
 			valuesToProperties(v, newPath, sb)
 		default:
-			sb.WriteString(fmt.Sprintf("%s: %v\n", newPath, v))
+			fmt.Fprintf(sb, "%s: %v\n", newPath, v)
 		}
 	}
 }

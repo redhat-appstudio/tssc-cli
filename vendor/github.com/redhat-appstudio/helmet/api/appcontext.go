@@ -1,5 +1,9 @@
 package api
 
+import (
+	"strings"
+)
+
 // AppContext holds immutable application metadata.
 // This is passed throughout the component tree as the single source of truth
 // for application identity, versioning, and organizational information.
@@ -51,6 +55,12 @@ func WithLongDescription(long string) ContextOption {
 	return func(a *AppContext) {
 		a.Long = long
 	}
+}
+
+// IdentifierName returns the application name suitable for programmatic
+// identifiers, replacing hyphens with underscores.
+func (a *AppContext) IdentifierName() string {
+	return strings.ReplaceAll(a.Name, "-", "_")
 }
 
 // NewAppContext creates a new application context with sensible defaults.

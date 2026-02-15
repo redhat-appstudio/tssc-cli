@@ -6,6 +6,7 @@ import (
 	"log/slog"
 
 	"github.com/redhat-appstudio/helmet/internal/config"
+	"github.com/redhat-appstudio/helmet/internal/runcontext"
 
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
@@ -85,7 +86,7 @@ func (a *Azure) Type() corev1.SecretType {
 }
 
 // Data returns the data for the Azure integration secret.
-func (a *Azure) Data(context.Context, *config.Config) (map[string][]byte, error) {
+func (a *Azure) Data(context.Context, *runcontext.RunContext, *config.Config) (map[string][]byte, error) {
 	return map[string][]byte{
 		"host":         []byte(a.host),
 		"token":        []byte(a.token),

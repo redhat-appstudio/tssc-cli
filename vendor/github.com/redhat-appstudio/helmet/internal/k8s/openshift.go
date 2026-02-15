@@ -23,7 +23,7 @@ import (
 var ErrIngressDomainNotFound = fmt.Errorf("ingress domain not found")
 
 // Returns `default` IngressController CR if exists.
-func getIngressControllerCR(ctx context.Context, kube *Kube) (*v1.IngressController, error) {
+func getIngressControllerCR(ctx context.Context, kube Interface) (*v1.IngressController, error) {
 	objectRef := &corev1.ObjectReference{
 		APIVersion: "operator.openshift.io/v1",
 		Namespace:  "openshift-ingress-operator",
@@ -52,7 +52,7 @@ func getIngressControllerCR(ctx context.Context, kube *Kube) (*v1.IngressControl
 }
 
 // Returns `version` ClusterVersion CR if exists.
-func getConfigVersionCR(ctx context.Context, kube *Kube) (*configv1.ClusterVersion, error) {
+func getConfigVersionCR(ctx context.Context, kube Interface) (*configv1.ClusterVersion, error) {
 	objectRef := &corev1.ObjectReference{
 		APIVersion: "config.openshift.io/v1",
 		Namespace:  "",
@@ -80,8 +80,8 @@ func getConfigVersionCR(ctx context.Context, kube *Kube) (*configv1.ClusterVersi
 	return version, nil
 }
 
-// Returns name of the defaultCertificate as specified in default IngressController
-func getIngressControllerDefaultCertificate(ctx context.Context, kube *Kube) (string, error) {
+// getIngressControllerDefaultCertificate returns name of the defaultCertificate as specified in default IngressController.
+func getIngressControllerDefaultCertificate(ctx context.Context, kube Interface) (string, error) {
 	ingressController, err := getIngressControllerCR(ctx, kube)
 	if err != nil {
 		return "", err
@@ -98,7 +98,7 @@ func getIngressControllerDefaultCertificate(ctx context.Context, kube *Kube) (st
 // Uses either what's defines in spec->defaultCertificate of IngressController or if that's not defined
 // uses `router-ca` secret from `openshift-ingress-operator` namespace.
 // Related documentation: https://docs.openshift.com/container-platform/4.18/security/certificates/replacing-default-ingress-certificate.html#replacing-default-ingress
-func GetOpenShiftIngressRouteCA(ctx context.Context, kube *Kube) (string, error) {
+func GetOpenShiftIngressRouteCA(ctx context.Context, kube Interface) (string, error) {
 	defaultCertSecretName, err := getIngressControllerDefaultCertificate(ctx, kube)
 	if err != nil {
 		return "", err
@@ -126,7 +126,7 @@ func GetOpenShiftIngressRouteCA(ctx context.Context, kube *Kube) (string, error)
 }
 
 // GetOpenShiftIngressDomain returns the OpenShift Ingress domain.
-func GetOpenShiftIngressDomain(ctx context.Context, kube *Kube) (string, error) {
+func GetOpenShiftIngressDomain(ctx context.Context, kube Interface) (string, error) {
 	ingressController, err := getIngressControllerCR(ctx, kube)
 	if err != nil {
 		return "", err
@@ -140,7 +140,7 @@ func GetOpenShiftIngressDomain(ctx context.Context, kube *Kube) (string, error) 
 }
 
 // GetOpenShiftVersion returns the OpenShift version.
-func GetOpenShiftVersion(ctx context.Context, kube *Kube) (string, error) {
+func GetOpenShiftVersion(ctx context.Context, kube Interface) (string, error) {
 	clusterVersion, err := getConfigVersionCR(ctx, kube)
 	if err != nil {
 		return "", err
@@ -157,7 +157,7 @@ func GetOpenShiftVersion(ctx context.Context, kube *Kube) (string, error) {
 func EnsureOpenShiftProject(
 	ctx context.Context,
 	logger *slog.Logger,
-	kube *Kube,
+	kube Interface,
 	projectName string,
 ) error {
 	logger = logger.With("project", projectName)

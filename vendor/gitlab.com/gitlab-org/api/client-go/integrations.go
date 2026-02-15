@@ -102,7 +102,7 @@ var _ IntegrationsServiceInterface = (*IntegrationsService)(nil)
 // https://docs.gitlab.com/api/group_integrations/
 // https://docs.gitlab.com/api/project_integrations/
 type Integration struct {
-	ID                             int        `json:"id"`
+	ID                             int64      `json:"id"`
 	Title                          string     `json:"title"`
 	Slug                           string     `json:"slug"`
 	CreatedAt                      *time.Time `json:"created_at"`
@@ -216,7 +216,7 @@ type SetMicrosoftTeamsNotificationsOptions struct {
 func (s *IntegrationsService) SetGroupMicrosoftTeamsNotifications(gid any, opt *SetMicrosoftTeamsNotificationsOptions, options ...RequestOptionFunc) (*Integration, *Response, error) {
 	return do[*Integration](
 		s.client,
-		withPath("groups/%s/integrations/microsoft_teams", GroupID{gid}),
+		withPath("groups/%s/integrations/microsoft-teams", GroupID{gid}),
 		withMethod(http.MethodPut),
 		withAPIOpts(opt),
 		withRequestOpts(options...),
@@ -226,7 +226,7 @@ func (s *IntegrationsService) SetGroupMicrosoftTeamsNotifications(gid any, opt *
 func (s *IntegrationsService) DisableGroupMicrosoftTeamsNotifications(gid any, options ...RequestOptionFunc) (*Response, error) {
 	_, resp, err := do[none](
 		s.client,
-		withPath("groups/%s/integrations/microsoft_teams", GroupID{gid}),
+		withPath("groups/%s/integrations/microsoft-teams", GroupID{gid}),
 		withMethod(http.MethodDelete),
 		withRequestOpts(options...),
 	)
@@ -236,7 +236,7 @@ func (s *IntegrationsService) DisableGroupMicrosoftTeamsNotifications(gid any, o
 func (s *IntegrationsService) GetGroupMicrosoftTeamsNotifications(gid any, options ...RequestOptionFunc) (*Integration, *Response, error) {
 	return do[*Integration](
 		s.client,
-		withPath("groups/%s/integrations/microsoft_teams", GroupID{gid}),
+		withPath("groups/%s/integrations/microsoft-teams", GroupID{gid}),
 		withMethod(http.MethodGet),
 		withRequestOpts(options...),
 	)

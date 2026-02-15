@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/redhat-appstudio/helmet/internal/config"
+	"github.com/redhat-appstudio/helmet/internal/runcontext"
 
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
@@ -67,6 +68,7 @@ func (a *ACS) Validate() error {
 // Data returns the ACS integration data.
 func (a *ACS) Data(
 	_ context.Context,
+	_ *runcontext.RunContext,
 	_ *config.Config,
 ) (map[string][]byte, error) {
 	return map[string][]byte{
@@ -75,7 +77,7 @@ func (a *ACS) Data(
 	}, nil
 }
 
-// NewACS creates a new instance of the ACS integration.l
+// NewACS creates a new instance of the ACS integration.
 func NewACS() *ACS {
 	return &ACS{}
 }

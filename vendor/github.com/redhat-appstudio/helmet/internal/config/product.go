@@ -6,13 +6,6 @@ import (
 	"strings"
 )
 
-const (
-	// DeveloperHub Red Hat Developer Hub (RHDH).
-	DeveloperHub = "Developer Hub"
-	// OpenShiftPipelines OpenShift Pipelines.
-	OpenShiftPipelines = "OpenShift Pipelines"
-)
-
 // ProductSpec contains the configuration for a specific product.
 type Product struct {
 	// Name of the product.
