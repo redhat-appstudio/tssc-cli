@@ -1,16 +1,22 @@
 # Trusted Software Factory Installer
 
+## Prerequisites
+
+* An OpenShift cluster with admin access
+* A GitHub organization (create a test organization if needed)
+* A Quay.io account with access to an organization (or your own Quay instance)
+
 ## Quickstart
 
 1. Copy [private.env.template](../hack/private.env.template) as `tsf.env` and fill in the blanks. See the [Getting the information for tsf.env](#getting-the-information-for-tsfenv) section if you need help finding the required values.
 2. Start a container with `podman run -it --rm --env-file tsf.env --entrypoint bash -p 8228:8228 --pull always quay.io/roming22-org/tsf:latest --login`.
 3. Log on the cluster with `oc login "$OCP__API_ENDPOINT" --username "$OCP__USERNAME" --password "$OCP__PASSWORD"`
 4. Create the TSF config on the cluster with `tssc config --create`.
-5. Check if the `Red Hat Cert-Manager` operator is already installed in the cluster. If it is, edit the `tssc-config` ConfigMap in the `tssc` namespace to set `manageSubscription: false` for that product.
-5. Create the github app integration with `tssc integration github --create --org "$GITHUB__ORG" "tsf-$(date +%m%d-%H%M)"`. Open the link to create the app, follow the instructions, and install the application to your GitHub organization.
-6. Create the quay integration with `tssc integration quay --organization="$QUAY__ORG" --token="$QUAY__API_TOKEN" --url="$QUAY__URL"`. If you need information on how to generate the token, look further in this document.
-7. Deploy all the services with `tssc deploy`.
-8. Cluster users (including the admin user) should now be able to login the Konflux UI. You will find the URL in the logs of the deployment. You can also access it through the GitHub App (via the `Website` link on the application public page, or via the link displayed on the application configuration page which was the last page displayed after you installed the application).
+5. Check if the `Red Hat Cert-Manager` operator is already installed in the cluster. If it is, edit the `tssc-config` ConfigMap in the `tssc` namespace to set `manageSubscription: false` for that product. Alternatively, you can use the `-i cert-manager` flag with the `tssc deploy` command in step 8.
+6. Create the github app integration with `tssc integration github --create --org "$GITHUB__ORG" "tsf-$(date +%m%d-%H%M)"`. Open the link to create the app, follow the instructions, and install the application to your GitHub organization.
+7. Create the quay integration with `tssc integration quay --organization="$QUAY__ORG" --token="$QUAY__API_TOKEN" --url="$QUAY__URL"`. If you need information on how to generate the token, look further in this document.
+8. Deploy all the services with `tssc deploy`.
+9. Cluster users (including the admin user) should now be able to login the Konflux UI. You will find the URL in the logs of the deployment. You can also access it through the GitHub App (via the `Website` link on the application public page, or via the link displayed on the application configuration page which was the last page displayed after you installed the application).
 
 ## Getting the information for tsf.env
 
@@ -21,7 +27,7 @@ Use the name of that organization for `GITHUB__ORG`.
 
 ### OpenShift
 
-* `OCP__API_ENDPOINT`: the full url of the cluster's api endpoint. Example: ``.
+* `OCP__API_ENDPOINT`: the full url of the cluster's api endpoint. Example: `https://api.example.com:6443`.
 * `OCP__USERNAME`: User with admin privileges on the cluster. Example: `admin`.
 * `OCP__PASSWORD`: Credential for the user.
 
@@ -49,7 +55,7 @@ To create the API token:
 
 When a new component is created in Konflux, a new repository is created, in the organization specified at install time.
 If you are using a free quay.io account, the visibility of the repository should be changed to public manually because of the account limitations.
-If you are use a corporate account, or your own Quay instance, the repository visibility can remain private.
+If you are using a corporate account, or your own Quay instance, the repository visibility can remain private.
 
 ## Troubleshooting
 
