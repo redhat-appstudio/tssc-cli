@@ -73,4 +73,4 @@ The subscription has already been installed by a third party. Helm does not want
 
 #### Workaround
 
-* Add `-i cert-manager` to the `./hack/tssc deploy` command.
+* Add `-i cert-manager` to the `tssc deploy` command.
