@@ -4,7 +4,7 @@
 
 * An OpenShift cluster with admin access
 * A GitHub organization (create a test organization if needed)
-* A Quay.io account with access to an organization (or your own Quay instance)
+* A Quay.io account with access to an organization (currently only quay.io is supported; support for other Quay instances is planned for the future)
 
 ## Quickstart
 
@@ -33,8 +33,8 @@ Use the name of that organization for `GITHUB__ORG`.
 
 ### Quay
 
-* `QUAY__URL`: full url of the quay instance. Example: `https://quay.io`.
-* `QUAY__API_TOKEN`: token giving access to an organization on the quay instance.
+* `QUAY__URL`: full url of quay.io. Use: `https://quay.io`.
+* `QUAY__API_TOKEN`: token giving access to an organization on quay.io.
 * `QUAY__ORG`: the organization that the token gives access to.
 
 To create the API token:
@@ -55,7 +55,7 @@ To create the API token:
 
 When a new component is created in Konflux, a new repository is created, in the organization specified at install time.
 If you are using a free quay.io account, the visibility of the repository should be changed to public manually because of the account limitations.
-If you are using a corporate account, or your own Quay instance, the repository visibility can remain private.
+If you are using a paid quay.io account, the repository visibility can remain private.
 
 ## Troubleshooting
 
