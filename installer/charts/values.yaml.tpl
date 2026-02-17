@@ -252,6 +252,9 @@ trustedProfileAnalyzer:
               key: testingManager
 {{- end }}
 
+  integrationSecret:
+    namespace: {{ .Installer.Namespace }}
+
 trustification:
   name: trustedprofileanalyzer
   namespace: "{{ $tpa.Namespace }}"

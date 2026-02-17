@@ -15,6 +15,12 @@
 {{- $tufInternalUrl := required (printf "tuf_service_url not found in secret 'tssc-tas-integration' in namespace '%s'" .Values.konflux.tssc.namespace) (get $secretData "tuf_service_url") | b64dec | toString -}}
 {{- $tufExternalUrl := required (printf "tuf_url not found in secret 'tssc-tas-integration' in namespace '%s'" .Values.konflux.tssc.namespace) (get $secretData "tuf_url") | b64dec | toString -}}
 
+{{- /* Lookup Trusted Profile Analyzer integration secret to get URLs */ -}}
+{{- $tpaSecretObj := (lookup "v1" "Secret" .Values.konflux.tssc.namespace "tssc-tpa-integration") | default dict -}}
+{{- $secretData := required (printf "Secret 'tssc-tpa-integration' not found in namespace '%s'" .Values.konflux.tssc.namespace) (get $tpaSecretObj "data") | default dict -}}
+{{- $trustifyServerInternalUrl := required (printf "trustify_server_internal_url not found in secret 'tssc-tpa-integration' in namespace '%s'" .Values.konflux.tssc.namespace) (get $secretData "trustify_server_internal_url") | b64dec | toString -}}
+{{- $trustifyServerExternalUrl := required (printf "trustify_server_external_url not found in secret 'tssc-tpa-integration' in namespace '%s'" .Values.konflux.tssc.namespace) (get $secretData "trustify_server_external_url") | b64dec | toString -}}
+
 ---
 apiVersion: konflux.konflux-ci.dev/v1alpha1
 kind: Konflux
@@ -28,6 +34,7 @@ spec:
     spec:
       clusterConfig:
         data:
+          enableKeylessSigning: true
           defaultOIDCIssuer: https://kubernetes.default.svc
           fulcioInternalUrl: {{ $fulcioInternalUrl | quote }}
           fulcioExternalUrl: {{ $fulcioExternalUrl | quote }}
@@ -35,7 +42,12 @@ spec:
           rekorExternalUrl: {{ $rekorExternalUrl | quote }}
           tufInternalUrl: {{ $tufInternalUrl | quote }}
           tufExternalUrl: {{ $tufExternalUrl | quote }}
+          trustifyServerInternalUrl: {{ $trustifyServerInternalUrl | quote }}
+          trustifyServerExternalUrl: {{ $trustifyServerExternalUrl | quote }}
       publicInfo:
         integrations:
           github:
             application_url: {{ $applicationURL | quote }}
+          sbom_server:
+            url: "{{ $trustifyServerExternalUrl }}/sbom/content/<PLACEHOLDER>"
+            sbom_sha: "{{ $trustifyServerExternalUrl }}/sboms/<PLACEHOLDER>"

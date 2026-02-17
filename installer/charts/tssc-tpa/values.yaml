@@ -174,7 +174,9 @@ trustedProfileAnalyzer:
     serviceEnabled: true
     # Additional CA certificates to trust, which is fundamental to support
     # OpenShift internal TLS communication.
-    additionalTrustAnchor: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt 
+    additionalTrustAnchor: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+  integrationSecret:
+    namespace: __OVERWRITE_ME__
   # TPA is composed by services, each service needs integration with S3 bucket and
   # Kafka topics. When the bucket receives a new document, a message is issued to
   # the "stored" Kafka topic.
