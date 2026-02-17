@@ -6,7 +6,7 @@ subscriptions:
     apiResource: konfluxes.konflux.konflux-ci.dev
     namespace: konflux-operator
     name: konflux-operator
-    channel: stable-v0
+    channel: stable-v0.0
     source: community-operators
     sourceNamespace: openshift-marketplace
     operatorGroup:
