@@ -60,8 +60,8 @@ github.com/clipperhouse/stringish
 # github.com/clipperhouse/uax29/v2 v2.5.0
 ## explicit; go 1.18
 github.com/clipperhouse/uax29/v2/graphemes
-# github.com/containerd/containerd v1.7.29
-## explicit; go 1.23.0
+# github.com/containerd/containerd v1.7.30
+## explicit; go 1.24.0
 github.com/containerd/containerd/archive/compression
 github.com/containerd/containerd/content
 github.com/containerd/containerd/errdefs
