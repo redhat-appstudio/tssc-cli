@@ -33,7 +33,7 @@ configure_subscription() {
         .subscriptions.$SUBSCRIPTION.source = \"$SOURCE\"
     " "$subscription_values_file"
 
-    cat $subscription_values_file
+    cat "$subscription_values_file"
 }
 
 # Initialize GITHUB_TOKEN from environment or GITOPS_GIT_TOKEN
