@@ -5,6 +5,9 @@
 iam:
   enabled: false
   namespace: __OVERWRITE_ME__
+  # Authentication integration secret created by realm import.
+  integrationSecret:
+    namespace: __OVERWRITE_ME__
   instances: 1
   database:
     host: __OVERWRITE_ME__
@@ -85,15 +88,3 @@ iam:
         - "http://server-tssc-tpa.apps-crc.testing/*"
         - "http://sbom-tssc-tpa.apps-crc.testing"
         - "http://sbom-tssc-tpa.apps-crc.testing/*"
-      # Describe details of Trustification installation for integration with other
-      # components.
-      integrationSecret:
-        # Bombastic API URL.
-        bombasticAPI: __OVERWRITE_ME__
-        # OIDC client ID to interact with the Bombastic API endpoint.
-        oidcClientID: cli
-        # Secret namespace and name.
-        namespace: __OVERWRITE_ME__
-        name: tssc-trustification-integration
-        # CycloneDX version supported by TPA (Trustification).
-        cycloneDXVersion: 1.4
