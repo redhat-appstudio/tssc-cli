@@ -17,6 +17,11 @@ spec:
         value: main
       - name: pathInRepo
         value: integration-tests/pipelines/e2e-main-pipeline.yaml
+  params:
+    - name: konflux-test-infra-secret
+      value: konflux-test-infra
+    - name: cloud-credential-key
+      value: rhtap-cloud-credentials-us-east-1
   workspaces:
     - name: rhads-config
       volumeClaimTemplate:
