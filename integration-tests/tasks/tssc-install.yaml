@@ -55,28 +55,6 @@ spec:
         set -o nounset
         set -o pipefail
 
-        # # go-toolset image has make and go but not oc/kubectl; install cluster tools if missing
-        # if ! command -v oc &>/dev/null; then
-        #   command -v curl &>/dev/null || dnf install -y curl
-        #   ARCH=$(uname -m)
-        #   echo "Installing oc and kubectl for $ARCH..."
-        #   curl -sL "https://mirror.openshift.com/pub/openshift-v4/${ARCH}/clients/ocp/stable/openshift-client-linux.tar.gz" | tar xz -C /tmp
-        #   mv /tmp/oc /tmp/kubectl /usr/local/bin/
-        # fi
-        # for cmd in jq git; do
-        #   if ! command -v $cmd &>/dev/null; then
-        #     dnf install -y $cmd
-        #   fi
-        # done
-        # if ! command -v yq &>/dev/null; then
-        #   YQ_ARCH=$(uname -m)
-        #   [[ "$YQ_ARCH" == "x86_64" ]] && YQ_ARCH="amd64" || true
-        #   [[ "$YQ_ARCH" == "aarch64" ]] && YQ_ARCH="arm64" || true
-        #   echo "Installing yq for $YQ_ARCH..."
-        #   curl -sL "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_${YQ_ARCH}" -o /usr/local/bin/yq
-        #   chmod +x /usr/local/bin/yq
-        # fi
-
         GIT_REPO="${GIT_REPO:-$(echo "$JOB_SPEC" | jq -r '.git.repo // empty')}"
         if [ -z "$GIT_REPO" ]; then
           echo "[ERROR] GIT_REPO is not set in JOB_SPEC"
