@@ -96,6 +96,11 @@ spec:
         tssc_image=$(echo "${SNAPSHOT}" | jq -r '.components[] |select(.name=="tssc-cli").containerImage')
         tssc_test_image=$(echo "${SNAPSHOT}" | jq -r '.components[] |select(.name=="tssc-test").containerImage')
 
+        # TEMP
+        tssc_test_image=quay.io/rhopp/tssc-tests:fix-tpa-integration
+
+        # /TEMP
+
         GIT_REPO="$(jq -r '.git.repo // empty' <<< $JOB_SPEC)"
         KONFLUX_URL="https://konflux-ui.apps.stone-prd-rh01.pg1f.p1.openshiftapps.com"
 
