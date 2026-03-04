@@ -99,8 +99,8 @@ spec:
         echo "Decoded rhads-config content:"
         echo "$DECODED_RHADS_CONFIG"
         # Extract images from snapshot
-        tssc_image=$(echo "${SNAPSHOT}" | jq -r '.components[] |select(.name=="tssc-cli").containerImage')
-        tssc_test_image=$(echo "${SNAPSHOT}" | jq -r '.components[] |select(.name=="tssc-test").containerImage')
+        tssc_image=$(echo "${SNAPSHOT}" | jq -r '.components[] |select(.name | startswith("tssc-cli")).containerImage')
+        tssc_test_image=$(echo "${SNAPSHOT}" | jq -r '.components[] |select(.name | startswith("tssc-test")).containerImage')
 
         GIT_REPO="$(jq -r '.git.repo // empty' <<< $JOB_SPEC)"
         KONFLUX_URL="https://konflux-ui.apps.stone-prd-rh01.pg1f.p1.openshiftapps.com"

@@ -37,8 +37,6 @@ spec:
           mountPath: /tssc-bin
     - name: install
       image: quay.io/konflux-ci/appstudio-utils:latest
-      securityContext:
-        runAsUser: 0
       env:
         - name: JOB_SPEC
           value: "$(params.job-spec)"
