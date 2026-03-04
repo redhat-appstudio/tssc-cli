@@ -32,7 +32,7 @@ spec:
         - name: tssc-bin
           mountPath: /tssc-bin
     - name: install
-      image: quay.io/konflux-qe-incubator/konflux-qe-tools:latest
+      image: quay.io/konflux-ci/tekton-integration-catalog/utils:latest
       env:
         - name: JOB_SPEC
           value: "$(params.job-spec)"
