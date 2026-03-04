@@ -65,20 +65,14 @@ spec:
         cd "$(mktemp -d)"
 
         if [[ "${GIT_REPO}" = "tssc-cli" ]]; then
-            #GIT_URL="${GIT_URL:-$(echo "$JOB_SPEC" | jq -r '.git.source_repo_url')}"
-            #GIT_REVISION="${GIT_REVISION:-$(echo "$JOB_SPEC" | jq -r '.git.commit_sha')}"
-            GIT_URL="https://github.com/jkopriva/tssc-cli.git"
-            GIT_REVISION="RHTAP-6123"
+            GIT_URL="${GIT_URL:-$(echo "$JOB_SPEC" | jq -r '.git.source_repo_url')}"
+            GIT_REVISION="${GIT_REVISION:-$(echo "$JOB_SPEC" | jq -r '.git.commit_sha')}"
             echo -e "INFO: Cloning repository '$GIT_REPO' with revision '$GIT_REVISION' from URL '$GIT_URL'"
             git clone "${GIT_URL}" .
             git checkout "${GIT_REVISION}"
         else
-            #echo -e "INFO: Cloning repository 'redhat-appstudio/tssc-cli' with revision 'main'"
-            #git clone https://github.com/redhat-appstudio/tssc-cli.git .
-            GIT_URL="https://github.com/jkopriva/tssc-cli.git"
-            GIT_REVISION="RHTAP-6123"
-            git clone "${GIT_URL}" .
-            git checkout "${GIT_REVISION}"
+            echo -e "INFO: Cloning repository 'redhat-appstudio/tssc-cli' with revision 'main'"
+            git clone https://github.com/redhat-appstudio/tssc-cli.git .
         fi
 
         # Generate the .env file for tssc installation based on the configuration given in the rhads-config
