@@ -14,7 +14,7 @@ import (
 )
 
 // ACS represents the ACS, Advanced Cluster Security, integration. The coordinates
-// to connect TSSC with a external instance of ACS.
+// to connect the installer with an external instance of ACS.
 type ACS struct {
 	endpoint string // ACS service endpoint
 	token    string // API token credentials

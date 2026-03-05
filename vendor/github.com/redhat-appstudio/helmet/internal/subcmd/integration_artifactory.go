@@ -1,6 +1,8 @@
 package subcmd
 
 import (
+	"fmt"
+
 	"github.com/redhat-appstudio/helmet/api"
 	"github.com/redhat-appstudio/helmet/internal/config"
 	"github.com/redhat-appstudio/helmet/internal/integration"
@@ -20,14 +22,6 @@ type IntegrationArtifactory struct {
 }
 
 var _ api.SubCommand = &IntegrationArtifactory{}
-
-const artifactoryIntegrationLongDesc = `
-Manages the artifactory integration with TSSC, by storing the required
-credentials required by the TSSC services to interact with artifactory.
-
-The credentials are stored in a Kubernetes Secret in the configured namespace
-for RHDH.
-`
 
 // Cmd exposes the cobra instance.
 func (a *IntegrationArtifactory) Cmd() *cobra.Command {
@@ -52,7 +46,7 @@ func (a *IntegrationArtifactory) Run() error {
 }
 
 // NewIntegrationArtifactory creates the sub-command for the "integration artifactory"
-// responsible to manage the TSSC integrations with a Artifactory image registry.
+// responsible to manage the integrations with a Artifactory image registry.
 func NewIntegrationArtifactory(
 	appCtx *api.AppContext,
 	runCtx *runcontext.RunContext,
@@ -60,9 +54,21 @@ func NewIntegrationArtifactory(
 ) *IntegrationArtifactory {
 	a := &IntegrationArtifactory{
 		cmd: &cobra.Command{
-			Use:          "artifactory [flags]",
-			Short:        "Integrates a Artifactory instance into TSSC",
-			Long:         artifactoryIntegrationLongDesc,
+			Use: "artifactory [flags]",
+			Short: fmt.Sprintf(
+				"Integrates an Artifactory instance into %s",
+				appCtx.Name,
+			),
+			Long: fmt.Sprintf(`
+Manages the Artifactory integration with %s by storing the credentials
+required by %s services to interact with Artifactory.
+
+The credentials are stored in a Kubernetes Secret in the namespace
+configured for %s.`,
+				appCtx.Name,
+				appCtx.Name,
+				appCtx.Name,
+			),
 			SilenceUsage: true,
 		},
 
