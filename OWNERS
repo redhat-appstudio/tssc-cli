@@ -3,8 +3,8 @@ approvers:
   - otaviof
   - roming22
   - lcarva
-reviewers:
-  - xinredhat
-  - prietyc123
-  - jkopriva
   - rhopp
+  - jkopriva
+  - xinredhat
+reviewers:
+  - prietyc123

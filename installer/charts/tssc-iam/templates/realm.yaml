@@ -99,9 +99,9 @@ data:
   {{ $k }}: {{ $s }}
   {{- end }}
 #
-# TPA Integration Secret
+# Authentication Integration Secret
 #
-#   Creates a secret to store integration details.
+#   Creates a secret with realm OIDC details.
 #
 ---
 apiVersion: v1
@@ -110,36 +110,18 @@ metadata:
   labels:
     app: keycloak
   namespace: {{
-    required ".Values.trustedProfileAnalyzerRealm.integrationSecret.namespace is required"
-      $tpa.integrationSecret.namespace
+    required "iam.integrationSecret.namespace is required"
+      .Values.iam.integrationSecret.namespace
   }}
-  name: {{
-    required "Values.trustedProfileAnalyzerRealm.integrationSecret.name is required"
-      $tpa.integrationSecret.name
-  }}
+  name: tssc-authentication-integration
 type: Opaque
 stringData:
-  bombastic_api_url: {{
-    required ".Values.trustedProfileAnalyzerRealm.integrationSecret.bombasticAPI is required"
-      $tpa.integrationSecret.bombasticAPI
-  }}
   oidc_issuer_url: {{
-    required ".Values.trustedProfileAnalyzerRealm.oidcIssuerURL is required"
+    required "iam.keycloakCR.trustedProfileAnalyzerRealm.oidcIssuerURL is required"
       $tpa.oidcIssuerURL
   }}
-  oidc_client_id: {{
-    required ".Values.trustedProfileAnalyzerRealm.integrationSecret.oidcClientID is required"
-      $tpa.integrationSecret.oidcClientID
-  }}
-  oidc_client_secret: {{
-    get $oidcCredentialsTPA
-      $tpa.integrationSecret.oidcClientID |
-        b64dec
-  }}
-  supported_cyclonedx_version: "{{
-    required ".Values.trustedProfileAnalyzerRealm.integrationSecret.cycloneDXVersion is required"
-      $tpa.integrationSecret.cycloneDXVersion
-  }}"
+  oidc_client_id: cli
+  oidc_client_secret: {{ get $oidcCredentialsTPA "cli" | b64dec }}
 {{- end }}
 #
 # RHDH Client
