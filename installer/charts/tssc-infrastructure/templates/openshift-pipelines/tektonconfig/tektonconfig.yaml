@@ -1,0 +1,4 @@
+{{- $config := fromYaml (include "pipelines.TektonConfigDefault" .) }}
+{{- $patch := fromYaml (include "pipelines.TektonConfigPatch" .) }}
+---
+{{ mergeOverwrite $config $patch | toYaml }}
