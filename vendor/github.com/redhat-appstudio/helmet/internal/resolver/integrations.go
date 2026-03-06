@@ -25,16 +25,41 @@ var (
 		"dependency prerequisite integration(s) missing")
 )
 
-// Inspect loops the Topology and evaluates the integrations required by each
-// dependency, as well integrations provided by them. The inspection keeps the
-// state of the integrations configured in the cluster.
+// Inspect walks the Topology in two passes to evaluate integrations provided and
+// required by each dependency. The two-pass approach makes validation
+// order-independent: all provisions are collected first, then all requirements
+// are evaluated against the complete state.
 func (i *Integrations) Inspect(t *Topology) error {
+	// Pass 1: collect all integrations provided by charts in the topology.
+	// This marks each provided integration as configured before any
+	// requirements are evaluated, eliminating order-dependency.
+	if err := t.Walk(func(chartName string, d Dependency) error {
+		for _, provided := range d.IntegrationsProvided() {
+			configured, exists := i.configured[provided]
+			// Asserting that the integration is provided by this project.
+			if !exists {
+				return fmt.Errorf("%w: %q in %q dependency (%q product)",
+					ErrUnknownIntegration, provided, chartName, d.ProductName())
+			}
+			if configured {
+				// If the integration is already configured (either by user or
+				// previous run) we skip marking it again to ensure idempotency.
+				continue
+			}
+			// Marking the integration as configured, this dependency is
+			// responsible for creating the integration secret accordingly.
+			i.configured[provided] = true
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	// Pass 2: validate all integrations required by charts in the topology.
+	// At this point the configured map contains both cluster-state entries and
+	// all provisions declared by charts, so CEL evaluation is independent of
+	// topology ordering.
 	return t.Walk(func(chartName string, d Dependency) error {
-		// Inspecting the integrations required by the dependency, the "required"
-		// annotation is a CEL expression describing which integration it depends
-		// on. If the expression evaluates to false, the integration is not
-		// configured in the cluster, and it's not provided by any other
-		// dependency (chart) in the Topology.
 		if required := d.IntegrationsRequired(); required != "" {
 			if err := i.cel.Evaluate(i.configured, required); err != nil {
 				switch {
@@ -93,25 +118,6 @@ An unexpected error occurred during CEL evaluation:
 					)
 				}
 			}
-		}
-		// Inspecting the integrations provided by the Helm chart (dependency). It
-		// must provide a integration name supported by this project, and must not
-		// overwrite configured integrations.
-		for _, provided := range d.IntegrationsProvided() {
-			configured, exists := i.configured[provided]
-			// Asserting that the integration is provided by this project.
-			if !exists {
-				return fmt.Errorf("%w: %q in %q dependency (%q product)",
-					ErrUnknownIntegration, provided, chartName, d.ProductName())
-			}
-			if configured {
-				// If the integration is already configured (either by user or
-				// previous run) we skip marking it again to ensure idempotency.
-				continue
-			}
-			// Marking the integration as configured, this dependency is
-			// responsible for creating the integration secret accordingly.
-			i.configured[provided] = true
 		}
 		return nil
 	})

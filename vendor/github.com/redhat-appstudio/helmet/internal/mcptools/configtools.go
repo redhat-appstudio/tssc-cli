@@ -79,7 +79,7 @@ func (c *ConfigTools) getHandler(
 
 	// The cluster is not configured yet, showing the user a default configuration
 	// and hints on how to proceed.
-	if _, err = config.NewConfigDefault(c.cfs, ""); err != nil {
+	if _, err = config.NewConfigDefault(c.cfs, "", c.appName); err != nil {
 		return nil, err
 	}
 
@@ -132,7 +132,7 @@ Unable to retrieve the configuration from the cluster!`,
 	if err != nil {
 		return nil, err
 	}
-	cfgPtr, err := config.NewConfigFromBytes(payload, ns)
+	cfgPtr, err := config.NewConfigFromBytes(payload, ns, c.appName)
 	if err != nil {
 		return nil, err
 	}
@@ -210,7 +210,7 @@ You must inform the %q argument with the value for the informed key %q!`,
 	}
 
 	// Updating the configuration instance and the cluster.
-	err := cfg.Set(fmt.Sprintf("tssc.settings.%s", key), value)
+	err := cfg.Set(fmt.Sprintf("%s.settings.%s", c.appName, key), value)
 	if err != nil {
 		return mcp.NewToolResultErrorf(`
 Unable to update the existing configuration with informed settings:
@@ -232,9 +232,10 @@ Unable to update the cluster configuration!
 	}
 
 	return mcp.NewToolResultText(fmt.Sprintf(`
-The cluster is now using the following '.tssc.settings':
+The cluster is now using the following '.%s.settings':
 
 %v`,
+		c.appName,
 		cfg.Installer.Settings,
 	)), nil
 }
@@ -465,8 +466,8 @@ exists yet.`,
 			mcp.WithString(
 				NamespaceArg,
 				mcp.Description(fmt.Sprintf(`
-The main namespace for %s ('.tssc.namespace'), where services will be deployed by default.`,
-					c.appName,
+The main namespace for %s ('.%s.namespace'), where services will be deployed by default.`,
+					c.appName, c.appName,
 				)),
 				mcp.DefaultString(c.defaultCfg.Namespace()),
 			),
@@ -476,24 +477,26 @@ The main namespace for %s ('.tssc.namespace'), where services will be deployed b
 		Tool: mcp.NewTool(
 			c.appName+configSettingsSuffix,
 			mcp.WithDescription(fmt.Sprintf(`
-Modifies the top level settings, '.tssc.settings' in the configuration. It defines
+Modifies the top level settings, '.%s.settings' in the configuration. It defines
 the global settings for the installer applied to all products. Use the tool %q to
-inspect the configuration's '.tssc.settings' attributes and their current values,
+inspect the configuration's '.%s.settings' attributes and their current values,
 pay attention to the data type of the values, and make sure they are compatible
 with the expected types.`,
-				c.appName+configGetSuffix,
+				c.appName, c.appName+configGetSuffix, c.appName,
 			)),
 			mcp.WithString(
 				KeyArg,
-				mcp.Description(`
-The key in '.tssc.settings' object to update, for instance "crc".`,
-				),
+				mcp.Description(fmt.Sprintf(`
+The key in '.%s.settings' object to update, for instance "crc".`,
+					c.appName,
+				)),
 			),
 			mcp.WithBoolean(
 				ValueArg,
-				mcp.Description(`
-The value for the informed key in '.tssc.settings' object.`,
-				),
+				mcp.Description(fmt.Sprintf(`
+The value for the informed key in '.%s.settings' object.`,
+					c.appName,
+				)),
 			),
 		),
 		Handler: c.configSettingsHandler,
@@ -576,7 +579,8 @@ func NewConfigTools(
 	cm *config.ConfigMapManager,
 ) (*ConfigTools, error) {
 	// Loading the default configuration to serve as a reference for MCP tools.
-	defaultCfg, err := config.NewConfigDefault(cfs, appCtx.Namespace)
+	defaultCfg, err := config.NewConfigDefault(
+		cfs, appCtx.Namespace, appCtx.IdentifierName())
 	if err != nil {
 		return nil, err
 	}

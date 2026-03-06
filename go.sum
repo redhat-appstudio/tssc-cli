@@ -316,8 +316,8 @@ github.com/prometheus/procfs v0.19.2 h1:zUMhqEW66Ex7OXIiDkll3tl9a1ZdilUOd/F6ZXw4
 github.com/prometheus/procfs v0.19.2/go.mod h1:M0aotyiemPhBCM0z5w87kL22CxfcH05ZpYlu+b4J7mw=
 github.com/quay/claircore v1.5.48 h1:JTJVlRmaxKWe9kUmHP3433JAADQvHIe5CQS544M3cUk=
 github.com/quay/claircore v1.5.48/go.mod h1:PYAACdI99elSBL31m/bRM3pdQSPoD0sbYccRcza/9Zs=
-github.com/redhat-appstudio/helmet v0.0.0-20260217191258-d9756a013aeb h1:qmM7vJIPXiL0TW2KzCdqMFr420gHlVhBM5z+yZ8TAAk=
-github.com/redhat-appstudio/helmet v0.0.0-20260217191258-d9756a013aeb/go.mod h1:oAUkb8FwrsIzI/vlLkqoWd+zcVpekVwz5QYSML+5VJw=
+github.com/redhat-appstudio/helmet v0.0.0-20260305150602-25478ef1724b h1:7ho50aJCA4hsZ4ybCszPEDF8dPQMzORiiEEp5Dzm+CA=
+github.com/redhat-appstudio/helmet v0.0.0-20260305150602-25478ef1724b/go.mod h1:oAUkb8FwrsIzI/vlLkqoWd+zcVpekVwz5QYSML+5VJw=
 github.com/redis/go-redis/extra/rediscmd/v9 v9.0.5 h1:EaDatTxkdHG+U3Bk4EUr+DZ7fOGwTfezUiUJMaIcaho=
 github.com/redis/go-redis/extra/rediscmd/v9 v9.0.5/go.mod h1:fyalQWdtzDBECAQFBJuQe5bzQ02jGd5Qcbgb97Flm7U=
 github.com/redis/go-redis/extra/redisotel/v9 v9.0.5 h1:EfpWLLCyXw8PSM2/XNJLjI3Pb27yVE+gIAfeqp8LUCc=

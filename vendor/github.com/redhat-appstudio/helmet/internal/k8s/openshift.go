@@ -185,7 +185,7 @@ func EnsureOpenShiftProject(
 
 	projectRequest := &projectv1.ProjectRequest{
 		DisplayName: projectName,
-		Description: fmt.Sprintf("TSSC: %s", projectName),
+		Description: fmt.Sprintf("Managed project: %s", projectName),
 		ObjectMeta: metav1.ObjectMeta{
 			Name: projectName,
 		},

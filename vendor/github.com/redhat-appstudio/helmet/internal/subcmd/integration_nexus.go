@@ -1,6 +1,8 @@
 package subcmd
 
 import (
+	"fmt"
+
 	"github.com/redhat-appstudio/helmet/api"
 	"github.com/redhat-appstudio/helmet/internal/config"
 	"github.com/redhat-appstudio/helmet/internal/integration"
@@ -20,14 +22,6 @@ type IntegrationNexus struct {
 }
 
 var _ api.SubCommand = &IntegrationNexus{}
-
-const nexusIntegrationLongDesc = `
-Manages the Nexus integration with TSSC, by storing the required
-credentials required by the TSSC services to interact with Nexus.
-
-The credentials are stored in a Kubernetes Secret in the configured namespace
-for RHDH.
-`
 
 // Cmd exposes the cobra instance.
 func (n *IntegrationNexus) Cmd() *cobra.Command {
@@ -52,7 +46,7 @@ func (n *IntegrationNexus) Run() error {
 }
 
 // NewIntegrationNexus creates the sub-command for the "integration nexus"
-// responsible to manage the TSSC integrations with a Nexus image registry.
+// responsible to manage the integrations with a Nexus image registry.
 func NewIntegrationNexus(
 	appCtx *api.AppContext,
 	runCtx *runcontext.RunContext,
@@ -60,9 +54,18 @@ func NewIntegrationNexus(
 ) *IntegrationNexus {
 	n := &IntegrationNexus{
 		cmd: &cobra.Command{
-			Use:          "nexus [flags]",
-			Short:        "Integrates a Nexus instance into TSSC",
-			Long:         nexusIntegrationLongDesc,
+			Use:   "nexus [flags]",
+			Short: fmt.Sprintf("Integrates a Nexus instance into %s", appCtx.Name),
+			Long: fmt.Sprintf(`
+Manages the Nexus integration with %s by storing the credentials
+required by %s services to interact with Nexus.
+
+The credentials are stored in a Kubernetes Secret in the namespace
+configured for %s.`,
+				appCtx.Name,
+				appCtx.Name,
+				appCtx.Name,
+			),
 			SilenceUsage: true,
 		},
 
