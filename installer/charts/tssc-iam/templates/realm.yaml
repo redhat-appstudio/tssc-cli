@@ -113,7 +113,7 @@ metadata:
     required "iam.integrationSecret.namespace is required"
       .Values.iam.integrationSecret.namespace
   }}
-  name: tssc-authentication-integration
+  name: tssc-trustificationauth-integration
 type: Opaque
 stringData:
   oidc_issuer_url: {{
