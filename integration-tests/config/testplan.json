@@ -24,6 +24,13 @@
           "registry": "nexus",
           "tpa": "local",
           "acs": "local"
+        },        
+        {
+          "git": "gitlab",
+          "ci": "tekton",
+          "registry": "nexus",
+          "tpa": "local",
+          "acs": "local"
         }
       ],
       "tests": ["full_workflow.test.ts"]

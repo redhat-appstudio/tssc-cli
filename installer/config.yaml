@@ -64,7 +64,7 @@ tssc:
       enabled: true
       namespace: tssc-dh
       properties:
-        catalogURL: https://github.com/redhat-appstudio/tssc-dev-multi-ci/blob/main/samples/all.yaml
+        catalogURL: https://github.com/jsmid1/tssc-dev-multi-ci/blob/fix_gitlab-webhook-secret/samples/all.yaml
         manageSubscription: true
         # namespacePrefixes:
         #   - tssc-app
