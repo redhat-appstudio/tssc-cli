@@ -45,5 +45,3 @@ spec:
 
         echo "Original rhads-config content:"
         cat rhads-config
-        echo "Writing rhads-config to workspace:"
-        # The file is already in the workspace directory, no need to copy
