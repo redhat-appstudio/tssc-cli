@@ -380,7 +380,7 @@ github.com/pmezard/go-difflib/difflib
 # github.com/quay/claircore v1.5.48
 ## explicit; go 1.24.0
 github.com/quay/claircore/pkg/tarfs
-# github.com/redhat-appstudio/helmet v0.0.0-20260305150602-25478ef1724b
+# github.com/redhat-appstudio/helmet v0.0.0-20260305154445-d2bd180cd798
 ## explicit; go 1.25.7
 github.com/redhat-appstudio/helmet/api
 github.com/redhat-appstudio/helmet/api/integrations
