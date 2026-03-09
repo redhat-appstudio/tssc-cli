@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/redhat-appstudio/helmet/internal/annotations"
 	"github.com/redhat-appstudio/helmet/internal/constants"
@@ -18,8 +19,9 @@ import (
 //
 //nolint:revive
 type ConfigMapManager struct {
-	kube k8s.Interface // kubernetes client
-	name string        // configmap name
+	kube    k8s.Interface // kubernetes client
+	name    string        // configmap name
+	appName string        // config root key
 }
 
 // Selector label selector for installer configuration.
@@ -103,7 +105,11 @@ func (m *ConfigMapManager) GetConfig(ctx context.Context) (*Config, error) {
 		)
 	}
 
-	return NewConfigFromBytes([]byte(payload), configMap.GetNamespace())
+	return NewConfigFromBytes(
+		[]byte(payload),
+		configMap.GetNamespace(),
+		m.appName,
+	)
 }
 
 // configMapForConfig generate a ConfigMap resource based on informed Config.
@@ -165,10 +171,13 @@ func (m *ConfigMapManager) Delete(ctx context.Context) error {
 }
 
 // NewConfigMapManager instantiates the ConfigMapManager.
-// The appName parameter is used to generate the ConfigMap name as "{appName}-config".
+// The appName parameter is used to generate the ConfigMap name as "{appName}-config"
+// and, with hyphens replaced by underscores, as the YAML root key for config
+// decoding.
 func NewConfigMapManager(kube k8s.Interface, appName string) *ConfigMapManager {
 	return &ConfigMapManager{
-		kube: kube,
-		name: fmt.Sprintf("%s-config", appName),
+		kube:    kube,
+		name:    fmt.Sprintf("%s-config", appName),
+		appName: strings.ReplaceAll(appName, "-", "_"),
 	}
 }

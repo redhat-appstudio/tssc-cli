@@ -13,7 +13,7 @@ import (
 )
 
 // ImageRegistry represents the image registry integration coordinates. Works with
-// different TSSC integrations managing image registry configuration.
+// different installer integrations managing image registry configuration.
 type ImageRegistry struct {
 	dockerConfig   string // registry credentials (JSON)
 	dockerConfigRO string // registry read-only credentials (JSON)

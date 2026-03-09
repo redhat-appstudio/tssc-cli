@@ -1,6 +1,8 @@
 package subcmd
 
 import (
+	"fmt"
+
 	"github.com/redhat-appstudio/helmet/api"
 	"github.com/redhat-appstudio/helmet/internal/config"
 	"github.com/redhat-appstudio/helmet/internal/integration"
@@ -20,13 +22,6 @@ type IntegrationAzure struct {
 }
 
 var _ api.SubCommand = &IntegrationAzure{}
-
-const azureIntegrationLongDesc = `
-Manages the Azure integration with TSSC, by storing the required
-credentials required by the TSSC services to interact with Azure.
-The credentials are stored in a Kubernetes Secret in the default
-installation namespace.
-`
 
 // Cmd exposes the cobra instance.
 func (a *IntegrationAzure) Cmd() *cobra.Command {
@@ -51,7 +46,7 @@ func (a *IntegrationAzure) Run() error {
 }
 
 // NewIntegrationAzure creates the sub-command for the "integration azure"
-// responsible to manage the TSSC integrations with the Azure service.
+// responsible to manage the integrations with the Azure service.
 func NewIntegrationAzure(
 	appCtx *api.AppContext,
 	runCtx *runcontext.RunContext,
@@ -59,9 +54,21 @@ func NewIntegrationAzure(
 ) *IntegrationAzure {
 	a := &IntegrationAzure{
 		cmd: &cobra.Command{
-			Use:          "azure [flags]",
-			Short:        "Integrates a Azure instance into TSSC",
-			Long:         azureIntegrationLongDesc,
+			Use: "azure [flags]",
+			Short: fmt.Sprintf(
+				"Integrates an Azure instance into %s",
+				appCtx.Name,
+			),
+			Long: fmt.Sprintf(`
+Manages the Azure integration with %s by storing the credentials
+required by %s services to interact with Azure.
+
+The credentials are stored in a Kubernetes Secret in the namespace
+configured for %s.`,
+				appCtx.Name,
+				appCtx.Name,
+				appCtx.Name,
+			),
 			SilenceUsage: true,
 		},
 

@@ -120,6 +120,8 @@ infrastructure:
 iam:
   enabled: {{ $keycloakEnabled }}
   namespace: {{ $keycloakNamespace }}
+  integrationSecret:
+    namespace: {{ .Installer.Namespace }}
   instances: 1
   database:
     host: keycloak-pgsql
@@ -173,14 +175,6 @@ iam:
         - "{{ printf "%s://%s-%s.%s" $protocol . $tpa.Namespace $ingressDomain }}"
         - "{{ printf "%s://%s-%s.%s/*" $protocol . $tpa.Namespace $ingressDomain }}"
     {{- end }}
-      integrationSecret:
-        bombasticAPI: {{
-          printf "%s://server-%s.%s"
-            $protocol
-            $tpa.Namespace
-            $ingressDomain
-        }}
-        namespace: {{ .Installer.Namespace }}
 
 #
 # tssc-acs
@@ -309,9 +303,12 @@ developerHub:
 
 trustedProfileAnalyzer:
   enabled: {{ $tpa.Enabled }}
+  cycloneDXVersion: "1.4"
   oidcIssuerURL: {{ $tpaOIDCIssuerURL }}
   namespace: "{{ $tpa.Namespace }}"
   appDomain: "{{ $tpaAppDomain }}"
+  integrationSecret:
+    namespace: {{ .Installer.Namespace }}
   ingress: &tpaIngress
     className: openshift-default
   openshift: &tpaOpenShift

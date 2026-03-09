@@ -16,9 +16,6 @@ import (
 // Trustification services.
 type Trustification struct {
 	bombasticURL              string // URL of the BOMbastic api host
-	oidcIssuerURL             string // URL of the OIDC token issuer
-	oidcClientID              string // OIDC client ID
-	oidcClientSecret          string // OIDC client secret
 	supportedCycloneDXVersion string // CycloneDX supported version.
 }
 
@@ -31,13 +28,6 @@ func (t *Trustification) PersistentFlags(c *cobra.Command) {
 	p.StringVar(&t.bombasticURL, "bombastic-api-url", t.bombasticURL,
 		"URL of the BOMbastic api host "+
 			"e.g. https://sbom.trustification.dev)")
-	p.StringVar(&t.oidcIssuerURL, "oidc-issuer-url", t.oidcIssuerURL,
-		"URL of the OIDC token issuer "+
-			"(e.g. https://sso.trustification.dev/realms/chicken)")
-	p.StringVar(&t.oidcClientID, "oidc-client-id", t.oidcClientID,
-		"OIDC client ID")
-	p.StringVar(&t.oidcClientSecret, "oidc-client-secret", t.oidcClientSecret,
-		"OIDC client secret")
 	p.StringVar(
 		&t.supportedCycloneDXVersion,
 		"supported-cyclonedx-version",
@@ -46,15 +36,8 @@ func (t *Trustification) PersistentFlags(c *cobra.Command) {
 			"supported version before uploading.",
 	)
 
-	for _, f := range []string{
-		"bombastic-api-url",
-		"oidc-issuer-url",
-		"oidc-client-id",
-		"oidc-client-secret",
-	} {
-		if err := c.MarkPersistentFlagRequired(f); err != nil {
-			panic(err)
-		}
+	if err := c.MarkPersistentFlagRequired("bombastic-api-url"); err != nil {
+		panic(err)
 	}
 }
 
@@ -67,9 +50,6 @@ func (t *Trustification) SetArgument(string, string) error {
 func (t *Trustification) LoggerWith(logger *slog.Logger) *slog.Logger {
 	return logger.With(
 		"bombastic-api-url", t.bombasticURL,
-		"oidc-issuer-url", t.oidcIssuerURL,
-		"oidc-client-id", t.oidcClientID,
-		"oidc-client-secret-len", len(t.oidcClientSecret),
 		"supported-cyclonedx-version", t.supportedCycloneDXVersion,
 	)
 }
@@ -88,18 +68,6 @@ func (t *Trustification) Validate() error {
 	if err = ValidateURL(t.bombasticURL); err != nil {
 		return fmt.Errorf("%w: %q", err, t.bombasticURL)
 	}
-	if t.oidcIssuerURL == "" {
-		return fmt.Errorf("oidc-issuer-url is required")
-	}
-	if err = ValidateURL(t.oidcIssuerURL); err != nil {
-		return fmt.Errorf("%w: %q", err, t.oidcIssuerURL)
-	}
-	if t.oidcClientID == "" {
-		return fmt.Errorf("oidc-client-id is required")
-	}
-	if t.oidcClientSecret == "" {
-		return fmt.Errorf("oidc-client-secret is required")
-	}
 	return nil
 }
 
@@ -111,9 +79,6 @@ func (t *Trustification) Data(
 ) (map[string][]byte, error) {
 	return map[string][]byte{
 		"bombastic_api_url":           []byte(t.bombasticURL),
-		"oidc_client_id":              []byte(t.oidcClientID),
-		"oidc_client_secret":          []byte(t.oidcClientSecret),
-		"oidc_issuer_url":             []byte(t.oidcIssuerURL),
 		"supported_cyclonedx_version": []byte(t.supportedCycloneDXVersion),
 	}, nil
 }
