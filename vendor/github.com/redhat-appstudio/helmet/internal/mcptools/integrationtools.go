@@ -24,7 +24,7 @@ type IntegrationTools struct {
 const (
 	// integrationListSuffix list integrations tool suffix.
 	integrationListSuffix = "_integration_list"
-	// integrationScaffoldSuffix generates the `tssc integration` command suffix.
+	// integrationScaffoldSuffix generates the integration command suffix.
 	integrationScaffoldSuffix = "_integration_scaffold"
 	// integrationStatusSuffix checks if integrations are configured suffix.
 	integrationStatusSuffix = "_integration_status"
@@ -152,7 +152,7 @@ You must inform at least one integration name via the '%s' argument`,
 	return mcp.NewToolResultText(output.String()), nil
 }
 
-// Init registers the TSSC integration management tools with the MCP server. These
+// Init registers the integration management tools with the MCP server. These
 // tools allow users to list available integrations, scaffold their
 // configurations, and check their current status.
 func (i *IntegrationTools) Init(s *server.MCPServer) {

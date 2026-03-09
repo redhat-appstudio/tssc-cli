@@ -1,6 +1,8 @@
 package subcmd
 
 import (
+	"fmt"
+
 	"github.com/redhat-appstudio/helmet/api"
 	"github.com/redhat-appstudio/helmet/internal/config"
 	"github.com/redhat-appstudio/helmet/internal/integration"
@@ -20,26 +22,6 @@ type IntegrationQuay struct {
 }
 
 var _ api.SubCommand = &IntegrationQuay{}
-
-const quayIntegrationLongDesc = `
-Manages the Quay integration with TSSC, by storing the required
-credentials required by the TSSC services to interact with Quay.
-
-The credentials are stored in a Kubernetes Secret in the configured namespace
-for RHDH.
-
-If you experience push issues, add the image repository path in the
-"dockerconfig.json". For example, instead of "quay.io", specify the full
-repository path "quay.io/my-repository", as shown below:
-
-  $ tssc integration quay \
-	  --dockerconfigjson '{ "auths": { "quay.io/my-repository": { "auth": "REDACTED" } } }' \
-	  --token "REDACTED" \
-	  --url 'https://quay.io'
-
-The given API token (--token) must have push/pull permissions on the target
-repository.
-`
 
 // Cmd exposes the cobra instance.
 func (q *IntegrationQuay) Cmd() *cobra.Command {
@@ -64,7 +46,7 @@ func (q *IntegrationQuay) Run() error {
 }
 
 // NewIntegrationQuay creates the sub-command for the "integration quay"
-// responsible to manage the TSSC integrations with a Quay image registry.
+// responsible to manage the integrations with a Quay image registry.
 func NewIntegrationQuay(
 	appCtx *api.AppContext,
 	runCtx *runcontext.RunContext,
@@ -72,9 +54,31 @@ func NewIntegrationQuay(
 ) *IntegrationQuay {
 	q := &IntegrationQuay{
 		cmd: &cobra.Command{
-			Use:          "quay [flags]",
-			Short:        "Integrates a Quay instance into TSSC",
-			Long:         quayIntegrationLongDesc,
+			Use:   "quay [flags]",
+			Short: fmt.Sprintf("Integrates a Quay instance into %s", appCtx.Name),
+			Long: fmt.Sprintf(`
+Manages the Quay integration with %s by storing the credentials
+required by %s services to interact with Quay.
+
+The credentials are stored in a Kubernetes Secret in the namespace
+configured for %s.
+
+If you experience push issues, include the full image repository path in the
+"dockerconfig.json". For example, instead of "quay.io", specify
+"quay.io/my-repository", as shown below:
+
+  $ %s integration quay \
+	  --dockerconfigjson '{ "auths": { "quay.io/my-repository": { "auth": "REDACTED" } } }' \
+	  --token "REDACTED" \
+	  --url 'https://quay.io'
+
+The API token (--token) must have push and pull permissions on the target
+repository.`,
+				appCtx.Name,
+				appCtx.Name,
+				appCtx.Name,
+				appCtx.Name,
+			),
 			SilenceUsage: true,
 		},
 

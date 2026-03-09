@@ -9,3 +9,4 @@ annotations:
   helmet.redhat-appstudio.github.com/product-name: Trusted Profile Analyzer
   helmet.redhat-appstudio.github.com/depends-on: tssc-openshift, tssc-subscriptions, tssc-infrastructure, tssc-iam
   helmet.redhat-appstudio.github.com/integrations-provided: trustification
+  helmet.redhat-appstudio.github.com/integrations-required: trustificationauth

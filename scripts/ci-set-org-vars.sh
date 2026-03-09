@@ -122,7 +122,7 @@ getValues() {
     ROX_API_TOKEN="$(oc get secrets -n "$NAMESPACE" "$SECRET" -o json | jq -r '.data.token | @base64d')"
 
     TPA_SECRET="tssc-trustification-integration"
-    AUTH_SECRET_JSON="tssc-authentication-integration"
+    AUTH_SECRET_JSON="tssc-trustificationauth-integration"
     TPA_SECRET_JSON=$(oc get secret -n "$NAMESPACE" "$TPA_SECRET" -o json)
     AUTH_SECRET_JSON=$(oc get secret -n "$NAMESPACE" "$AUTH_SECRET_JSON" -o json)
     TPA_URL="$(echo "$TPA_SECRET_JSON" | jq -r '.data.bombastic_api_url | @base64d')"
