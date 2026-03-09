@@ -122,11 +122,13 @@ getValues() {
     ROX_API_TOKEN="$(oc get secrets -n "$NAMESPACE" "$SECRET" -o json | jq -r '.data.token | @base64d')"
 
     TPA_SECRET="tssc-trustification-integration"
+    AUTH_SECRET_JSON="tssc-trustificationauth-integration"
     TPA_SECRET_JSON=$(oc get secret -n "$NAMESPACE" "$TPA_SECRET" -o json)
+    AUTH_SECRET_JSON=$(oc get secret -n "$NAMESPACE" "$AUTH_SECRET_JSON" -o json)
     TPA_URL="$(echo "$TPA_SECRET_JSON" | jq -r '.data.bombastic_api_url | @base64d')"
-    TPA_OIDC_ISSUER_URL="$(echo "$TPA_SECRET_JSON" | jq -r '.data.oidc_issuer_url | @base64d')"
-    TPA_OIDC_CLIENT_ID="$(echo "$TPA_SECRET_JSON" | jq -r '.data.oidc_client_id | @base64d')"
-    TPA_OIDC_CLIENT_SECRET="$(echo "$TPA_SECRET_JSON" | jq -r '.data.oidc_client_secret | @base64d')"
+    TPA_OIDC_ISSUER_URL="$(echo "$AUTH_SECRET_JSON" | jq -r '.data.oidc_issuer_url | @base64d')"
+    TPA_OIDC_CLIENT_ID="$(echo "$AUTH_SECRET_JSON" | jq -r '.data.oidc_client_id | @base64d')"
+    TPA_OIDC_CLIENT_SECRET="$(echo "$AUTH_SECRET_JSON" | jq -r '.data.oidc_client_secret | @base64d')"
     TPA_SUPPORTED_CYCLONEDX_VERSION="$(echo "$TPA_SECRET_JSON" | jq -r '.data.supported_cyclonedx_version | @base64d')"
 
     TAS_SECRET="tssc-tas-integration"
@@ -404,11 +406,7 @@ jenkinsGetValues() {
     JENKINS__USERNAME="$(echo "$JENKINS_SECRET_JSON" | jq -r '.data.username | @base64d')"
     JENKINS__TOKEN="$(echo "$JENKINS_SECRET_JSON" | jq -r '.data.token | @base64d')"
 
-    # Add usernames with passwords
-    if oc get secrets -n "$NAMESPACE" "tssc-quay-integration" -o name >/dev/null 2>&1; then
-        echo "Setting QUAY_IO_CREDS: *********"
-        add_username_with_password "QUAY_IO_CREDS" "$IMAGE_REGISTRY_USER" "$IMAGE_REGISTRY_PASSWORD"
-    fi
+    # Add gitops credentials
     echo "Setting GITOPS_CREDENTIALS: *********"
     add_username_with_password "GITOPS_CREDENTIALS" "$GIT_USER" "$GIT_TOKEN"
 }

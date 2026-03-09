@@ -31,34 +31,6 @@ type Template struct {
 
 var _ api.SubCommand = (*Template)(nil)
 
-const templateDesc = `
-The Template subcommand is used to render the values template file and,
-optionally, the Helm chart manifests. It is particularly useful for
-troubleshooting and developing Helm charts for the TSSC installation process.
-
-By using the '--show-manifest=false' flag, only the global values template
-('--values-template') will be rendered as YAML, thus the last argument, with the
-Helm chart directory, optional.
-
-Additionally, the '--debug' flag should be used to display rendered global values,
-passed into every Helm Chart installed, as key-value pairs.
-
-The installer resources are embedded in the executable, these resources are
-employed by default, to use local files just use the last argument with the path
-to the local Helm Chart.
-
-Examples:
-
-  # Only showing the global values as YAML.
-  $ tssc template --show-manifests=false
-
-  # Rendering only the templates of a single Helm Chart.
-  $ tssc template --show-values=false charts/tssc-subscriptions
-
-  # Rendering all resources of a Helm Chart.
-  $ tssc template charts/tssc-subscriptions
-`
-
 // Cmd exposes the cobra instance.
 func (t *Template) Cmd() *cobra.Command {
 	return t.cmd
@@ -143,6 +115,39 @@ func NewTemplate(
 	f *flags.Flags,
 	installerTarball []byte,
 ) *Template {
+	templateDesc := fmt.Sprintf(`
+The Template subcommand is used to render the values template file and,
+optionally, the Helm chart manifests. It is particularly useful for
+troubleshooting and developing Helm charts for the installation process.
+
+By using the '--show-manifests=false' flag, only the global values template
+('--values-template') will be rendered as YAML, thus the last argument, with the
+Helm chart directory, optional.
+
+Additionally, the '--debug' flag should be used to display rendered global values,
+passed into every Helm Chart installed, as key-value pairs.
+
+The installer resources are embedded in the executable, these resources are
+employed by default, to use local files just use the last argument with the path
+to the local Helm Chart.
+
+Examples:
+
+  # Only showing the global values as YAML.
+  $ %s template --show-manifests=false
+
+  # Rendering only the templates of a single Helm Chart.
+  $ %s template --show-values=false charts/%s-subscriptions
+
+  # Rendering all resources of a Helm Chart.
+  $ %s template charts/%s-subscriptions`,
+		appCtx.Name,
+		appCtx.Name,
+		appCtx.IdentifierName(),
+		appCtx.Name,
+		appCtx.IdentifierName(),
+	)
+
 	t := &Template{
 		cmd: &cobra.Command{
 			Use:          "template",

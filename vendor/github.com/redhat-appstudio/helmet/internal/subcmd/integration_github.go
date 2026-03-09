@@ -26,17 +26,6 @@ type IntegrationGitHub struct {
 
 var _ api.SubCommand = &IntegrationGitHub{}
 
-const integrationLongDesc = `
-Manages the GitHub App integration with TSSC, by creating a new application
-using the GitHub API, and storing the credentials required by the TSSC services
-to interact with the GitHub App.
-
-The App credentials are stored in a Kubernetes Secret in the configured namespace
-for the application.
-
-The personal access token (--token) is optional.
-`
-
 // Cmd exposes the cobra instance.
 func (g *IntegrationGitHub) Cmd() *cobra.Command {
 	return g.cmd
@@ -94,10 +83,21 @@ func NewIntegrationGitHub(
 ) *IntegrationGitHub {
 	g := &IntegrationGitHub{
 		cmd: &cobra.Command{
-			Aliases:      []string{"github-app"},
-			Use:          "github <name> [--create|--update] [flags]",
-			Short:        "Prepares a GitHub App for integration",
-			Long:         integrationLongDesc,
+			Aliases: []string{"github-app"},
+			Use:     "github <name> [--create|--update] [flags]",
+			Short:   "Prepares a GitHub App for integration",
+			Long: fmt.Sprintf(`
+Manages the GitHub App integration with %s, by creating a new application
+using the GitHub API, and storing the credentials required by the %s services
+to interact with the GitHub App.
+
+The App credentials are stored in a Kubernetes Secret in the configured namespace
+for the application.
+
+The personal access token (--token) is optional.`,
+				appCtx.Name,
+				appCtx.Name,
+			),
 			SilenceUsage: true,
 		},
 
