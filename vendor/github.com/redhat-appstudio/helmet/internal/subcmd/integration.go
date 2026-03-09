@@ -2,6 +2,7 @@ package subcmd
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/redhat-appstudio/helmet/api"
 	"github.com/redhat-appstudio/helmet/internal/config"
@@ -71,8 +72,10 @@ func NewIntegration(
 	manager *integrations.Manager,
 ) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "integration <type>",
-		Short: "Configures an external service provider for TSSC",
+		Use: "integration <type>",
+		Short: fmt.Sprintf(
+			"Configures an external service provider for %s", appCtx.Name,
+		),
 		PersistentPostRunE: func(cmd *cobra.Command, _ []string) error {
 			ctx := cmd.Context()
 

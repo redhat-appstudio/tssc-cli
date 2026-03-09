@@ -1,6 +1,8 @@
 package subcmd
 
 import (
+	"fmt"
+
 	"github.com/redhat-appstudio/helmet/api"
 	"github.com/redhat-appstudio/helmet/internal/config"
 	"github.com/redhat-appstudio/helmet/internal/integration"
@@ -20,14 +22,6 @@ type IntegrationACS struct {
 }
 
 var _ api.SubCommand = &IntegrationACS{}
-
-const acsIntegrationLongDesc = `
-Manages the ACS integration with TSSC, by storing the required
-credentials required by the TSSC services to interact with ACS.
-
-The credentials are stored in a Kubernetes Secret in the configured namespace
-for RHDH.
-`
 
 // Cmd exposes the cobra instance.
 func (a *IntegrationACS) Cmd() *cobra.Command {
@@ -52,7 +46,7 @@ func (a *IntegrationACS) Run() error {
 }
 
 // NewIntegrationACS creates the sub-command for the "integration acs"
-// responsible to manage the TSSC integrations with the ACS service.
+// responsible to manage the integrations with the ACS service.
 func NewIntegrationACS(
 	appCtx *api.AppContext,
 	runCtx *runcontext.RunContext,
@@ -60,9 +54,18 @@ func NewIntegrationACS(
 ) *IntegrationACS {
 	a := &IntegrationACS{
 		cmd: &cobra.Command{
-			Use:          "acs [flags]",
-			Short:        "Integrates a ACS instance into TSSC",
-			Long:         acsIntegrationLongDesc,
+			Use:   "acs [flags]",
+			Short: fmt.Sprintf("Integrates an ACS instance into %s", appCtx.Name),
+			Long: fmt.Sprintf(`
+Manages the ACS integration with %s by storing the credentials
+required by %s services to interact with ACS.
+
+The credentials are stored in a Kubernetes Secret in the namespace
+configured for %s.`,
+				appCtx.Name,
+				appCtx.Name,
+				appCtx.Name,
+			),
 			SilenceUsage: true,
 		},
 

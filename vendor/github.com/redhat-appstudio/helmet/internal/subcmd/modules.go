@@ -111,6 +111,16 @@ var (
 		},
 	}
 
+	TrustificationAuthModule = api.IntegrationModule{
+		Name: string(integrations.TrustificationAuth),
+		Init: func(_ *slog.Logger, _ k8s.Interface) integration.Interface {
+			return integration.NewTrustificationAuth()
+		},
+		Command: func(appCtx *api.AppContext, runCtx *runcontext.RunContext, i *integration.Integration) api.SubCommand {
+			return NewIntegrationTrustificationAuth(appCtx, runCtx, i)
+		},
+	}
+
 	TrustificationModule = api.IntegrationModule{
 		Name: string(integrations.Trustification),
 		Init: func(_ *slog.Logger, _ k8s.Interface) integration.Interface {
@@ -135,6 +145,7 @@ func StandardModules() []api.IntegrationModule {
 		NexusModule,
 		QuayModule,
 		TrustedArtifactSignerModule,
+		TrustificationAuthModule,
 		TrustificationModule,
 	}
 }

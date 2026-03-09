@@ -1,6 +1,8 @@
 package subcmd
 
 import (
+	"fmt"
+
 	"github.com/redhat-appstudio/helmet/api"
 	"github.com/redhat-appstudio/helmet/internal/config"
 	"github.com/redhat-appstudio/helmet/internal/integration"
@@ -20,14 +22,6 @@ type IntegrationGitLab struct {
 }
 
 var _ api.SubCommand = &IntegrationGitLab{}
-
-const gitlabIntegrationLongDesc = `
-Manages the GitLab integration with TSSC, by storing the required
-credentials required by the TSSC services to interact with GitLab.
-
-The credentials are stored in a Kubernetes Secret in the configured namespace
-for RHDH.
-`
 
 // Cmd exposes the cobra instance.
 func (g *IntegrationGitLab) Cmd() *cobra.Command {
@@ -52,7 +46,7 @@ func (g *IntegrationGitLab) Run() error {
 }
 
 // NewIntegrationGitLab creates the sub-command for the "integration gitlab"
-// responsible to manage the TSSC integrations with the GitLab service.
+// responsible to manage the integrations with the GitLab service.
 func NewIntegrationGitLab(
 	appCtx *api.AppContext,
 	runCtx *runcontext.RunContext,
@@ -60,9 +54,21 @@ func NewIntegrationGitLab(
 ) *IntegrationGitLab {
 	g := &IntegrationGitLab{
 		cmd: &cobra.Command{
-			Use:          "gitlab [flags]",
-			Short:        "Integrates a GitLab instance into TSSC",
-			Long:         gitlabIntegrationLongDesc,
+			Use: "gitlab [flags]",
+			Short: fmt.Sprintf(
+				"Integrates a GitLab instance into %s",
+				appCtx.Name,
+			),
+			Long: fmt.Sprintf(`
+Manages the GitLab integration with %s by storing the credentials
+required by %s services to interact with GitLab.
+
+The credentials are stored in a Kubernetes Secret in the namespace
+configured for %s.`,
+				appCtx.Name,
+				appCtx.Name,
+				appCtx.Name,
+			),
 			SilenceUsage: true,
 		},
 

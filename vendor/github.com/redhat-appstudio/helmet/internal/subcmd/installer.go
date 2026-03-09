@@ -33,27 +33,6 @@ type Installer struct {
 
 var _ api.SubCommand = &Installer{}
 
-const installerDesc = `
-Shows the embedded installer resources, and extracts them to a directory.
-
-The installer resources can be inspected, and optionally customized for a specific
-installation scenario. Later on power up the installation process using the
-'deploy' subcommand.
-
-For instance:
-
-	1. Extract the installer resources to a directory:
-		$ mkdir /path/to/directory
-		$ tssc installer --list
-		$ tssc installer --extract /path/to/directory
-
-	2. Customize the installer resources on '/path/to/directory' and edit the
-		'config.yaml' configuration file (in the same directory).
-
-	3. Deploy the customized installer resources:
-		$ tssc deploy --config /path/to/directory/config.yaml
-`
-
 // dirMode is the default directory permissions.
 const dirMode os.FileMode = 0o755
 
@@ -239,6 +218,27 @@ func NewInstaller(
 	f *flags.Flags,
 	installerTarball []byte,
 ) *Installer {
+	installerDesc := fmt.Sprintf(`
+Shows the embedded installer resources, and extracts them to a directory.
+
+The installer resources can be inspected, and optionally customized for a specific
+installation scenario. Later on power up the installation process using the
+'deploy' subcommand.
+
+For instance:
+
+	1. Extract the installer resources to a directory:
+		$ mkdir /path/to/directory
+		$ %s installer --list
+		$ %s installer --extract /path/to/directory
+
+	2. Customize the installer resources on '/path/to/directory' and edit the
+		'config.yaml' configuration file (in the same directory).
+
+	3. Deploy the customized installer resources:
+		$ %s deploy --config /path/to/directory/config.yaml
+`, appCtx.Name, appCtx.Name, appCtx.Name)
+
 	i := &Installer{
 		cmd: &cobra.Command{
 			Use:   "installer",

@@ -1,6 +1,8 @@
 package subcmd
 
 import (
+	"fmt"
+
 	"github.com/redhat-appstudio/helmet/api"
 	"github.com/redhat-appstudio/helmet/internal/config"
 	"github.com/redhat-appstudio/helmet/internal/integration"
@@ -11,6 +13,7 @@ import (
 
 // IntegrationTrustification is the sub-command for the "integration trustification",
 // responsible for creating and updating the Trustification integration secret.
+// It includes the coordinates to connect the cluster with remote Trustification services.
 type IntegrationTrustification struct {
 	cmd         *cobra.Command           // cobra command
 	appCtx      *api.AppContext          // application context
@@ -20,14 +23,6 @@ type IntegrationTrustification struct {
 }
 
 var _ api.SubCommand = &IntegrationTrustification{}
-
-const trustificationIntegrationLongDesc = `
-Manages the Trustification integration with TSSC, by storing the required
-credentials required by the TSSC services to interact with Trustification.
-
-The credentials are stored in a Kubernetes Secret in the configured namespace
-for RHDH.
-`
 
 // Cmd exposes the cobra instance.
 func (t *IntegrationTrustification) Cmd() *cobra.Command {
@@ -52,7 +47,7 @@ func (t *IntegrationTrustification) Run() error {
 }
 
 // NewIntegrationTrustification creates the sub-command for the "integration
-// trustification" responsible to manage the TSSC integrations with the
+// trustification" responsible to manage the integrations with the
 // Trustification service.
 func NewIntegrationTrustification(
 	appCtx *api.AppContext,
@@ -61,9 +56,21 @@ func NewIntegrationTrustification(
 ) *IntegrationTrustification {
 	t := &IntegrationTrustification{
 		cmd: &cobra.Command{
-			Use:          "trustification [flags]",
-			Short:        "Integrates a Trustification instance into TSSC",
-			Long:         trustificationIntegrationLongDesc,
+			Use: "trustification [flags]",
+			Short: fmt.Sprintf(
+				"Integrates a Trustification instance into %s",
+				appCtx.Name,
+			),
+			Long: fmt.Sprintf(`
+Manages the Trustification integration with %s by storing the information
+required by %s services to interact with Trustification.
+
+The information is stored in a Kubernetes Secret in the namespace
+configured for %s.`,
+				appCtx.Name,
+				appCtx.Name,
+				appCtx.Name,
+			),
 			SilenceUsage: true,
 		},
 

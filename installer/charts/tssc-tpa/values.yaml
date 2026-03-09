@@ -9,11 +9,14 @@ trustedProfileAnalyzer:
   # which includes the deployment of the application components, and the Keycloak
   # Realm import.
   enabled: true
+  cycloneDXVersion: __OVERWRITE_ME__
   # Realm's OIDC issuer URL, the endpoint to TPA's realm.
   oidcIssuerURL: __OVERWRITE_ME__
   name: trustedprofileanalyzer
   namespace: __OVERWRITE_ME__
   appDomain: __OVERWRITE_ME__
+  integrationSecret:
+    namespace: __OVERWRITE_ME__
   replicas: 1
   rust:
     logFilter: debug

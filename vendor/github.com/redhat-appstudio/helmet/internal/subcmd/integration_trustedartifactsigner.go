@@ -1,6 +1,8 @@
 package subcmd
 
 import (
+	"fmt"
+
 	"github.com/redhat-appstudio/helmet/api"
 	"github.com/redhat-appstudio/helmet/internal/config"
 	"github.com/redhat-appstudio/helmet/internal/integration"
@@ -20,12 +22,6 @@ type IntegrationTrustedArtifactSigner struct {
 }
 
 var _ api.SubCommand = &IntegrationTrustedArtifactSigner{}
-
-const trustedArtifactSignerIntegrationLongDesc = `
-Manages the TrustedArtifactSigner integration with TSSC, by storing the required
-URL required to interact with Trusted Artifact Signer.
-
-The credentials are stored in a Kubernetes Secret in the configured namespace for TSSC.`
 
 // Cmd exposes the cobra instance.
 func (t *IntegrationTrustedArtifactSigner) Cmd() *cobra.Command {
@@ -50,7 +46,7 @@ func (t *IntegrationTrustedArtifactSigner) Run() error {
 }
 
 // NewIntegrationTrustedArtifactSigner creates the sub-command for the "integration
-// trusted-artifact-signer" responsible to manage the TSSC integrations with the
+// trusted-artifact-signer" responsible to manage the integrations with the
 // Trusted Artifact Signer services.
 func NewIntegrationTrustedArtifactSigner(
 	appCtx *api.AppContext,
@@ -59,9 +55,20 @@ func NewIntegrationTrustedArtifactSigner(
 ) *IntegrationTrustedArtifactSigner {
 	t := &IntegrationTrustedArtifactSigner{
 		cmd: &cobra.Command{
-			Use:          "trusted-artifact-signer [flags]",
-			Short:        "Integrates a Trusted Artifact Signer instance into TSSC",
-			Long:         trustedArtifactSignerIntegrationLongDesc,
+			Use: "trusted-artifact-signer [flags]",
+			Short: fmt.Sprintf(
+				"Integrates a Trusted Artifact Signer instance into %s",
+				appCtx.Name,
+			),
+			Long: fmt.Sprintf(`
+Manages the Trusted Artifact Signer integration with %s by storing the
+URL required to interact with the Trusted Artifact Signer service.
+
+The configuration is stored in a Kubernetes Secret in the namespace
+configured for %s.`,
+				appCtx.Name,
+				appCtx.Name,
+			),
 			SilenceUsage: true,
 		},
 
