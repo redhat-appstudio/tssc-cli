@@ -28,10 +28,6 @@ type MCPServer struct {
 
 var _ api.SubCommand = (*MCPServer)(nil)
 
-const mcpServerDesc = ` 
-Starts the MCP server for the TSSC installer, using STDIO communication.
-`
-
 // PersistentFlags adds flags to the command.
 func (m *MCPServer) PersistentFlags(cmd *cobra.Command) {
 	p := cmd.PersistentFlags()
@@ -96,7 +92,10 @@ func NewMCPServer(
 		cmd: &cobra.Command{
 			Use:   "mcp-server",
 			Short: "Starts the MCP server",
-			Long:  mcpServerDesc,
+			Long: fmt.Sprintf(`
+Starts the MCP server for the %s installer, using STDIO communication.`,
+				appCtx.Name,
+			),
 		},
 
 		appCtx:          appCtx,

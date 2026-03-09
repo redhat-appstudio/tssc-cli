@@ -186,8 +186,9 @@ func (j *Job) applyClusterRoleBinding(
 	return err
 }
 
-// createJob creates a Kubernetes Job to deploy TSSC, preparing the installer to
-// run on a container image and connect to the Kubernetes API in-cluster.
+// createJob creates a Kubernetes Job to deploy the application, preparing the
+// installer to run on a container image and connect to the Kubernetes API
+// in-cluster.
 func (j *Job) createJob(
 	ctx context.Context,
 	debug, dryRun bool,
