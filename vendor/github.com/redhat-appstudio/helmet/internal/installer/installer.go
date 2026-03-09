@@ -4,13 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"os"
 
 	"github.com/redhat-appstudio/helmet/internal/config"
 	"github.com/redhat-appstudio/helmet/internal/deployer"
 	"github.com/redhat-appstudio/helmet/internal/engine"
 	"github.com/redhat-appstudio/helmet/internal/flags"
-	"github.com/redhat-appstudio/helmet/internal/hooks"
 	"github.com/redhat-appstudio/helmet/internal/k8s"
 	"github.com/redhat-appstudio/helmet/internal/monitor"
 	"github.com/redhat-appstudio/helmet/internal/printer"
@@ -77,8 +75,7 @@ func (i *Installer) PrintValues() {
 	printer.ValuesPrinter("Values", i.values)
 }
 
-// Install performs the installation of the Helm chart, including the pre and post
-// hooks execution.
+// Install performs the installation of the Helm chart.
 func (i *Installer) Install(ctx context.Context) error {
 	if i.values == nil {
 		return fmt.Errorf("values not set")
@@ -94,16 +91,6 @@ func (i *Installer) Install(ctx context.Context) error {
 	)
 	if err != nil {
 		return err
-	}
-
-	hook := hooks.NewHooks(i.dep, os.Stdout, os.Stderr)
-	if !i.flags.DryRun {
-		i.logger.Debug("Running pre-deploy hook script...")
-		if err = hook.PreDeploy(i.values); err != nil {
-			return err
-		}
-	} else {
-		i.logger.Debug("Skipping pre-deploy hook script (dry-run)")
 	}
 
 	// Performing the installation, or upgrade, of the Helm chart dependency,
@@ -130,13 +117,8 @@ func (i *Installer) Install(ctx context.Context) error {
 			return err
 		}
 		i.logger.Debug("Monitoring completed, release is successful!")
-
-		i.logger.Debug("Running post-deploy hook script...")
-		if err = hook.PostDeploy(i.values); err != nil {
-			return err
-		}
 	} else {
-		i.logger.Debug("Skipping monitoring and post-deploy hook (dry-run)")
+		i.logger.Debug("Skipping monitoring (dry-run)")
 	}
 
 	i.logger.Info("Helm chart installed!")

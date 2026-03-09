@@ -1,6 +1,8 @@
 package subcmd
 
 import (
+	"fmt"
+
 	"github.com/redhat-appstudio/helmet/api"
 	"github.com/redhat-appstudio/helmet/internal/config"
 	"github.com/redhat-appstudio/helmet/internal/integration"
@@ -20,14 +22,6 @@ type IntegrationJenkins struct {
 }
 
 var _ api.SubCommand = &IntegrationJenkins{}
-
-const jenkinsIntegrationLongDesc = `
-Manages the Jenkins integration with TSSC, by storing the required
-credentials required by the TSSC services to interact with Jenkins.
-
-The credentials are stored in a Kubernetes Secret in the configured namespace
-for RHDH.
-`
 
 // Cmd exposes the cobra instance.
 func (j *IntegrationJenkins) Cmd() *cobra.Command {
@@ -52,7 +46,7 @@ func (j *IntegrationJenkins) Run() error {
 }
 
 // NewIntegrationJenkins creates the sub-command for the "integration jenkins"
-// responsible to manage the TSSC integrations with the Jenkins service.
+// responsible to manage the integrations with the Jenkins service.
 func NewIntegrationJenkins(
 	appCtx *api.AppContext,
 	runCtx *runcontext.RunContext,
@@ -60,9 +54,21 @@ func NewIntegrationJenkins(
 ) *IntegrationJenkins {
 	j := &IntegrationJenkins{
 		cmd: &cobra.Command{
-			Use:          "jenkins [flags]",
-			Short:        "Integrates a Jenkins instance into TSSC",
-			Long:         jenkinsIntegrationLongDesc,
+			Use: "jenkins [flags]",
+			Short: fmt.Sprintf(
+				"Integrates a Jenkins instance into %s",
+				appCtx.Name,
+			),
+			Long: fmt.Sprintf(`
+Manages the Jenkins integration with %s by storing the credentials
+required by %s services to interact with Jenkins.
+
+The credentials are stored in a Kubernetes Secret in the namespace
+configured for %s.`,
+				appCtx.Name,
+				appCtx.Name,
+				appCtx.Name,
+			),
 			SilenceUsage: true,
 		},
 

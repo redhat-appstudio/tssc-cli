@@ -1,6 +1,8 @@
 package subcmd
 
 import (
+	"fmt"
+
 	"github.com/redhat-appstudio/helmet/api"
 	"github.com/redhat-appstudio/helmet/internal/config"
 	"github.com/redhat-appstudio/helmet/internal/integration"
@@ -20,14 +22,6 @@ type IntegrationBitBucket struct {
 }
 
 var _ api.SubCommand = &IntegrationBitBucket{}
-
-const bitbucketIntegrationLongDesc = `
-Manages the BitBucket integration with TSSC, by storing the required
-credentials required by the TSSC services to interact with BitBucket.
-
-The credentials are stored in a Kubernetes Secret in the configured namespace
-for RHDH.
-`
 
 // Cmd exposes the cobra instance.
 func (b *IntegrationBitBucket) Cmd() *cobra.Command {
@@ -52,7 +46,7 @@ func (b *IntegrationBitBucket) Run() error {
 }
 
 // NewIntegrationBitBucket creates the sub-command for the "integration bitbucket"
-// responsible to manage the TSSC integrations with the BitBucket service.
+// responsible to manage the integrations with the BitBucket service.
 func NewIntegrationBitBucket(
 	appCtx *api.AppContext,
 	runCtx *runcontext.RunContext,
@@ -60,9 +54,21 @@ func NewIntegrationBitBucket(
 ) *IntegrationBitBucket {
 	b := &IntegrationBitBucket{
 		cmd: &cobra.Command{
-			Use:          "bitbucket [flags]",
-			Short:        "Integrates a BitBucket instance into TSSC",
-			Long:         bitbucketIntegrationLongDesc,
+			Use: "bitbucket [flags]",
+			Short: fmt.Sprintf(
+				"Integrates a BitBucket instance into %s",
+				appCtx.Name,
+			),
+			Long: fmt.Sprintf(`
+Manages the BitBucket integration with %s by storing the credentials
+required by %s services to interact with BitBucket.
+
+The credentials are stored in a Kubernetes Secret in the namespace
+configured for %s.`,
+				appCtx.Name,
+				appCtx.Name,
+				appCtx.Name,
+			),
 			SilenceUsage: true,
 		},
 

@@ -33,6 +33,7 @@ const (
 	Quay                  IntegrationName = "quay"
 	TrustedArtifactSigner IntegrationName = "tas"
 	Trustification        IntegrationName = "trustification"
+	TrustificationAuth    IntegrationName = "trustificationauth"
 )
 
 // Integration returns the integration instance by name.

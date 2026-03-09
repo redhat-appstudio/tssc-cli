@@ -31,8 +31,9 @@ type Config struct {
 	cfs       *chartfs.ChartFS // embedded filesystem
 	root      yaml.Node        // yaml data representation
 	namespace string           // installer's namespace
+	appName   string           // dynamic root key name
 
-	Installer Spec `yaml:"tssc"` // root configuration for the installer
+	Installer Spec `yaml:"-"` // root configuration for the installer
 }
 
 var (
@@ -111,17 +112,17 @@ func (c *Config) DecodeNode() error {
 	if doc.Kind != yaml.MappingNode || len(doc.Content) < 2 {
 		return fmt.Errorf("invalid configuration: root must be a mapping")
 	}
-	var tsscNode *yaml.Node
+	var appNode *yaml.Node
 	for i := 0; i+1 < len(doc.Content); i += 2 {
-		if doc.Content[i].Value == "tssc" {
-			tsscNode = doc.Content[i+1]
+		if doc.Content[i].Value == c.appName {
+			appNode = doc.Content[i+1]
 			break
 		}
 	}
-	if tsscNode == nil {
-		return fmt.Errorf("invalid configuration: missing 'tssc' key")
+	if appNode == nil {
+		return fmt.Errorf("invalid configuration: missing '%s' key", c.appName)
 	}
-	if err := tsscNode.Decode(&c.Installer); err != nil {
+	if err := appNode.Decode(&c.Installer); err != nil {
 		return err
 	}
 	return nil
@@ -154,21 +155,21 @@ func (c *Config) SetProduct(name string, spec Product) error {
 	}
 	doc := c.root.Content[0]
 
-	var tsscNode *yaml.Node
+	var appNode *yaml.Node
 	for i := 0; i+1 < len(doc.Content); i += 2 {
-		if doc.Content[i].Value == "tssc" {
-			tsscNode = doc.Content[i+1]
+		if doc.Content[i].Value == c.appName {
+			appNode = doc.Content[i+1]
 			break
 		}
 	}
-	if tsscNode == nil {
-		return fmt.Errorf("invalid configuration: missing 'tssc' key")
+	if appNode == nil {
+		return fmt.Errorf("invalid configuration: missing '%s' key", c.appName)
 	}
 
 	var productsNode *yaml.Node
-	for i := 0; i+1 < len(tsscNode.Content); i += 2 {
-		if tsscNode.Content[i].Value == "products" {
-			productsNode = tsscNode.Content[i+1]
+	for i := 0; i+1 < len(appNode.Content); i += 2 {
+		if appNode.Content[i].Value == "products" {
+			productsNode = appNode.Content[i+1]
 			break
 		}
 	}
@@ -204,8 +205,8 @@ func (c *Config) SetProduct(name string, spec Product) error {
 			}
 
 			// Construct the path prefix for this product entry:
-			// "tssc.products.[index]".
-			pathPrefix := fmt.Sprintf("tssc.products.%d", i)
+			// "<appName>.products.[index]".
+			pathPrefix := fmt.Sprintf("%s.products.%d", c.appName, i)
 
 			keyPaths, err := FlattenMap(specMap, pathPrefix)
 			if err != nil {
@@ -278,8 +279,9 @@ func NewConfigFromFile(
 	cfs *chartfs.ChartFS,
 	configPath string,
 	namespace string,
+	appName string,
 ) (*Config, error) {
-	c := &Config{cfs: cfs, namespace: namespace}
+	c := &Config{cfs: cfs, namespace: namespace, appName: appName}
 	var err error
 	payload, err := c.cfs.ReadFile(configPath)
 	if err != nil {
@@ -292,8 +294,12 @@ func NewConfigFromFile(
 }
 
 // NewConfigFromBytes instantiates a new Config from the bytes payload informed.
-func NewConfigFromBytes(payload []byte, namespace string) (*Config, error) {
-	c := &Config{namespace: namespace}
+func NewConfigFromBytes(
+	payload []byte,
+	namespace string,
+	appName string,
+) (*Config, error) {
+	c := &Config{namespace: namespace, appName: appName}
 	if err := c.UnmarshalYAML(payload); err != nil {
 		return nil, err
 	}
@@ -302,6 +308,10 @@ func NewConfigFromBytes(payload []byte, namespace string) (*Config, error) {
 
 // NewConfigDefault returns a new Config instance with default values, i.e. the
 // configuration payload is loading embedded data.
-func NewConfigDefault(cfs *chartfs.ChartFS, namespace string) (*Config, error) {
-	return NewConfigFromFile(cfs, DefaultRelativeConfigPath, namespace)
+func NewConfigDefault(
+	cfs *chartfs.ChartFS,
+	namespace string,
+	appName string,
+) (*Config, error) {
+	return NewConfigFromFile(cfs, DefaultRelativeConfigPath, namespace, appName)
 }
