@@ -89,3 +89,21 @@ spec:
           value: $(params.ocp-replicas)
         - name: context-pipeline-run-name
           value: $(context.pipelineRun.name)
+  finally:
+    - name: cancel-nested-pipelines
+      when:
+        - input: $(tasks.start-nested-pipelines.status)
+          operator: in
+          values: ["Failed", "None"]
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/chetna14manku/tssc-cli.git
+          - name: revision
+            value: RHTAP-6134
+          - name: pathInRepo
+            value: integration-tests/tasks/cancel-nested-pipelines.yaml
+      params:
+        - name: main-pipeline-run-name
+          value: $(context.pipelineRun.name)
