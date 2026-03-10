@@ -1,0 +1,61 @@
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: cancel-nested-pipelines
+  annotations:
+    tekton.dev/displayName: "Cancel Nested Pipelines"
+    tekton.dev/categories: "Pipeline"
+    tekton.dev/tags: "pipeline,cancel,cleanup"
+spec:
+  description: >-
+    This task cancels nested pipelines that were started by a main pipeline.
+    It finds nested pipelines using the label selector and cancels any that are still running.
+  params:
+    - name: main-pipeline-run-name
+      type: string
+      description: "The name of the main pipeline run whose nested pipelines should be cancelled"
+  steps:
+    - name: cancel-pipelines
+      image: quay.io/openshift-pipeline/ci
+      env:
+        - name: MAIN_PIPELINE_RUN_NAME
+          value: $(params.main-pipeline-run-name)
+        - name: KONFLUX_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+      script: |
+        #!/usr/bin/env bash
+        set -euo pipefail
+
+        echo "Cancelling nested pipelines for main pipeline: $MAIN_PIPELINE_RUN_NAME"
+
+        # Find nested pipelines using label selector
+        LABEL_SELECTOR="custom.appstudio.openshift.io/main-pipeline-run=$MAIN_PIPELINE_RUN_NAME"
+        echo "Looking for pipelines with label: $LABEL_SELECTOR"
+
+        # Get list of nested pipeline runs
+        NESTED_PIPELINES=$(oc get pipelinerun -n "$KONFLUX_NAMESPACE" -l "$LABEL_SELECTOR" -o jsonpath='{.items[*].metadata.name}' 2>/dev/null || echo "")
+
+        if [[ -z "$NESTED_PIPELINES" ]]; then
+          echo "No nested pipelines found with label: $LABEL_SELECTOR"
+          exit 0
+        fi
+
+        echo "Found nested pipelines: $NESTED_PIPELINES"
+
+        for PIPELINE_RUN in $NESTED_PIPELINES; do
+          echo "Checking pipeline: $PIPELINE_RUN"
+          # Check if pipeline is still running (status Unknown means running)
+          STATUS=$(oc get pipelinerun "$PIPELINE_RUN" -n "$KONFLUX_NAMESPACE" -o jsonpath='{.status.conditions[?(@.type=="Succeeded")].status}' 2>/dev/null || echo "NotFound")
+
+          if [[ "$STATUS" == "Unknown" ]]; then
+            echo "Cancelling running pipeline: $PIPELINE_RUN"
+            oc patch pipelinerun "$PIPELINE_RUN" -n "$KONFLUX_NAMESPACE" --type=merge -p '{"spec":{"status":"CancelledRunFinally"}}' || true
+          else
+            echo "Pipeline $PIPELINE_RUN already finished (status: $STATUS), skipping"
+          fi
+        done
+
+        echo "Nested pipeline cancellation complete"
