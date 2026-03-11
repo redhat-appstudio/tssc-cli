@@ -4,7 +4,7 @@
   {{- if $secretData -}}
 apiVersion: v1
 data:
-  password: {{ $secretData.appPassword }}
+  password: {{ $secretData.token }}
   username: {{ $secretData.username }}
 kind: Secret
 metadata:

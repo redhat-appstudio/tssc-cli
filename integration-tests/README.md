@@ -19,7 +19,7 @@ In order to succesfully run this integration test one must:
         * `acs-api-token`
         * `rhdh-github-client-secret`
         * `bitbucket-username`
-        * `bitbucket-app-password`
+        * `bitbucket-token`
         * `rhdh-github-webhook-secret`
         * `github-username`
         * `github-password`

@@ -13,9 +13,9 @@ import (
 
 // BitBucket represents the BitBucket integration coordinates.
 type BitBucket struct {
-	appPassword string // password
-	host        string // endpoint
-	username    string // username
+	token    string // API token (recommended over app password)
+	host     string // endpoint
+	username string // username (use email for Bitbucket Cloud)
 }
 
 var _ Interface = &BitBucket{}
@@ -27,11 +27,11 @@ func (b *BitBucket) PersistentFlags(c *cobra.Command) {
 	p.StringVar(&b.host, "host", b.host,
 		"BitBucket API endpoint")
 	p.StringVar(&b.username, "username", b.username,
-		"BitBucket username")
-	p.StringVar(&b.appPassword, "app-password", b.appPassword,
-		"BitBucket application password")
+		"BitBucket username (use email for Bitbucket Cloud)")
+	p.StringVar(&b.token, "token", b.token,
+		"BitBucket API token")
 
-	for _, f := range []string{"host", "username", "app-password"} {
+	for _, f := range []string{"host", "username", "token"} {
 		if err := c.MarkPersistentFlagRequired(f); err != nil {
 			panic(err)
 		}
@@ -47,7 +47,7 @@ func (b *BitBucket) SetArgument(_, _ string) error {
 func (b *BitBucket) LoggerWith(logger *slog.Logger) *slog.Logger {
 	return logger.With(
 		"username", b.username,
-		"app-password-len", len(b.appPassword),
+		"token-len", len(b.token),
 		"host", b.host,
 	)
 }
@@ -69,9 +69,9 @@ func (b *BitBucket) Data(
 	_ *config.Config,
 ) (map[string][]byte, error) {
 	return map[string][]byte{
-		"host":        []byte(b.host),
-		"username":    []byte(b.username),
-		"appPassword": []byte(b.appPassword),
+		"host":     []byte(b.host),
+		"username": []byte(b.username),
+		"token":    []byte(b.token),
 	}, nil
 }
 
