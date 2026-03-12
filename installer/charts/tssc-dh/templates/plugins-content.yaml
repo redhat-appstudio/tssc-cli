@@ -132,7 +132,7 @@ plugins:
                 title: CI
                 mountPoint: entity.page.ci
   - disabled: false
-    package: quay.io/redhat-tssc/backstage-plugins:1.9.0!tssc-plugins-backstage-community-plugin-multi-source-security-viewer-backend
+    package: oci://quay.io/redhat-tssc/backstage-plugins:1.9.0!tssc-plugins-backstage-community-plugin-multi-source-security-viewer-backend
   #
   # Git
   #
