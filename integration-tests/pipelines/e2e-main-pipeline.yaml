@@ -96,3 +96,21 @@ spec:
       workspaces:
         - name: rhads-config
           workspace: rhads-config
+  finally:
+    - name: cancel-nested-pipelines
+      when:
+        - input: $(tasks.start-nested-pipelines.status)
+          operator: in
+          values: ["Failed", "None"]
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/redhat-appstudio/tssc-cli.git
+          - name: revision
+            value: main
+          - name: pathInRepo
+            value: integration-tests/tasks/cancel-nested-pipelines.yaml
+      params:
+        - name: main-pipeline-run-name
+          value: $(context.pipelineRun.name)

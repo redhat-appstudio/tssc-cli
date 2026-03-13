@@ -8,7 +8,6 @@ import (
 	"github.com/redhat-appstudio/helmet/internal/config"
 	"github.com/redhat-appstudio/helmet/internal/flags"
 	"github.com/redhat-appstudio/helmet/internal/k8s"
-	"github.com/redhat-appstudio/helmet/internal/printer"
 	"github.com/redhat-appstudio/helmet/internal/resolver"
 	"github.com/redhat-appstudio/helmet/internal/runcontext"
 
@@ -34,28 +33,6 @@ type Config struct {
 }
 
 var _ api.SubCommand = (*Config)(nil)
-
-const configDesc = `
-Manages installer's cluster configuration.
-
-It should only be used to for experimental deployments. Production
-deployments are not supported.
-
-Before "tssc deploy", you need to
-create a cluster configuration, responsible to define all installation settings
-for the whole Kubernetes cluster.
-
-You can use the embedded executable configuration, or inform your own local
-configuration file path to "--create". Use "--force" to update existing
-configuration.
-
-The "--create" flag reflects the creation of a new configuration while, "--force"
-is meant to amend the cluster configuration and overwrite changes to installer's
-defaults.
-
-This subcommand ensures a single cluster configuration is applied, identified and
-retrieved using a unique label selector.
-`
 
 // Cmd exposes the cobra instance.
 func (c *Config) Cmd() *cobra.Command {
@@ -158,10 +135,9 @@ func (c *Config) Validate() error {
 // runCreate runs create action, makes sure a new configuration is applied in the
 // cluster and update when using the --force flag.
 func (c *Config) runCreate() error {
-	printer.Disclaimer()
-
 	c.log().Debug("Loading configuration from file")
-	cfg, err := config.NewConfigFromFile(c.runCtx.ChartFS, c.configPath, c.namespace)
+	cfg, err := config.NewConfigFromFile(
+		c.runCtx.ChartFS, c.configPath, c.namespace, c.appCtx.IdentifierName())
 	if err != nil {
 		return err
 	}
@@ -281,6 +257,25 @@ func NewConfig(
 	runCtx *runcontext.RunContext,
 	f *flags.Flags,
 ) api.SubCommand {
+	configDesc := fmt.Sprintf(`
+Manages installer's cluster configuration.
+
+Before "%s deploy", you need to
+create a cluster configuration, responsible to define all installation settings
+for the whole Kubernetes cluster.
+
+You can use the embedded executable configuration, or inform your own local
+configuration file path to "--create". Use "--force" to update existing
+configuration.
+
+The "--create" flag reflects the creation of a new configuration while, "--force"
+is meant to amend the cluster configuration and overwrite changes to installer's
+defaults.
+
+This subcommand ensures a single cluster configuration is applied, identified and
+retrieved using a unique label selector.
+`, appCtx.Name)
+
 	c := &Config{
 		cmd: &cobra.Command{
 			Use:          "config [flags] [path/to/config.yaml]",
