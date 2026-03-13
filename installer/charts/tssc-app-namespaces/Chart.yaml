@@ -2,7 +2,7 @@ apiVersion: v2
 name: tssc-app-namespaces
 description: Red Hat User Application Namespaces
 type: application
-version: "1.8.0"
+version: "1.9.0"
 annotations:
   helmet.redhat-appstudio.github.com/depends-on: tssc-acs, tssc-pipelines, tssc-tpa
   helmet.redhat-appstudio.github.com/integrations-required: "(bitbucket || github || gitlab) && acs && trustification && trustificationauth"

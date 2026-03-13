@@ -3,7 +3,7 @@ apiVersion: v2
 name: tssc-tpa
 description: TSSC Trusted Profile Analyzer
 type: application
-version: "1.8.0"
+version: "1.9.0"
 appVersion: "2.2.0"
 annotations:
   helmet.redhat-appstudio.github.com/product-name: Trusted Profile Analyzer

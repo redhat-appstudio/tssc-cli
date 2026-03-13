@@ -3,7 +3,7 @@ apiVersion: v2
 name: tssc-acs-test
 description: TSSC Advanced Cluster Security Test
 type: application
-version: "1.8.0"
+version: "1.9.0"
 appVersion: "4.10"
 annotations:
   helmet.redhat-appstudio.github.com/use-product-namespace: Advanced Cluster Security
