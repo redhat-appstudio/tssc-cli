@@ -2,7 +2,9 @@ package integration
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/tls"
+	"encoding/hex"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -20,13 +22,14 @@ import (
 type GitLab struct {
 	logger *slog.Logger // application logger
 
-	insecure  bool   // skip tls verification
-	host      string // gitlab host
-	port      int    // gitlab port
-	group     string // gitlab group name
-	appID     string // gitlab application client id
-	appSecret string // gitlab application client secret
-	token     string // api token credentials
+	insecure      bool   // skip tls verification
+	host          string // gitlab host
+	port          int    // gitlab port
+	group         string // gitlab group name
+	appID         string // gitlab application client id
+	appSecret     string // gitlab application client secret
+	token         string // api token credentials
+	webhookSecret string // Optional: Webhook secret
 }
 
 var _ Interface = &GitLab{}
@@ -49,6 +52,8 @@ func (g *GitLab) PersistentFlags(c *cobra.Command) {
 		"GitLab application client secret")
 	p.StringVar(&g.token, "token", g.token,
 		"GitLab API token")
+	p.StringVar(&g.webhookSecret, "webhook-secret", g.webhookSecret,
+		"Optional Pipeline Webhook secret. Will be generated if not passed")
 
 	for _, f := range []string{"token", "group"} {
 		if err := c.MarkPersistentFlagRequired(f); err != nil {
@@ -72,6 +77,7 @@ func (g *GitLab) LoggerWith(logger *slog.Logger) *slog.Logger {
 		"app-id", g.appID,
 		"app-secret-len", len(g.appSecret),
 		"token-len", len(g.token),
+		"webhook-secret-len", len(g.webhookSecret),
 	)
 }
 
@@ -129,6 +135,14 @@ func (g *GitLab) getCurrentGitLabUser() (string, error) {
 	return user.Username, nil
 }
 
+func (g *GitLab) generateWebhookSecret() (string, error) {
+	b := make([]byte, 32) // 32 bytes = 64 hex characters
+	if _, err := rand.Read(b); err != nil {
+		return "", fmt.Errorf("failed to generate random bytes: %w", err)
+	}
+	return hex.EncodeToString(b), nil
+}
+
 // Data returns the GitLab integration data, using the local configuration and
 // username obtained on the fly.
 func (g *GitLab) Data(
@@ -141,14 +155,25 @@ func (g *GitLab) Data(
 		return nil, err
 	}
 
+	if g.webhookSecret == "" {
+		secret, err := g.generateWebhookSecret()
+		if err != nil {
+			return nil, err
+		}
+		g.webhookSecret = secret
+		// User will need to copy this into GitLab!
+		g.log().Info("Generated automatic GitLab webhook secret")
+	}
+
 	return map[string][]byte{
-		"host":         []byte(g.host),
-		"port":         []byte(strconv.Itoa(g.port)),
-		"group":        []byte(g.group),
-		"clientId":     []byte(g.appID),
-		"clientSecret": []byte(g.appSecret),
-		"username":     []byte(username),
-		"token":        []byte(g.token),
+		"host":          []byte(g.host),
+		"port":          []byte(strconv.Itoa(g.port)),
+		"group":         []byte(g.group),
+		"clientId":      []byte(g.appID),
+		"clientSecret":  []byte(g.appSecret),
+		"username":      []byte(username),
+		"token":         []byte(g.token),
+		"webhookSecret": []byte(g.webhookSecret),
 	}, nil
 }
 

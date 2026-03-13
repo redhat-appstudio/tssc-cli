@@ -10,16 +10,16 @@ plugins:
   # ArgoCD
   #
   - disabled: false
-    package: ./dynamic-plugins/dist/backstage-community-plugin-redhat-argocd
+    package: oci://ghcr.io/redhat-developer/rhdh-plugin-export-overlays/backstage-community-plugin-argocd:bs_1.45.3__2.4.3
   - disabled: false
-    package: oci://quay.io/redhat-tssc/backstage-plugins:1.8.0!tssc-plugins-backstage-community-plugin-redhat-argocd-backend
+    package: oci://ghcr.io/redhat-developer/rhdh-plugin-export-overlays/backstage-community-plugin-argocd-backend:bs_1.45.3__1.0.2
     pluginConfig:
       argocd:
         appLocatorMethods:
           - type: 'config'
             instances: []
   - disabled: false
-    package: ./dynamic-plugins/dist/roadiehq-scaffolder-backend-argocd-dynamic
+    package: oci://ghcr.io/redhat-developer/rhdh-plugin-export-overlays/roadiehq-scaffolder-backend-argocd:bs_1.45.3__1.8.1
     pluginConfig:
       argocd:
         appLocatorMethods:
@@ -30,7 +30,7 @@ plugins:
   # CI
   #
   - disabled: false
-    package: ./dynamic-plugins/dist/backstage-community-plugin-tekton
+    package: oci://ghcr.io/redhat-developer/rhdh-plugin-export-overlays/backstage-community-plugin-tekton:bs_1.45.3__3.33.3
     pluginConfig:
       dynamicPlugins:
         frontend:
@@ -47,9 +47,9 @@ plugins:
                 mountPoint: entity.page.ci/cards
 {{- if (lookup "v1" "Secret" $integrationNamespace "tssc-azure-integration") }}
   - disabled: false
-    package: ./dynamic-plugins/dist/backstage-community-plugin-azure-devops-backend-dynamic
+    package: oci://ghcr.io/redhat-developer/rhdh-plugin-export-overlays/backstage-community-plugin-azure-devops-backend:bs_1.45.3__0.23.0
   - disabled: false
-    package: ./dynamic-plugins/dist/backstage-community-plugin-azure-devops
+    package: oci://ghcr.io/redhat-developer/rhdh-plugin-export-overlays/backstage-community-plugin-azure-devops:bs_1.45.3__0.23.0
     # The default pluginConfig also includes EntityAzurePullRequestsContent which is not supported
     # in TSSC and causes 500 errors when loading the PR/MR tab:
     # https://issues.redhat.com/browse/RHTAP-4837
@@ -69,11 +69,11 @@ plugins:
 {{- end }}
 {{- if (lookup "v1" "Secret" $integrationNamespace "tssc-github-integration") }}
   - disabled: false
-    package: ./dynamic-plugins/dist/backstage-community-plugin-github-actions
+    package: oci://ghcr.io/redhat-developer/rhdh-plugin-export-overlays/backstage-community-plugin-github-actions:bs_1.45.3__0.18.0
 {{- end }}
 {{- if (lookup "v1" "Secret" $integrationNamespace "tssc-gitlab-integration") }}
   - disabled: false
-    package: ./dynamic-plugins/dist/immobiliarelabs-backstage-plugin-gitlab
+    package: oci://ghcr.io/redhat-developer/rhdh-plugin-export-overlays/immobiliarelabs-backstage-plugin-gitlab:bs_1.45.3__6.13.0
     pluginConfig:
       dynamicPlugins:
         frontend:
@@ -90,11 +90,11 @@ plugins:
                       - hasAnnotation:
                           - gitlab.com/project-id
   - disabled: false
-    package: ./dynamic-plugins/dist/immobiliarelabs-backstage-plugin-gitlab-backend-dynamic
+    package: oci://ghcr.io/redhat-developer/rhdh-plugin-export-overlays/immobiliarelabs-backstage-plugin-gitlab-backend:bs_1.45.3__6.13.0
 {{- end }}
 {{- if (lookup "v1" "Secret" $integrationNamespace "tssc-jenkins-integration") }}
   - disabled: false
-    package: ./dynamic-plugins/dist/backstage-community-plugin-jenkins
+    package: oci://ghcr.io/redhat-developer/rhdh-plugin-export-overlays/backstage-community-plugin-jenkins:bs_1.45.3__0.26.0
     pluginConfig:
       dynamicPlugins:
         frontend:
@@ -109,10 +109,10 @@ plugins:
                     allOf:
                       - isJenkinsAvailable
   - disabled: false
-    package: ./dynamic-plugins/dist/backstage-community-plugin-jenkins-backend-dynamic
+    package: oci://ghcr.io/redhat-developer/rhdh-plugin-export-overlays/backstage-community-plugin-jenkins-backend:bs_1.45.3__0.22.0
 {{- end }}
   - disabled: false
-    package: oci://quay.io/redhat-tssc/backstage-plugins:1.8.0!tssc-plugins-backstage-community-plugin-multi-source-security-viewer-dynamic
+    package: oci://quay.io/redhat-tssc/backstage-plugins:1.9.0!tssc-plugins-backstage-community-plugin-multi-source-security-viewer
     pluginConfig:
       dynamicPlugins:
         frontend:
@@ -131,12 +131,14 @@ plugins:
               - path: /ci
                 title: CI
                 mountPoint: entity.page.ci
+  - disabled: false
+    package: oci://quay.io/redhat-tssc/backstage-plugins:1.9.0!tssc-plugins-backstage-community-plugin-multi-source-security-viewer-backend
   #
   # Git
   #
 {{- if (lookup "v1" "Secret" $integrationNamespace "tssc-bitbucket-integration") }}
   - disabled: false
-    package: ./dynamic-plugins/dist/backstage-plugin-scaffolder-backend-module-bitbucket-cloud-dynamic
+    package: oci://ghcr.io/redhat-developer/rhdh-plugin-export-overlays/backstage-plugin-scaffolder-backend-module-bitbucket-cloud:bs_1.45.3__0.2.15
 {{- end }}
 {{- if (lookup "v1" "Secret" $integrationNamespace "tssc-github-integration") }}
   - disabled: false
@@ -151,15 +153,15 @@ plugins:
   #
 {{- if (lookup "v1" "Secret" $integrationNamespace "tssc-artifactory-integration") }}
   - disabled: false
-    package: ./dynamic-plugins/dist/backstage-community-plugin-jfrog-artifactory
+    package: oci://ghcr.io/redhat-developer/rhdh-plugin-export-overlays/backstage-community-plugin-jfrog-artifactory:bs_1.45.3__1.24.1
 {{- end }}
 {{- if (lookup "v1" "Secret" $integrationNamespace "tssc-nexus-integration") }}
   - disabled: false
-    package: ./dynamic-plugins/dist/backstage-community-plugin-nexus-repository-manager
+    package: oci://ghcr.io/redhat-developer/rhdh-plugin-export-overlays/backstage-community-plugin-nexus-repository-manager:bs_1.45.3__1.19.4
 {{- end }}
 {{- if (lookup "v1" "Secret" $integrationNamespace "tssc-quay-integration") }}
   - disabled: false
-    package: ./dynamic-plugins/dist/backstage-community-plugin-quay
+    package: oci://ghcr.io/redhat-developer/rhdh-plugin-export-overlays/backstage-community-plugin-quay:bs_1.45.3__1.28.1
 {{- end }}
   #
   # Kubernetes
