@@ -12,16 +12,9 @@
           "acs": "local"
         },
         {
-          "git": "github",
-          "ci": "githubactions",
-          "registry": "artifactory",
-          "tpa": "local",
-          "acs": "local"
-        },
-        {
           "git": "gitlab",
-          "ci": "gitlabci",
-          "registry": "nexus",
+          "ci": "tekton",
+          "registry": "quay",
           "tpa": "local",
           "acs": "local"
         }
