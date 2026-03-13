@@ -39,7 +39,7 @@ export ACS__API_TOKEN=
 export ACS__CENTRAL_PASSWORD=
 
 #### Jenkins
-# https://github.com/redhat-appstudio/rhtap-utils/blob/main/jenkins/README-JENKINS.md
+# https://github.com/redhat-appstudio/tssc-cli/tree/main/integration-tests/utils/jenkins/README-JENKINS.md (migrated from rhtap-utils)
 export JENKINS_API_TOKEN=
 export JENKINS_URL=
 export JENKINS_USERNAME=
