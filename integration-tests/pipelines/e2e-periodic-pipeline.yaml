@@ -34,6 +34,9 @@ spec:
       description: 'Additional parameters for installation testing (e.g., PRE_RELEASE=TAS TAS_VERSION=1.3.2). When empty, does not alter normal installation.'
       default: ""
       type: string
+  workspaces:
+    - name: rhads-config
+      description: "Workspace for sharing RHADS configuration data between tasks"
   tasks:
     - name: test-metadata
       taskRef:
@@ -63,6 +66,9 @@ spec:
       params:
         - name: job-spec
           value: $(tasks.test-metadata.results.job-spec)
+      workspaces:
+        - name: rhads-config
+          workspace: rhads-config
       runAfter:
         - test-metadata
     - name: start-periodic-pipelines
@@ -83,8 +89,6 @@ spec:
           value: $(params.SNAPSHOT)
         - name: job-spec
           value: $(tasks.test-metadata.results.job-spec)
-        - name: rhads-config
-          value: $(tasks.process-periodic-configs.results.rhads-config)
         - name: mode
           value: "periodic"
         - name: konflux-test-infra-secret
@@ -99,3 +103,6 @@ spec:
           value: $(params.install-params)
         - name: context-pipeline-run-name
           value: $(context.pipelineRun.name)
+      workspaces:
+        - name: rhads-config
+          workspace: rhads-config
