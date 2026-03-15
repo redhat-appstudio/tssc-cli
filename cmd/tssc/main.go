@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/redhat-appstudio/tssc-cli/installer"
+
 	"github.com/redhat-appstudio/helmet/api"
 	"github.com/redhat-appstudio/helmet/framework"
-	"github.com/redhat-appstudio/tssc-cli/installer"
 )
 
 var (
@@ -52,6 +53,8 @@ func main() {
 		fmt.Fprintf(os.Stderr, "failed to create application: %v\n", err)
 		os.Exit(1)
 	}
+
+	printDisclaimer()
 
 	if err := app.Run(); err != nil {
 		os.Exit(1)
