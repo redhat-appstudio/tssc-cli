@@ -150,7 +150,7 @@ action() {
         CURL=(
             "curl"
             "--fail"
-            "--header" "Authorization: Basic $(echo -n "$BITBUCKET__USERNAME:$BITBUCKET__APP_PASSWORD" | base64)" \
+            "--header" "Authorization: Basic $(echo -n "$BITBUCKET__USERNAME:$BITBUCKET__TOKEN" | base64)" \
             "--header" "Content-Type: application/json"
             "--silent"
         )

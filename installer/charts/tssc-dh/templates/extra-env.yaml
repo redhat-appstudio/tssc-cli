@@ -57,7 +57,7 @@ data:
 {{- $bbSecretObj := (lookup "v1" "Secret" $integrationNamespace "tssc-bitbucket-integration") }}
 {{- $bbSecretData := ($bbSecretObj.data | default dict) }}
 {{- if $bbSecretData }}
-    BITBUCKET__APP_PASSWORD:  {{ $bbSecretData.appPassword }}
+    BITBUCKET__TOKEN: {{ $bbSecretData.token }}
     BITBUCKET__USERNAME: {{ $bbSecretData.username }}
 {{- end }}
     DEVELOPER_HUB__CATALOG__URL: {{
