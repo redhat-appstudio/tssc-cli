@@ -21,7 +21,7 @@
         {
           "git": "gitlab",
           "ci": "gitlabci",
-          "registry": "nexus",
+          "registry": "quay",
           "tpa": "local",
           "acs": "local"
         }
