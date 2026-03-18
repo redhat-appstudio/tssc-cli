@@ -31,6 +31,10 @@ subscriptions:
     channel: pipelines-1.21
     source: redhat-operators
     sourceNamespace: openshift-marketplace
+    config:
+      env:
+        - name: AUTOINSTALL_COMPONENTS
+          value: "false"
   openshiftTrustedArtifactSigner:
     enabled: false
     description: Red Hat Trusted Artifact Signer Operator

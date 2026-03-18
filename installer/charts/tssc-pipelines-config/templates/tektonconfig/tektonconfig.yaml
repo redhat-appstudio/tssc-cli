@@ -1,0 +1,6 @@
+{{- if .Values.infrastructure.openShiftPipelines.enabled }}
+{{- $config := fromYaml (include "pipelines.TektonConfigDefault" .) }}
+{{- $patch := fromYaml (include "pipelines.TektonConfigPatch" .) }}
+---
+{{ mergeOverwrite $config $patch | toYaml }}
+{{- end }}
