@@ -31,25 +31,3 @@
 {{- end }}
 {{- end }}
 {{- end }}
-{{- $osp := .Values.infrastructure.openShiftPipelines }}
-{{- if $osp.enabled }}
-    #
-    # Tests the OpenShift Pipelines rollout status.
-    #
-    - name: test-rollout-openshift-pipelines
-      image: registry.redhat.io/openshift4/ose-tools-rhel9:v4.19
-      env:
-        - name: NAMESPACE
-          value: {{ $osp.namespace }}
-        - name: RESOURCE_TYPE
-          value: "deployment"
-      command:
-        - /scripts/test-rollout-status.sh
-      args:
-        - "app.kubernetes.io/part-of=tekton-pipelines"
-      volumeMounts:
-        - name: scripts
-          mountPath: /scripts
-      securityContext:
-        allowPrivilegeEscalation: false
-{{- end }}

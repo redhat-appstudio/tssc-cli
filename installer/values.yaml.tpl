@@ -224,6 +224,15 @@ argoCD:
     namespace: {{ .Installer.Namespace }}
 
 #
+# tssc-pipelines-config
+#
+
+pipelines_config:
+  namespace:  {{ $pipelinesNamespace }}
+  integrationSecret:
+    namespace: {{ .Installer.Namespace }}
+
+#
 # tssc-pipelines
 #
 
