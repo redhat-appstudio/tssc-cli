@@ -222,6 +222,8 @@ nexus:
 permission:
   enabled: true
   rbac:
+    pluginsWithPermission:
+      - multi-source-security-viewer
     admin:
       users:
       {{- range .Values.developerHub.RBAC.adminUsers }}
