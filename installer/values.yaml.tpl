@@ -207,6 +207,8 @@ appNamespaces:
   {{- range ($rhdh.Properties.namespacePrefixes | default (tuple (printf "%s-app" .Installer.Namespace))) }}
     - {{ . }}
   {{- end }}
+  pipelines:
+    enabled: {{ $pipelines.Enabled}}
 
 #
 # tssc-gitops
