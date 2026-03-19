@@ -1,16 +1,10 @@
 {{- define "pipelines.TektonConfigPatch" -}}
   {{- $rekor_url := "" }}
-  {{- $secretObj := (lookup "v1" "Secret" .Release.Namespace "tssc-tas-integration") | default dict -}}
+  {{- $secretObj := (lookup "v1" "Secret" .Values.pipelines_config.integrationSecret.namespace "tssc-tas-integration") | default dict -}}
   {{- $secretData := (get $secretObj "data") | default dict -}}
   {{- if $secretData }}
     {{- $rekor_url = $secretData.rekor_url | b64dec }}
   {{- end }}
-metadata:
-  annotations:
-    meta.helm.sh/release-name: {{ .Chart.Name }}
-    meta.helm.sh/release-namespace: {{ .Release.Namespace }}
-  labels:
-    app.kubernetes.io/managed-by: Helm
 spec:
   chain:
     generateSigningSecret: true

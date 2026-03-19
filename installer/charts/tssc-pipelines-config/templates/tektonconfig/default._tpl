@@ -1,0 +1,140 @@
+# This is a copy of the default TektonConfig that is generated
+# when installing OpenShift Pipelines.
+# The TSSC specific configuration override is in `patch._tpl`
+{{- define "pipelines.TektonConfigDefault" -}}
+apiVersion: operator.tekton.dev/v1alpha1
+kind: TektonConfig
+metadata:
+  name: config
+# Generated with `oc get tektonconfig config -o yaml | yq '.spec | sort_keys(..) | {"spec": .}'`
+# with a default install of the `Red Hat OpenShift Pipelines` operator.
+spec:
+  addon:
+    params:
+      - name: communityResolverTasks
+        value: "true"
+      - name: pipelineTemplates
+        value: "true"
+      - name: resolverTasks
+        value: "true"
+      - name: resolverStepActions
+        value: "true"
+  chain:
+    artifacts.oci.format: simplesigning
+    artifacts.oci.storage: oci
+    artifacts.pipelinerun.format: in-toto
+    artifacts.pipelinerun.storage: oci
+    artifacts.taskrun.format: in-toto
+    artifacts.taskrun.storage: oci
+    disabled: false
+    options: {}
+    performance:
+      disable-ha: false
+  config: {}
+  dashboard:
+    options: {}
+    readonly: false
+  hub:
+    options: {}
+  pipeline:
+    await-sidecar-readiness: true
+    coschedule: workspaces
+    default-service-account: pipeline
+    disable-affinity-assistant: true
+    disable-creds-init: false
+    enable-api-fields: beta
+    enable-bundles-resolver: true
+    enable-cel-in-whenexpression: false
+    enable-cluster-resolver: true
+    enable-custom-tasks: true
+    enable-git-resolver: true
+    enable-hub-resolver: true
+    enable-param-enum: false
+    enable-provenance-in-status: true
+    enable-step-actions: true
+    enforce-nonfalsifiability: none
+    keep-pod-on-cancel: false
+    max-result-size: 4096
+    metrics.count.enable-reason: false
+    metrics.pipelinerun.duration-type: histogram
+    metrics.pipelinerun.level: pipeline
+    metrics.taskrun.duration-type: histogram
+    metrics.taskrun.level: task
+    options: {}
+    params:
+      - name: enableMetrics
+        value: "true"
+    performance:
+      disable-ha: false
+    require-git-ssh-secret-known-hosts: false
+    results-from: termination-message
+    running-in-environment-with-injected-sidecars: true
+    send-cloudevents-for-runs: false
+    set-security-context: false
+    trusted-resources-verification-no-match-policy: ignore
+  platforms:
+    openshift:
+      pipelinesAsCode:
+        enable: true
+        options: {}
+        settings:
+          application-name: Pipelines as Code CI
+          auto-configure-new-github-repo: "false"
+          auto-configure-repo-namespace-template: ""
+          auto-configure-repo-repository-template: ""
+          bitbucket-cloud-additional-source-ip: ""
+          bitbucket-cloud-check-source-ip: "true"
+          custom-console-name: ""
+          custom-console-url: ""
+          custom-console-url-namespace: ""
+          custom-console-url-pr-details: ""
+          custom-console-url-pr-tasklog: ""
+          default-max-keep-runs: "0"
+          enable-cancel-in-progress-on-pull-requests: "false"
+          enable-cancel-in-progress-on-push: "false"
+          error-detection-from-container-logs: "true"
+          error-detection-max-number-of-lines: "50"
+          error-detection-simple-regexp: ^(?P<filename>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+)?([ ]*)?(?P<error>.*)
+          error-log-snippet: "true"
+          error-log-snippet-number-of-lines: "3"
+          hub-catalog-type: artifacthub
+          hub-url: https://artifacthub.io/api/v1
+          max-keep-run-upper-limit: "0"
+          remember-ok-to-test: "false"
+          remote-tasks: "true"
+          require-ok-to-test-sha: "false"
+          secret-auto-create: "true"
+          secret-github-app-scope-extra-repos: ""
+          secret-github-app-token-scoped: "true"
+          skip-push-event-for-pr-commits: "true"
+          tekton-dashboard-url: ""
+      scc:
+        default: pipelines-scc
+  profile: all
+  pruner:
+    disabled: false
+    keep: 100
+    resources:
+      - pipelinerun
+    schedule: 0 8 * * *
+  result:
+    disabled: false
+    is_external_db: false
+    options: {}
+    performance:
+      disable-ha: false
+    route_enabled: true
+    route_tls_termination: edge
+  targetNamespace: openshift-pipelines
+  tektonpruner:
+    disabled: true
+    global-config:
+      enforcedConfigLevel: global
+      historyLimit: 100
+    options: {}
+  trigger:
+    default-service-account: pipeline
+    disabled: false
+    enable-api-fields: stable
+    options: {}
+{{- end }}

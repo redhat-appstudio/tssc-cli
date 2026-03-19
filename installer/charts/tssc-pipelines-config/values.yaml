@@ -1,0 +1,5 @@
+---
+pipelines_config:
+  namespace: __OVERWRITE_ME__
+  integrationSecret:
+    namespace: __OVERWRITE_ME__
