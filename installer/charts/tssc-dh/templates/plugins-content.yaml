@@ -88,7 +88,7 @@ plugins:
                     allOf:
                       - isGitlabAvailable
                       - hasAnnotation:
-                          - gitlab.com/project-id
+                          - gitlab.com/enabled
   - disabled: false
     package: oci://ghcr.io/redhat-developer/rhdh-plugin-export-overlays/immobiliarelabs-backstage-plugin-gitlab-backend:bs_1.45.3__6.13.0
 {{- end }}
