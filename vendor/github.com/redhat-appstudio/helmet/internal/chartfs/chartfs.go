@@ -2,6 +2,7 @@ package chartfs
 
 import (
 	"io/fs"
+	"os"
 	"path/filepath"
 
 	"helm.sh/helm/v3/pkg/chart"
@@ -17,7 +18,20 @@ type ChartFS struct {
 }
 
 // ReadFile reads the file from the file system.
+// It supports absolute paths (read from the OS filesystem), relative paths
+// that exist in the OS filesystem (converted to absolute), and relative paths
+// from the embedded filesystem.
 func (c *ChartFS) ReadFile(name string) ([]byte, error) {
+	// Absolute paths are always read from the OS filesystem
+	// For relative paths, try to convert to absolute
+	// Check if file exists in OS
+	absPath, err := filepath.Abs(name)
+	if err == nil {
+		if _, statErr := os.Stat(absPath); statErr == nil {
+			return os.ReadFile(absPath)
+		}
+	}
+	// Fallback to embedded filesystem
 	return fs.ReadFile(c.fsys, name)
 }
 
