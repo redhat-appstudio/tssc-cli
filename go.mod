@@ -1,6 +1,6 @@
 module github.com/redhat-appstudio/tssc-cli
 
-go 1.24.6
+go 1.25.0
 
 toolchain go1.25.4
 
@@ -12,8 +12,8 @@ require (
 	github.com/google/go-github/v75 v75.0.0
 	github.com/mark3labs/mcp-go v0.43.1
 	github.com/onsi/gomega v1.38.2
-	github.com/openshift/api v0.0.0-20251124165233-999c45c0835a
-	github.com/openshift/client-go v0.0.0-20251123231646-4685125c2287
+	github.com/openshift/api v0.0.0-20260318185450-1f2fa3f09f4e
+	github.com/openshift/client-go v0.0.0-20260320040014-4b5fc2cdad98
 	github.com/pkg/errors v0.9.1
 	github.com/quay/claircore v1.5.45
 	github.com/spf13/cobra v1.10.1
@@ -21,10 +21,10 @@ require (
 	gitlab.com/gitlab-org/api/client-go v0.160.2
 	gopkg.in/yaml.v3 v3.0.1
 	helm.sh/helm/v3 v3.19.2
-	k8s.io/api v0.34.2
-	k8s.io/apimachinery v0.34.2
+	k8s.io/api v0.35.1
+	k8s.io/apimachinery v0.35.1
 	k8s.io/cli-runtime v0.34.2
-	k8s.io/client-go v0.34.2
+	k8s.io/client-go v0.35.1
 	k8s.io/kubectl v0.34.2
 )
 
