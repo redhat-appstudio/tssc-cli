@@ -2,10 +2,7 @@ module github.com/redhat-appstudio/tssc-cli
 
 go 1.25.7
 
-require (
-	github.com/redhat-appstudio/helmet v0.0.0-20260319215325-e665a08127fc
-	golang.org/x/term v0.41.0
-)
+require github.com/redhat-appstudio/helmet v0.0.0-20260319215325-e665a08127fc
 
 require (
 	cel.dev/expr v0.25.1 // indirect
@@ -130,6 +127,7 @@ require (
 	golang.org/x/oauth2 v0.34.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect
+	golang.org/x/term v0.41.0 // indirect
 	golang.org/x/text v0.35.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260311181403-84a4fc48630c // indirect
@@ -150,7 +148,7 @@ require (
 	k8s.io/klog/v2 v2.140.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20260304202019-5b3e3fdb0acf // indirect
 	k8s.io/kubectl v0.35.2 // indirect
-	k8s.io/utils v0.0.0-20260210185600-b8788abfbbc2 // indirect
+	k8s.io/utils v0.0.0-20260319190234-28399d86e0b5 // indirect
 	oras.land/oras-go/v2 v2.6.0 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/kustomize/api v0.21.1 // indirect
