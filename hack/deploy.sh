@@ -32,7 +32,7 @@ Optional arguments:
         Environment variables definitions (default: $SCRIPT_DIR/private.env)
     -i, --integration INTEGRATION
         Use an external service [acs, bitbucket, ci, github, gitlab,
-        jenkins, quay, tas].
+        jenkins, quay, tas, tpa].
     -d, --debug
         Activate tracing/debug mode.
     -h, --help
@@ -91,9 +91,13 @@ parse_args() {
             tas)
                 TAS=1
                 ;;
+            tpa)
+                TPA=1
+                ;;
             *)
-                echo "[ERROR] Unknown integration: $1"
+                echo "[ERROR] Unknown integration: $2"
                 usage
+                exit 1
                 ;;
             esac
             shift
@@ -253,6 +257,15 @@ integrations() {
         tssc_cli integration trusted-artifact-signer --force \
             --rekor-url='"$TAS__REKOR_URL"' \
             --tuf-url='"$TAS__TUF_URL"'
+    fi
+    if [[ -n "${TPA:-}" ]]; then
+        tssc_cli integration trustification --force \
+            --bombastic-api-url='"$TPA__BOMBASTIC_API_URL"' \
+            --supported-cyclonedx-version='"$TPA__SUPPORTED_CYCLONEDX_VERSION"'
+        tssc_cli integration trustificationauth --force \
+            --oidc-issuer-url='"$TPA__OIDC_ISSUER_URL"' \
+            --oidc-client-id='"$TPA__OIDC_CLIENT_ID"' \
+            --oidc-client-secret='"$TPA__OIDC_CLIENT_SECRET"'
     fi
 }
 
