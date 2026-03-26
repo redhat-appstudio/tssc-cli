@@ -60,7 +60,7 @@ sleep 15
 LATEST_PIPELINE_RUN=$(tkn pipelinerun list -n "${PERIODIC_KONFLUX_TENANT_NAME}" -o json | jq -r --arg scenario "${PERIODIC_SCENARIO_NAME}" '
   .items
   | map(select(
-      .metadata.labels."test.appstudio.openshift.io/run" == $scenario and
+      .metadata.labels."test.appstudio.openshift.io/scenario" == $scenario and
       (
         (.status.conditions // [])
         | map(select(
