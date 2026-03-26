@@ -22,6 +22,7 @@ KONFLUX_UI_BASE_URL="${KONFLUX_UI_BASE_URL:-https://konflux-ui.apps.stone-prd-rh
 
 # Optional: extra args for the scheduler (e.g. --no-old-commits-run or install params for RHDH)
 PERIODIC_SCHEDULER_EXTRA_ARGS="${PERIODIC_SCHEDULER_EXTRA_ARGS:-}"
+read -r -a PERIODIC_SCHEDULER_EXTRA_ARGS_ARR <<< "${PERIODIC_SCHEDULER_EXTRA_ARGS}"
 
 waitFor() {
   local PLR="$1"
@@ -52,7 +53,7 @@ curl -sL https://raw.githubusercontent.com/konflux-ci/tekton-integration-catalog
   --konflux-application-name "${PERIODIC_KONFLUX_APP_NAME}" \
   --konflux-component-name "${PERIODIC_KONFLUX_COMPONENT_NAME}" \
   --schedule "${PERIODIC_SCHEDULE_DAYS}" \
-  ${PERIODIC_SCHEDULER_EXTRA_ARGS}
+  "${PERIODIC_SCHEDULER_EXTRA_ARGS_ARR[@]}"
 
 sleep 15
 
@@ -84,7 +85,7 @@ echo "[INFO] Found running PipelineRun: $LATEST_PIPELINE_RUN"
 waitFor "$LATEST_PIPELINE_RUN" "$PERIODIC_KONFLUX_TENANT_NAME" "Nested pipelines are still running. Waiting 1 minute" "All nested pipelines finished"
 
 echo "[INFO] Getting pipeline run status and logs URL"
-status=$(oc get pipelinerun/${LATEST_PIPELINE_RUN} -n ${PERIODIC_KONFLUX_TENANT_NAME} -o jsonpath="{.status.conditions[].message}")
+status=$(oc get "pipelinerun/${LATEST_PIPELINE_RUN}" -n "${PERIODIC_KONFLUX_TENANT_NAME}" -o jsonpath="{.status.conditions[].message}")
 logsUrl="${KONFLUX_UI_BASE_URL}/ns/${PERIODIC_KONFLUX_TENANT_NAME}/applications/${PERIODIC_LOGS_APP_NAME}/pipelineruns/${LATEST_PIPELINE_RUN}"
 
 echo "[INFO] Setting icon and run status in message"
