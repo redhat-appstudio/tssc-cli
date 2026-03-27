@@ -66,8 +66,6 @@ tssc:
       properties:
         catalogURL: https://github.com/redhat-appstudio/tssc-dev-multi-ci/blob/release-v1.9.x/samples/all.yaml
         manageSubscription: true
-        # namespacePrefixes:
-        #   - tssc-app
         authProvider: oidc
         # Possible values: github, gitlab, oidc
         # RBAC:

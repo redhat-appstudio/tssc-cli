@@ -204,9 +204,7 @@ appNamespaces:
   argoCD:
     name: {{ $argoCDName }}
   namespace_prefixes:
-  {{- range ($rhdh.Properties.namespacePrefixes | default (tuple (printf "%s-app" .Installer.Namespace))) }}
-    - {{ . }}
-  {{- end }}
+    - {{ printf "%s-app" .Installer.Namespace }}
   pipelines:
     enabled: {{ $pipelines.Enabled}}
 
