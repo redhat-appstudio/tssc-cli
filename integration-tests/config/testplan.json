@@ -1,29 +1,23 @@
 {
   "testPlans": [
     {
-      "name": "backend-tests",
+      "name": "e2e-tests",
       "templates": ["go"],
       "tssc": [
         {
           "git": "github",
           "ci": "tekton",
-          "registry": "quay",
-          "tpa": "local",
-          "acs": "local"
+          "registry": "quay"
         },
         {
           "git": "github",
           "ci": "githubactions",
-          "registry": "artifactory",
-          "tpa": "local",
-          "acs": "local"
+          "registry": "artifactory"
         },
         {
           "git": "gitlab",
           "ci": "gitlabci",
-          "registry": "nexus",
-          "tpa": "local",
-          "acs": "local"
+          "registry": "nexus"
         }
       ],
       "tests": ["full_workflow.test.ts"]
