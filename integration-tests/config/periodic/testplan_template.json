@@ -1,7 +1,7 @@
 {
   "testPlans": [
     {
-      "name": "backend-tests",
+      "name": "e2e-tests",
       "templates": [
         "go"
     ],
