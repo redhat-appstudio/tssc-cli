@@ -157,4 +157,4 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
-replace github.com/Microsoft/hcsshim => github.com/Microsoft/hcsshim v0.13.0
+replace github.com/Microsoft/hcsshim => github.com/Microsoft/hcsshim v0.14.0
