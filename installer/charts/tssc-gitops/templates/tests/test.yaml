@@ -26,7 +26,7 @@
     # Tests the ArgoCD instance login.
     #
     - name: {{ printf "argocd-login-%s" $argoCD.name }}
-      image: registry.redhat.io/openshift-gitops-1/argocd-rhel8:{{ .Chart.AppVersion }}
+      image: registry.redhat.io/openshift-gitops-1/argocd-rhel9:{{ .Chart.AppVersion }}
       env:
         - name: ARGOCD_HOSTNAME
           value: {{ include "argoCD.serverHostname" . }}
