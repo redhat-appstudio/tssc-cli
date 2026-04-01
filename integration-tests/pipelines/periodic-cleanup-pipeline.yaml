@@ -25,3 +25,24 @@ spec:
               - hack/ci/git-org-cleanup/github-repos-cleanup.sh
               - hack/ci/git-org-cleanup/gitlab-repos-cleanup.sh
               - hack/ci/git-org-cleanup/bitbucket-repos-cleanup.sh
+              - hack/ci/image-org-cleanup/artifactory-image-cleanup.sh
+              - hack/ci/image-org-cleanup/nexus-image-cleanup.sh
+              - hack/ci/image-org-cleanup/quay-image-cleanup.sh
+              - hack/ci/service-jenkins-cleanup/jenkins-cleanup.sh
+    - name: cleanup-rosa-cluster
+      taskRef:
+        resolver: git
+        params:
+          - name: url
+            value: https://github.com/redhat-appstudio/tssc-cli.git
+          - name: revision
+            value: main
+          - name: pathInRepo
+            value: integration-tests/tasks/download-and-execute-cleanup.yaml
+      params:
+        - name: script-path
+          value: scripts/rosa/delete-rosa-clusters.sh
+        - name: source-git-repo
+          value: konflux-ci/tekton-integration-catalog
+        - name: source-git-revision
+          value: main
