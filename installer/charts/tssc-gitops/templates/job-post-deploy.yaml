@@ -36,7 +36,7 @@ spec:
         # file which is later stored as a Kubernetes secret.
         #
         - name: argocd-generate-token
-          image: registry.redhat.io/openshift-gitops-1/argocd-rhel8:{{ .Chart.AppVersion }}
+          image: registry.redhat.io/openshift-gitops-1/argocd-rhel9:{{ .Chart.AppVersion }}
           env:
             - name: ARGOCD_HOSTNAME
               value: {{ include "argoCD.serverHostname" . }}
