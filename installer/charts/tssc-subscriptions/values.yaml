@@ -17,7 +17,7 @@ subscriptions:
     apiResource: keycloaks.k8s.keycloak.org
     namespace: rhbk-operator
     name: rhbk-operator
-    channel: stable-v24
+    channel: stable-v26.4
     source: redhat-operators
     sourceNamespace: openshift-marketplace
     operatorGroup:
