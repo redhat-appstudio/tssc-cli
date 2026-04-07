@@ -108,7 +108,7 @@ infrastructure:
 #
 
 {{- $keycloakRouteTLSSecretName := "keycloak-tls" }}
-{{- $keycloakRouteHost := printf "sso.%s" $ingressDomain }}
+{{- $keycloakRouteHost := printf "tssc-sso.%s" $ingressDomain }}
 {{- $realmsName := "tssc-iam" }}
 {{- $tpaTestingUsersEnabled := false }}
 {{- $protocol := "https" -}}
