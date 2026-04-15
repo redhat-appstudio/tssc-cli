@@ -1,0 +1,29 @@
+---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  generateName: e2e-periodic-pipelinerun-
+spec:
+  pipelineRef:
+    resolver: git
+    params:
+      - name: url
+        value: https://github.com/redhat-appstudio/tssc-cli
+      - name: revision
+        value: main
+      - name: pathInRepo
+        value: integration-tests/pipelines/e2e-periodic-pipeline.yaml
+  params:
+    - name: konflux-test-infra-secret
+      value: konflux-test-infra
+    - name: cloud-credential-key
+      value: rhtap-cloud-credentials-us-east-1
+  workspaces:
+    - name: rhads-config
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Gi
