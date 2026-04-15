@@ -218,9 +218,9 @@ bitbucket_integration() {
     echo "[INFO] Configure Bitbucket integration into TSSC"
 
     BITBUCKET_USERNAME="${BITBUCKET_USERNAME:-$(cat /usr/local/rhtap-cli-install/bitbucket-username)}"
-    BITBUCKET_APP_PASSWORD="${BITBUCKET_APP_PASSWORD:-$(cat /usr/local/rhtap-cli-install/bitbucket-app-password)}"
+    BITBUCKET_TOKEN="${BITBUCKET_TOKEN:-$(cat /usr/local/rhtap-cli-install/bitbucket-token)}"
 
-    "${TSSC_BINARY}" integration --kube-config "$KUBECONFIG" bitbucket --host="${BITBUCKET_HOST}" --username="${BITBUCKET_USERNAME}" --app-password="${BITBUCKET_APP_PASSWORD}" --force
+    "${TSSC_BINARY}" integration --kube-config "$KUBECONFIG" bitbucket --host="${BITBUCKET_HOST}" --username="${BITBUCKET_USERNAME}" --token="${BITBUCKET_TOKEN}" --force
   fi
 }
 

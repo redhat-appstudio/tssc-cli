@@ -45,9 +45,9 @@ export AZURE_HOST=
 export AZURE_ORGANIZATION=
 
 #### Bitbucket
-# https://docs.redhat.com/en/documentation/red_hat_trusted_application_pipeline/1.3/html-single/installing_red_hat_trusted_application_pipeline/index#optional_integrating_bitbucket
+# API token
 export BITBUCKET_USERNAME=
-export BITBUCKET_APP_PASSWORD=
+export BITBUCKET_TOKEN=
 export BITBUCKET_HOST="bitbucket.org"
 
 #### TPA

@@ -182,8 +182,8 @@ integrations:
 {{- end }}
 {{- if $bbSecretObj }}
   bitbucketCloud:
-    - appPassword: ${BITBUCKET__APP_PASSWORD}
-      username: ${BITBUCKET__USERNAME}
+    - username: ${BITBUCKET__USERNAME}
+      token: ${BITBUCKET__TOKEN}
 {{- end }}
 {{- if $githubSecretObj }}
   github:

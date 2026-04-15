@@ -214,7 +214,7 @@ integrations() {
     fi
     if [[ -n "${BITBUCKET:-}" ]]; then
         tssc_cli integration bitbucket --force \
-            --app-password='"$BITBUCKET__APP_PASSWORD"' \
+            --token='"$BITBUCKET__TOKEN"' \
             --host='"$BITBUCKET__HOST"' \
             --username='"$BITBUCKET__USERNAME"'
     fi
