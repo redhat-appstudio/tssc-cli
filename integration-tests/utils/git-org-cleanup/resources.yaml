@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: rhtap-cleanup
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: github-org-creds
+  namespace: rhtap-cleanup
+type: Opaque
+stringData:
+  github_org: <GITHUB_ORG_NAME> # Replace with your github org name
+  github_token: <GITHUB_ORG_TOKEN> # Replace with your github token
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: periodic-git-cleanup
+  namespace: rhtap-cleanup
+spec:
+  schedule: "0 8 * * 6" # every Saturday at 8:00 AM
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: git-cleanup
+            image: quay.io/konflux-ci/appstudio-utils:latest
+            command: ["/bin/bash", "-c"]
+            args:
+              - |
+                curl -o /tmp/git-cleanup.sh https://raw.githubusercontent.com/redhat-appstudio/tssc-cli/refs/heads/main/integration-tests/utils/git-org-cleanup/git-repo-cleanup.sh && \
+                chmod +x /tmp/git-cleanup.sh && \
+                ./tmp/git-cleanup.sh
+            env:
+              - name: GITHUB_ORG_NAME
+                valueFrom:
+                  secretKeyRef:
+                    name: github-org-creds
+                    key: github_org
+              - name: GITHUB_ORG_TOKEN
+                valueFrom:
+                  secretKeyRef:
+                    name: github-org-creds
+                    key: github_token
+            securityContext:
+                runAsNonRoot: true
+          restartPolicy: Never

@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: rhtap-cleanup
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: service-jenkins-creds
+  namespace: rhtap-cleanup
+type: Opaque
+stringData:
+  jenkins-api-token: <JENKINS_API_TOKEN> # Replace with user's api token
+  jenkins-username: <JENKINS_USERNAME>  # Replace with user name
+  jenkins-url: <JENKINS_URL> # Replace with Jenkins api url
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: periodic-jenkins-cleanup
+  namespace: rhtap-cleanup
+spec:
+  schedule: "0 7 * * 6" # every Saturday at 7:00 AM
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: jenkins-cleanup
+              image: quay.io/konflux-ci/appstudio-utils:latest
+              imagePullPolicy: Always
+              command: ["/bin/bash", "-c"]
+              args:
+                - |
+                  curl -o /tmp/service-jenkins-cleanup.sh https://raw.githubusercontent.com/redhat-appstudio/tssc-cli/refs/heads/main/integration-tests/utils/service-jenkins-cleanup/service-jenkins-cleanup.sh && \
+                  chmod +x /tmp/service-jenkins-cleanup.sh && \
+                  ./tmp/service-jenkins-cleanup.sh -d false
+              env:
+                - name: JENKINS_USERNAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: service-jenkins-creds
+                      key: jenkins-username
+                - name: JENKINS_API_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: service-jenkins-creds
+                      key: jenkins-api-token
+                - name: JENKINS_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: service-jenkins-creds
+                      key: jenkins-url
+              securityContext:
+                runAsNonRoot: true
+          restartPolicy: Never

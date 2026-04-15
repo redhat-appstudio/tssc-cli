@@ -1,0 +1,11 @@
+[[runners]]
+  environment = ["STORAGE_DRIVER=vfs","BUILDAH_FORMAT=docker", "BUILDAH_ISOLATION=chroot", "KUBERNETES_SERVICE_ACCOUNT_OVERWRITE=gitlab-ci-sa"]
+  [runners.kubernetes]
+      service_account = "gitlab-ci-sa"
+  [runners.kubernetes.pod_security_context]
+      run_as_non_root = false
+      run_as_user = 0
+    [runners.kubernetes.build_container_security_context]
+      run_as_user = 0
+    [runners.kubernetes.build_container_security_context.capabilities]
+      add = ["SETFCAP", "MKNOD"]

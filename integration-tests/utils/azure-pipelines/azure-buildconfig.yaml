@@ -1,0 +1,46 @@
+kind: BuildConfig
+apiVersion: build.openshift.io/v1
+metadata:
+  name: azure-build-agent
+  namespace: azure-build
+spec:
+  output:
+    to:
+      kind: ImageStreamTag
+      name: azure-build-agent:latest
+  source:
+    type: Dockerfile
+    dockerfile: |
+      FROM quay.io/redhat-appstudio/rhtap-task-runner:latest
+      ENV _BUILDAH_STARTED_IN_USERNS="" \
+          BUILDAH_ISOLATION=chroot \
+          STORAGE_DRIVER=vfs
+
+      USER root
+      COPY start.sh .
+      RUN curl $AZP_AGENT_PACKAGE_LATEST_URL --output vsts-agent-linux-x64.tar.gz && \
+          tar zxvf vsts-agent-linux-x64.tar.gz && \
+          rm vsts-agent-linux-x64.tar.gz && id && \
+          chmod 755 *.sh && chown -R root:root . && microdnf install -y openssl-libs krb5-libs zlib libicu && microdnf install -y lttng-ust && \
+          touch /etc/containers/nodocker && \
+          usermod --add-subuids 100000-165535 root && \
+          usermod --add-subgids 100000-165535 root && \
+          setcap cap_setuid+eip /usr/bin/newuidmap && \
+          setcap cap_setgid+eip /usr/bin/newgidmap
+      USER 1001
+      ENTRYPOINT ["./start.sh"]
+    configMaps:
+      - configMap:
+          name: start-sh
+  strategy:
+    type: Docker
+    dockerStrategy:
+      from:
+        kind: DockerImage
+        name: 'quay.io/redhat-appstudio/rhtap-task-runner:latest'
+      env:
+        - name: AZP_AGENT_PACKAGE_LATEST_URL
+          value: >-
+            https://vstsagentpackage.azureedge.net/agent/4.253.0/vsts-agent-linux-x64-4.253.0.tar.gz
+  triggers:
+    - type: ConfigChange
