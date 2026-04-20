@@ -1,0 +1,4 @@
+name: Trusted Profile Analyzer
+namespace: tssc-tpa
+properties:
+  manageSubscription: true

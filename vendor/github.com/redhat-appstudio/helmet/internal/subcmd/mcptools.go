@@ -55,6 +55,7 @@ func standardMCPTools(
 		toolsCtx.AppContext,
 		toolsCtx.RunContext,
 		toolsCtx.IntegrationManager,
+		toolsCtx.Flags,
 	)
 	integrationTools := mcptools.NewIntegrationTools(
 		toolsCtx.AppContext.IdentifierName(), toolsCtx.AppContext.Name,

@@ -63,11 +63,23 @@ func (c *Config) GetProduct(name string) (*Product, error) {
 	return nil, fmt.Errorf("product '%s' not found", name)
 }
 
-// GetEnabledProducts returns a map of enabled products.
+// FindProduct returns the product with the given name, or nil if it is not
+// listed under installer.products.
+func (c *Config) FindProduct(name string) *Product {
+	for i := range c.Installer.Products {
+		if c.Installer.Products[i].Name == name {
+			return &c.Installer.Products[i]
+		}
+	}
+	return nil
+}
+
+// GetEnabledProducts returns products that are active for deployment (omitted
+// enabled or true).
 func (c *Config) GetEnabledProducts() Products {
 	enabled := Products{}
 	for _, product := range c.Installer.Products {
-		if product.Enabled {
+		if product.IsActive() {
 			enabled = append(enabled, product)
 		}
 	}

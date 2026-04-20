@@ -1,0 +1,331 @@
+        #!/usr/bin/env bash
+        set -euo pipefail
+
+        echo "Starting pipelines in mode: $MODE"
+        echo "Using Konflux metadata: namespace=$KONFLUX_NAMESPACE, app=$KONFLUX_APPLICATION_NAME, component=$KONFLUX_COMPONENT_NAME"
+        # Decode base64 encoded rhads-config
+        echo "Decoding base64 encoded rhads-config..."
+        DECODED_RHADS_CONFIG=$(echo "$RHADS_CONFIG" | base64 -d)
+        echo "Decoded rhads-config content:"
+        echo "$DECODED_RHADS_CONFIG"
+        # Extract images from snapshot
+        tssc_image=$(echo "${SNAPSHOT}" | jq -r '.components[] |select(.name=="tssc-cli").containerImage')
+        tssc_test_image=$(echo "${SNAPSHOT}" | jq -r '.components[] |select(.name=="tssc-test").containerImage')
+
+        GIT_REPO="$(jq -r '.git.repo // empty' <<< $JOB_SPEC)"
+        KONFLUX_URL="https://konflux-ui.apps.stone-prd-rh01.pg1f.p1.openshiftapps.com"
+
+        if [[ "${GIT_REPO}" = "tssc-cli" ]]; then
+          REPO_ORG=$(jq -r '.git.source_repo_org' <<< $JOB_SPEC)
+          # Extract the repository name from the source_repo_url
+          SOURCE_REPO_URL=$(jq -r '.git.source_repo_url' <<< $JOB_SPEC)
+          REPO=$(basename "$SOURCE_REPO_URL" .git)
+          # Extract the branch name from the source_repo_branch
+          SOURCE_REPO_BRANCH=$(jq -r '.git.source_repo_branch' <<< $JOB_SPEC)
+          BRANCH="${SOURCE_REPO_BRANCH##refs/heads/}"
+        else
+          REPO_ORG="redhat-appstudio"
+          REPO="tssc-cli"
+          BRANCH="main"
+        fi
+        if [[ "$MODE" == "periodic" ]]; then
+          # use always main from redhat-appstudio for periodic jobs
+          REPO_ORG="redhat-appstudio"
+          BRANCH="main"
+        fi
+        echo "REPO_ORG: $REPO_ORG"
+        echo "BRANCH: $BRANCH"
+        URL_ORG=$(jq -r '.git.org' <<< $JOB_SPEC)
+        echo "URL_ORG: $URL_ORG"
+        URL_REPOSITORY=$(jq -r '.git.repo' <<< $JOB_SPEC)
+        echo "URL_REPOSITORY: $URL_REPOSITORY"
+        GIT_REVISION=$(jq -r '.git.commit_sha // empty' <<< $JOB_SPEC)
+        echo "GIT_REVISION: $GIT_REVISION"
+        PR_NUMBER=$(jq -r '.git.pull_request_number // empty' <<< $JOB_SPEC)
+        echo "PR_NUMBER: $PR_NUMBER"
+        EVENT_TYPE=$(jq -r '.event_type // .git.event_type // empty' <<< $JOB_SPEC)
+        echo "EVENT_TYPE: $EVENT_TYPE"
+
+        PIPELINERUNS_ARRAY=()
+
+        # Function to start a single pipeline
+        start_single_pipeline() {
+          local ocp_version="$1"
+          local config="$2"
+          local testplan_b64="$3"
+          local config_suffix="$4"
+          echo "Starting pipeline for OCP version: $ocp_version"
+          local pipeline_run
+          # Build the tkn command with proper parameter handling
+          local tkn_params=(
+            "--param" "ocp-version=$ocp_version"
+            "--param" "job-spec=$JOB_SPEC"
+            "--param" "konflux-test-infra-secret=$KONFLUX_TEST_INFRA_SECRET"
+            "--param" "rhads-config=$config"
+            "--param" "testplan=${testplan_b64:-}"
+            "--param" "cloud-credential-key=$CLOUD_CREDENTIAL_KEY"
+            "--param" "machine-type=$OCP_INSTANCE_TYPE"
+            "--param" "replicas=$OCP_REPLICAS"
+          )
+
+          # Add optional image parameters
+          if [[ "${tssc_image}" != "" ]]; then
+            tkn_params+=("--param" "tssc-image=${tssc_image}")
+          fi
+          if [[ "${tssc_test_image}" != "" ]]; then
+            tkn_params+=("--param" "tssc-test-image=${tssc_test_image}")
+          fi
+
+          # Add labels and other flags
+          tkn_params+=(
+            "--use-param-defaults"
+            "--labels" "appstudio.openshift.io/component=${KONFLUX_COMPONENT_NAME}"
+            "--labels" "appstudio.openshift.io/application=${KONFLUX_APPLICATION_NAME}"
+            "--labels" "pipelines.appstudio.openshift.io/type=${CONTEXT_PIPELINE_RUN_NAME}"
+            "--labels" "test.appstudio.openshift.io/scenario=pr-e2e-tests"
+            "--labels" "pac.test.appstudio.openshift.io/url-org=${URL_ORG}"
+            "--labels" "pac.test.appstudio.openshift.io/url-repository=${URL_REPOSITORY}"
+            "--labels" "pac.test.appstudio.openshift.io/git-revision=${GIT_REVISION}"
+            "--labels" "pac.test.appstudio.openshift.io/pull-request=${PR_NUMBER}"
+            "--labels" "pac.test.appstudio.openshift.io/event-type=${EVENT_TYPE}"
+            "--labels" "custom.appstudio.openshift.io/main-pipeline-run=${CONTEXT_PIPELINE_RUN_NAME}"
+            "--prefix-name" "e2e-$ocp_version$config_suffix"
+            "-o" "name"
+            "--serviceaccount" "konflux-integration-runner"
+            "--pipeline-timeout" "2h0m"
+          )
+
+          echo "Starting pipeline with testplan (${#testplan_b64} chars): ${testplan_b64:0:50}..."
+          pipeline_run=$(tkn pipeline start -f https://raw.githubusercontent.com/$REPO_ORG/$REPO/refs/heads/$BRANCH/integration-tests/pipelines/tssc-cli-e2e.yaml "${tkn_params[@]}")
+          #Verifying Timeout
+          pipeline_timeout=$(oc get pipelinerun "${pipeline_run}" -n "${KONFLUX_NAMESPACE}" -o jsonpath='{.spec.timeouts.pipeline}')
+          echo "Pipeline run timeout set to ${pipeline_timeout}"
+          # Construct console URL for the new PipelineRun
+          CONSOLE_URL="${KONFLUX_URL}/ns/${KONFLUX_NAMESPACE}/applications/${KONFLUX_APPLICATION_NAME}/pipelineruns/${pipeline_run}"
+          echo "Started new pipelinerun: ${CONSOLE_URL}"
+          # Set console URL as annotation for store-pipeline-status task
+          # Annotations can contain full URLs, unlike labels which have restrictions
+          oc annotate pipelinerun "${pipeline_run}" -n "${KONFLUX_NAMESPACE}" "pac.test.appstudio.openshift.io/log-url=${CONSOLE_URL}" --overwrite
+          PIPELINERUNS_ARRAY+=($pipeline_run)
+        }
+
+        if [[ "$MODE" == "periodic" ]]; then
+          echo "Processing periodic configurations..."
+          echo "RHADS Config data:"
+          echo "$DECODED_RHADS_CONFIG"
+          # Validate that we have some content
+          if [[ -z "$DECODED_RHADS_CONFIG" ]]; then
+            echo "ERROR: No RHADS configuration data found"
+            exit 1
+          fi
+          # Count configurations
+          if echo "$DECODED_RHADS_CONFIG" | grep -q "---CONFIG_SEPARATOR---"; then
+            SEPARATOR_COUNT=$(echo "$DECODED_RHADS_CONFIG" | grep -o -e "---CONFIG_SEPARATOR---" | wc -l)
+            echo "DEBUG: Found $SEPARATOR_COUNT separators using grep"
+          else
+            SEPARATOR_COUNT=0
+            echo "DEBUG: No separators found, setting SEPARATOR_COUNT=0"
+          fi
+          CONFIG_COUNT=$((SEPARATOR_COUNT + 1))  # Add 1 because there's one more config than separators
+          echo "Found $CONFIG_COUNT configurations to process"
+          # Handle single configuration case
+          if [[ $CONFIG_COUNT -eq 1 ]]; then
+            echo "Processing single configuration in periodic mode..."
+            FULL_CONFIG="$DECODED_RHADS_CONFIG"
+            # Trim whitespace from config
+            FULL_CONFIG=$(echo "$FULL_CONFIG" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+            CONFIG_INDEX=1
+            echo "==================== Configuration $CONFIG_INDEX ===================="
+            echo "$FULL_CONFIG"
+            echo "================================================================"
+            # Split RHADS config and testplan
+            if [[ "$FULL_CONFIG" == *"---TESTPLAN_START---"* ]]; then
+              # Extract RHADS config (before testplan)
+              CONFIG="${FULL_CONFIG%%---TESTPLAN_START---*}"
+              # Extract testplan (between markers)
+              TESTPLAN_PART="${FULL_CONFIG#*---TESTPLAN_START---}"
+              TESTPLAN="${TESTPLAN_PART%%---TESTPLAN_END---*}"
+              # Trim whitespace from both parts
+              CONFIG=$(echo "$CONFIG" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+              TESTPLAN=$(echo "$TESTPLAN" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+              echo "RHADS Config:"
+              echo "$CONFIG"
+              echo "Testplan:"
+              echo "$TESTPLAN"
+              # Encode testplan to base64
+              TESTPLAN_B64=$(echo "$TESTPLAN" | base64 -w 0)
+              echo "Testplan base64: $TESTPLAN_B64"
+            else
+              # No testplan found, use config as-is
+              CONFIG="$FULL_CONFIG"
+              TESTPLAN_B64=""
+              echo "No testplan found for this configuration"
+            fi
+            # Extract OCP version from this configuration
+            if [[ $CONFIG =~ OCP=\"([^\"]+)\" ]]; then
+              OCP_VERSION="${BASH_REMATCH[1]}"
+              echo "Successfully extracted OCP version: $OCP_VERSION from configuration $CONFIG_INDEX"
+              # Start pipeline using shared function
+              start_single_pipeline "$OCP_VERSION" "$CONFIG" "$TESTPLAN_B64" "-config$CONFIG_INDEX"
+            else
+              echo "ERROR: Could not extract OCP version from configuration $CONFIG_INDEX"
+              echo "Configuration content: $CONFIG"
+              exit 1
+            fi
+          else
+            # Multiple configurations
+            echo "Processing multiple configurations using separator logic..."
+            # Create a pipeline for every RHADS config using pure bash string manipulation
+            CONFIG_INDEX=0
+            # Split the configurations using bash string manipulation
+            REMAINING_CONFIG="$DECODED_RHADS_CONFIG"
+          while [[ -n "$REMAINING_CONFIG" ]]; do
+            # Find the next separator
+            if [[ "$REMAINING_CONFIG" == *"---CONFIG_SEPARATOR---"* ]]; then
+              # Extract config before separator
+              FULL_CONFIG="${REMAINING_CONFIG%%---CONFIG_SEPARATOR---*}"
+              # Remove processed config and separator from remaining
+              REMAINING_CONFIG="${REMAINING_CONFIG#*---CONFIG_SEPARATOR---}"
+            else
+              # Last config (no separator after it)
+              FULL_CONFIG="$REMAINING_CONFIG"
+              REMAINING_CONFIG=""
+            fi
+            # Trim whitespace from config
+            FULL_CONFIG=$(echo "$FULL_CONFIG" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+            CONFIG_INDEX=$(( $CONFIG_INDEX + 1 ))
+            echo "==================== Configuration $CONFIG_INDEX ===================="
+            echo "$FULL_CONFIG"
+            echo "================================================================"
+            # Split RHADS config and testplan
+            if [[ "$FULL_CONFIG" == *"---TESTPLAN_START---"* ]]; then
+              # Extract RHADS config (before testplan)
+              CONFIG="${FULL_CONFIG%%---TESTPLAN_START---*}"
+              # Extract testplan (between markers)
+              TESTPLAN_PART="${FULL_CONFIG#*---TESTPLAN_START---}"
+              TESTPLAN="${TESTPLAN_PART%%---TESTPLAN_END---*}"
+              # Trim whitespace from both parts
+              CONFIG=$(echo "$CONFIG" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+              TESTPLAN=$(echo "$TESTPLAN" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+              echo "RHADS Config:"
+              echo "$CONFIG"
+              echo "Testplan:"
+              echo "$TESTPLAN"
+              # Encode testplan to base64
+              TESTPLAN_B64=$(echo "$TESTPLAN" | base64 -w 0)
+              echo "Testplan base64: $TESTPLAN_B64"
+            else
+              # No testplan found, use config as-is
+              CONFIG="$FULL_CONFIG"
+              TESTPLAN_B64=""
+              echo "No testplan found for this configuration"
+            fi
+            # Extract OCP version from this configuration
+            if [[ $CONFIG =~ OCP=\"([^\"]+)\" ]]; then
+              OCP_VERSION="${BASH_REMATCH[1]}"
+              echo "Successfully extracted OCP version: $OCP_VERSION from configuration $CONFIG_INDEX"
+              # Start pipeline using shared function
+              start_single_pipeline "$OCP_VERSION" "$CONFIG" "$TESTPLAN_B64" "-config$CONFIG_INDEX"
+            else
+              echo "ERROR: Could not extract OCP version from configuration $CONFIG_INDEX"
+              echo "Configuration content: $CONFIG"
+              exit 1
+            fi
+          done
+          echo "Started $CONFIG_INDEX sub-pipelines for periodic testing"
+          fi
+        else
+          echo "Processing single configuration..."
+          RHADS_CONFIG_CONTENT=$(echo "$DECODED_RHADS_CONFIG")
+          echo "Configuration:"
+          echo "$RHADS_CONFIG_CONTENT"
+          # Extract OCP versions from RHADS config
+          [[ $RHADS_CONFIG_CONTENT =~ OCP=\"([^\"]+)\" ]] && IFS=',' read -ra OCP_VERSIONS <<< "${BASH_REMATCH[1]}"
+          echo "Running tests for OCP versions: ${OCP_VERSIONS[*]}"
+          # Loop through each OCP version and start a sub-pipeline for each
+          for OCP_VERSION in "${OCP_VERSIONS[@]}"; do
+            echo "Starting sub-pipeline for OCP version: $OCP_VERSION"
+            # Start pipeline using shared function
+            start_single_pipeline "$OCP_VERSION" "$RHADS_CONFIG_CONTENT" "" ""
+          done
+        fi
+
+        echo "Total pipelines started: ${#PIPELINERUNS_ARRAY[@]}"
+        # Validate that we started at least one pipeline
+        if [[ ${#PIPELINERUNS_ARRAY[@]} -eq 0 ]]; then
+          echo "ERROR: No pipelines were started. Check the configuration data and OCP version extraction."
+          exit 1
+        fi
+
+        # Store results
+        printf '%s\n' "${PIPELINERUNS_ARRAY[@]}" | jq -R . | jq -s . > $(results.pipeline-runs.path)
+
+        declare -A PIPELINE_RESULTS
+
+        # Wait for completion function
+        waitFor() {
+          local CONDITION="$1"
+          local MESSAGE_RUNNING="$2"
+          local MESSAGE_DONE="$3"
+          export CONDITION MESSAGE_RUNNING MESSAGE_DONE
+          timeout --foreground 120m /bin/bash -c '
+            #deserialize plrs array
+            set -x
+            read -r -a PIPELINERUNS_ARRAY <<< "$PIPELINERUNS_ARRAY_SERIALIZED"
+            echo "${PIPELINERUNS_ARRAY[*]}"
+            while [[ ${#PIPELINERUNS_ARRAY[@]} -gt 0 ]]; do
+              # Create a new array to store pipelines that are still running
+              STILL_RUNNING=()
+              for PIPELINE_RUN in "${PIPELINERUNS_ARRAY[@]}"; do
+                if eval "$CONDITION"; then
+                  # Pipeline is still running, keep it in the array
+                  STILL_RUNNING+=("$PIPELINE_RUN")
+                else
+                  # Pipeline is finished, remove it from the array
+                  echo "Pipeline $PIPELINE_RUN has finished"
+                  JSON_PATH='{.status.conditions[?(@.type=="Succeeded")].status}'
+                  RESULT=$(oc get pipelinerun/${PIPELINE_RUN} -n ${KONFLUX_NAMESPACE} -o jsonpath="$JSON_PATH")
+                  PIPELINE_RESULTS["$PIPELINE_RUN"]="$RESULT"
+                  echo "Succeeded: $RESULT"
+                fi
+              done
+              # Update the array with only running pipelines
+              PIPELINERUNS_ARRAY=("${STILL_RUNNING[@]}")
+              if [[ ${#PIPELINERUNS_ARRAY[@]} -gt 0 ]]; then
+                echo "$MESSAGE_RUNNING (${#PIPELINERUNS_ARRAY[@]} pipelines remaining)"
+                sleep 60
+              else
+                echo "$MESSAGE_DONE"
+                break
+              fi
+            done
+          '
+        }
+
+        #Serialize plrs array to be able to export it as var
+        export PIPELINERUNS_ARRAY_SERIALIZED="${PIPELINERUNS_ARRAY[*]}"
+
+        waitFor '! oc get pipelinerun/$PIPELINE_RUN -n ${KONFLUX_NAMESPACE} &>/dev/null' "Pipelines are still starting. Waiting 1 minute" "All pipelines have started"
+        waitFor '[[ $(oc get pipelinerun/$PIPELINE_RUN -n ${KONFLUX_NAMESPACE} -o jsonpath="{.status.conditions[?(@.type==\"Succeeded\")].status}") == "" ]]' "Waiting for nested pipelinerun status to be set. Waiting 1 minute" "Nested pipelinerun status is set"
+        waitFor '[[ $(oc get pipelinerun/$PIPELINE_RUN -n ${KONFLUX_NAMESPACE} -o jsonpath="{.status.conditions[?(@.type==\"Succeeded\")].status}") == "Unknown" ]]' "Nested pipelines are still running. Waiting 1 minute" "All nested pipelines finished"
+
+        # Explore and report status of all failed pipelineruns. Fail if anything failed
+        SOME_PIPELINE_FAILED=false
+        SOME_PIPELINE_SUCCEEDED=false
+        for PIPELINE_RUN in "${PIPELINERUNS_ARRAY[@]}"; do
+          STATUS="${PIPELINE_RESULTS[$PIPELINE_RUN]}"
+          if [[ "$STATUS" == "False" ]]; then
+            if ! $SOME_PIPELINE_FAILED ; then
+              echo "List of failed PLRs:"
+            fi
+            echo "${KONFLUX_URL}/ns/${KONFLUX_NAMESPACE}/applications/${KONFLUX_APPLICATION_NAME}/pipelineruns/${PIPELINE_RUN}"
+            SOME_PIPELINE_FAILED=true
+          elif [[ "$STATUS" == "True" ]]; then
+            SOME_PIPELINE_SUCCEEDED=true
+          fi
+        done
+        if $SOME_PIPELINE_SUCCEEDED ; then
+          exit 0
+        fi
+        # If we reach here, no pipelines succeeded - fail the main pipeline
+        exit 1

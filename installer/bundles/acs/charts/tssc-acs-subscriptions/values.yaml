@@ -1,0 +1,15 @@
+---
+# Chart-local defaults for the Advanced Cluster Security operator Subscription only.
+# Install-time values come from ../../values.yaml.tpl (merged by Helmet).
+subscriptions:
+  advancedClusterSecurity:
+    enabled: false
+    description: Red Hat Advanced Cluster Security Operator
+    apiResource: centrals.platform.stackrox.io
+    channel: rhacs-4.10
+    namespace: rhacs-operator
+    name: rhacs-operator
+    source: redhat-operators
+    sourceNamespace: openshift-marketplace
+    operatorGroup:
+      upgradeStrategy: Default

@@ -1,0 +1,22 @@
+{{- if ne (dig "mode" "product" (index .Values "bundle" | default dict)) "integration" }}
+{{- $tpa := index .Values "redhat-trusted-profile-analyzer" -}}
+---
+{{- include "common.preInstall" . }}
+  containers:
+    - name: test-url
+      image: registry.redhat.io/openshift4/ose-tools-rhel9:v4.19
+      env:
+        - name: URL
+          value: {{
+            required ".Values.trustedProfileAnalyzer.oidcIssuerURL is required!"
+            .Values.trustedProfileAnalyzer.oidcIssuerURL
+          }}
+      command:
+        - /scripts/test-url.sh
+      volumeMounts:
+        - name: scripts
+          mountPath: /scripts
+      securityContext:
+        allowPrivilegeEscalation: false
+{{- end }}
+

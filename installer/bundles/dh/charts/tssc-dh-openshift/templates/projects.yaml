@@ -1,0 +1,21 @@
+{{- $projects := list -}}
+{{- range $p := .Values.openshift.projects -}}
+  {{- if not (has $p $projects ) -}}
+    {{- $projects = append $projects $p -}}
+  {{- end -}}
+{{- end -}}
+
+{{- range $p := $projects }}
+  {{- if and
+        (not (hasPrefix "openshift-" $p))
+        (not (lookup "project.openshift.io/v1" "Project" "" $p ))
+  }}
+---
+apiVersion: project.openshift.io/v1
+kind: ProjectRequest
+description: {{ $p }}
+displayName: {{ $p }}
+metadata:
+  name: {{ $p }}
+  {{- end }}
+{{- end }}

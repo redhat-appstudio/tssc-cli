@@ -1,0 +1,9 @@
+---
+apiVersion: v2
+name: tssc-gitops-integrations
+description: TSSC GitOps integrations (Argo CD repo credentials from CLI secrets)
+type: application
+version: "1.9.0"
+annotations:
+  helmet.redhat-appstudio.github.com/depends-on: tssc-gitops
+  helmet.redhat-appstudio.github.com/install-release-in-installer-namespace: "true"

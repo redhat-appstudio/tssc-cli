@@ -1,0 +1,9 @@
+---
+apiVersion: v2
+name: tssc-tpa-pgsql
+description: PostgreSQL instance for Trusted Profile Analyzer
+type: application
+version: "1.9.0"
+annotations:
+  helmet.redhat-appstudio.github.com/use-product-namespace: Trusted Profile Analyzer
+  helmet.redhat-appstudio.github.com/install-release-in-installer-namespace: "true"

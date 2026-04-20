@@ -534,7 +534,7 @@ configure_tas() {
     
     # Update values.yaml to use the correct source and channel from the pre-release subscription
     # This ensures the installer references match what was actually installed
-    values_file="$PROJECT_DIR/installer/charts/tssc-subscriptions/values.yaml"
+    values_file="$PROJECT_DIR/installer/bundles/tas/charts/tssc-tas-subscriptions/values.yaml"
     if [[ -f "$values_file" ]]; then
         echo "[INFO] Updating values.yaml to use pre-release TAS catalog source and channel" >&2
         echo "[INFO] Setting source to: $SOURCE, channel to: $CHANNEL" >&2

@@ -1,5 +1,0 @@
-{{- $tpa := .Values.trustedProfileAnalyzer }}
-{{- $trustification := .Values.trustification -}}
-Trusted Profile Analyzer (TPA):
-  - UI: {{ printf "https://server%s" $trustification.appDomain }}
-    Keycloak URL:   {{ $trustification.oidc.issuerUrl }}

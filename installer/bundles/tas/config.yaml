@@ -1,0 +1,4 @@
+name: Trusted Artifact Signer
+namespace: tssc-tas
+properties:
+  manageSubscription: true

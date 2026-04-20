@@ -1,0 +1,6 @@
+name: IAM
+namespace: tssc-keycloak
+properties:
+  # When false, Keycloak operator Subscription/OperatorGroup are not managed by
+  # tssc-iam-subscriptions (use if they already exist from a prior tssc-subscriptions release).
+  manageSubscription: true

@@ -1,0 +1,17 @@
+---
+# Chart-local defaults for the Trusted Profile Analyzer operator Subscription only.
+# Install-time values come from ../../values.yaml.tpl (merged by Helmet).
+subscriptions:
+  trustedProfileAnalyzer:
+    enabled: false
+    description: Red Hat Trusted Profile Analyzer
+    apiResource: trustedprofileanalyzers.rhtpa.io
+    namespace: tssc-tpa
+    name: rhtpa-operator
+    channel: stable-v1.1
+    source: redhat-operators
+    sourceNamespace: openshift-marketplace
+    operatorGroup:
+      upgradeStrategy: Default
+      targetNamespaces:
+        - tssc-tpa

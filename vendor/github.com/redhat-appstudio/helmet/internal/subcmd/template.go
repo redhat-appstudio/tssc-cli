@@ -2,6 +2,8 @@ package subcmd
 
 import (
 	"fmt"
+	"path/filepath"
+	"strings"
 
 	"github.com/redhat-appstudio/helmet/api"
 	"github.com/redhat-appstudio/helmet/internal/config"
@@ -46,11 +48,16 @@ func (t *Template) Complete(args []string) error {
 		return fmt.Errorf("expecting one chart, got %d", len(args))
 	}
 
-	hc, err := t.runCtx.ChartFS.GetChartFiles(args[0])
+	chartDir, err := t.runCtx.ChartFS.ResolveChartDir(args[0])
 	if err != nil {
 		return err
 	}
-	t.dep = *resolver.NewDependencyWithNamespace(hc, t.namespace)
+	chartDir = filepath.ToSlash(strings.TrimSuffix(chartDir, "/"))
+	hc, err := t.runCtx.ChartFS.GetChartFiles(chartDir)
+	if err != nil {
+		return err
+	}
+	t.dep = *resolver.NewDependencyWithNamespaceAndChartPath(hc, t.namespace, chartDir)
 
 	if t.cfg, err = bootstrapConfig(t.cmd.Context(), t.appCtx, t.runCtx); err != nil {
 		return err
@@ -74,7 +81,10 @@ func (t *Template) Validate() error {
 
 // Run Renders the templates.
 func (t *Template) Run() error {
-	valuesTmplPayload, err := t.runCtx.ChartFS.ReadFile(t.valuesTemplatePath)
+	valuesTmplPayload, _, err := t.runCtx.ChartFS.ReadValuesTemplate(
+		t.dep.ChartPath(),
+		t.valuesTemplatePath,
+	)
 	if err != nil {
 		return fmt.Errorf("failed to read values template file: %w", err)
 	}
@@ -124,24 +134,37 @@ By using the '--show-manifests=false' flag, only the global values template
 ('--values-template') will be rendered as YAML, thus the last argument, with the
 Helm chart directory, optional.
 
-Additionally, the '--debug' flag should be used to display rendered global values,
-passed into every Helm Chart installed, as key-value pairs.
+During deploy, '--verbose' prints rendered values before and after template
+rendering. For this command, use '--show-values' to emit the rendered global values
+as YAML.
 
 The installer resources are embedded in the executable, these resources are
 employed by default, to use local files just use the last argument with the path
 to the local Helm Chart.
+
+Chart path resolution: a bare chart name resolves to charts/<name> when present,
+otherwise FindChartDir scans bundles/*/charts/<name>. Bundle-local charts use a
+distinct Helm chart name (e.g. %s-tpa-subscriptions under bundles/tpa/charts/).
+Use an explicit path to render a bundle chart so values come from
+bundles/<bundle-id>/values.yaml.tpl.
 
 Examples:
 
   # Only showing the global values as YAML.
   $ %s template --show-manifests=false
 
-  # Rendering only the templates of a single Helm Chart.
+  # Global subscriptions chart (installer/charts/).
   $ %s template --show-values=false charts/%s-subscriptions
+
+  # Bundle chart + bundle values (bundles/tpa/values.yaml.tpl).
+  $ %s template --show-values=false bundles/tpa/charts/%s-tpa-subscriptions
 
   # Rendering all resources of a Helm Chart.
   $ %s template charts/%s-subscriptions`,
+		appCtx.IdentifierName(),
 		appCtx.Name,
+		appCtx.Name,
+		appCtx.IdentifierName(),
 		appCtx.Name,
 		appCtx.IdentifierName(),
 		appCtx.Name,

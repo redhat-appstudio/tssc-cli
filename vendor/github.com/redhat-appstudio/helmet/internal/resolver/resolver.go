@@ -6,14 +6,16 @@ import (
 	"strings"
 	"text/tabwriter"
 
+	"github.com/redhat-appstudio/helmet/internal/annotations"
 	"github.com/redhat-appstudio/helmet/internal/config"
 )
 
 // Resolver represents the actor that resolves dependencies between charts.
 type Resolver struct {
-	cfg        *config.Config // installer configuration
-	collection *Collection    // collection of charts
-	topology   *Topology      // topology of dependencies
+	cfg             *config.Config          // installer configuration
+	collection      *Collection             // collection of charts
+	topology          *Topology               // topology of dependencies
+	bundleMembers map[string][]string // bundle id -> chart names (bundles/<id>/charts/)
 }
 
 // ErrCircularDependency reports a circular dependency.
@@ -43,14 +45,26 @@ func (r *Resolver) setDependencyNamespace(d *Dependency) error {
 	if product == "" {
 		namespace = r.cfg.Namespace()
 	} else {
-		spec, err := r.cfg.GetProduct(product)
-		if err != nil {
-			return err
+		spec := r.cfg.FindProduct(product)
+		if spec == nil {
+			// Chart carries product-name but that product is not under installer.products:
+			// release in the installer namespace.
+			namespace = r.cfg.Namespace()
+		} else {
+			namespace = *spec.Namespace
 		}
-		namespace = *spec.Namespace
 	}
 	d.SetNamespace(namespace)
+	r.maybeInstallReleaseInInstallerNamespace(d)
 	return nil
+}
+
+// maybeInstallReleaseInInstallerNamespace overrides the dependency namespace to the
+// installer namespace when the chart declares install-release-in-installer-namespace.
+func (r *Resolver) maybeInstallReleaseInInstallerNamespace(d *Dependency) {
+	if d != nil && d.InstallReleaseInInstallerNamespace() {
+		d.SetNamespace(r.cfg.Namespace())
+	}
 }
 
 // dependsOn checks if the chart has dependencies and resolves them. The
@@ -70,19 +84,17 @@ func (r *Resolver) dependsOn(
 	visited[dependencyName] = true
 	defer delete(visited, dependencyName)
 
-	for _, dependsOn := range d.DependsOn() {
+	for _, dependsOn := range r.effectiveDependsOn(d) {
 		// Picking up the dependency from the collection by name.
 		dependsOnDep, err := r.collection.Get(dependsOn)
 		if err != nil {
 			return err
 		}
-		// Skiping when the next dependency is associated with a disabled product.
+		// Skip only when the product exists in config and is disabled. If the
+		// product is not listed in installer.products, still resolve depends-on
+		// so ordering stays correct; namespace uses installer namespace.
 		if product := dependsOnDep.ProductName(); product != "" {
-			productSpec, err := r.cfg.GetProduct(product)
-			if err != nil {
-				return err
-			}
-			if !productSpec.Enabled {
+			if spec := r.cfg.FindProduct(product); spec != nil && !spec.IsActive() {
 				continue
 			}
 		}
@@ -110,6 +122,7 @@ func (r *Resolver) resolveEnabledProducts() error {
 		}
 		// Products uses the namespace specified in the configuration.
 		d.SetNamespace(*product.Namespace)
+		r.maybeInstallReleaseInInstallerNamespace(d)
 		// Product charts are added to the topology before required charts.
 		r.topology.Append(*d)
 		// Recursively resolving the dependencies, added before this chart.
@@ -133,7 +146,7 @@ func (r *Resolver) resolveDependencies() error {
 		// Collecting the last dependency name that is required by the current
 		// chart (dependency), if any.
 		requiredDependency := ""
-		for _, dependsOn := range d.DependsOn() {
+		for _, dependsOn := range r.effectiveDependsOn(&d) {
 			// Ensure the required dependency is in the topology, when not in the
 			// topology it is skipped.
 			if !r.topology.Contains(dependsOn) {
@@ -168,10 +181,55 @@ func (r *Resolver) resolveDependencies() error {
 
 // Resolve resolves the all dependencies in the collection to create the topology.
 func (r *Resolver) Resolve() error {
+	r.bundleMembers = r.buildBundleMembersIndex()
 	if err := r.resolveEnabledProducts(); err != nil {
 		return err
 	}
 	return r.resolveDependencies()
+}
+
+func (r *Resolver) buildBundleMembersIndex() map[string][]string {
+	idx := map[string][]string{}
+	_ = r.collection.Walk(func(name string, d Dependency) error {
+		bid := bundleIDFromChartPath(d.ChartPath())
+		if bid != "" {
+			idx[bid] = append(idx[bid], name)
+		}
+		return nil
+	})
+	return idx
+}
+
+// effectiveDependsOn merges global charts, bundle-local charts, expanded bundle
+// dependencies, or the legacy depends-on annotation when no split annotations are set.
+func (r *Resolver) effectiveDependsOn(d *Dependency) []string {
+	g := d.DependsOnGlobalCharts()
+	bc := d.DependsOnBundleCharts()
+	bb := d.DependsOnBundles()
+	legacy := d.getAnnotation(annotations.DependsOn)
+	if len(g) == 0 && len(bc) == 0 && len(bb) == 0 && legacy != "" {
+		return commaSeparatedToSlice(legacy)
+	}
+	var parts []string
+	parts = append(parts, g...)
+	parts = append(parts, bc...)
+	for _, bid := range bb {
+		bid = strings.TrimSpace(bid)
+		if bid == "" {
+			continue
+		}
+		parts = append(parts, r.bundleMembers[bid]...)
+	}
+	return dedupeOrdered(parts)
+}
+
+func (r *Resolver) isActiveProduct(name string) bool {
+	for _, p := range r.cfg.Installer.Products {
+		if p.Name == name && p.IsActive() {
+			return true
+		}
+	}
+	return false
 }
 
 // Print prints the resolved topology to the writer formatted as a table.
@@ -189,7 +247,7 @@ func (r *Resolver) Print(w io.Writer) {
 			d.Name(),
 			d.Namespace(),
 			d.ProductName(),
-			strings.Join(d.DependsOn(), ", "),
+			strings.Join(r.effectiveDependsOn(&d), ", "),
 			fmt.Sprintf("%d", weight),
 			strings.Join(d.IntegrationsProvided(), ", "),
 			d.IntegrationsRequired(),

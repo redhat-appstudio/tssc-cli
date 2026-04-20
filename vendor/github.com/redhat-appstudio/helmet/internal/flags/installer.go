@@ -15,6 +15,6 @@ func SetValuesTmplFlag(p *pflag.FlagSet, v *string) {
 		v,
 		ValuesTemplateFlag,
 		constants.ValuesFilename,
-		"Path to the values template file",
+		"Path to the default values template; a chart may use <chart-dir>/values.yaml.tpl instead",
 	)
 }

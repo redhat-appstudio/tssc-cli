@@ -1,1 +1,0 @@
-../../../scripts/argocd-helper.sh

@@ -1,0 +1,41 @@
+{{- $any := false -}}
+{{- range $inst := .Values.pgsqlService.instances -}}
+{{- if $inst.enabled -}}
+{{- $any = true -}}
+{{- end -}}
+{{- end -}}
+{{- if $any -}}
+---
+{{- include "common.test" . }}
+  containers:
+{{- with $pgsql := .Values.pgsqlService }}
+{{- range $inst := $pgsql.instances }}
+{{- if $inst.enabled }}
+{{- $podName := printf "test-%s-%s" $inst.name $pgsql.podName }}
+{{- $serviceName := printf "%s-%s" $inst.name $pgsql.service.name }}
+{{- $secretName := printf "%s-%s" $inst.name $pgsql.secretName }}
+{{- $hostName := printf "%s.%s.svc" $serviceName $inst.namespace }}
+    - name: {{ $podName }}
+      image: '{{ $pgsql.image.repository }}{{ $pgsql.image.name }}:{{ $pgsql.image.tag }}'
+      imagePullPolicy: {{ $pgsql.image.pullPolicy }}
+      env:
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ $secretName }}
+              key: password
+      command:
+        - /bin/bash
+        - -ec
+        - |
+          for i in {1..30}; do
+            psql -d {{ $inst.name }} -h {{ $hostName }} -p {{ $pgsql.service.port | toString }} -U {{ $inst.name }} -c "select 1" && exit 0
+            echo "pgsql service not ready yet, retrying ($i/30)..."
+            sleep 2
+          done
+          echo "ERROR: psql readiness check failed after 30 retries"
+          exit 1
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

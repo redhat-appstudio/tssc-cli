@@ -1,1 +1,0 @@
-../../../scripts/test-signing-secrets.sh

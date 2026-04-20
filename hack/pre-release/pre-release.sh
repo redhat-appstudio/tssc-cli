@@ -270,7 +270,7 @@ main() {
         echo
     done
     echo "Updated subscription values.yaml"
-    cat "$PROJECT_DIR/installer/charts/tssc-subscriptions/values.yaml"
+    cat "$PROJECT_DIR/installer/bundles/dh/charts/tssc-dh-subscriptions/values.yaml"
 }
 
 if [ "${BASH_SOURCE[0]}" == "$0" ]; then

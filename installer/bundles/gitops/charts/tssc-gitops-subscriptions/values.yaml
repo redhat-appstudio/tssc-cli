@@ -1,0 +1,15 @@
+---
+# Chart-local defaults for the OpenShift GitOps operator Subscription only.
+# Install-time values come from ../../values.yaml.tpl (merged by Helmet).
+subscriptions:
+  openshiftGitOps:
+    enabled: false
+    description: OpenShift GitOps Operator
+    apiResource: gitopsservices.pipelines.openshift.io
+    namespace: openshift-operators
+    name: openshift-gitops-operator
+    channel: gitops-1.20
+    source: redhat-operators
+    sourceNamespace: openshift-marketplace
+    config:
+      argoCDClusterNamespace: __OVERWRITE_ME__
