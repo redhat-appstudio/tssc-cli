@@ -15,8 +15,9 @@ import (
 // TrustedArtifactSigner represents the coordinates to connect to
 // the TrustedArtifactSigner services.
 type TrustedArtifactSigner struct {
-	rekorURL string // URL of the rekor server
-	tufURL   string // URL of the TUF server
+	fulcioURL string // URL of the Fulcio server
+	rekorURL  string // URL of the rekor server
+	tufURL    string // URL of the TUF server
 }
 
 var _ Interface = &TrustedArtifactSigner{}
@@ -25,12 +26,15 @@ var _ Interface = &TrustedArtifactSigner{}
 func (t *TrustedArtifactSigner) PersistentFlags(c *cobra.Command) {
 	p := c.PersistentFlags()
 
+	p.StringVar(&t.fulcioURL, "fulcio-url", t.fulcioURL,
+		"URL of the Fulcio server (e.g. https://fulcio.sigstore.dev)")
 	p.StringVar(&t.rekorURL, "rekor-url", t.rekorURL,
 		"URL of the Rekor server (e.g. https://rekor.sigstore.dev)")
 	p.StringVar(&t.tufURL, "tuf-url", t.tufURL,
 		"URL of the TUF server (e.g. https://tuf.trustification.dev)")
 
 	for _, f := range []string{
+		"fulcio-url",
 		"rekor-url",
 		"tuf-url",
 	} {
@@ -48,6 +52,7 @@ func (t *TrustedArtifactSigner) SetArgument(string, string) error {
 // LoggerWith decorates the logger with the integration flags.
 func (t *TrustedArtifactSigner) LoggerWith(logger *slog.Logger) *slog.Logger {
 	return logger.With(
+		"fulcio-url", t.fulcioURL,
 		"rekor-url", t.rekorURL,
 		"tuf-url", t.tufURL,
 	)
@@ -60,6 +65,12 @@ func (t *TrustedArtifactSigner) Type() corev1.SecretType {
 
 // Validate checks the informed URLs ensure valid inputs.
 func (t *TrustedArtifactSigner) Validate() error {
+	if t.fulcioURL != "" {
+		// Fulcio URL is optional, but if provided, it must be valid.
+		if err := ValidateURL(t.fulcioURL); err != nil {
+			return fmt.Errorf("%w: %q", err, t.fulcioURL)
+		}
+	}
 	if t.rekorURL == "" {
 		return fmt.Errorf("rekor-url is required")
 	}
@@ -83,8 +94,9 @@ func (t *TrustedArtifactSigner) Data(
 	_ *config.Config,
 ) (map[string][]byte, error) {
 	return map[string][]byte{
-		"rekor_url": []byte(t.rekorURL),
-		"tuf_url":   []byte(t.tufURL),
+		"fulcio_url": []byte(t.fulcioURL),
+		"rekor_url":  []byte(t.rekorURL),
+		"tuf_url":    []byte(t.tufURL),
 	}, nil
 }
 

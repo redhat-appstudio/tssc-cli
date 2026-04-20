@@ -1,0 +1,4 @@
+name: Advanced Cluster Security
+namespace: tssc-acs
+properties:
+  manageSubscription: true

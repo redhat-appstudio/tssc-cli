@@ -1,0 +1,7 @@
+# Placeholder; real values come from values.yaml.tpl and cluster config.
+quay:
+  url: ""
+  token: ""
+  organization: ""
+  dockerconfigjson: ""
+  dockerconfigjsonreadonly: ""

@@ -1,5 +1,21 @@
 ---
 #
+# bundle.mode is set by values.yaml.tpl: "integration" (Secret + test) or "product" (full install).
+#
+bundle:
+  mode: product
+#
+# Top-level key "tpa" matches installer integration id (local://tpa, charts/tssc-tpa);
+# used for distributed config merge and shared with integrationSecret.
+# "integrations-provided" may still be "trustification" for CEL / topology.
+#
+x-tpa-integration: &tpaIntegration
+  bombastic_api_url: ""
+  supported_cyclonedx_version: ""
+
+tpa:
+  <<: *tpaIntegration
+#
 # Red Hat Trusted Profile Analyzer
 #
 #  https://access.redhat.com/products/red-hat-trusted-profile-analyzer
@@ -17,6 +33,9 @@ trustedProfileAnalyzer:
   appDomain: __OVERWRITE_ME__
   integrationSecret:
     namespace: __OVERWRITE_ME__
+    # Set by values.yaml.tpl from tpa integration properties and TPA defaults.
+    # When empty, integration-secret.yaml derives bombastic URL and CycloneDX from TPA.
+    <<: *tpaIntegration
   replicas: 1
   rust:
     logFilter: debug

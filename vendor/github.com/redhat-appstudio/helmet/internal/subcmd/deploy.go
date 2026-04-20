@@ -76,12 +76,6 @@ func (d *Deploy) Validate() error {
 
 // Run deploys the enabled dependencies listed on the configuration.
 func (d *Deploy) Run() error {
-	d.log().Debug("Reading values template file")
-	valuesTmpl, err := d.runCtx.ChartFS.ReadFile(d.valuesTemplatePath)
-	if err != nil {
-		return err
-	}
-
 	topology, err := d.topologyBuilder.Build(d.cmd.Context(), d.cfg)
 	if err != nil {
 		if errors.Is(err, resolver.ErrMissingIntegrations) ||
@@ -129,19 +123,28 @@ subcommand to configure them. For example:
 
 		i := installer.NewInstaller(d.log(), d.flags, d.runCtx.Kube, &dep, d.installerTarball)
 
-		ctx := d.cmd.Context()
-		err := i.SetValues(ctx, d.cfg, string(valuesTmpl))
+		valuesTmpl, templatePath, err := d.runCtx.ChartFS.ReadValuesTemplate(
+			dep.ChartPath(),
+			d.valuesTemplatePath,
+		)
 		if err != nil {
 			return err
 		}
-		if d.flags.Debug {
+		d.log().Debug("Using values template", "path", templatePath)
+
+		ctx := d.cmd.Context()
+		err = i.SetValues(ctx, d.cfg, string(valuesTmpl))
+		if err != nil {
+			return err
+		}
+		if d.flags.Verbose {
 			i.PrintRawValues()
 		}
 
 		if err := i.RenderValues(); err != nil {
 			return err
 		}
-		if d.flags.Debug {
+		if d.flags.Verbose {
 			i.PrintValues()
 		}
 
@@ -180,8 +183,9 @@ installed, and the dependencies to be resolved.
 The deployment configuration file describes the sequence of Helm charts to be
 applied, on the attribute '%s.dependencies[]'.
 
-The platform configuration is rendered from the values template file
-(--values-template), this configuration payload is given to all Helm charts.
+The platform configuration is rendered from values templates: each chart may
+supply charts/<chart>/values.yaml.tpl; otherwise the root file (--values-template)
+is used for that chart.
 
 The installer resources are embedded in the executable, these resources are
 employed by default.

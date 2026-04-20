@@ -1,3 +1,4 @@
+{{- if ne (dig "mode" "product" (index .Values "bundle" | default dict)) "integration" }}
 ---
 {{- include "common.test" . }}
   containers:
@@ -17,3 +18,4 @@
           mountPath: /scripts
       securityContext:
         allowPrivilegeEscalation: false
+{{- end }}

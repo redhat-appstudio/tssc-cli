@@ -1,0 +1,6 @@
+name: Developer Hub
+namespace: tssc-dh
+properties:
+  catalogURL: https://github.com/redhat-appstudio/tssc-dev-multi-ci/blob/release-v1.9.x/samples/all.yaml
+  manageSubscription: true
+  authProvider: oidc

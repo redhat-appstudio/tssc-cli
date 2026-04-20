@@ -58,7 +58,7 @@ func FindNode(node *yaml.Node, key string) (*yaml.Node, error) {
 //   - If the node is a MappingNode, it searches for the specified key.
 //     If found, it marshals the newValue to YAML and unmarshals it back
 //     into a new yaml.Node to preserve type fidelity, then replaces the
-//     existing value node. If the key is not found, it returns nil.
+//     existing value node. If the key is not found, it appends a new entry.
 //   - For any other node kind, it returns an error.
 func UpdateMappingValue(node *yaml.Node, key string, newValue any) error {
 	switch node.Kind {
@@ -100,6 +100,26 @@ func UpdateMappingValue(node *yaml.Node, key string, newValue any) error {
 
 			return nil
 		}
+		// Key not found: append a new key-value pair (e.g. optional fields like
+		// "enabled" omitted from YAML until toggled).
+		var insertDoc yaml.Node
+		bs, err := yaml.Marshal(newValue)
+		if err != nil {
+			return err
+		}
+		if err := yaml.Unmarshal(bs, &insertDoc); err != nil {
+			return err
+		}
+		if len(insertDoc.Content) == 0 {
+			return fmt.Errorf("invalid new value for key %q", key)
+		}
+		keyNode := &yaml.Node{
+			Kind:  yaml.ScalarNode,
+			Tag:   "!!str",
+			Value: key,
+		}
+		insertedValue := insertDoc.Content[0]
+		node.Content = append(node.Content, keyNode, insertedValue)
 		return nil
 	default:
 		return fmt.Errorf("cannot set value on node kind: %v", node.Kind)

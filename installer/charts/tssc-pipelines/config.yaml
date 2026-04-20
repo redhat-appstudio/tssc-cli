@@ -1,0 +1,3 @@
+name: OpenShift Pipelines
+properties:
+  manageSubscription: true

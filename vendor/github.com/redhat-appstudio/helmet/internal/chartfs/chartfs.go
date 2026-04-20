@@ -1,9 +1,13 @@
 package chartfs
 
 import (
+	"errors"
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
+
+	"github.com/redhat-appstudio/helmet/internal/constants"
 
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
@@ -33,6 +37,34 @@ func (c *ChartFS) ReadFile(name string) ([]byte, error) {
 	}
 	// Fallback to embedded filesystem
 	return fs.ReadFile(c.fsys, name)
+}
+
+// LoadedChart pairs a Helm chart with its source directory path relative to the
+// ChartFS root (e.g. "charts/product-a").
+type LoadedChart struct {
+	Path  string
+	Chart *chart.Chart
+}
+
+// ReadValuesTemplate loads chartDir/values.yaml.tpl when chartDir is non-empty
+// and that file exists; otherwise it loads rootValuesPath (typically the
+// installer root values.yaml.tpl).
+func (c *ChartFS) ReadValuesTemplate(chartDir, rootValuesPath string) ([]byte, string, error) {
+	if chartDir != "" {
+		p := path.Join(chartDir, constants.ValuesFilename)
+		b, err := c.ReadFile(p)
+		if err == nil {
+			return b, p, nil
+		}
+		if !errors.Is(err, fs.ErrNotExist) && !errors.Is(err, os.ErrNotExist) {
+			return nil, "", err
+		}
+	}
+	b, err := c.ReadFile(rootValuesPath)
+	if err != nil {
+		return nil, "", err
+	}
+	return b, rootValuesPath, nil
 }
 
 // Open opens the named file. Implements "fs.FS" interface.
@@ -83,18 +115,21 @@ func (c *ChartFS) walkAndFindChartDirs(
 }
 
 // GetAllCharts retrieves all Helm charts from the filesystem.
-func (c *ChartFS) GetAllCharts() ([]chart.Chart, error) {
-	charts := []chart.Chart{}
+func (c *ChartFS) GetAllCharts() ([]LoadedChart, error) {
+	charts := []LoadedChart{}
 	chartDirs, err := c.walkAndFindChartDirs(c.fsys, ".")
 	if err != nil {
 		return nil, err
 	}
 	for _, chartDir := range chartDirs {
-		chart, err := c.GetChartFiles(chartDir)
+		hc, err := c.GetChartFiles(chartDir)
 		if err != nil {
 			return nil, err
 		}
-		charts = append(charts, *chart)
+		charts = append(charts, LoadedChart{
+			Path:  filepath.ToSlash(chartDir),
+			Chart: hc,
+		})
 	}
 	return charts, nil
 }
