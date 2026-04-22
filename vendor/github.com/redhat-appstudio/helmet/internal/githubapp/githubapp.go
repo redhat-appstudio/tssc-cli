@@ -152,10 +152,6 @@ func (g *GitHubApp) oAuth2Workflow(
 	// background, this process should obtain the oAuth code.
 	go func() {
 		localhostURL := fmt.Sprintf("http://localhost:%d", g.webServerPort)
-		fmt.Printf(
-			"Opening %q, click on the link to create your new GitHub App\n",
-			localhostURL,
-		)
 		go func() {
 			err := webServer.ListenAndServe()
 			if err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -165,7 +161,17 @@ func (g *GitHubApp) oAuth2Workflow(
 		g.log().Debug("opening browser", "url", localhostURL)
 		go func() {
 			if err := OpenInBrowser(localhostURL); err != nil {
-				g.logger.Error("failed to open browser", "error", err)
+				g.logger.Debug("failed to open browser", "error", err)
+				// When using the image, the web browser is not available.
+				fmt.Printf(
+					"Open %q in your browser, and click on the link to create your new GitHub App\n",
+					localhostURL,
+				)
+			} else {
+				fmt.Printf(
+					"Opening %q, click on the link to create your new GitHub App\n",
+					localhostURL,
+				)
 			}
 		}()
 	}()
