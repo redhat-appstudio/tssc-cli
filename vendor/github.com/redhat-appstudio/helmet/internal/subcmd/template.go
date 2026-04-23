@@ -124,8 +124,9 @@ By using the '--show-manifests=false' flag, only the global values template
 ('--values-template') will be rendered as YAML, thus the last argument, with the
 Helm chart directory, optional.
 
-Additionally, the '--debug' flag should be used to display rendered global values,
-passed into every Helm Chart installed, as key-value pairs.
+During deploy, '--verbose' prints rendered values before and after template
+rendering. For this command, use '--show-values' to emit the rendered global values
+as YAML.
 
 The installer resources are embedded in the executable, these resources are
 employed by default, to use local files just use the last argument with the path

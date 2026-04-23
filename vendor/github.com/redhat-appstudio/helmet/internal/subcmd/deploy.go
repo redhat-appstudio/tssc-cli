@@ -134,14 +134,14 @@ subcommand to configure them. For example:
 		if err != nil {
 			return err
 		}
-		if d.flags.Debug {
+		if d.flags.Verbose {
 			i.PrintRawValues()
 		}
 
 		if err := i.RenderValues(); err != nil {
 			return err
 		}
-		if d.flags.Debug {
+		if d.flags.Verbose {
 			i.PrintValues()
 		}
 
