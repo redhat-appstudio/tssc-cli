@@ -1,5 +1,5 @@
 ---
-apiVersion: tekton.dev/v1
+apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
   name: tssc-install-e2e
@@ -45,14 +45,6 @@ spec:
     - name: testplan
       type: string
       description: 'Optional testplan.json content encoded in base64 format. If not provided, testplan will be downloaded from the repository.'
-      default: ""
-    - name: ui-error-strategy
-      type: string
-      description: 'Error handling strategy for UI tests'
-      default: "continue"
-    - name: install-params
-      type: string
-      description: 'Additional parameters for installation testing (e.g., PRE_RELEASE=TAS TAS_VERSION=1.3.2). When empty, does not alter normal installation.'
       default: ""
   tasks:
     - name: rosa-hcp-metadata
@@ -113,8 +105,6 @@ spec:
           value: $(params.rhads-config)
         - name: tssc-image
           value: $(params.tssc-image)
-        - name: install-params
-          value: $(params.install-params)
     - name: sprayproxy-provision
       runAfter:
         - tssc-install
@@ -156,7 +146,7 @@ spec:
     - name: rhtap-ui-tests
       runAfter:
         - tssc-e2e-tests
-      onError: $(params.ui-error-strategy)
+      onError: continue
       taskRef:
         resolver: git
         params:
