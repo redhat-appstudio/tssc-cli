@@ -45,7 +45,7 @@ github.com/bahlo/generic-list-go
 # github.com/blang/semver/v4 v4.0.0
 ## explicit; go 1.14
 github.com/blang/semver/v4
-# github.com/buger/jsonparser v1.1.1
+# github.com/buger/jsonparser v1.2.0
 ## explicit; go 1.13
 github.com/buger/jsonparser
 # github.com/chai2010/gettext-go v1.0.3
