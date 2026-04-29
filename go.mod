@@ -2,10 +2,7 @@ module github.com/redhat-appstudio/tssc-cli
 
 go 1.25.7
 
-require (
-	github.com/redhat-appstudio/helmet v0.0.0-20260319215325-e665a08127fc
-	golang.org/x/term v0.41.0
-)
+require github.com/redhat-appstudio/helmet v0.0.0-20260319215325-e665a08127fc
 
 require (
 	cel.dev/expr v0.25.1 // indirect
@@ -95,8 +92,8 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
-	github.com/openshift/api v0.0.0-20260311143357-f6ee4c095675 // indirect
-	github.com/openshift/client-go v0.0.0-20260306160707-3935d929fc7d // indirect
+	github.com/openshift/api v0.0.0-20260429122012-1180c0f5c3e9 // indirect
+	github.com/openshift/client-go v0.0.0-20260429123927-c81f86abfa6a // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
@@ -130,6 +127,7 @@ require (
 	golang.org/x/oauth2 v0.34.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect
+	golang.org/x/term v0.41.0 // indirect
 	golang.org/x/text v0.35.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260311181403-84a4fc48630c // indirect
