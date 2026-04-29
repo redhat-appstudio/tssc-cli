@@ -22,12 +22,19 @@ spec:
     - name: tssc-cli-volume
       secret:
         secretName: rhtap-cli-install
+    - name: konflux-test-infra-volume
+      secret:
+        secretName: konflux-test-infra
   steps:
     - name: download-and-execute-cleanup
       image: quay.io/konflux-ci/tekton-integration-catalog/utils:latest
       volumeMounts:
         - name: tssc-cli-volume
           mountPath: /usr/local/rhtap-cli-install
+          readOnly: true
+        - name: konflux-test-infra-volume
+          mountPath: /usr/local/konflux-test-infra
+          readOnly: true
       script: |
         #!/bin/bash
         set -euo pipefail
@@ -37,6 +44,18 @@ spec:
 
         # Build Script URL from parameters
         SCRIPT_URL="https://raw.githubusercontent.com/$(params.source-git-repo)/$(params.source-git-revision)/$(params.script-path)"
+
+        if [[ "$SCRIPT_NAME" == "delete-rosa-clusters.sh" ]]; then
+          # Read credentials from mounted volume
+          CREDENTIALS_FILE="/usr/local/konflux-test-infra/rhtap-cloud-credentials-us-east-1"
+
+          # Extract individual values from the JSON credentials
+          export ROSA_TOKEN=$(jq -r '.aws["rosa-hcp"]["rosa-token"]' "$CREDENTIALS_FILE")
+          export AWS_ACCESS_KEY_ID=$(jq -r '.aws["access-key-id"]' "$CREDENTIALS_FILE")
+          export AWS_SECRET_ACCESS_KEY=$(jq -r '.aws["access-key-secret"]' "$CREDENTIALS_FILE")
+          export AWS_SUBNET_IDS=$(jq -r '.aws["rosa-hcp"]["subnets-ids"]' "$CREDENTIALS_FILE")
+          export AWS_DEFAULT_REGION=$(jq -r '.aws["region"]' "$CREDENTIALS_FILE")
+        fi
 
         # Function to prefix logs
         log_prefix() {

@@ -10,7 +10,7 @@ set -o pipefail
 
 # Common configuration
 DAYS="${DAYS:-14}"
-repo_name_regex="${REPO_NAME_REGEX:-^[a-z0-9-]*(python|dotnet-basic|java-quarkus|go|nodejs|java-springboot)[a-z0-9-]*(-gitops)?$}"
+repo_name_regex="${REPO_NAME_REGEX:-^[a-zA-Z0-9-]*(python|dotnet-basic|java-quarkus|go|nodejs|java-springboot)[a-zA-Z0-9-]*(-gitops)?\$}"
 
 usage() {
     echo "
@@ -85,23 +85,53 @@ bitbucket_cleanup() {
     echo "Cutoff date: $cutoff_date"
     echo ""
     
-    # Fetch repositories using scoped API token (max pagelen=100 for Bitbucket)
-    # Sort by updated_on (oldest first) to prioritize older repositories for cleanup
-    repos=$(curl -s -u "$AUTH_CREDS" -H "Accept: application/json" \
-        "https://api.bitbucket.org/2.0/repositories/$BITBUCKET_WORKSPACE?q=project.key=\"$BITBUCKET_PROJECT\"&sort=updated_on&pagelen=100")
+    # Fetch repositories with pagination (max pagelen=100 for Bitbucket).
+    # Sort by updated_on (oldest first) to prioritize older repositories for cleanup.
+    next_url="https://api.bitbucket.org/2.0/repositories/$BITBUCKET_WORKSPACE?q=project.key=\"$BITBUCKET_PROJECT\"&sort=updated_on&pagelen=100"
+    all_repos=()
+    while [[ -n "$next_url" ]]; do
+        tmp_file=$(mktemp)
+        http_status=$(curl -s -o "$tmp_file" -w "%{http_code}" -u "$AUTH_CREDS" -H "Accept: application/json" "$next_url")
+        repos_page=$(<"$tmp_file")
+        rm -f "$tmp_file"
 
-    # Check for API errors (only if .error field exists and is not null)
-    if echo "$repos" | jq -e '.error' >/dev/null 2>&1; then
-        echo "Error fetching repositories: $(echo "$repos" | jq -r '.error.message')" >&2
-        return 1
+        # Handle HTTP errors first.
+        if [[ "$http_status" -lt 200 || "$http_status" -ge 300 ]]; then
+            echo "Error: Bitbucket API returned HTTP $http_status" >&2
+            if [[ -n "$repos_page" ]]; then
+                echo "Response: $repos_page"
+            fi
+            return 1
+        fi
+
+        # Check for API errors (only if .error field exists and is not null).
+        if echo "$repos_page" | jq -e '.error' >/dev/null 2>&1; then
+            echo "Error fetching repositories: $(echo "$repos_page" | jq -r '.error.message')" >&2
+            return 1
+        fi
+
+        # Check if we got a valid response with values array.
+        if ! echo "$repos_page" | jq -e '.values' >/dev/null 2>&1; then
+            echo "Error: Invalid response format from Bitbucket API" >&2
+            echo "Response: $repos_page"
+            return 1
+        fi
+
+        while IFS= read -r repo; do
+            all_repos+=("$repo")
+        done < <(echo "$repos_page" | jq -c '.values[]')
+
+        next_url=$(echo "$repos_page" | jq -r '.next // empty')
+    done
+
+    if [[ ${#all_repos[@]} -gt 0 ]]; then
+        repos=$(printf '%s\n' "${all_repos[@]}" | jq -s '{values: .}')
+    else
+        repos='{"values":[]}'
     fi
-    
-    # Check if we got a valid response with values array
-    if ! echo "$repos" | jq -e '.values' >/dev/null 2>&1; then
-        echo "Error: Invalid response format from Bitbucket API" >&2
-        echo "Response: $repos"
-        return 1
-    fi
+
+    repo_count=$(echo "$repos" | jq '.values | length')
+    echo "Found $repo_count repositories"
     
     # Process repositories (using process substitution to avoid subshell)
     while read -r repo; do

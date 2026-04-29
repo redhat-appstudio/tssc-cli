@@ -11,7 +11,7 @@ set -o pipefail
 
 # Common configuration
 DAYS="${DAYS:-14}"
-repo_name_regex="${REPO_NAME_REGEX:-^[a-z0-9-]*(python|dotnet-basic|java-quarkus|go|nodejs|java-springboot)[a-z0-9-]*(-gitops)?$}"
+repo_name_regex="${REPO_NAME_REGEX:-^[a-zA-Z0-9-]*(python|dotnet-basic|java-quarkus|go|nodejs|java-springboot)[a-zA-Z0-9-]*(-gitops)?\$}"
 
 usage() {
     echo "
@@ -65,15 +65,57 @@ gitlab_cleanup() {
     echo "Cutoff date: $cutoff_date"
     echo ""
     
-    # Fetch projects from group (sorted by creation date, oldest first)
-    projects=$(curl -s -H "$AUTH_HEADER" \
-        "$GITLAB_URL/api/v4/groups/$GITLAB_GROUP/projects?per_page=200&order_by=created_at&sort=asc")
-    
-    if echo "$projects" | jq -e '.message or .error' 2>/dev/null ; then
-        echo "Error fetching projects: $projects" >&2
-        return 1
+    # Fetch all projects from group with pagination.
+    next_page=1
+    all_projects=()
+    while [[ -n "$next_page" ]]; do
+        api_url="$GITLAB_URL/api/v4/groups/$GITLAB_GROUP/projects?per_page=100&order_by=name&sort=asc&page=$next_page"
+        tmp_body=$(mktemp)
+        tmp_headers=$(mktemp)
+        http_status=$(curl -s -D "$tmp_headers" -o "$tmp_body" -w "%{http_code}" -H "$AUTH_HEADER" "$api_url")
+        projects_page=$(<"$tmp_body")
+        rm -f "$tmp_body"
+
+        # Handle HTTP errors first.
+        if [[ "$http_status" -lt 200 || "$http_status" -ge 300 ]]; then
+            echo "Error: GitLab API returned HTTP $http_status" >&2
+            if [[ -n "$projects_page" ]]; then
+                echo "Response: $projects_page"
+            fi
+            rm -f "$tmp_headers"
+            return 1
+        fi
+
+        if echo "$projects_page" | jq -e '.message or .error' >/dev/null 2>&1; then
+            echo "Error fetching projects: $projects_page" >&2
+            rm -f "$tmp_headers"
+            return 1
+        fi
+
+        if ! echo "$projects_page" | jq -e 'type == "array"' >/dev/null 2>&1; then
+            echo "Error: Invalid response format from GitLab API" >&2
+            echo "Response: ${projects_page:-<empty>}"
+            rm -f "$tmp_headers"
+            return 1
+        fi
+
+        while IFS= read -r project; do
+            all_projects+=("$project")
+        done < <(echo "$projects_page" | jq -c '.[]')
+
+        next_page=$(tr -d '\r' < "$tmp_headers" | awk -F': ' 'tolower($1)=="x-next-page"{print $2}')
+        rm -f "$tmp_headers"
+    done
+
+    if [[ ${#all_projects[@]} -gt 0 ]]; then
+        projects=$(printf '%s\n' "${all_projects[@]}" | jq -s '.')
+    else
+        projects='[]'
     fi
-    
+
+    project_count=$(echo "$projects" | jq 'length')
+    echo "Found $project_count repositories"
+
     # Process projects (using process substitution to avoid subshell)
     while read -r project; do
         project_name=$(echo "$project" | jq -r '.name' 2>/dev/null)

@@ -10,7 +10,7 @@ set -o pipefail
 
 # Common configuration
 DAYS="${DAYS:-14}"
-repo_name_regex="${REPO_NAME_REGEX:-^[a-z0-9-]*(python|dotnet-basic|java-quarkus|go|nodejs|java-springboot)[a-z0-9-]*(-gitops)?$}"
+repo_name_regex="${REPO_NAME_REGEX:-^[a-zA-Z0-9-]*(python|dotnet-basic|java-quarkus|go|nodejs|java-springboot)[a-zA-Z0-9-]*(-gitops)?\$}"
 
 usage() {
     echo "
@@ -60,12 +60,60 @@ github_cleanup() {
     echo "Checking GitHub organization: $GITHUB_ORG"
     echo "Cutoff date: $(date -d "@$cutoff_time")"
     
-    # Fetch repositories (sorted by creation date, oldest first)
-    repos=$(curl -s -X GET -H "$AUTH_HEADER" "https://api.github.com/orgs/$GITHUB_ORG/repos?per_page=200&sort=created&direction=asc")
-    if echo "$repos" | jq -e '.status' >/dev/null 2>&1; then
-        echo "Error fetching repositories: $repos" >&2
-        return 1
+    # Fetch repositories (sorted by creation date, oldest first) with pagination.
+    next_url="https://api.github.com/orgs/$GITHUB_ORG/repos?per_page=100&sort=created&direction=asc"
+    all_repos=()
+    while [[ -n "$next_url" ]]; do
+        tmp_body=$(mktemp)
+        tmp_headers=$(mktemp)
+        http_status=$(curl -s -D "$tmp_headers" -o "$tmp_body" -w "%{http_code}" -X GET -H "$AUTH_HEADER" "$next_url")
+        repos_page=$(<"$tmp_body")
+        rm -f "$tmp_body"
+
+        # Handle HTTP errors first.
+        if [[ "$http_status" -lt 200 || "$http_status" -ge 300 ]]; then
+            echo "Error: GitHub API returned HTTP $http_status" >&2
+            if [[ -n "$repos_page" ]]; then
+                echo "Response: $repos_page"
+            fi
+            rm -f "$tmp_headers"
+            return 1
+        fi
+
+        if echo "$repos_page" | jq -e '.status' >/dev/null 2>&1; then
+            echo "Error fetching repositories: $repos_page" >&2
+            rm -f "$tmp_headers"
+            return 1
+        fi
+
+        if ! echo "$repos_page" | jq -e 'type == "array"' >/dev/null 2>&1; then
+            echo "Error: Invalid response format from GitHub API" >&2
+            echo "Response: ${repos_page:-<empty>}"
+            rm -f "$tmp_headers"
+            return 1
+        fi
+
+        while IFS= read -r repo; do
+            all_repos+=("$repo")
+        done < <(echo "$repos_page" | jq -c '.[]')
+
+        link_header=$(tr -d '\r' < "$tmp_headers" | awk -F': ' 'tolower($1)=="link"{print $2}')
+        rm -f "$tmp_headers"
+        if [[ "$link_header" =~ \<([^>]*)\>\;\ rel=\"next\" ]]; then
+            next_url="${BASH_REMATCH[1]}"
+        else
+            next_url=""
+        fi
+    done
+
+    if [[ ${#all_repos[@]} -gt 0 ]]; then
+        repos=$(printf '%s\n' "${all_repos[@]}" | jq -s '.')
+    else
+        repos='[]'
     fi
+
+    repo_count=$(echo "$repos" | jq 'length')
+    echo "Found $repo_count repositories"
     
     # Process repositories
     while read -r repo; do
