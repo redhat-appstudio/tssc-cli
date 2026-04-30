@@ -2,10 +2,7 @@ module github.com/redhat-appstudio/tssc-cli
 
 go 1.25.7
 
-require (
-	github.com/redhat-appstudio/helmet v0.0.0-20260319215325-e665a08127fc
-	golang.org/x/term v0.41.0
-)
+require github.com/redhat-appstudio/helmet v0.0.0-20260319215325-e665a08127fc
 
 require (
 	cel.dev/expr v0.25.1 // indirect
@@ -75,7 +72,7 @@ require (
 	github.com/invopop/jsonschema v0.13.0 // indirect
 	github.com/jmoiron/sqlx v1.4.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/klauspost/compress v1.18.4 // indirect
+	github.com/klauspost/compress v1.18.6 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/lib/pq v1.10.9 // indirect
@@ -130,6 +127,7 @@ require (
 	golang.org/x/oauth2 v0.34.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect
+	golang.org/x/term v0.41.0 // indirect
 	golang.org/x/text v0.35.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260311181403-84a4fc48630c // indirect
