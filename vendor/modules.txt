@@ -1175,5 +1175,5 @@ sigs.k8s.io/structured-merge-diff/v6/value
 sigs.k8s.io/yaml
 sigs.k8s.io/yaml/goyaml.v3
 sigs.k8s.io/yaml/kyaml
-# github.com/Microsoft/hcsshim => github.com/Microsoft/hcsshim v0.13.0
+# github.com/Microsoft/hcsshim => github.com/Microsoft/hcsshim v0.14.1
 # github.com/imdario/mergo => github.com/imdario/mergo v1.0.2
