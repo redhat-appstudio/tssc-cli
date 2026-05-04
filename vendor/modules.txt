@@ -27,8 +27,8 @@ github.com/Masterminds/sprig/v3
 # github.com/Masterminds/squirrel v1.5.4
 ## explicit; go 1.14
 github.com/Masterminds/squirrel
-# github.com/PuerkitoBio/goquery v1.11.0
-## explicit; go 1.24.0
+# github.com/PuerkitoBio/goquery v1.12.0
+## explicit; go 1.25.0
 github.com/PuerkitoBio/goquery
 # github.com/andybalholm/cascadia v1.3.3
 ## explicit; go 1.16
@@ -204,8 +204,8 @@ github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/google/go-github/scrape v0.0.0-20251209012504-06ab3a273511
-## explicit; go 1.24.0
+# github.com/google/go-github/scrape v0.0.0-20260504115318-6c643b8fb267
+## explicit; go 1.25.0
 github.com/google/go-github/scrape
 # github.com/google/go-github/v75 v75.0.0
 ## explicit; go 1.24.0
@@ -213,6 +213,9 @@ github.com/google/go-github/v75/github
 # github.com/google/go-github/v80 v80.0.0
 ## explicit; go 1.24.0
 github.com/google/go-github/v80/github
+# github.com/google/go-github/v85 v85.0.0
+## explicit; go 1.25.0
+github.com/google/go-github/v85/github
 # github.com/google/go-querystring v1.2.0
 ## explicit; go 1.13
 github.com/google/go-querystring/query
@@ -455,7 +458,7 @@ go.yaml.in/yaml/v2
 # go.yaml.in/yaml/v3 v3.0.4
 ## explicit; go 1.16
 go.yaml.in/yaml/v3
-# golang.org/x/crypto v0.49.0
+# golang.org/x/crypto v0.50.0
 ## explicit; go 1.25.0
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
@@ -472,7 +475,7 @@ golang.org/x/crypto/scrypt
 # golang.org/x/exp v0.0.0-20260218203240-3dfff04db8fa
 ## explicit; go 1.25.0
 golang.org/x/exp/slices
-# golang.org/x/net v0.52.0
+# golang.org/x/net v0.53.0
 ## explicit; go 1.25.0
 golang.org/x/net/html
 golang.org/x/net/html/atom
@@ -491,15 +494,15 @@ golang.org/x/oauth2/internal
 ## explicit; go 1.25.0
 golang.org/x/sync/errgroup
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.42.0
+# golang.org/x/sys v0.43.0
 ## explicit; go 1.25.0
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/term v0.41.0
+# golang.org/x/term v0.42.0
 ## explicit; go 1.25.0
 golang.org/x/term
-# golang.org/x/text v0.35.0
+# golang.org/x/text v0.36.0
 ## explicit; go 1.25.0
 golang.org/x/text/encoding
 golang.org/x/text/encoding/internal
