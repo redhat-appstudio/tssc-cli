@@ -22,6 +22,10 @@ type Products []Product
 type Spec struct {
 	// Settings contains the configuration for the installer settings.
 	Settings Settings `yaml:"settings"`
+	// Integrations lists external integration targets (credentials live in
+	// integration Secrets; this section holds non-secret or placeholder config).
+	// Each entry uses id (suffix of local:// in helmet.yaml; keys .Installer.Integrations).
+	Integrations []IntegrationSpec `yaml:"integrations,omitempty"`
 	// Products contains the configuration for the installer products.
 	Products Products `yaml:"products"`
 }
@@ -63,11 +67,23 @@ func (c *Config) GetProduct(name string) (*Product, error) {
 	return nil, fmt.Errorf("product '%s' not found", name)
 }
 
-// GetEnabledProducts returns a map of enabled products.
+// FindProduct returns the product with the given name, or nil if it is not
+// listed under installer.products (e.g. integration-only charts are absent).
+func (c *Config) FindProduct(name string) *Product {
+	for i := range c.Installer.Products {
+		if c.Installer.Products[i].Name == name {
+			return &c.Installer.Products[i]
+		}
+	}
+	return nil
+}
+
+// GetEnabledProducts returns products that are active for deployment (omitted
+// enabled or true).
 func (c *Config) GetEnabledProducts() Products {
 	enabled := Products{}
 	for _, product := range c.Installer.Products {
-		if product.Enabled {
+		if product.IsActive() {
 			enabled = append(enabled, product)
 		}
 	}
@@ -94,6 +110,11 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("%w: missing settings", ErrInvalidConfig)
 	}
 
+	for _, integration := range root.Integrations {
+		if err := integration.Validate(); err != nil {
+			return err
+		}
+	}
 	// Validating the products, making sure every product entry is valid.
 	for _, product := range root.Products {
 		if err := product.Validate(); err != nil {

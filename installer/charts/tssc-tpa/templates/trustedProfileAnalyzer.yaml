@@ -1,3 +1,4 @@
+{{- if ne (dig "mode" "product" (index .Values "bundle" | default dict)) "integration" }}
 {{- $tpa := .Values.trustedProfileAnalyzer -}}
 ---
 apiVersion: rhtpa.io/v1
@@ -54,3 +55,5 @@ spec:
   }}
   tracing:
     enabled: false
+{{- end }}
+

@@ -2,6 +2,7 @@ package subcmd
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/redhat-appstudio/helmet/api"
 	"github.com/redhat-appstudio/helmet/internal/config"
@@ -46,11 +47,12 @@ func (t *Template) Complete(args []string) error {
 		return fmt.Errorf("expecting one chart, got %d", len(args))
 	}
 
+	chartDir := filepath.ToSlash(filepath.Clean(args[0]))
 	hc, err := t.runCtx.ChartFS.GetChartFiles(args[0])
 	if err != nil {
 		return err
 	}
-	t.dep = *resolver.NewDependencyWithNamespace(hc, t.namespace)
+	t.dep = *resolver.NewDependencyWithNamespaceAndChartPath(hc, t.namespace, chartDir)
 
 	if t.cfg, err = bootstrapConfig(t.cmd.Context(), t.appCtx, t.runCtx); err != nil {
 		return err
@@ -74,7 +76,10 @@ func (t *Template) Validate() error {
 
 // Run Renders the templates.
 func (t *Template) Run() error {
-	valuesTmplPayload, err := t.runCtx.ChartFS.ReadFile(t.valuesTemplatePath)
+	valuesTmplPayload, _, err := t.runCtx.ChartFS.ReadValuesTemplate(
+		t.dep.ChartPath(),
+		t.valuesTemplatePath,
+	)
 	if err != nil {
 		return fmt.Errorf("failed to read values template file: %w", err)
 	}
@@ -124,8 +129,9 @@ By using the '--show-manifests=false' flag, only the global values template
 ('--values-template') will be rendered as YAML, thus the last argument, with the
 Helm chart directory, optional.
 
-Additionally, the '--debug' flag should be used to display rendered global values,
-passed into every Helm Chart installed, as key-value pairs.
+During deploy, '--verbose' prints rendered values before and after template
+rendering. For this command, use '--show-values' to emit the rendered global values
+as YAML.
 
 The installer resources are embedded in the executable, these resources are
 employed by default, to use local files just use the last argument with the path

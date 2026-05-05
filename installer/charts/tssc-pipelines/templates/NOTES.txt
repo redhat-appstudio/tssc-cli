@@ -3,13 +3,15 @@ Tekton Pipelines as Code:
 {{- if $routeObj }}
   - URL: https://{{ $routeObj.spec.host }}
 {{- else }}
-  - URL: unset
+  - URL: unset (no Route pipelines-as-code-controller in openshift-pipelines yet)
 {{- end }}
 
 Tekton Chains:
 {{- $secretObj := (lookup "v1" "Secret" "openshift-pipelines" "signing-secrets") | default dict -}}
-{{- if $secretObj }}
+{{- $secretData := (get $secretObj "data") | default dict -}}
+{{- $cosignKey := (get $secretData "cosign.key") | default "" -}}
+{{- if ne $cosignKey "" }}
   - cosign signing key exists
 {{- else }}
-  - cosign signing key missing
+  - cosign signing key missing (often until post-install hook Job tssc-tekton-configuration finishes)
 {{- end }}

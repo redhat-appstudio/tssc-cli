@@ -25,6 +25,9 @@ type Config struct {
 	manager    *config.ConfigMapManager // cluster configuration manager
 	configPath string                   // configuration file relative path
 
+	mergedInstaller bool // when set, empty path means "load merged layout" (not an error)
+	loadCreate      config.CreateConfigLoader
+
 	namespace string // installer's namespace
 	create    bool   // create a new configuration
 	force     bool   // overrides existing configuration
@@ -111,10 +114,14 @@ func (c *Config) Complete(args []string) error {
 	}
 	// Storing the configuration file reference, when empty using the embedded
 	// default configuration path.
-	if len(args) == 1 {
+	switch {
+	case len(args) == 1:
 		c.configPath = args[0]
 		c.log().Debug("Using local configuration file")
-	} else {
+	case c.mergedInstaller:
+		c.configPath = ""
+		c.log().Debug("Using merged installer configuration (no path argument).")
+	default:
 		c.configPath = config.DefaultRelativeConfigPath
 		c.log().Debug("Using embedded configuration file, default settings.")
 	}
@@ -123,7 +130,7 @@ func (c *Config) Complete(args []string) error {
 
 // Validate make sure all items are in place.
 func (c *Config) Validate() error {
-	if c.create && c.configPath == "" {
+	if c.create && c.configPath == "" && !c.mergedInstaller {
 		return fmt.Errorf("configuration file is not informed")
 	}
 	if err := c.validateFlags(); err != nil {
@@ -136,8 +143,18 @@ func (c *Config) Validate() error {
 // cluster and update when using the --force flag.
 func (c *Config) runCreate() error {
 	c.log().Debug("Loading configuration from file")
-	cfg, err := config.NewConfigFromFile(
-		c.runCtx.ChartFS, c.configPath, c.namespace, c.appCtx.IdentifierName())
+
+	loader := c.loadCreate
+	if loader == nil {
+		loader = config.DefaultCreateConfigLoader
+	}
+
+	cfg, err := loader(
+		c.runCtx.ChartFS,
+		c.configPath,
+		c.namespace,
+		c.appCtx.IdentifierName(),
+	)
 	if err != nil {
 		return err
 	}
@@ -256,6 +273,8 @@ func NewConfig(
 	appCtx *api.AppContext,
 	runCtx *runcontext.RunContext,
 	f *flags.Flags,
+	mergedInstaller bool,
+	loadCreate config.CreateConfigLoader,
 ) api.SubCommand {
 	configDesc := fmt.Sprintf(`
 Manages installer's cluster configuration.
@@ -283,10 +302,12 @@ retrieved using a unique label selector.
 			Long:         configDesc,
 			SilenceUsage: true,
 		},
-		appCtx:  appCtx,
-		runCtx:  runCtx,
-		flags:   f,
-		manager: config.NewConfigMapManager(runCtx.Kube, appCtx.Name),
+		appCtx:          appCtx,
+		runCtx:          runCtx,
+		flags:           f,
+		manager:         config.NewConfigMapManager(runCtx.Kube, appCtx.Name),
+		mergedInstaller: mergedInstaller,
+		loadCreate:      loadCreate,
 	}
 
 	c.PersistentFlags(c.cmd.PersistentFlags())

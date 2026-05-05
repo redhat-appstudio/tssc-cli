@@ -1,3 +1,4 @@
+{{- if ne (dig "mode" "product" (index .Values "bundle" | default dict)) "integration" }}
 {{- $tpa := index .Values "redhat-trusted-profile-analyzer" -}}
 ---
 {{- include "common.preInstall" . }}
@@ -17,3 +18,5 @@
           mountPath: /scripts
       securityContext:
         allowPrivilegeEscalation: false
+{{- end }}
+

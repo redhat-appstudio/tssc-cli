@@ -2,7 +2,7 @@ package engine
 
 import (
 	"bytes"
-	"html/template"
+	"text/template"
 
 	"github.com/redhat-appstudio/helmet/internal/constants"
 	"github.com/redhat-appstudio/helmet/internal/k8s"

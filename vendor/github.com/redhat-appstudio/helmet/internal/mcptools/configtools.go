@@ -316,9 +316,9 @@ You must inform the %q argument, with the status of the product %q`,
 		return res, nil
 	}
 	// Toggle the product status.
-	spec.Enabled = enabled
+	spec.Enabled = &enabled
 
-	if res = c.setProduct(ctx, cfg, name, config.Product{Enabled: enabled}); res != nil {
+	if res = c.setProduct(ctx, cfg, name, *spec); res != nil {
 		return res, nil
 	}
 

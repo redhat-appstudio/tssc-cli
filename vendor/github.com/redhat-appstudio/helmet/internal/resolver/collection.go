@@ -6,7 +6,7 @@ import (
 	"slices"
 
 	"github.com/redhat-appstudio/helmet/api"
-	"helm.sh/helm/v3/pkg/chart"
+	"github.com/redhat-appstudio/helmet/internal/chartfs"
 )
 
 // Collection represents a collection of dependencies the Resolver can utilize.
@@ -74,6 +74,21 @@ func (c *Collection) GetProductDependency(product string) (*Dependency, error) {
 	return productDependency, nil
 }
 
+// FindChartProvidingIntegration returns the first chart that declares the given
+// integration in integrations-provided (e.g. "quay", "trustification").
+func (c *Collection) FindChartProvidingIntegration(integrationName string) (*Dependency, error) {
+	if integrationName == "" {
+		return nil, fmt.Errorf("%w: empty integration name", ErrDependencyNotFound)
+	}
+	for chartName, dep := range c.dependencies {
+		if slices.Contains(dep.IntegrationsProvided(), integrationName) {
+			return c.dependencies[chartName], nil
+		}
+	}
+	return nil, fmt.Errorf("%w: no chart provides integration %q",
+		ErrDependencyNotFound, integrationName)
+}
+
 // GetProductNameForIntegration searches and returns the product name by integration name.
 // It goes though all charts and search for annotation "integrations-provided".
 // If it matches integration name, then returns product name, which is from
@@ -97,13 +112,13 @@ func (c *Collection) GetProductNameForIntegration(integrationName string) string
 
 // NewCollection creates a new Collection from the given charts. It returns an
 // error if there are duplicate charts and product names.
-func NewCollection(_ *api.AppContext, charts []chart.Chart) (*Collection, error) {
+func NewCollection(_ *api.AppContext, charts []chartfs.LoadedChart) (*Collection, error) {
 	c := &Collection{dependencies: map[string]*Dependency{}}
 	// Stores the product names found in the slice of Helm charts.
 	productNames := []string{}
 	// Populating the collection with dependencies.
-	for _, hc := range charts {
-		d := NewDependency(&hc)
+	for _, lc := range charts {
+		d := NewDependencyWithChartPath(lc.Chart, lc.Path)
 		// Asserting the weight annotation is a valid integer.
 		if _, err := d.Weight(); err != nil {
 			return nil, fmt.Errorf("%w:  %w", ErrInvalidCollection, err)

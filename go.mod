@@ -3,7 +3,7 @@ module github.com/redhat-appstudio/tssc-cli
 go 1.25.7
 
 require (
-	github.com/redhat-appstudio/helmet v0.0.0-20260319215325-e665a08127fc
+	github.com/redhat-appstudio/helmet v0.0.0-20260420150238-7035f5b16d8e
 	golang.org/x/term v0.41.0
 )
 
@@ -134,7 +134,7 @@ require (
 	golang.org/x/time v0.15.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260311181403-84a4fc48630c // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260311181403-84a4fc48630c // indirect
-	google.golang.org/grpc v1.79.2 // indirect
+	google.golang.org/grpc v1.79.3 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
@@ -164,3 +164,5 @@ replace (
 	github.com/Microsoft/hcsshim => github.com/Microsoft/hcsshim v0.13.0
 	github.com/imdario/mergo => github.com/imdario/mergo v1.0.2
 )
+
+replace github.com/redhat-appstudio/helmet => github.com/dperaza4dustbit/helmet v0.0.0-20260505155742-5a15b822a58b

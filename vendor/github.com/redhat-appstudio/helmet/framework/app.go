@@ -6,6 +6,7 @@ import (
 
 	"github.com/redhat-appstudio/helmet/api"
 	"github.com/redhat-appstudio/helmet/internal/chartfs"
+	"github.com/redhat-appstudio/helmet/internal/config"
 	"github.com/redhat-appstudio/helmet/internal/flags"
 	"github.com/redhat-appstudio/helmet/internal/integrations"
 	"github.com/redhat-appstudio/helmet/internal/k8s"
@@ -32,6 +33,9 @@ type App struct {
 	mcpToolsBuilder  mcptools.MCPToolsBuilder // tools builder
 	mcpImage         string                   // installer image
 	installerTarball []byte                   // embedded installer tarball
+
+	loadCreateConfig      config.CreateConfigLoader // optional config --create loader
+	mergedInstallerConfig bool                      // empty path means merge fragments
 }
 
 // Command exposes the Cobra command.
@@ -83,9 +87,14 @@ func (a *App) setupRootCmd() error {
 		return fmt.Errorf("failed to load modules: %w", err)
 	}
 
+	if a.mergedInstallerConfig && a.loadCreateConfig == nil {
+		return fmt.Errorf(
+			"merged installer layout requires WithLoadCreateConfig (see framework options)")
+	}
+
 	// Register standard subcommands.
 	a.rootCmd.AddCommand(subcmd.NewIntegration(
-		a.AppCtx, runCtx, a.integrationManager,
+		a.AppCtx, runCtx, a.integrationManager, a.flags,
 	))
 
 	// Use default builder if none provided.
@@ -102,7 +111,13 @@ func (a *App) setupRootCmd() error {
 
 	// Other subcommands via api.Runner.
 	subs := []api.SubCommand{
-		subcmd.NewConfig(a.AppCtx, runCtx, a.flags),
+		subcmd.NewConfig(
+			a.AppCtx,
+			runCtx,
+			a.flags,
+			a.mergedInstallerConfig,
+			a.loadCreateConfig,
+		),
 		subcmd.NewDeploy(a.AppCtx, runCtx, a.flags, a.integrationManager, a.installerTarball),
 		subcmd.NewInstaller(a.AppCtx, runCtx, a.flags, a.installerTarball),
 		subcmd.NewMCPServer(a.AppCtx, runCtx, a.flags, a.integrationManager, mcpBuilder, a.mcpImage),
@@ -179,6 +194,22 @@ func NewAppFromTarball(
 
 	// Create and return the App using the existing constructor
 	return NewApp(appCtx, cfs, opts...)
+}
+
+func distributedInstallerMergeLoader(
+	cfs *chartfs.ChartFS,
+	explicitPath string,
+	namespace string,
+	appIdentifier string,
+) (*config.Config, error) {
+	if explicitPath != "" {
+		return config.NewConfigFromFile(cfs, explicitPath, namespace, appIdentifier)
+	}
+	payload, err := config.MergeDistributedInstallerYAML(cfs, appIdentifier)
+	if err != nil {
+		return nil, err
+	}
+	return config.NewConfigFromBytes(payload, namespace, appIdentifier)
 }
 
 // StandardIntegrations returns the list of standard integration modules.

@@ -1,6 +1,5 @@
 {{- $crc := required "CRC settings" .Installer.Settings.crc -}}
 {{- $tas := required "TAS settings" .Installer.Products.Trusted_Artifact_Signer -}}
-{{- $tpa := required "TPA settings" .Installer.Products.Trusted_Profile_Analyzer -}}
 {{- $acs := required "Red Hat ACS settings" .Installer.Products.Advanced_Cluster_Security -}}
 {{- $gitops := required "GitOps settings" .Installer.Products.OpenShift_GitOps -}}
 {{- $pipelines := required "Pipelines settings" .Installer.Products.OpenShift_Pipelines -}}
@@ -10,7 +9,42 @@
 {{- $ingressRouterCA := required "OpenShift RouterCA" .OpenShift.Ingress.RouterCA -}}
 {{- $openshiftMinorVersion := required "OpenShift Version" .OpenShift.MinorVersion -}}
 {{- $authProvider := required "Auth Provider is required" $rhdh.Properties.authProvider }}
-{{- $keycloakEnabled := or $tpa.Enabled $tas.Enabled (and $rhdh.Enabled (eq $authProvider "oidc"))}}
+{{- $instNs := .Installer.Namespace -}}
+{{- $tasActive := true -}}
+{{- if and (kindIs "bool" $tas.Enabled) (eq $tas.Enabled false) }}{{- $tasActive = false -}}{{- end -}}
+{{- $tasNs := default $instNs $tas.Namespace -}}
+{{- $tpa := index .Installer.Products "Trusted_Profile_Analyzer" -}}
+{{- $tpaIntegration := index .Installer.Integrations "tpa" -}}
+{{- $tpaBundleMode := "product" -}}
+{{- if not $tpa }}{{- $tpaBundleMode = "integration" -}}{{- end -}}
+{{- if $tpa -}}
+{{- if and (kindIs "bool" $tpa.Enabled) (eq $tpa.Enabled false) }}{{- $tpaBundleMode = "integration" -}}{{- end -}}
+{{- end -}}
+{{- $tpaActive := false -}}
+{{- if eq $tpaBundleMode "product" -}}
+{{- $tpaActive = true -}}
+{{- if and $tpa (kindIs "bool" $tpa.Enabled) (eq $tpa.Enabled false) }}{{- $tpaActive = false -}}{{- end -}}
+{{- end -}}
+{{- $tpaNs := "tssc-tpa" -}}
+{{- if eq $tpaBundleMode "product" -}}
+{{- $tpaNs = default $instNs $tpa.Namespace -}}
+{{- else if $tpa -}}
+{{- $tpaNs = default "tssc-tpa" $tpa.Namespace -}}
+{{- end -}}
+{{- $tpaManageSub := false -}}
+{{- if $tpa -}}{{- $tpaManageSub = dig "Properties" "manageSubscription" false $tpa -}}{{- end -}}
+{{- $acsActive := true -}}
+{{- if and (kindIs "bool" $acs.Enabled) (eq $acs.Enabled false) }}{{- $acsActive = false -}}{{- end -}}
+{{- $acsNs := default $instNs $acs.Namespace -}}
+{{- $gitopsActive := true -}}
+{{- if and (kindIs "bool" $gitops.Enabled) (eq $gitops.Enabled false) }}{{- $gitopsActive = false -}}{{- end -}}
+{{- $gitopsNs := default $instNs $gitops.Namespace -}}
+{{- $pipelinesActive := true -}}
+{{- if and (kindIs "bool" $pipelines.Enabled) (eq $pipelines.Enabled false) }}{{- $pipelinesActive = false -}}{{- end -}}
+{{- $rhdhActive := true -}}
+{{- if and (kindIs "bool" $rhdh.Enabled) (eq $rhdh.Enabled false) }}{{- $rhdhActive = false -}}{{- end -}}
+{{- $rhdhNs := default $instNs $rhdh.Namespace -}}
+{{- $keycloakEnabled := or $tpaActive $tasActive (and $rhdhActive (eq $authProvider "oidc")) (not (empty $tpaIntegration)) }}
 {{- $keycloakNamespace := "tssc-keycloak" -}}
 ---
 debug:
@@ -26,29 +60,26 @@ openshift:
     - {{ $keycloakNamespace }}
     - rhbk-operator
 {{- end }}
-{{- if $acs.Enabled }}
-    - {{ $acs.Namespace }}
+{{- if $acsActive }}
+    - {{ $acsNs }}
     {{- if $acs.Properties.manageSubscription }}
     - rhacs-operator
     {{- end }}
 {{- end }}
-{{- if $tpa.Enabled }}
-    - {{ $tpa.Namespace }}
-    {{- if $tpa.Properties.manageSubscription }}
+{{- if or $tpaActive $tpaIntegration }}
+    - {{ $tpaNs }}
+    {{- if and $tpaActive $tpaManageSub }}
     - rhtpa-operator
     {{- end }}
 {{- end }}
-{{- if $gitops.Enabled }}
-    - {{ $gitops.Namespace }}
+{{- if $gitopsActive }}
+    - {{ $gitopsNs }}
 {{- end }}
-{{- if $tas.Enabled }}
-    - {{ $tas.Namespace }}
+{{- if $tasActive }}
+    - {{ $tasNs }}
 {{- end }}
-{{- if $tpa.Enabled }}
-    - {{ $tpa.Namespace }}
-{{- end }}
-{{- if $rhdh.Enabled }}
-    - {{ $rhdh.Namespace }}
+{{- if $rhdhActive }}
+    - {{ $rhdhNs }}
 {{- end }}
 
 #
@@ -58,10 +89,10 @@ openshift:
 
 subscriptions:
   openshiftGitOps:
-    enabled: {{ $gitops.Enabled }}
-    managed: {{ and $gitops.Enabled $gitops.Properties.manageSubscription }}
+    enabled: {{ $gitopsActive }}
+    managed: {{ and $gitopsActive $gitops.Properties.manageSubscription }}
     config:
-      argoCDClusterNamespace: {{ $gitops.Namespace }}
+      argoCDClusterNamespace: {{ $gitopsNs }}
   openshiftKeycloak:
     enabled: {{ $keycloakEnabled }}
     managed: {{ $keycloakEnabled }}
@@ -69,20 +100,20 @@ subscriptions:
       targetNamespaces:
         - {{ default "empty" $keycloakNamespace }}
   openshiftPipelines:
-    enabled: {{ $pipelines.Enabled }}
-    managed: {{ and $pipelines.Enabled $pipelines.Properties.manageSubscription }}
+    enabled: {{ $pipelinesActive }}
+    managed: {{ and $pipelinesActive $pipelines.Properties.manageSubscription }}
   openshiftTrustedArtifactSigner:
-    enabled: {{ $tas.Enabled }}
-    managed: {{ and $tas.Enabled $tas.Properties.manageSubscription }}
+    enabled: {{ $tasActive }}
+    managed: {{ and $tasActive $tas.Properties.manageSubscription }}
   trustedProfileAnalyzer:
-    enabled: {{ $tpa.Enabled }}
-    managed: {{ and $tpa.Enabled $tpa.Properties.manageSubscription }}
+    enabled: {{ $tpaActive }}
+    managed: {{ and $tpaActive $tpaManageSub }}
   advancedClusterSecurity:
-    enabled: {{ $acs.Enabled }}
-    managed: {{ and $acs.Enabled $acs.Properties.manageSubscription }}
+    enabled: {{ $acsActive }}
+    managed: {{ and $acsActive $acs.Properties.manageSubscription }}
   developerHub:
-    enabled: {{ $rhdh.Enabled }}
-    managed: {{ and $rhdh.Enabled $rhdh.Properties.manageSubscription }}
+    enabled: {{ $rhdhActive }}
+    managed: {{ and $rhdhActive $rhdh.Properties.manageSubscription }}
 
 #
 # tssc-infrastructure
@@ -90,109 +121,18 @@ subscriptions:
 
 infrastructure:
   developerHub:
-    namespace: {{ $rhdh.Namespace }}
+    namespace: {{ $rhdhNs }}
   pgsqlService:
     instances:
       - name: tpa
-        enabled: {{ $tpa.Enabled }}
-        namespace: {{ $tpa.Namespace }}
+        enabled: {{ $tpaActive }}
+        namespace: {{ $tpaNs }}
       - name: keycloak
         enabled: {{ $keycloakEnabled }}
         namespace: {{ $keycloakNamespace }}
   openShiftPipelines:
-    enabled: {{ $pipelines.Enabled }}
+    enabled: {{ $pipelinesActive }}
     namespace: {{ $pipelinesNamespace }}
-
-#
-# tssc-iam
-#
-
-{{- $keycloakRouteTLSSecretName := "keycloak-tls" }}
-{{- $keycloakRouteHost := printf "tssc-sso.%s" $ingressDomain }}
-{{- $realmsName := "tssc-iam" }}
-{{- $tpaTestingUsersEnabled := false }}
-{{- $protocol := "https" -}}
-{{- if $crc }}
-  {{- $protocol = "http" }}
-{{- end }}
-{{- $tpaOIDCIssuerURL := printf "%s://%s/realms/%s" $protocol $keycloakRouteHost $realmsName }}
-
-iam:
-  enabled: {{ $keycloakEnabled }}
-  namespace: {{ $keycloakNamespace }}
-  integrationSecret:
-    namespace: {{ .Installer.Namespace }}
-  instances: 1
-  database:
-    host: keycloak-pgsql
-    name: keycloak
-    secretName: keycloak-pgsql-user
-  route:
-    host: {{ $keycloakRouteHost }}
-    tls:
-      enabled: {{ not $crc }}
-      secretName: {{ $keycloakRouteTLSSecretName }}
-      termination: reencrypt
-{{- if $crc }}
-    annotations:
-      route.openshift.io/termination: reencrypt
-{{- end }}
-  service:
-    annotations:
-      service.beta.openshift.io/serving-cert-secret-name: {{ $keycloakRouteTLSSecretName }}
-  keycloakCR:
-    namespace: {{ $keycloakNamespace }}
-    ingressDomain: {{ $ingressDomain }}
-    rhdhRealm:
-      enabled: {{ and $rhdh.Enabled (eq $authProvider "oidc") }}
-      rhdhRedirectUris:
-        - {{
-          printf "%s://backstage-developer-hub-tssc-dh.%s/api/auth/oidc/handler/frame"
-          $protocol
-          $ingressDomain
-        }}
-      rhdhOriginUris:
-        - {{
-          printf "%s://backstage-developer-hub-tssc-dh.%s"
-          $protocol
-          $ingressDomain
-        }}
-    trustedArtifactSignerRealm:
-      enabled: {{ $tas.Enabled }}
-    trustedProfileAnalyzerRealm:
-      enabled: {{ $tpa.Enabled }}
-      oidcIssuerURL: {{ $tpaOIDCIssuerURL }}
-      clients:
-        cli:
-          enabled: true
-        testingManager:
-          enabled: {{ $tpaTestingUsersEnabled }}
-        testingUser:
-          enabled: {{ $tpaTestingUsersEnabled }}
-      frontendRedirectUris:
-        - "http://localhost:8080"
-    {{- range list "server" "sbom" }}
-        - "{{ printf "%s://%s-%s.%s" $protocol . $tpa.Namespace $ingressDomain }}"
-        - "{{ printf "%s://%s-%s.%s/*" $protocol . $tpa.Namespace $ingressDomain }}"
-    {{- end }}
-
-#
-# tssc-acs
-#
-
-acs: &acs
-  enabled: {{ $acs.Enabled }}
-  name: &acsName stackrox-central-services
-  ingressDomain: {{ $ingressDomain }}
-  ingressRouterCA: {{ $ingressRouterCA }}
-  integrationSecret:
-    namespace: {{ .Installer.Namespace }}
-  test:
-    scanner:
-      image: registry.access.redhat.com/ubi10:latest
-  tssc:
-    namespace: {{ .Installer.Namespace }}
-acsTest: *acs
 
 #
 # tssc-app-namespaces
@@ -206,51 +146,22 @@ appNamespaces:
   namespace_prefixes:
     - {{ printf "%s-app" .Installer.Namespace }}
   pipelines:
-    enabled: {{ $pipelines.Enabled}}
+    enabled: {{ $pipelinesActive }}
 
 #
-# tssc-gitops
+# tssc-integrations (also needs top-level .Values.argoCD for gitops auth templates)
 #
 
 argoCD:
-  enabled: {{ $gitops.Enabled }}
-  name: {{ $argoCDName }}
-  namespace: {{ $gitops.Namespace }}
-  integrationSecret:
-    name: tssc-argocd-integration
-    namespace: {{ .Installer.Namespace }}
-  ingressDomain: {{ $ingressDomain }}
-  tssc:
-    namespace: {{ .Installer.Namespace }}
-
-#
-# tssc-pipelines-config
-#
-
-pipelines_config:
-  namespace:  {{ $pipelinesNamespace }}
-  integrationSecret:
-    namespace: {{ .Installer.Namespace }}
-
-#
-# tssc-pipelines
-#
-
-pipelines:
-  namespace: {{ $pipelinesNamespace }}
-  tssc:
-    namespace: {{ .Installer.Namespace }}
-
-#
-# tssc-integrations
-#
+  enabled: {{ $gitopsActive }}
+  namespace: {{ $gitopsNs }}
 
 integrations:
   acs:
-    enabled: {{ $acs.Enabled }}
+    enabled: {{ $acsActive }}
   argoCD:
-    enabled: {{ $gitops.Enabled }}
-    namespace: {{ $gitops.Namespace }}
+    enabled: {{ $gitopsActive }}
+    namespace: {{ $gitopsNs }}
   tssc:
     namespace: {{ .Installer.Namespace }}
 #   github:
@@ -265,150 +176,3 @@ integrations:
 #     webhookSecret: ""
 #   gitlab:
 #     token: ""
-
-#
-# tssc-dh
-#
-
-{{- $catalogURL := required "Red Hat Developer Hub Catalog URL is required"
-    $rhdh.Properties.catalogURL }}
-
-
-developerHub:
-  namespace: {{ $rhdh.Namespace }}
-  ingressDomain: {{ $ingressDomain }}
-  catalogURL: {{ $catalogURL }}
-  authProvider: {{ $authProvider }}
-  integrationSecrets:
-    namespace: {{ .Installer.Namespace }}
-  RBAC:
-    enabled: {{ dig "Properties" "RBAC" "enabled" false $rhdh }}
-{{- if eq $authProvider "github" }}
-    adminUsers:
-{{ dig "Properties" "RBAC" "adminUsers" (list "${GITHUB__USERNAME}") $rhdh | toYaml | indent 6 }}
-    orgs:
-{{ dig "Properties" "RBAC" "orgs" (list "${GITHUB__ORG}") $rhdh | toYaml | indent 6 }}
-{{- else if eq $authProvider "gitlab" }}
-    adminUsers:
-{{ dig "Properties" "RBAC" "adminUsers" (list "${GITLAB__USERNAME}") $rhdh | toYaml | indent 6 }}
-{{- else if eq $authProvider "oidc" }}
-  oidc:
-    secretNamespace: {{ .Installer.Namespace }}
-    enabled: true
-    clientID: rhdh
-    metadataURL: {{ printf "%s://%s/realms/%s/.well-known/openid-configuration" $protocol $keycloakRouteHost $realmsName }}
-    baseURL: {{ printf "%s://%s" $protocol $keycloakRouteHost }}
-    loginRealm: {{ $realmsName }}
-    realm: {{ $realmsName }}
-{{- end }}
-
-#
-# tssc-tpa
-#
-
-{{- $tpaDatabaseSecretName := "tpa-pgsql-user" }}
-{{- $tpaAppDomain := printf "-%s.%s" $tpa.Namespace $ingressDomain }}
-{{- $tpaOIDCClientsSecretName := "tpa-realm-clients" }}
-
-trustedProfileAnalyzer:
-  enabled: {{ $tpa.Enabled }}
-  cycloneDXVersion: "1.4"
-  oidcIssuerURL: {{ $tpaOIDCIssuerURL }}
-  namespace: "{{ $tpa.Namespace }}"
-  appDomain: "{{ $tpaAppDomain }}"
-  integrationSecret:
-    namespace: {{ .Installer.Namespace }}
-  ingress: &tpaIngress
-    className: openshift-default
-  openshift: &tpaOpenShift
-    # In practice it toggles "https" vs. "http" for TPA components, for CRC it's
-    # easier to focus on "http" communication only.
-    useServiceCa: {{ not $crc }}
-  database: &tpaDatabase
-    name:
-      valueFrom:
-        secretKeyRef:
-          name: {{ $tpaDatabaseSecretName }}
-          key: dbname
-    host:
-      valueFrom:
-        secretKeyRef:
-          name: {{ $tpaDatabaseSecretName }}
-          key: host
-    port:
-      valueFrom:
-        secretKeyRef:
-          name: {{ $tpaDatabaseSecretName}}
-          key: port
-    username:
-      valueFrom:
-        secretKeyRef:
-          name: {{ $tpaDatabaseSecretName }}
-          key: user
-    password:
-      valueFrom:
-        secretKeyRef:
-          name: {{ $tpaDatabaseSecretName }}
-          key: password
-  createDatabase: *tpaDatabase
-  migrateDatabase: *tpaDatabase
-  storage: &tpaStorage
-    type: filesystem
-    size: 32Gi
-  oidc: &tpaOIDC
-    issuerUrl: {{ $tpaOIDCIssuerURL }}
-    clients:
-      cli:
-        clientSecret:
-          valueFrom:
-            secretKeyRef:
-              name: {{ $tpaOIDCClientsSecretName }}
-              key: cli
-{{- if $tpaTestingUsersEnabled }}
-      testingUser:
-        clientSecret:
-          valueFrom:
-            secretKeyRef:
-              name: {{ $tpaOIDCClientsSecretName }}
-              key: testingUser
-      testingManager:
-        clientSecret:
-          valueFrom:
-            secretKeyRef:
-              name: {{ $tpaOIDCClientsSecretName }}
-              key: testingManager
-{{- end }}
-
-trustification:
-  name: trustedprofileanalyzer
-  namespace: "{{ $tpa.Namespace }}"
-  appDomain: "{{ $tpaAppDomain }}"
-  openshift: *tpaOpenShift
-  storage: *tpaStorage
-  oidc: *tpaOIDC
-  ingress: *tpaIngress
-  tls:
-    serviceEnabled: "{{ not $crc }}"
-
-#
-# tssc-tas
-#
-
-{{- $tasRealmPath := printf "realms/%s" $realmsName }}
-
-trustedArtifactSigner:
-  enabled: {{ $tas.Enabled }}
-  ingressDomain: "{{ $ingressDomain }}"
-  secureSign:
-    enabled: {{ $tas.Enabled }}
-    namespace: {{ $tas.Namespace }}
-    fulcio:
-      oidc:
-        clientID: trusted-artifact-signer
-        issuerURL: {{ printf "%s://%s/%s" $protocol $keycloakRouteHost $tasRealmPath }}
-      certificate:
-        # TODO: promopt the user for organization email/name input!
-        organizationEmail: trusted-artifact-signer@company.dev
-        organizationName: TSSC
-  integrationSecret:
-    namespace: {{ .Installer.Namespace }}

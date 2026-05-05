@@ -1,0 +1,140 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ .Release.Name }}-test-quay-connectivity
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    helm.sh/hook: test
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+  labels:
+    {{- include "tssc-quay.labels" . | nindent 4 }}
+spec:
+  automountServiceAccountToken: false
+  restartPolicy: Never
+  containers:
+    - name: quay-http-check
+      image: registry.redhat.io/openshift4/ose-tools-rhel9:v4.19
+      command:
+        - /bin/bash
+        - -ec
+        - |
+          set -euo pipefail
+          URL="${QUAY_URL:?}"
+          TOKEN="${QUAY_TOKEN:-}"
+          DOCKERCONFIG="${QUAY_DOCKERCONFIGJSON:-}"
+          DOCKERCONFIG_RO="${QUAY_DOCKERCONFIGJSON_READONLY:-}"
+
+          validate_json() {
+            local label="$1"
+            local data="$2"
+            if command -v jq >/dev/null 2>&1; then
+              if ! printf '%s' "${data}" | jq -e . >/dev/null; then
+                echo "ERROR: ${label} is not valid JSON" >&2
+                exit 1
+              fi
+            elif command -v python3 >/dev/null 2>&1; then
+              if ! printf '%s' "${data}" | python3 -c 'import json,sys; json.load(sys.stdin)' 2>/dev/null; then
+                echo "ERROR: ${label} is not valid JSON" >&2
+                exit 1
+              fi
+            else
+              echo "ERROR: install jq or python3 to validate dockerconfig JSON" >&2
+              exit 1
+            fi
+          }
+
+          validate_json "quay.dockerconfigjson" "${DOCKERCONFIG}"
+          # dockerconfigjsonreadonly is optional (dev/stage/prod pull-only creds). Validate JSON only when set.
+          if [[ -n "${DOCKERCONFIG_RO}" ]]; then
+            validate_json "quay.dockerconfigjsonreadonly" "${DOCKERCONFIG_RO}"
+          fi
+          echo "Quay dockerconfig JSON OK"
+
+          curl -sfk --connect-timeout 10 "${URL%/}/health/instance" \
+            || curl -sfk --connect-timeout 10 "${URL%/}/api/v1/discovery" \
+            || curl -sfk --connect-timeout 10 "${URL%/}/health"
+
+          if [[ -z "${TOKEN}" || "${TOKEN}" == "REPLACE_ME" ]]; then
+            echo "ERROR: quay.token must be set to a real token (not empty or REPLACE_ME)" >&2
+            exit 1
+          fi
+          curl -sfk --connect-timeout 10 \
+            -H "Authorization: Bearer ${TOKEN}" \
+            "${URL%/}/api/v1/user/" >/dev/null
+          echo "Quay API token OK"
+
+          # Best-effort: registry OCI v2 /v2/ check. API token + dockerconfig JSON are already validated above.
+          # Quay often uses different credentials for REST API vs registry pulls (robot vs OAuth); failing only this
+          # probe should not fail the chart test when API checks passed.
+          probe_registry_dockerconfig() {
+            local label="$1"
+            local json="$2"
+            if ! command -v jq >/dev/null 2>&1; then
+              echo "WARNING: jq not found; skipping registry /v2/ dockerconfig probe (${label})" >&2
+              return 0
+            fi
+            if [[ -z "${json}" || "${json}" == "{}" ]]; then
+              echo "Skipping registry /v2/ probe (${label}: empty)"
+              return 0
+            fi
+            local host="${QUAY_URL#*://}"
+            host="${host%%/*}"
+            host="${host%%:*}"
+            if [[ -z "${host}" ]]; then
+              echo "WARNING: could not parse host from QUAY_URL; skipping registry probe (${label})" >&2
+              return 0
+            fi
+            if ! echo "${json}" | jq -e '.auths | length > 0' >/dev/null 2>&1; then
+              echo "Skipping registry /v2/ probe (${label}: no auths)"
+              return 0
+            fi
+            # Anonymous catalog is enough for some registries (public pull).
+            if curl -sfk --connect-timeout 10 "https://${host}/v2/" >/dev/null 2>&1; then
+              echo "Quay registry /v2/ reachable (${label}, no auth required)"
+              return 0
+            fi
+            local auth_b64
+            auth_b64="$(echo "${json}" | jq -r --arg h "${host}" '
+              [.auths | to_entries[]
+                | select((.key | sub("^https?://"; "") | split("/")[0] | split(":")[0]) == $h)
+                | .value.auth // empty]
+              | map(select(length > 0))
+              | first // empty
+            ')"
+            if [[ -z "${auth_b64}" ]]; then
+              echo "WARNING: no \"auth\" entry in ${label} for registry host ${host} (keys must match URL host, e.g. quay.io)" >&2
+              return 0
+            fi
+            local userpwd
+            userpwd="$(printf '%s' "${auth_b64}" | base64 -d)"
+            if curl -sfk --connect-timeout 10 -u "${userpwd}" "https://${host}/v2/" >/dev/null; then
+              echo "Quay registry dockerconfig OK (${label})"
+              return 0
+            fi
+            echo "WARNING: GET https://${host}/v2/ failed with dockerconfig Basic auth (REST API already OK; use docker login creds or a robot account for pulls — often different from OAuth API token)" >&2
+          }
+
+          probe_registry_dockerconfig "dockerconfigjson" "${DOCKERCONFIG}"
+          if [[ -n "${DOCKERCONFIG_RO}" ]]; then
+            probe_registry_dockerconfig "dockerconfigjsonreadonly" "${DOCKERCONFIG_RO}"
+          fi
+
+          echo "Quay connectivity OK"
+      env:
+        - name: QUAY_URL
+          value: {{ include "tssc-quay.scalarJSON" .Values.quay.url }}
+        - name: QUAY_TOKEN
+          value: {{ include "tssc-quay.scalarJSON" .Values.quay.token }}
+        - name: QUAY_DOCKERCONFIGJSON
+          value: {{ include "tssc-quay.dockerconfigjsonQuoted" .Values.quay.dockerconfigjson }}
+        - name: QUAY_DOCKERCONFIGJSON_READONLY
+          value: {{ include "tssc-quay.dockerconfigjsonReadonlyQuoted" .Values.quay.dockerconfigjsonreadonly }}
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+          ephemeral-storage: 64Mi
+        limits:
+          memory: 256Mi
+      securityContext:
+        allowPrivilegeEscalation: false

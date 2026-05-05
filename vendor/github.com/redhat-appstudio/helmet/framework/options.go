@@ -2,6 +2,7 @@ package framework
 
 import (
 	"github.com/redhat-appstudio/helmet/api"
+	"github.com/redhat-appstudio/helmet/internal/config"
 	"github.com/redhat-appstudio/helmet/internal/mcptools"
 )
 
@@ -14,6 +15,24 @@ type Option func(*App)
 func WithIntegrations(modules ...api.IntegrationModule) Option {
 	return func(a *App) {
 		a.integrations = append(a.integrations, modules...)
+	}
+}
+
+// WithLoadCreateConfig replaces the default "config --create" loader.
+func WithLoadCreateConfig(fn config.CreateConfigLoader) Option {
+	return func(a *App) {
+		a.loadCreateConfig = fn
+	}
+}
+
+// WithDistributedInstallerMergeLayout configures "config --create" without a file
+// argument to merge installer/config/settings.yaml, installer/helmet.yaml,
+// charts/<chart>/config.yaml fragments, and generated integrations (see
+// config.MergeDistributedInstallerYAML). Overrides the default single-file loader.
+func WithDistributedInstallerMergeLayout() Option {
+	return func(a *App) {
+		a.mergedInstallerConfig = true
+		a.loadCreateConfig = distributedInstallerMergeLoader
 	}
 }
 

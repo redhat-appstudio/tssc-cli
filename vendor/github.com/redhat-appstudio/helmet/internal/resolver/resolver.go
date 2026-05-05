@@ -6,6 +6,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
+	"github.com/redhat-appstudio/helmet/internal/annotations"
 	"github.com/redhat-appstudio/helmet/internal/config"
 )
 
@@ -43,14 +44,26 @@ func (r *Resolver) setDependencyNamespace(d *Dependency) error {
 	if product == "" {
 		namespace = r.cfg.Namespace()
 	} else {
-		spec, err := r.cfg.GetProduct(product)
-		if err != nil {
-			return err
+		spec := r.cfg.FindProduct(product)
+		if spec == nil {
+			// Chart carries product-name but that product is not under installer.products
+			// (integration-bundle deploy): release in the installer namespace.
+			namespace = r.cfg.Namespace()
+		} else {
+			namespace = *spec.Namespace
 		}
-		namespace = *spec.Namespace
 	}
 	d.SetNamespace(namespace)
+	r.maybeInstallReleaseInInstallerNamespace(d)
 	return nil
+}
+
+// maybeInstallReleaseInInstallerNamespace overrides the dependency namespace to the
+// installer namespace when the chart declares install-release-in-installer-namespace.
+func (r *Resolver) maybeInstallReleaseInInstallerNamespace(d *Dependency) {
+	if d != nil && d.InstallReleaseInInstallerNamespace() {
+		d.SetNamespace(r.cfg.Namespace())
+	}
 }
 
 // dependsOn checks if the chart has dependencies and resolves them. The
@@ -76,13 +89,11 @@ func (r *Resolver) dependsOn(
 		if err != nil {
 			return err
 		}
-		// Skiping when the next dependency is associated with a disabled product.
+		// Skip only when the product exists in config and is disabled. If the
+		// product is not listed (integration-only chart), still resolve depends-on
+		// so ordering stays correct; namespace uses installer namespace.
 		if product := dependsOnDep.ProductName(); product != "" {
-			productSpec, err := r.cfg.GetProduct(product)
-			if err != nil {
-				return err
-			}
-			if !productSpec.Enabled {
+			if spec := r.cfg.FindProduct(product); spec != nil && !spec.IsActive() {
 				continue
 			}
 		}
@@ -110,6 +121,7 @@ func (r *Resolver) resolveEnabledProducts() error {
 		}
 		// Products uses the namespace specified in the configuration.
 		d.SetNamespace(*product.Namespace)
+		r.maybeInstallReleaseInInstallerNamespace(d)
 		// Product charts are added to the topology before required charts.
 		r.topology.Append(*d)
 		// Recursively resolving the dependencies, added before this chart.
@@ -171,7 +183,60 @@ func (r *Resolver) Resolve() error {
 	if err := r.resolveEnabledProducts(); err != nil {
 		return err
 	}
+	if err := r.resolveIntegrationBundles(); err != nil {
+		return err
+	}
 	return r.resolveDependencies()
+}
+
+// resolveIntegrationBundles adds charts that provide an integration listed under
+// installer.integrations when the chart declares support for the integration bundle
+// (bundle-types-supported includes integration, or legacy bundle-type integration/dual).
+// If the same chart is already deployed as an active product, it is skipped.
+func (r *Resolver) resolveIntegrationBundles() error {
+	for _, in := range r.cfg.Installer.Integrations {
+		inID := in.EffectiveID()
+		if inID == "" {
+			continue
+		}
+		chartName := fmt.Sprintf("tssc-%s", inID)
+		d, err := r.collection.Get(chartName)
+		if err != nil {
+			return fmt.Errorf("installer.integrations id %q: no chart %q: %w", inID, chartName, err)
+		}
+		supportsIntegration, _, err := d.BundleSupport()
+		if err != nil {
+			return fmt.Errorf("chart %q: %w", d.Name(), err)
+		}
+		if !supportsIntegration {
+			return fmt.Errorf(
+				"installer.integrations references id %q (chart %s) but that chart does not support an integration bundle; use %s (e.g. integration, product or both) or remove it from integrations",
+				inID,
+				d.Name(),
+				annotations.BundleTypesSupported,
+			)
+		}
+		pn := strings.TrimSpace(d.ProductName())
+		if pn != "" && r.isActiveProduct(pn) {
+			continue
+		}
+		if r.topology.Contains(d.Name()) {
+			continue
+		}
+		dep := *d
+		dep.SetNamespace(r.cfg.Namespace())
+		r.topology.Append(dep)
+	}
+	return nil
+}
+
+func (r *Resolver) isActiveProduct(name string) bool {
+	for _, p := range r.cfg.Installer.Products {
+		if p.Name == name && p.IsActive() {
+			return true
+		}
+	}
+	return false
 }
 
 // Print prints the resolved topology to the writer formatted as a table.

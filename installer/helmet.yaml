@@ -1,0 +1,10 @@
+name: tssc
+products:
+  - local://dh
+  - local://pipelines
+  - local://gitops
+  - local://tas
+  - local://acs
+integrations:
+  - local://quay
+  - local://tpa

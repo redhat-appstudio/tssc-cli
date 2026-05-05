@@ -1,5 +1,10 @@
+{{- if eq (dig "mode" "product" (index .Values "bundle" | default dict)) "integration" }}
+Trusted Profile Analyzer: integration Secret + connectivity test only.
+{{- else }}
 {{- $tpa := .Values.trustedProfileAnalyzer }}
-{{- $trustification := .Values.trustification -}}
+{{- $trustification := .Values.trustification }}
+{{- $issuer := coalesce (dig "oidc" "issuerUrl" "" $trustification) $tpa.oidcIssuerURL }}
 Trusted Profile Analyzer (TPA):
   - UI: {{ printf "https://server%s" $trustification.appDomain }}
-    Keycloak URL:   {{ $trustification.oidc.issuerUrl }}
+    Keycloak URL:   {{ $issuer }}
+{{- end }}
