@@ -191,7 +191,7 @@ func (j *Job) applyClusterRoleBinding(
 // in-cluster.
 func (j *Job) createJob(
 	ctx context.Context,
-	debug, dryRun bool,
+	verbose, dryRun bool,
 	namespace, image string,
 ) error {
 	bc, err := j.kube.BatchV1ClientSet("")
@@ -201,8 +201,8 @@ func (j *Job) createJob(
 
 	// Setting up the list of arguments for the deployment job.
 	args := []string{"deploy"}
-	if debug {
-		args = append(args, "--debug")
+	if verbose {
+		args = append(args, "--verbose")
 		args = append(args, "--log-level=debug")
 	}
 	if dryRun {
@@ -273,7 +273,7 @@ func (j *Job) GetJobLogFollowCmd(namespace string) string {
 // creates the job.
 func (j *Job) Run(
 	ctx context.Context,
-	debug, dryRun, force bool,
+	verbose, dryRun, force bool,
 	namespace, image string,
 ) error {
 	state, err := j.GetState(ctx)
@@ -301,7 +301,7 @@ func (j *Job) Run(
 		return fmt.Errorf("unable to apply the cluster role binding: %w", err)
 	}
 	// Creating the job itself.
-	return j.createJob(ctx, debug, dryRun, namespace, image)
+	return j.createJob(ctx, verbose, dryRun, namespace, image)
 }
 
 // NewJob instantiates a new Job object.

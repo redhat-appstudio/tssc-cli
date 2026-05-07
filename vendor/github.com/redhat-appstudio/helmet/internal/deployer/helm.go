@@ -44,15 +44,15 @@ var ErrUpgradeFailed = errors.New("upgrade failed")
 
 // printRelease prints the Helm release information.
 func (h *Helm) printRelease(rel *release.Release) {
-	// In debug mode, print the configuration values using key-value pairs.
-	if !h.flags.DryRun && h.flags.Debug {
+	// In verbose mode, print the configuration values using key-value pairs.
+	if !h.flags.DryRun && h.flags.Verbose {
 		printer.ValuesPrinter("Config", rel.Config)
 	}
 	printer.HelmReleasePrinter(rel)
-	// Print extended release information only in dry-run or debug mode. This
+	// Print extended release information only in dry-run or verbose mode. This
 	// allows rendering chart templates (dry-run) while inspecting the release
 	// manifests.
-	if h.flags.DryRun || h.flags.Debug {
+	if h.flags.DryRun || h.flags.Verbose {
 		printer.HelmExtendedReleasePrinter(rel)
 	}
 	printer.HelmReleaseNotesPrinter(rel)

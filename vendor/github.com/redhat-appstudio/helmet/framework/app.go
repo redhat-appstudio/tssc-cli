@@ -85,7 +85,7 @@ func (a *App) setupRootCmd() error {
 
 	// Register standard subcommands.
 	a.rootCmd.AddCommand(subcmd.NewIntegration(
-		a.AppCtx, runCtx, a.integrationManager,
+		a.AppCtx, runCtx, a.integrationManager, a.flags,
 	))
 
 	// Use default builder if none provided.
