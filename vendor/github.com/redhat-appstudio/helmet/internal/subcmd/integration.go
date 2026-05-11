@@ -6,6 +6,7 @@ import (
 
 	"github.com/redhat-appstudio/helmet/api"
 	"github.com/redhat-appstudio/helmet/internal/config"
+	"github.com/redhat-appstudio/helmet/internal/flags"
 	"github.com/redhat-appstudio/helmet/internal/integrations"
 	"github.com/redhat-appstudio/helmet/internal/resolver"
 	"github.com/redhat-appstudio/helmet/internal/runcontext"
@@ -50,15 +51,16 @@ func disableProductForIntegration(
 		return nil // no product provides this integration
 	}
 
-	spec, err := cfg.GetProduct(productName)
-	if err != nil {
-		return err
+	spec := cfg.FindProduct(productName)
+	if spec == nil {
+		return nil // product not in config (e.g. integration-only bundle)
 	}
-	if !spec.Enabled {
+	if !spec.IsActive() {
 		return nil // already disabled
 	}
 
-	spec.Enabled = false
+	disabled := false
+	spec.Enabled = &disabled
 	if err := cfg.SetProduct(productName, *spec); err != nil {
 		return err
 	}
@@ -70,6 +72,7 @@ func NewIntegration(
 	appCtx *api.AppContext,
 	runCtx *runcontext.RunContext,
 	manager *integrations.Manager,
+	f *flags.Flags,
 ) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "integration <type>",
@@ -88,8 +91,15 @@ func NewIntegration(
 			if err != nil {
 				return err
 			}
-			return disableProductForIntegration(
-				ctx, appCtx, runCtx, manager, cfg, activeIntegration)
+			if err := disableProductForIntegration(
+				ctx, appCtx, runCtx, manager, cfg, activeIntegration); err != nil {
+				return err
+			}
+			if f.Verbose {
+				_, err := fmt.Fprintln(cmd.OutOrStdout(), "Integration created successfully")
+				return err
+			}
+			return nil
 		},
 	}
 

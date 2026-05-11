@@ -1,0 +1,19 @@
+---
+apiVersion: v2
+name: tssc-tpa
+description: TSSC Trusted Profile Analyzer
+type: application
+version: "1.9.0"
+appVersion: "2.2.0"
+annotations:
+  helmet.redhat-appstudio.github.com/bundle-types-supported: both
+  # Helm release runs in the installer namespace so integration Secrets in that
+  # namespace stay owned by this release (product workloads still use trustedProfileAnalyzer.namespace).
+  helmet.redhat-appstudio.github.com/install-release-in-installer-namespace: "true"
+  helmet.redhat-appstudio.github.com/installer-integration-id: tpa
+  helmet.redhat-appstudio.github.com/integration-display-name: Trusted Profile Analyzer
+  helmet.redhat-appstudio.github.com/product-name: Trusted Profile Analyzer
+  helmet.redhat-appstudio.github.com/depends-on-bundles: iam
+  helmet.redhat-appstudio.github.com/depends-on-bundle-charts: tssc-tpa-openshift, tssc-tpa-subscriptions, tssc-tpa-pgsql
+  helmet.redhat-appstudio.github.com/integrations-provided: trustification
+  helmet.redhat-appstudio.github.com/integrations-required: trustificationauth

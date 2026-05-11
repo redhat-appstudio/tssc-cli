@@ -1,0 +1,1 @@
+../../../../../charts/_common/_copy-scripts.tpl

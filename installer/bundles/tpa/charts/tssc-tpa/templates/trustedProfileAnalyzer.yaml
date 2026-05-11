@@ -1,0 +1,59 @@
+{{- if ne (dig "mode" "product" (index .Values "bundle" | default dict)) "integration" }}
+{{- $tpa := .Values.trustedProfileAnalyzer -}}
+---
+apiVersion: rhtpa.io/v1
+kind: TrustedProfileAnalyzer
+metadata:
+  name: {{ $tpa.name }}
+  namespace: {{ required ".tpa.namespace is required" $tpa.namespace }}
+spec:
+  appDomain: {{ required ".tpa.appDomain is required" $tpa.appDomain }}
+  collector: {}
+  database: {{
+    required ".tpa.database is required"
+      $tpa.database | toYaml | nindent 8
+  }}
+  createDatabase: {{
+    required ".tpa.createDatabase is required"
+      $tpa.createDatabase | toYaml | nindent 8
+  }}
+  migrateDatabase: {{
+    required ".tpa.migrateDatabase is required"
+      $tpa.migrateDatabase | toYaml | nindent 8
+  }}
+  infrastructure:
+    port: 9010
+  ingress: {{
+    required ".tpa.ingress is required"
+      $tpa.ingress | toYaml | nindent 8
+  }}
+  metrics:
+    enabled: false
+  modules: {{
+    required ".tpa.modules is required"
+      $tpa.modules | toYaml | nindent 8
+  }}
+  oidc: {{
+    required ".tpa.oidc is required"
+      $tpa.oidc | toYaml | nindent 8
+  }}
+  openshift:
+    useServiceCa: true
+  partOf: trustify
+  replicas: 1
+  rust: {{
+    required ".tpa.rust is required"
+      $tpa.rust | toYaml | nindent 8
+  }}
+  storage: {{
+    required ".tpa.storage is required"
+      $tpa.storage | toYaml | nindent 8
+  }}
+  tls: {{
+    required ".tpa.tls is required"
+      $tpa.tls | toYaml | nindent 8
+  }}
+  tracing:
+    enabled: false
+{{- end }}
+

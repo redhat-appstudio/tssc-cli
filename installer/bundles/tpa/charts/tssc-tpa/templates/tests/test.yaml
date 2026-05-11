@@ -1,0 +1,22 @@
+{{- if ne (dig "mode" "product" (index .Values "bundle" | default dict)) "integration" }}
+---
+{{- include "common.test" . }}
+  containers:
+    - name: deployments-test
+      image: registry.redhat.io/openshift4/ose-tools-rhel9:v4.19
+      env:
+        # Workloads run in the TPA project namespace; Helm release may live in the installer ns.
+        - name: NAMESPACE
+          value: {{ required "trustedProfileAnalyzer.namespace" .Values.trustedProfileAnalyzer.namespace }}
+        - name: RESOURCE_TYPE
+          value: "deployment"
+      command:
+        - /scripts/test-rollout-status.sh
+      args:
+        - {{ printf "app.kubernetes.io/instance=%s" .Values.trustedProfileAnalyzer.name }}
+      volumeMounts:
+        - name: scripts
+          mountPath: /scripts
+      securityContext:
+        allowPrivilegeEscalation: false
+{{- end }}

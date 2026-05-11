@@ -1,0 +1,9 @@
+---
+apiVersion: v2
+name: tssc-acs-integrations
+description: TSSC ACS integrations (registry integrations via ACS API)
+type: application
+version: "1.9.0"
+annotations:
+  helmet.redhat-appstudio.github.com/depends-on: tssc-acs
+  helmet.redhat-appstudio.github.com/install-release-in-installer-namespace: "true"

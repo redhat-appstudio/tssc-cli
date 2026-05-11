@@ -1,0 +1,13 @@
+---
+# Chart-local defaults for the Red Hat Developer Hub operator Subscription only.
+# Install-time values come from ../../values.yaml.tpl (merged by Helmet).
+subscriptions:
+  developerHub:
+    enabled: false
+    description: Red Hat Developer Hub Operator
+    apiResource: backstages.rhdh.redhat.com
+    namespace: openshift-operators
+    name: rhdh
+    channel: fast-1.9
+    source: redhat-operators
+    sourceNamespace: openshift-marketplace

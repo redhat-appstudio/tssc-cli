@@ -1,0 +1,10 @@
+---
+apiVersion: v2
+name: tssc-pipelines-config
+description: TSSC Pipelines Config
+type: application
+version: "1.9.0"
+appVersion: "1.21"
+annotations:
+  helmet.redhat-appstudio.github.com/depends-on-bundle-charts: tssc-pipelines-openshift, tssc-pipelines-subscriptions
+  helmet.redhat-appstudio.github.com/depends-on-bundles: tas

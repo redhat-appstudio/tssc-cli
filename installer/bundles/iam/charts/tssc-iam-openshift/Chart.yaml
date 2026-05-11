@@ -1,0 +1,6 @@
+---
+apiVersion: v2
+name: tssc-iam-openshift
+description: OpenShift project requests for the IAM (Keycloak) bundle
+type: application
+version: "1.9.0"

@@ -66,7 +66,19 @@ func (i *Installer) RenderValues() error {
 	i.logger.Debug("Preparing rendered values for Helm installation")
 	var err error
 	i.values, err = chartutil.ReadValues(i.valuesBytes)
-	return err
+	if err != nil {
+		return err
+	}
+	// Expose CLI dry-run to charts as .Values.helmet.dryRun so templates can skip
+	// cluster-dependent checks (e.g. lookup integration secrets not created yet).
+	if i.flags != nil && i.flags.DryRun {
+		i.values = chartutil.CoalesceTables(i.values, chartutil.Values{
+			"helmet": chartutil.Values{
+				"dryRun": true,
+			},
+		})
+	}
+	return nil
 }
 
 // PrintValues prints the parsed values to the console.

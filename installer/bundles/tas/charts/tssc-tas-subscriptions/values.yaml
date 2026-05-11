@@ -1,0 +1,13 @@
+---
+# Chart-local defaults for the Trusted Artifact Signer operator Subscription only.
+# Install-time values come from ../../values.yaml.tpl (merged by Helmet).
+subscriptions:
+  openshiftTrustedArtifactSigner:
+    enabled: false
+    description: Red Hat Trusted Artifact Signer Operator
+    apiResource: securesigns.rhtas.redhat.com
+    namespace: openshift-operators
+    name: rhtas-operator
+    channel: stable-v1.3
+    source: redhat-operators
+    sourceNamespace: openshift-marketplace

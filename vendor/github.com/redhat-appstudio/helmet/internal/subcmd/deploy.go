@@ -4,9 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/redhat-appstudio/helmet/api"
+	"github.com/redhat-appstudio/helmet/internal/chartfs"
 	"github.com/redhat-appstudio/helmet/internal/config"
 	"github.com/redhat-appstudio/helmet/internal/flags"
 	"github.com/redhat-appstudio/helmet/internal/installer"
@@ -76,12 +79,6 @@ func (d *Deploy) Validate() error {
 
 // Run deploys the enabled dependencies listed on the configuration.
 func (d *Deploy) Run() error {
-	d.log().Debug("Reading values template file")
-	valuesTmpl, err := d.runCtx.ChartFS.ReadFile(d.valuesTemplatePath)
-	if err != nil {
-		return err
-	}
-
 	topology, err := d.topologyBuilder.Build(d.cmd.Context(), d.cfg)
 	if err != nil {
 		if errors.Is(err, resolver.ErrMissingIntegrations) ||
@@ -103,9 +100,20 @@ subcommand to configure them. For example:
 	if d.chartPath == "" {
 		d.log().Debug("Installing all dependencies...")
 		deps = topology.Dependencies()
+	} else if bundleID, ok := parseBundleDeployArg(d.chartPath); ok {
+		d.log().Debug("Installing all charts in bundle...", "bundle", bundleID)
+		var err error
+		deps, err = dependenciesForBundle(d.runCtx.ChartFS, topology, bundleID)
+		if err != nil {
+			return err
+		}
 	} else {
 		d.log().Debug("Installing a single Helm chart...")
-		hc, err := d.runCtx.ChartFS.GetChartFiles(d.chartPath)
+		chartDir, err := d.runCtx.ChartFS.ResolveChartDir(d.chartPath)
+		if err != nil {
+			return err
+		}
+		hc, err := d.runCtx.ChartFS.GetChartFiles(chartDir)
 		if err != nil {
 			return err
 		}
@@ -129,19 +137,28 @@ subcommand to configure them. For example:
 
 		i := installer.NewInstaller(d.log(), d.flags, d.runCtx.Kube, &dep, d.installerTarball)
 
-		ctx := d.cmd.Context()
-		err := i.SetValues(ctx, d.cfg, string(valuesTmpl))
+		valuesTmpl, templatePath, err := d.runCtx.ChartFS.ReadValuesTemplate(
+			dep.ChartPath(),
+			d.valuesTemplatePath,
+		)
 		if err != nil {
 			return err
 		}
-		if d.flags.Debug {
+		d.log().Debug("Using values template", "path", templatePath)
+
+		ctx := d.cmd.Context()
+		err = i.SetValues(ctx, d.cfg, string(valuesTmpl))
+		if err != nil {
+			return err
+		}
+		if d.flags.Verbose {
 			i.PrintRawValues()
 		}
 
 		if err := i.RenderValues(); err != nil {
 			return err
 		}
-		if d.flags.Debug {
+		if d.flags.Verbose {
 			i.PrintValues()
 		}
 
@@ -180,15 +197,19 @@ installed, and the dependencies to be resolved.
 The deployment configuration file describes the sequence of Helm charts to be
 applied, on the attribute '%s.dependencies[]'.
 
-The platform configuration is rendered from the values template file
-(--values-template), this configuration payload is given to all Helm charts.
+The platform configuration is rendered from values templates: each chart may
+supply charts/<chart>/values.yaml.tpl; otherwise the root file (--values-template)
+is used for that chart.
 
 The installer resources are embedded in the executable, these resources are
 employed by default.
 
-A single chart can be deployed by specifying its path. E.g.:
+Deploy one chart by path or chart name (charts/ and bundles/*/charts/ are resolved automatically). E.g.:
 	%s deploy charts/%s-openshift
-`, appCtx.Name, appCtx.IdentifierName(), appCtx.Name, appCtx.IdentifierName())
+	%s deploy %s-tpa
+Or deploy every chart in a composable bundle (in topology order):
+	%s deploy bundles/<bundle-id>
+`, appCtx.Name, appCtx.IdentifierName(), appCtx.Name, appCtx.IdentifierName(), appCtx.Name, appCtx.IdentifierName(), appCtx.Name)
 
 	d := &Deploy{
 		cmd: &cobra.Command{
@@ -206,4 +227,43 @@ A single chart can be deployed by specifying its path. E.g.:
 	}
 	flags.SetValuesTmplFlag(d.cmd.PersistentFlags(), &d.valuesTemplatePath)
 	return d
+}
+
+// parseBundleDeployArg returns bundleID when arg is exactly bundles/<id> (deploy all charts in that bundle).
+func parseBundleDeployArg(arg string) (bundleID string, ok bool) {
+	arg = filepath.ToSlash(strings.TrimSpace(arg))
+	arg = strings.TrimSuffix(arg, "/")
+	const p = "bundles/"
+	if !strings.HasPrefix(arg, p) {
+		return "", false
+	}
+	rest := strings.TrimPrefix(arg, p)
+	if rest == "" || strings.Contains(rest, "/") {
+		return "", false
+	}
+	return rest, true
+}
+
+// dependenciesForBundle returns topology dependencies whose chart dirs lie under bundles/<bundleID>/charts/, in install order.
+func dependenciesForBundle(cfs *chartfs.ChartFS, topology *resolver.Topology, bundleID string) (resolver.Dependencies, error) {
+	prefix := path.Join("bundles", bundleID, "charts")
+	dirs, err := cfs.ListChartsUnder(prefix)
+	if err != nil {
+		return nil, fmt.Errorf("bundle %q: list charts: %w", bundleID, err)
+	}
+	inBundle := make(map[string]struct{}, len(dirs))
+	for _, dir := range dirs {
+		inBundle[filepath.ToSlash(dir)] = struct{}{}
+	}
+	var out resolver.Dependencies
+	for _, dep := range topology.Dependencies() {
+		cp := filepath.ToSlash(dep.ChartPath())
+		if _, ok := inBundle[cp]; ok {
+			out = append(out, dep)
+		}
+	}
+	if len(out) == 0 {
+		return nil, fmt.Errorf("bundle %q: no charts from this bundle appear in the deployment topology (check config and bundle path)", bundleID)
+	}
+	return out, nil
 }

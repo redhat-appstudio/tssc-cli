@@ -1,0 +1,17 @@
+---
+# Chart-local defaults for the OpenShift Pipelines operator Subscription only.
+# Install-time values come from ../../values.yaml.tpl (merged by Helmet).
+subscriptions:
+  openshiftPipelines:
+    enabled: false
+    description: OpenShift Pipelines Operator
+    apiResource: tektonconfigs.operator.tekton.dev
+    namespace: openshift-operators
+    name: openshift-pipelines-operator-rh
+    channel: pipelines-1.21
+    source: redhat-operators
+    sourceNamespace: openshift-marketplace
+    config:
+      env:
+        - name: AUTOINSTALL_COMPONENTS
+          value: "false"

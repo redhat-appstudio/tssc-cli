@@ -1,0 +1,4 @@
+name: OpenShift GitOps
+namespace: tssc-gitops
+properties:
+  manageSubscription: true

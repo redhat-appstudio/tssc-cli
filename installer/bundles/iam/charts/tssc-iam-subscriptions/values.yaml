@@ -1,0 +1,16 @@
+---
+# Chart-local defaults for the Red Hat Keycloak operator Subscription only.
+# Install-time values come from ../../values.yaml.tpl (merged by Helmet).
+subscriptions:
+  openshiftKeycloak:
+    enabled: false
+    description: Red Hat Keycloak Operator
+    apiResource: keycloaks.k8s.keycloak.org
+    namespace: rhbk-operator
+    name: rhbk-operator
+    channel: stable-v26.4
+    source: redhat-operators
+    sourceNamespace: openshift-marketplace
+    operatorGroup:
+      upgradeStrategy: Default
+      targetNamespaces: []

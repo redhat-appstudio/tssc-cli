@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strconv"
+	"strings"
 
 	"github.com/redhat-appstudio/helmet/internal/annotations"
 	"helm.sh/helm/v3/pkg/chart"
@@ -15,6 +16,7 @@ import (
 type Dependency struct {
 	chart     *chart.Chart // helm chart instance
 	namespace string       // target namespace
+	chartPath string       // chart directory relative to ChartFS (for per-chart values.yaml.tpl)
 }
 
 // Dependencies represents a slice of Dependency instances.
@@ -25,6 +27,7 @@ func (d *Dependency) LoggerWith(logger *slog.Logger) *slog.Logger {
 	return logger.With(
 		"dependency-name", d.Name(),
 		"dependency-namespace", d.Namespace(),
+		"dependency-chart-dir", d.ChartPath(),
 	)
 }
 
@@ -43,6 +46,12 @@ func (d *Dependency) Namespace() string {
 	return d.namespace
 }
 
+// ChartPath returns the filesystem path of the chart directory relative to ChartFS,
+// used to resolve chart-local values.yaml.tpl.
+func (d *Dependency) ChartPath() string {
+	return d.chartPath
+}
+
 // SetNamespace sets the namespace for this dependency.
 func (d *Dependency) SetNamespace(namespace string) {
 	d.namespace = namespace
@@ -57,13 +66,33 @@ func (d *Dependency) getAnnotation(annotation string) string {
 	return ""
 }
 
-// DependsOn returns a slice of dependencies names from the chart's annotation.
+// DependsOn returns legacy depends-on annotation only (full list before bundle split).
 func (d *Dependency) DependsOn() []string {
 	dependsOn := d.getAnnotation(annotations.DependsOn)
 	if dependsOn == "" {
 		return nil
 	}
 	return commaSeparatedToSlice(dependsOn)
+}
+
+// DependsOnGlobalCharts lists dependencies on charts under the installer charts/ directory.
+func (d *Dependency) DependsOnGlobalCharts() []string {
+	return commaSeparatedToSlice(d.getAnnotation(annotations.DependsOnGlobalCharts))
+}
+
+// DependsOnBundleCharts lists sibling charts in the same bundles/<id>/charts/ directory.
+func (d *Dependency) DependsOnBundleCharts() []string {
+	return commaSeparatedToSlice(d.getAnnotation(annotations.DependsOnBundleCharts))
+}
+
+// DependsOnBundles lists bundle ids (bundles/<id>) this chart must follow in topology.
+func (d *Dependency) DependsOnBundles() []string {
+	return commaSeparatedToSlice(d.getAnnotation(annotations.DependsOnBundles))
+}
+
+// BundleID returns the bundle directory id when the chart lives under bundles/<id>/charts/.
+func (d *Dependency) BundleID() string {
+	return bundleIDFromChartPath(d.ChartPath())
 }
 
 // Weight returns the weight of this dependency. If no weight is specified, zero
@@ -90,6 +119,19 @@ func (d *Dependency) UseProductNamespace() string {
 	return d.getAnnotation(annotations.UseProductNamespace)
 }
 
+// InstallReleaseInInstallerNamespace is true when the chart requests the Helm
+// release to be installed in the installer namespace regardless of product namespace.
+func (d *Dependency) InstallReleaseInInstallerNamespace() bool {
+	v := strings.TrimSpace(strings.ToLower(
+		d.getAnnotation(annotations.InstallReleaseInInstallerNamespace)))
+	switch v {
+	case "true", "1", "yes", "y":
+		return true
+	default:
+		return false
+	}
+}
+
 // IntegrationsProvided returns the integrations provided.
 func (d *Dependency) IntegrationsProvided() []string {
 	provided := d.getAnnotation(annotations.IntegrationsProvided)
@@ -101,16 +143,52 @@ func (d *Dependency) IntegrationsRequired() string {
 	return d.getAnnotation(annotations.IntegrationsRequired)
 }
 
+// BundleType returns the legacy bundle-type annotation (integration, product, dual).
+func (d *Dependency) BundleType() string {
+	return d.getAnnotation(annotations.BundleType)
+}
+
+// BundleSupport returns whether this chart declares legacy bundle-type tokens for
+// integration vs product placement (integration bundle installs are no longer used;
+// only product placement remains).
+func (d *Dependency) BundleSupport() (integration, product bool, err error) {
+	return annotations.ParseBundleTypesSupported(
+		d.getAnnotation(annotations.BundleTypesSupported),
+		d.getAnnotation(annotations.BundleType),
+	)
+}
+
+// SupportsProductBundle is true when the chart may be listed under products.
+func (d *Dependency) SupportsProductBundle() bool {
+	_, p, err := d.BundleSupport()
+	if err != nil {
+		return false
+	}
+	return p
+}
+
 // NewDependency creates a new Dependency for the Helm chart and initially using
 // empty target namespace.
 func NewDependency(hc *chart.Chart) *Dependency {
-	return &Dependency{chart: hc}
+	return NewDependencyWithChartPath(hc, "")
+}
+
+// NewDependencyWithChartPath creates a Dependency that knows its chart directory
+// on ChartFS for per-chart values templates.
+func NewDependencyWithChartPath(hc *chart.Chart, chartPath string) *Dependency {
+	return &Dependency{chart: hc, chartPath: chartPath}
 }
 
 // NewDependencyWithNamespace creates a new Dependency for the Helm chart and sets
 // the target namespace.
 func NewDependencyWithNamespace(hc *chart.Chart, ns string) *Dependency {
-	d := NewDependency(hc)
+	return NewDependencyWithNamespaceAndChartPath(hc, ns, "")
+}
+
+// NewDependencyWithNamespaceAndChartPath creates a Dependency with namespace and
+// chart directory path.
+func NewDependencyWithNamespaceAndChartPath(hc *chart.Chart, ns, chartPath string) *Dependency {
+	d := NewDependencyWithChartPath(hc, chartPath)
 	d.SetNamespace(ns)
 	return d
 }

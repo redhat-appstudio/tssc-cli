@@ -30,7 +30,13 @@ func (v *Variables) SetInstaller(cfg *config.Config) error {
 		products[product.KeyName()] = product
 	}
 	v.Installer["Products"], err = UnstructuredType(products)
-	return err
+	if err != nil {
+		return err
+	}
+	// Templates may reference .Installer.Integrations for backward compatibility;
+	// runtime integration Secrets come from the integration CLI subcommands.
+	v.Installer["Integrations"] = map[string]interface{}{}
+	return nil
 }
 
 func getMinorVersion(version string) (string, error) {

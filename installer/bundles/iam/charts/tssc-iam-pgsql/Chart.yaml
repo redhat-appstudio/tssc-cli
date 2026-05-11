@@ -1,0 +1,9 @@
+---
+apiVersion: v2
+name: tssc-iam-pgsql
+description: PostgreSQL instance for Keycloak (IAM bundle)
+type: application
+version: "1.9.0"
+annotations:
+  helmet.redhat-appstudio.github.com/use-product-namespace: IAM
+  helmet.redhat-appstudio.github.com/install-release-in-installer-namespace: "true"

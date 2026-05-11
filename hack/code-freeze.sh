@@ -68,9 +68,26 @@ cleanup() {
     fi
 }
 
+subscription_values_for_channel_lookup() {
+    case "$1" in
+    openshiftKeycloak) echo "installer/bundles/iam/charts/tssc-iam-subscriptions/values.yaml" ;;
+    openshiftGitOps) echo "installer/bundles/gitops/charts/tssc-gitops-subscriptions/values.yaml" ;;
+    openshiftPipelines) echo "installer/bundles/pipelines/charts/tssc-pipelines-subscriptions/values.yaml" ;;
+    openshiftTrustedArtifactSigner) echo "installer/bundles/tas/charts/tssc-tas-subscriptions/values.yaml" ;;
+    advancedClusterSecurity) echo "installer/bundles/acs/charts/tssc-acs-subscriptions/values.yaml" ;;
+    developerHub) echo "installer/bundles/dh/charts/tssc-dh-subscriptions/values.yaml" ;;
+    *)
+        echo "[ERROR] Unknown subscription key for channel lookup: $1" >&2
+        exit 1
+        ;;
+    esac
+}
+
 get_version() {
+    local values_file
+    values_file="$(subscription_values_for_channel_lookup "$1")"
     VERSION_XY="$(
-        yq '.subscriptions.'"$1"'.channel' installer/charts/tssc-subscriptions/values.yaml \
+        yq '.subscriptions.'"$1"'.channel' "$values_file" \
         | grep --extended-regexp "[0-9.]*" --only-matching
     )"
     VERSION_XYZ="$VERSION_XY.0"
@@ -81,22 +98,22 @@ update_charts() {
     # Bump "version" in all charts
     get_version "developerHub"
     export RELEASE_BRANCH="release-$VERSION_XY"
-    find installer/charts/ -name Chart.yaml | while read -r CHART; do
+    find installer/charts installer/bundles -name Chart.yaml | while read -r CHART; do
         yq -i '.version = strenv(VERSION_XYZ)' "$CHART"
     done
 
     # Bump "appVersion" in all charts
     get_version "openshiftGitOps"
-    yq -i '.appVersion = strenv(VERSION_XY)' "installer/charts/tssc-gitops/Chart.yaml"
+    yq -i '.appVersion = strenv(VERSION_XY)' "installer/bundles/gitops/charts/tssc-gitops/Chart.yaml"
     get_version "openshiftPipelines"
-    yq -i '.appVersion = strenv(VERSION_XY)' "installer/charts/tssc-pipelines/Chart.yaml"
+    yq -i '.appVersion = strenv(VERSION_XY)' "installer/bundles/pipelines/charts/tssc-pipelines/Chart.yaml"
     get_version "openshiftTrustedArtifactSigner"
-    yq -i '.appVersion = strenv(VERSION_XY)' "installer/charts/tssc-tas/Chart.yaml"
+    yq -i '.appVersion = strenv(VERSION_XY)' "installer/bundles/tas/charts/tssc-tas/Chart.yaml"
     get_version "advancedClusterSecurity"
-    yq -i '.appVersion = strenv(VERSION_XY)' "installer/charts/tssc-acs/Chart.yaml"
-    yq -i '.appVersion = strenv(VERSION_XY)' "installer/charts/tssc-acs-test/Chart.yaml"
+    yq -i '.appVersion = strenv(VERSION_XY)' "installer/bundles/acs/charts/tssc-acs/Chart.yaml"
+    yq -i '.appVersion = strenv(VERSION_XY)' "installer/bundles/acs/charts/tssc-acs-test/Chart.yaml"
     get_version "developerHub"
-    yq -i '.appVersion = strenv(VERSION_XY)' "installer/charts/tssc-dh/Chart.yaml"
+    yq -i '.appVersion = strenv(VERSION_XY)' "installer/bundles/dh/charts/tssc-dh/Chart.yaml"
 }
 
 update_template() {

@@ -1,1 +1,0 @@
-../../../_common/_pre-install.tpl

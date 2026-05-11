@@ -154,7 +154,7 @@ EOF
     # with targetNamespaces: [tssc-tpa] - no manual OperatorGroup/Subscription creation needed
     echo "[INFO] Step 4: Updating tssc-cli configuration for pre-release TPA..." >&2
     
-    values_file="$PROJECT_DIR/installer/charts/tssc-subscriptions/values.yaml"
+    values_file="$PROJECT_DIR/installer/bundles/tpa/charts/tssc-tpa-subscriptions/values.yaml"
     if [[ -f "$values_file" ]]; then
         echo "[INFO] Updating values.yaml to use pre-release TPA catalog source and channel" >&2
         echo "[INFO] Setting source to: rhtpa-fbc-pre, channel to: stable-v1.1" >&2

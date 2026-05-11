@@ -1,0 +1,13 @@
+apiVersion: v2
+name: tssc-dh
+description: Red Hat Developer Hub
+type: application
+version: "1.9.0"
+appVersion: "1.9"
+annotations:
+  helmet.redhat-appstudio.github.com/bundle-types-supported: product
+  helmet.redhat-appstudio.github.com/product-name: Developer Hub
+  helmet.redhat-appstudio.github.com/depends-on-global-charts: tssc-app-namespaces
+  helmet.redhat-appstudio.github.com/depends-on-bundle-charts: tssc-dh-openshift, tssc-dh-subscriptions, tssc-dh-access
+  helmet.redhat-appstudio.github.com/depends-on-bundles: iam, gitops, pipelines, tas
+  helmet.redhat-appstudio.github.com/integrations-required: "(bitbucket || github || gitlab) && (artifactory || nexus || quay)"

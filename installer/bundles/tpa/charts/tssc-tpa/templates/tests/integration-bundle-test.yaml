@@ -1,0 +1,44 @@
+{{- if eq (dig "mode" "product" (index .Values "bundle" | default dict)) "integration" }}
+{{- $tpa := .Values.trustedProfileAnalyzer -}}
+{{- $proto := "http" -}}
+{{- if $tpa.openshift.useServiceCa }}{{- $proto = "https" -}}{{- end }}
+{{- $computed := printf "%s://server%s" $proto $tpa.appDomain -}}
+{{- $is := $tpa.integrationSecret | default dict -}}
+{{- $bombURL := default $computed (index $is "bombastic_api_url") -}}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ .Release.Name }}-test-trustification-connectivity
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    helm.sh/hook: test
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+spec:
+  automountServiceAccountToken: false
+  restartPolicy: Never
+  containers:
+    - name: bombastic-probe
+      image: registry.redhat.io/openshift4/ose-tools-rhel9:v4.19
+      env:
+        - name: BOMBASTIC_URL
+          value: {{ $bombURL | quote }}
+      command:
+        - /bin/bash
+        - -ec
+        - |
+          set -euo pipefail
+          curl -sfk --connect-timeout 15 "${BOMBASTIC_URL}/openapi.json" \
+            || curl -sfk --connect-timeout 15 "${BOMBASTIC_URL}/"
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+          ephemeral-storage: 64Mi
+        limits:
+          memory: 256Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+{{- end }}

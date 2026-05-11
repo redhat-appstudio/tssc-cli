@@ -1,0 +1,8 @@
+---
+apiVersion: v2
+name: tssc-iam-subscriptions
+description: Keycloak operator subscription (IAM bundle)
+type: application
+version: "1.9.0"
+annotations:
+  helmet.redhat-appstudio.github.com/depends-on-bundle-charts: tssc-iam-openshift

@@ -1,0 +1,17 @@
+.bzr/
+.bzrignore
+.DS_Store
+.git/
+.gitignore
+.hg/
+.hgignore
+.idea/
+.project
+.svn/
+.vscode/
+*.bak
+*.orig
+*.swp
+*.tmp
+*.tmproj
+*~

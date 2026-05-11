@@ -1,0 +1,14 @@
+---
+# Defaults for helm lint / tests; installer root values.yaml.tpl supplies production values.
+argoCD:
+  enabled: false
+  namespace: ""
+
+integrations:
+  acs:
+    enabled: false
+  argoCD:
+    enabled: false
+    namespace: ""
+  tssc:
+    namespace: ""

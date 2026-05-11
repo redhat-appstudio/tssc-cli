@@ -1,0 +1,6 @@
+---
+apiVersion: v2
+name: tssc-acs-openshift
+description: OpenShift project requests for the Advanced Cluster Security bundle
+type: application
+version: "1.9.0"

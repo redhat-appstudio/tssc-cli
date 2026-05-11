@@ -1,0 +1,9 @@
+name: tssc
+products:
+  - local://iam
+  - local://dh
+  - local://pipelines
+  - local://gitops
+  - local://tas
+  - local://acs
+  - local://tpa
