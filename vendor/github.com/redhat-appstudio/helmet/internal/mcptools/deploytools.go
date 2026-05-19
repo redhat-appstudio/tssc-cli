@@ -29,8 +29,8 @@ const (
 	// deploySuffix deploy tool name suffix.
 	deploySuffix = "_deploy"
 
-	// DebugArg enables debug mode for the deployment job.
-	DebugArg = "debug"
+	// VerboseArg enables verbose mode for the deployment job.
+	VerboseArg = "verbose"
 	// DryRunArg runs the deployment job on dry-run.
 	DryRunArg = "dry-run"
 	// ForceArg forces the recreation of the deployment job.
@@ -61,10 +61,10 @@ place. Inspect the error message below to assess the issue.`,
 	}
 
 	// Deployment job flags.
-	var debug, dryRun, force bool
+	var verbose, dryRun, force bool
 
-	if v, ok := ctr.GetArguments()[DebugArg].(bool); ok {
-		debug = v
+	if v, ok := ctr.GetArguments()[VerboseArg].(bool); ok {
+		verbose = v
 	}
 	if v, ok := ctr.GetArguments()[DryRunArg].(bool); ok {
 		dryRun = v
@@ -77,7 +77,7 @@ place. Inspect the error message below to assess the issue.`,
 	logsCmd := d.job.GetJobLogFollowCmd(cfg.Namespace())
 
 	// Issue the deployment job using the informed flags.
-	err = d.job.Run(ctx, debug, dryRun, force, cfg.Namespace(), d.image)
+	err = d.job.Run(ctx, verbose, dryRun, force, cfg.Namespace(), d.image)
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Sprintf(`
 Unable to issue the deployment Job, it returned the following error:
@@ -101,14 +101,14 @@ deployment status; this can take a few minutes depending on cluster performance.
 Use the tool periodically to verify that the deployment is proceeding as expected.
 
 Informed flags:
-	- debug: %v
+	- verbose: %v
 	- dry-run: %v
 	- force: %v
 
 You can follow the Kubernetes Job logs by running:
 
 	%s`,
-		d.appName+statusSuffix, debug, dryRun, force, logsCmd,
+		d.appName+statusSuffix, verbose, dryRun, force, logsCmd,
 	)), nil
 }
 
@@ -143,9 +143,9 @@ Job and create a new one regardless of its state.`,
 				mcp.DefaultBool(false),
 			),
 			mcp.WithBoolean(
-				DebugArg,
+				VerboseArg,
 				mcp.Description(`
-Sets the debug mode for the deployment job. This will enable verbose logging and
+Sets verbose mode for the deployment job. This enables debug logging and
 additional platform deployment information.`,
 				),
 				mcp.DefaultBool(false),
