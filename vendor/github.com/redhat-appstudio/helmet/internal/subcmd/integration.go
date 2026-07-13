@@ -6,6 +6,7 @@ import (
 
 	"github.com/redhat-appstudio/helmet/api"
 	"github.com/redhat-appstudio/helmet/internal/config"
+	"github.com/redhat-appstudio/helmet/internal/flags"
 	"github.com/redhat-appstudio/helmet/internal/integrations"
 	"github.com/redhat-appstudio/helmet/internal/resolver"
 	"github.com/redhat-appstudio/helmet/internal/runcontext"
@@ -70,6 +71,7 @@ func NewIntegration(
 	appCtx *api.AppContext,
 	runCtx *runcontext.RunContext,
 	manager *integrations.Manager,
+	f *flags.Flags,
 ) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "integration <type>",
@@ -88,8 +90,15 @@ func NewIntegration(
 			if err != nil {
 				return err
 			}
-			return disableProductForIntegration(
-				ctx, appCtx, runCtx, manager, cfg, activeIntegration)
+			if err := disableProductForIntegration(
+				ctx, appCtx, runCtx, manager, cfg, activeIntegration); err != nil {
+				return err
+			}
+			if f.Verbose {
+				_, err := fmt.Fprintln(cmd.OutOrStdout(), "Integration created successfully")
+				return err
+			}
+			return nil
 		},
 	}
 

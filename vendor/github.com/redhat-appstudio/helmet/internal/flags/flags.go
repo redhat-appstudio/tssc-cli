@@ -15,8 +15,8 @@ import (
 
 // Flags represents the global flags for the application.
 type Flags struct {
-	Debug          bool          // debug mode
 	DryRun         bool          // dry-run mode
+	Verbose        bool          // verbose output
 	KubeConfigPath string        // path to the kubeconfig file
 	LogLevel       *slog.Level   // log verbosity level
 	Timeout        time.Duration // helm client timeout
@@ -25,9 +25,15 @@ type Flags struct {
 
 // PersistentFlags sets up the global flags.
 func (f *Flags) PersistentFlags(p *pflag.FlagSet) {
-	p.BoolVar(&f.Debug, "debug", f.Debug, "enable debug mode")
 	p.BoolVar(&f.DryRun, "dry-run", f.DryRun, "enable dry-run mode")
 	p.BoolVar(&f.Version, "version", f.Version, "show the application version")
+	p.BoolVarP(
+		&f.Verbose,
+		"verbose",
+		"v",
+		f.Verbose,
+		"Enable verbose output",
+	)
 	p.StringVar(
 		&f.KubeConfigPath,
 		"kube-config",
@@ -60,7 +66,7 @@ func (f *Flags) GetLogger(out io.Writer) *slog.Logger {
 
 // LoggerWith returns a logger with contextual information.
 func (f *Flags) LoggerWith(l *slog.Logger) *slog.Logger {
-	return l.With("debug", f.Debug, "dry-run", f.DryRun, "timeout", f.Timeout)
+	return l.With("dry-run", f.DryRun, "timeout", f.Timeout, "verbose", f.Verbose)
 }
 
 // ShowVersion shows the application version.
@@ -83,11 +89,11 @@ func NewFlags() *Flags {
 		kubeConfigPath = path.Join(usr.HomeDir, ".kube", "config")
 	}
 	return &Flags{
-		Debug:          false,
 		DryRun:         false,
 		KubeConfigPath: kubeConfigPath,
 		LogLevel:       &defaultLogLevel,
 		Timeout:        15 * time.Minute,
+		Verbose:        false,
 		Version:        false,
 	}
 }
