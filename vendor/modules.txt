@@ -45,7 +45,7 @@ github.com/bahlo/generic-list-go
 # github.com/blang/semver/v4 v4.0.0
 ## explicit; go 1.14
 github.com/blang/semver/v4
-# github.com/buger/jsonparser v1.1.1
+# github.com/buger/jsonparser v1.1.2
 ## explicit; go 1.13
 github.com/buger/jsonparser
 # github.com/chai2010/gettext-go v1.0.3
@@ -245,8 +245,8 @@ github.com/huandu/xstrings
 # github.com/inconshreveable/mousetrap v1.1.0
 ## explicit; go 1.18
 github.com/inconshreveable/mousetrap
-# github.com/invopop/jsonschema v0.13.0
-## explicit; go 1.18
+# github.com/invopop/jsonschema v0.14.0
+## explicit; go 1.24
 github.com/invopop/jsonschema
 # github.com/jmoiron/sqlx v1.4.0
 ## explicit; go 1.10
@@ -279,10 +279,6 @@ github.com/lib/pq/scram
 # github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de
 ## explicit
 github.com/liggitt/tabwriter
-# github.com/mailru/easyjson v0.9.1
-## explicit; go 1.20
-github.com/mailru/easyjson/buffer
-github.com/mailru/easyjson/jwriter
 # github.com/mark3labs/mcp-go v0.45.0
 ## explicit; go 1.23.0
 github.com/mark3labs/mcp-go/mcp
@@ -351,6 +347,9 @@ github.com/openshift/client-go/project/applyconfigurations/internal
 github.com/openshift/client-go/project/applyconfigurations/project/v1
 github.com/openshift/client-go/project/clientset/versioned/scheme
 github.com/openshift/client-go/project/clientset/versioned/typed/project/v1
+# github.com/pb33f/ordered-map/v2 v2.3.1
+## explicit; go 1.24
+github.com/pb33f/ordered-map/v2
 # github.com/peterbourgon/diskv v2.0.1+incompatible
 ## explicit
 github.com/peterbourgon/diskv
@@ -419,9 +418,6 @@ github.com/spf13/pflag
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/assert/yaml
 github.com/stretchr/testify/require
-# github.com/wk8/go-ordered-map/v2 v2.1.8
-## explicit; go 1.18
-github.com/wk8/go-ordered-map/v2
 # github.com/x448/float16 v0.8.4
 ## explicit; go 1.11
 github.com/x448/float16
@@ -455,6 +451,9 @@ go.yaml.in/yaml/v2
 # go.yaml.in/yaml/v3 v3.0.4
 ## explicit; go 1.16
 go.yaml.in/yaml/v3
+# go.yaml.in/yaml/v4 v4.0.0-rc.2
+## explicit; go 1.18
+go.yaml.in/yaml/v4
 # golang.org/x/crypto v0.49.0
 ## explicit; go 1.25.0
 golang.org/x/crypto/bcrypt
